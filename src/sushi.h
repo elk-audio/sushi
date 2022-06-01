@@ -109,6 +109,7 @@ public:
      * Exposing audio frontend for the context where Sushi is embedded in another host.
      * @return
      */
+    // TODO: This shouldn't be here - Remove in AUD-466.
     audio_frontend::BaseAudioFrontend* audio_frontend() override;
 
     void set_sample_rate(float sample_rate) override;
@@ -117,6 +118,7 @@ public:
      * Exposing midi frontend for the context where Sushi is embedded in another host.
      * @return
      */
+    // TODO: This shouldn't be here - Remove in AUD-466.
     midi_frontend::PassiveMidiFrontend* midi_frontend() override;
 
     void set_sample_rate(float sample_rate);
@@ -126,6 +128,7 @@ public:
      * Used for example to set Transport values.
      * @return
      */
+    // TODO: This shouldn't be here - Remove in AUD-466.
     engine::BaseEngine* audio_engine() override;
 
 private:

@@ -105,17 +105,13 @@ public:
 
     sushi::Time calculate_timestamp_from_start() override;
     void increment_samples_since_start(uint64_t sample_count, Time timestamp) override;
-    Time real_time_from_sample_offset(int offset) const override;
-    std::pair<bool, int> sample_offset_from_realtime(Time timestamp) const override;
 
 private:
     audio_frontend::PassiveFrontend* _audio_frontend {nullptr};
     midi_frontend::PassiveMidiFrontend* _midi_frontend {nullptr};
     sushi::engine::Transport* _transport {nullptr};
 
-    std::unique_ptr<event_timer::EventTimer> _event_timer;
     uint64_t _samples_since_start {0};
-    TimePoint _start_time;
 
     double _sample_rate {0};
 

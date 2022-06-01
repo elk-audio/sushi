@@ -27,7 +27,6 @@ namespace sushi
 
 PassiveController::PassiveController(std::unique_ptr<sushi::AbstractSushi> sushi) : SushiOwner(std::move(sushi))
 {
-    _event_timer = std::make_unique<event_timer::EventTimer>(SUSHI_SAMPLE_RATE_DEFAULT);
 }
 
 PassiveController::~PassiveController()
@@ -66,8 +65,6 @@ void PassiveController::set_sample_rate(double sample_rate)
     _sample_rate = sample_rate;
 
     _sushi->set_sample_rate(sample_rate);
-
-    _event_timer->set_sample_rate(sample_rate);
 }
 
 double PassiveController::sample_rate() const
@@ -174,29 +171,13 @@ void PassiveController::set_midi_callback(PassiveMidiCallback&& callback)
 sushi::Time PassiveController::calculate_timestamp_from_start()
 {
     uint64_t micros = _samples_since_start * 1'000'000.0 / _sample_rate;
-
     auto timestamp = std::chrono::microseconds(micros);
-
-    _event_timer->set_incoming_time(timestamp);
-
     return timestamp;
 }
 
 void PassiveController::increment_samples_since_start(uint64_t sample_count, Time timestamp)
 {
-    _event_timer->set_outgoing_time(timestamp);
-
     _samples_since_start += sample_count;
-}
-
-Time PassiveController::real_time_from_sample_offset(int offset) const
-{
-    return _event_timer->real_time_from_sample_offset(offset);
-}
-
-std::pair<bool, int> PassiveController::sample_offset_from_realtime(Time timestamp) const
-{
-    return _event_timer->sample_offset_from_realtime(timestamp);
 }
 
 } // namespace sushi

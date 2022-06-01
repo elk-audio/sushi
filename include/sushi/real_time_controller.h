@@ -134,23 +134,6 @@ public:
      * @param timestamp
      */
     virtual void increment_samples_since_start(uint64_t sample_count, Time timestamp) = 0;
-
-    /**
-     * @brief Useful for MIDI messaging, to get the timestamp for each MIDI message passed to Sushi.
-     * @param offset The sample offset for the MIDI message
-     * @return Session time value corresponding to the given sample offset.
-     */
-    virtual Time real_time_from_sample_offset(int offset) const = 0;
-
-    /**
-     * @brief Useful for MIDI messaging, to convert a timestamp to a sample offset within the next chunk.
-     * @param timestamp Timestamp for which the sample offset is desired.
-     * @return If the timestamp falls withing the next chunk, the function
-     *         returns true and the offset in samples. If the timestamp
-     *         lies further in the future, the function returns false and
-     *         the returned offset is not valid.
-     */
-    virtual std::pair<bool, int> sample_offset_from_realtime(Time timestamp) const = 0;
 };
 
 } // namespace sushi
