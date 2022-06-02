@@ -16,11 +16,11 @@
 #ifndef PASSIVE_FACTORY_H
 #define PASSIVE_FACTORY_H
 
-#include "real_time_controller.h"
+#include "rt_controller.h"
 #include "sushi_interface.h"
 
 #include "src/factories/factory_base.h"
-#include "passive_controller.h"
+#include "real_time_controller.h"
 
 namespace sushi
 {
@@ -56,7 +56,7 @@ public:
     std::unique_ptr<sushi::AbstractSushi> sushi() override;
 
     // TODO: This should be made inside of Factory / owned by Sushi preferably
-    std::unique_ptr<sushi::PassiveController> controller();
+    std::unique_ptr<sushi::RealTimeController> rt_controller();
 
     InitStatus sushi_init_status()
     {
@@ -66,7 +66,7 @@ public:
 private:
     InitStatus _status {InitStatus::OK};
 
-    std::unique_ptr<sushi::PassiveController> _real_time_controller {nullptr};
+    std::unique_ptr<sushi::RealTimeController> _real_time_controller {nullptr};
 };
 
 } // namespace sushi

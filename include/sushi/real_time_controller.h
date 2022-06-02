@@ -13,129 +13,89 @@
 * SUSHI. If not, see http://www.gnu.org/licenses/
 */
 
-#ifndef REAL_TIME_CONTROLLER_H
-#define REAL_TIME_CONTROLLER_H
+#ifndef PASSIVE_CONTROLLER_H
+#define PASSIVE_CONTROLLER_H
 
-#include "control_interface.h"
-#include "library/sample_buffer.h"
-#include "library/time.h"
-#include "library/types.h"
+#include "rt_controller.h"
+#include "sushi_interface.h"
 
 namespace sushi
 {
 
-enum class TransportPositionSource
-{
-    EXTERNAL,
-    CALCULATED
-};
+class Sushi;
 
-using PassiveMidiCallback = std::function<void(int output, MidiDataByte data, Time timestamp)>;
+namespace audio_frontend
+{
+class PassiveFrontend;
+}
+
+namespace midi_frontend
+{
+class PassiveMidiFrontend;
+}
+
+namespace engine
+{
+class Transport;
+}
 
 /**
- * @brief The API for the methods which can safely be called from a real-time context to interact with Sushi as a library.
+ * @brief When a host application embeds Sushi, it should use this class to interface with Sushi in a real-time context.
+ *        RealTimeController implements the RtController API.
  */
-class RtController
+class RealTimeController : public RtController
 {
 public:
-    RtController() = default;
-    virtual ~RtController() = default;
+    RealTimeController(audio_frontend::PassiveFrontend* audio_frontend,
+                       midi_frontend::PassiveMidiFrontend* midi_frontend,
+                       sushi::engine::Transport* transport);
+
+    ~RealTimeController() override;
 
     /// For Transport:
     /////////////////////////////////////////////////////////////
 
-    /**
-     * @brief Set the tempo of the Sushi transport.
-     *        (can be called from a real-time context).
-     * @param tempo
-     */
-    virtual void set_tempo(float tempo) = 0;
+    void set_tempo(float tempo) override;
 
-    /**
-     * @brief Set the time signature of the Sushi transport.
-     *        (can be called from a real-time context).
-     * @param time_signature
-     */
-    virtual void set_time_signature(ext::TimeSignature time_signature) = 0;
+    void set_time_signature(ext::TimeSignature time_signature) override;
 
-    /**
-     * @brief Set the PlayingMode of the Sushi transport.
-     *        (can be called from a real-time context).
-     * @param mode
-     */
-    virtual void set_playing_mode(ext::PlayingMode mode) = 0;
+    void set_playing_mode(ext::PlayingMode mode) override;
 
-    /**
-     * @brief Set the beat time of the Sushi transport.
-     *        (can be called from a real-time context).
-     * @param beat_time
-     * @return true if the beat time was set, false if PositionSource is not set to EXTERNAL
-     */
-    virtual bool set_current_beats(double beat_time) = 0;
+    bool set_current_beats(double beat_count) override;
 
-    /**
-     * @brief Set the bar beat count of the Sushi transport.
-     *        (can be called from a real-time context).
-     * @param bar_beat_count
-     * @return true if the bar beat time was set, false if PositionSource is not set to EXTERNAL
-     */
-    virtual bool set_current_bar_beats(double bar_beat_count) = 0;
+    bool set_current_bar_beats(double bar_beat_count) override;
 
-    /**
-     * @brief Sets which source to use for the beat count position: the internally calculated one, or the one set
-     *        using the set_current_beats method below.
-     * @param TransportPositionSource Enum, EXTERNAL / CALCULATED
-     */
-    virtual void set_position_source(TransportPositionSource ps) = 0;
+    void set_position_source(TransportPositionSource ps) override;
 
     /// For Audio:
     /////////////////////////////////////////////////////////////
 
-    /**
-     * @brief Method to invoke from the host's audio callback.
-     * @param channel_count
-     * @param timestamp
-     */
-    virtual void process_audio(int channel_count,
-                               Time timestamp) = 0;
+    void process_audio(int channel_count, Time timestamp) override;
 
-    virtual ChunkSampleBuffer& in_buffer() = 0;
-    virtual ChunkSampleBuffer& out_buffer() = 0;
+    ChunkSampleBuffer& in_buffer() override;
+    ChunkSampleBuffer& out_buffer() override;
 
     /// For MIDI:
     /////////////////////////////////////////////////////////////
 
-    /**
-     * @brief Call to pass MIDI input to Sushi
-     * @param input Currently assumed to always be 0 since the frontend only supports a single input device.
-     * @param data MidiDataByte
-     * @param timestamp Sushi Time timestamp for message
-     */
-    virtual void receive_midi(int input, MidiDataByte data, Time timestamp) = 0;
+    void receive_midi(int input, MidiDataByte data, Time timestamp) override;
+    void set_midi_callback(PassiveMidiCallback&& callback) override;
 
-    /**
-     * @brief Assign a callback which is invoked when a MIDI message is generated from inside Sushi.
-     *        (Not safe to call from a real-time context, and should only really be called once).
-     * @param callback
-     */
-    virtual void set_midi_callback(PassiveMidiCallback&& callback) = 0;
+    sushi::Time calculate_timestamp_from_start(float sample_rate) override;
+    void increment_samples_since_start(uint64_t sample_count, Time timestamp) override;
 
-    /**
-     * @brief If the host doesn't provide a timestamp, this method can be used to calculate it,
-     *        based on the sample count from session start.
-     * @return The currently calculated Timestamp.
-     */
-    virtual sushi::Time calculate_timestamp_from_start(float sample_rate) = 0;
+private:
+    audio_frontend::PassiveFrontend* _audio_frontend {nullptr};
+    midi_frontend::PassiveMidiFrontend* _midi_frontend {nullptr};
+    sushi::engine::Transport* _transport {nullptr};
+    uint64_t _samples_since_start {0};
 
-    /**
-     * @brief Call this at the end of each ProcessBlock, to update the sample count and timestamp used for
-     *        time and sample offset calculations.
-     * @param sample_count
-     * @param timestamp
-     */
-    virtual void increment_samples_since_start(uint64_t sample_count, Time timestamp) = 0;
+    float _tempo {0};
+    sushi::TimeSignature _time_signature {0, 0};
+    ext::PlayingMode _playing_mode {ext::PlayingMode::STOPPED};
 };
 
 } // namespace sushi
 
-#endif //REAL_TIME_CONTROLLER_H
+
+#endif // PASSIVE_CONTROLLER_H

@@ -501,7 +501,7 @@ set(SOURCE_FILES
     src/engine/controller/cv_gate_controller.cpp
     src/engine/controller/osc_controller.cpp
     src/engine/controller/session_controller.cpp
-                      src/engine/controller/passive_controller.cpp
+        src/engine/controller/real_time_controller.cpp
                       src/factories/passive_factory.cpp
                       src/factories/factory_base.cpp
                       src/library/event.cpp

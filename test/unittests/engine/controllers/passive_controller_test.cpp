@@ -19,7 +19,7 @@
 #define private public
 #define protected public
 
-#include "engine/controller/passive_controller.cpp"
+#include "engine/controller/real_time_controller.cpp"
 
 // TODO: Make these mock-able too!
 #include "audio_frontends/passive_frontend.cpp"
@@ -47,7 +47,7 @@ protected:
 
     void SetUp()
     {
-        _passive_controller = std::make_unique<PassiveController>(&_audio_frontend,
+        _passive_controller = std::make_unique<RealTimeController>(&_audio_frontend,
                                                                   &_midi_frontend,
                                                                   &_transport);
 
@@ -93,7 +93,7 @@ protected:
     RtEventFifo<10> _rt_event_output;
     Transport _transport {TEST_SAMPLE_RATE, &_rt_event_output};
 
-    std::unique_ptr<PassiveController> _passive_controller;
+    std::unique_ptr<RealTimeController> _passive_controller;
 };
 
 TEST_F(PassiveControllerTestFrontend, TestRtControllerAudioCalls)

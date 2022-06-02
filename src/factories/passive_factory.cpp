@@ -69,7 +69,7 @@ void sushi::PassiveFactory::run(sushi::SushiOptions& options)
         _status = _configure_with_defaults(options);
     }
 
-    _real_time_controller = std::make_unique<sushi::PassiveController>(static_cast<audio_frontend::PassiveFrontend*>(_audio_frontend.get()),
+    _real_time_controller = std::make_unique<sushi::RealTimeController>(static_cast<audio_frontend::PassiveFrontend*>(_audio_frontend.get()),
                                                                        static_cast<midi_frontend::PassiveMidiFrontend*>(_midi_frontend.get()),
                                                                        _engine->transport());
 
@@ -97,7 +97,7 @@ std::unique_ptr<sushi::AbstractSushi> sushi::PassiveFactory::sushi()
     return std::move(_sushi);
 }
 
-std::unique_ptr<sushi::PassiveController> sushi::PassiveFactory::controller()
+std::unique_ptr<sushi::RealTimeController> sushi::PassiveFactory::rt_controller()
 {
     return std::move(_real_time_controller);
 }

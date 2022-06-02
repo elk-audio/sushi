@@ -13,7 +13,7 @@
 * SUSHI. If not, see http://www.gnu.org/licenses/
 */
 
-#include "include/sushi/passive_controller.h"
+#include "include/sushi/real_time_controller.h"
 
 #include "control_frontends/passive_midi_frontend.h"
 #include "audio_frontends/passive_frontend.h"
@@ -25,7 +25,7 @@
 namespace sushi
 {
 
-PassiveController::PassiveController(audio_frontend::PassiveFrontend* audio_frontend,
+RealTimeController::RealTimeController(audio_frontend::PassiveFrontend* audio_frontend,
                                      midi_frontend::PassiveMidiFrontend* midi_frontend,
                                      sushi::engine::Transport* transport) : _audio_frontend(audio_frontend),
                                                                             _midi_frontend(midi_frontend),
@@ -33,13 +33,13 @@ PassiveController::PassiveController(audio_frontend::PassiveFrontend* audio_fron
 {
 }
 
-PassiveController::~PassiveController()
+RealTimeController::~RealTimeController()
 {
 // TODO: Controller no longer OWNS sushi, so it shouldn't call exit.
 //    _sushi->exit();
 }
 
-void PassiveController::set_tempo(float tempo)
+void RealTimeController::set_tempo(float tempo)
 {
     // TODO: This works, but, it triggers the non-rt-safe Ableton Link event code.
     //  We want Ableton Link to be disabled anyway when Sushi is passive!
@@ -52,7 +52,7 @@ void PassiveController::set_tempo(float tempo)
     }
 }
 
-void PassiveController::set_time_signature(ext::TimeSignature time_signature)
+void RealTimeController::set_time_signature(ext::TimeSignature time_signature)
 {
     auto internal_time_signature = engine::to_internal(time_signature);
 
@@ -64,7 +64,7 @@ void PassiveController::set_time_signature(ext::TimeSignature time_signature)
     }
 }
 
-void PassiveController::set_playing_mode(ext::PlayingMode mode)
+void RealTimeController::set_playing_mode(ext::PlayingMode mode)
 {
     auto internal_playing_mode = engine::to_internal(mode);
 
@@ -76,7 +76,7 @@ void PassiveController::set_playing_mode(ext::PlayingMode mode)
     }
 }
 
-bool PassiveController::set_current_beats(double beat_count)
+bool RealTimeController::set_current_beats(double beat_count)
 {
     if (_transport->position_source() == sushi::PositionSource::EXTERNAL)
     {
@@ -87,7 +87,7 @@ bool PassiveController::set_current_beats(double beat_count)
     return false;
 }
 
-bool PassiveController::set_current_bar_beats(double bar_beat_count)
+bool RealTimeController::set_current_bar_beats(double bar_beat_count)
 {
     if (_transport->position_source() == sushi::PositionSource::EXTERNAL)
     {
@@ -98,7 +98,7 @@ bool PassiveController::set_current_bar_beats(double bar_beat_count)
     return false;
 }
 
-void PassiveController::set_position_source(TransportPositionSource ps)
+void RealTimeController::set_position_source(TransportPositionSource ps)
 {
     if (ps == sushi::TransportPositionSource::CALCULATED)
     {
@@ -110,39 +110,39 @@ void PassiveController::set_position_source(TransportPositionSource ps)
     }
 }
 
-void PassiveController::process_audio(int channel_count, Time timestamp)
+void RealTimeController::process_audio(int channel_count, Time timestamp)
 {
     _audio_frontend->process_audio(channel_count, _samples_since_start, timestamp);
 }
 
-ChunkSampleBuffer& PassiveController::in_buffer()
+ChunkSampleBuffer& RealTimeController::in_buffer()
 {
     return _audio_frontend->in_buffer();
 }
 
-ChunkSampleBuffer& PassiveController::out_buffer()
+ChunkSampleBuffer& RealTimeController::out_buffer()
 {
     return _audio_frontend->out_buffer();
 }
 
-void PassiveController::receive_midi(int input, MidiDataByte data, Time timestamp)
+void RealTimeController::receive_midi(int input, MidiDataByte data, Time timestamp)
 {
     _midi_frontend->receive_midi(input, data, timestamp);
 }
 
-void PassiveController::set_midi_callback(PassiveMidiCallback&& callback)
+void RealTimeController::set_midi_callback(PassiveMidiCallback&& callback)
 {
     _midi_frontend->set_callback(std::move(callback));
 }
 
-sushi::Time PassiveController::calculate_timestamp_from_start(float sample_rate)
+sushi::Time RealTimeController::calculate_timestamp_from_start(float sample_rate)
 {
     uint64_t micros = _samples_since_start * 1'000'000.0 / sample_rate;
     auto timestamp = std::chrono::microseconds(micros);
     return timestamp;
 }
 
-void PassiveController::increment_samples_since_start(uint64_t sample_count, Time timestamp)
+void RealTimeController::increment_samples_since_start(uint64_t sample_count, Time timestamp)
 {
     _samples_since_start += sample_count;
 }
