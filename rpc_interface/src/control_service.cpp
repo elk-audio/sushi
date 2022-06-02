@@ -131,6 +131,17 @@ inline sushi::ext::SyncMode to_sushi_ext(const sushi_rpc::SyncMode::Mode mode)
     }
 }
 
+inline sushi_rpc::TrackType::Type to_grpc(const sushi::ext::TrackType type)
+{
+    switch (type)
+    {
+        case sushi::ext::TrackType::REGULAR:      return sushi_rpc::TrackType::REGULAR;
+        case sushi::ext::TrackType::MASTER_PRE:   return sushi_rpc::TrackType::MASTER_PRE;
+        case sushi::ext::TrackType::MASTER_POST:  return sushi_rpc::TrackType::MASTER_POST;
+        default:                                  return sushi_rpc::TrackType::REGULAR;
+    }
+}
+
 inline const char* to_string(const sushi::ext::ControlStatus status)
 {
    switch (status)
@@ -240,6 +251,7 @@ inline void to_grpc(sushi_rpc::TrackInfo& dest, const sushi::ext::TrackInfo& src
     dest.set_name(src.name);
     dest.set_channels(src.channels);
     dest.set_buses(src.buses);
+    dest.mutable_type()->set_type(to_grpc(src.type));
     for (auto i : src.processors)
     {
         dest.mutable_processors()->Add()->set_id(i);
@@ -1088,6 +1100,22 @@ grpc::Status AudioGraphControlService::CreateMultibusTrack(grpc::ServerContext* 
                                                            sushi_rpc::GenericVoidValue* /*response*/)
 {
     auto status = _controller->create_multibus_track(request->name(), request->buses());
+    return to_grpc_status(status);
+}
+
+grpc::Status AudioGraphControlService::CreateMasterPreTrack(grpc::ServerContext* /*context*/,
+                                                            const sushi_rpc::CreateMasterTrackRequest* request,
+                                                            sushi_rpc::GenericVoidValue* /*response*/)
+{
+    auto status = _controller->create_master_pre_track(request->name());
+    return to_grpc_status(status);
+}
+
+grpc::Status AudioGraphControlService::CreateMasterPostTrack(grpc::ServerContext* /*context*/,
+                                                             const sushi_rpc::CreateMasterTrackRequest* request,
+                                                             sushi_rpc::GenericVoidValue* /*response*/)
+{
+    auto status = _controller->create_master_post_track(request->name());
     return to_grpc_status(status);
 }
 
