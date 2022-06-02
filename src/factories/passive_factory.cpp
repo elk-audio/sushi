@@ -73,7 +73,6 @@ void sushi::PassiveFactory::run(sushi::SushiOptions& options)
                                                                        static_cast<midi_frontend::PassiveMidiFrontend*>(_midi_frontend.get()),
                                                                        _engine->transport());
 
-
     _sushi = std::make_unique<sushi::Sushi>(std::move(_engine),
                                             std::move(_midi_dispatcher),
                                             std::move(_midi_frontend),
@@ -84,12 +83,6 @@ void sushi::PassiveFactory::run(sushi::SushiOptions& options)
                                             std::move(_rpc_server));
 
     _sushi->init(options);
-
-
-    auto midi_frontend_ptr = _midi_frontend.get();
-
-    // TODO: Reconsider starting here!!!!
-    _sushi->start();
 }
 
 std::unique_ptr<sushi::AbstractSushi> sushi::PassiveFactory::sushi()

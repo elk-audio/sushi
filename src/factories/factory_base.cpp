@@ -49,11 +49,16 @@
 namespace sushi
 {
 
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("sushi-factory");
+
 FactoryBase::FactoryBase() = default;
 
 FactoryBase::~FactoryBase() = default;
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("sushi-factory");
+sushi::InitStatus FactoryBase::sushi_init_status()
+{
+    return _status;
+}
 
 InitStatus FactoryBase::_configure_from_file(sushi::SushiOptions& options)
 {

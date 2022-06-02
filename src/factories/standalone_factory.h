@@ -1,5 +1,5 @@
 /*
-* Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
+* Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
 *
 * SUSHI is free software: you can redistribute it and/or modify it under the terms of
 * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -13,56 +13,33 @@
 * SUSHI. If not, see http://www.gnu.org/licenses/
 */
 
-#ifndef PASSIVE_FACTORY_H
-#define PASSIVE_FACTORY_H
+#ifndef SUSHI_STANDALONE_FACTORY_H
+#define SUSHI_STANDALONE_FACTORY_H
 
-#include "rt_controller.h"
-#include "sushi_interface.h"
+#include "include/sushi/sushi_interface.h"
 
 #include "src/factories/factory_base.h"
-#include "real_time_controller.h"
 
-namespace sushi
-{
-
-class Sushi;
-
-namespace audio_frontend
-{
-class PassiveFrontend;
+namespace sushi_rpc {
+class GrpcServer;
 }
 
-namespace midi_frontend
-{
-class PassiveMidiFrontend;
-}
+namespace sushi {
 
-namespace engine
-{
-class Transport;
-}
-
-/**
- *
- */
-class PassiveFactory : public FactoryBase
+class StandaloneFactory : public FactoryBase
 {
 public:
-    PassiveFactory();
-    ~PassiveFactory();
+    StandaloneFactory();
+    virtual ~StandaloneFactory();
 
     void run(sushi::SushiOptions& options) override;
 
     std::unique_ptr<sushi::AbstractSushi> sushi() override;
 
-    // TODO: This should be made inside of Factory / owned by Sushi preferably
-    std::unique_ptr<sushi::RealTimeController> rt_controller();
+protected:
 
-private:
-    std::unique_ptr<sushi::RealTimeController> _real_time_controller {nullptr};
 };
 
 } // namespace sushi
 
-
-#endif // PASSIVE_FACTORY_H
+#endif //SUSHI_STANDALONE_FACTORY_H

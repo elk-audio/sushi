@@ -13,10 +13,10 @@
 * SUSHI. If not, see http://www.gnu.org/licenses/
 */
 
-#include "include/sushi/sushi_interface.h"
-
 #ifndef SUSHI_FACTORY_BASE_H
 #define SUSHI_FACTORY_BASE_H
+
+#include "include/sushi/sushi_interface.h"
 
 namespace sushi_rpc {
 class GrpcServer;
@@ -67,6 +67,8 @@ public:
 
     virtual std::unique_ptr<sushi::AbstractSushi> sushi() = 0;
 
+    InitStatus sushi_init_status();
+
 protected:
     InitStatus _configure_from_file(sushi::SushiOptions& options);
     InitStatus _configure_with_defaults(sushi::SushiOptions& options);
@@ -81,6 +83,8 @@ protected:
                                sushi::jsonconfig::JsonConfigurator* configurator,
                                int midi_inputs,
                                int midi_outputs);
+
+    InitStatus _status {InitStatus::OK};
 
     std::unique_ptr<engine::AudioEngine> _engine {nullptr};
     std::unique_ptr<midi_dispatcher::MidiDispatcher> _midi_dispatcher {nullptr};

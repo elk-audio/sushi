@@ -28,6 +28,8 @@
 #include "library/parameter_dump.h"
 #include "compile_time_settings.h"
 
+#include "factories/standalone_factory.h"
+
 #include <condition_variable>
 
 #include "logging.h"
@@ -77,49 +79,48 @@ int main(int argc, char* argv[])
     else if (option_status == ParseStatus::MISSING_ARGUMENTS) return 2;
     else if (option_status == ParseStatus::EXIT)              return 0;
 
-    sushi::init_logger(options);
+    StandaloneFactory factory;
 
-    // sushi::Sushi sushi;
-    // auto init_status = sushi.init(options);
+    factory.run(options);
 
-    InitStatus init_status = InitStatus::FAILED_AUDIO_FRONTEND_INITIALIZATION;
+    auto sushi = factory.sushi();
 
-    // TODO: MAKE FACTORY STANDALONE/NATIVE!
+    auto init_status = factory.sushi_init_status();
 
-//    sushi.init(options);
-//
-//    if (init_status != InitStatus::OK)
-//    {
-//        auto message = to_string(init_status);
-//        if (init_status == InitStatus::FAILED_INVALID_FILE_PATH)
-//        {
-//            message.append(options.config_filename);
-//        }
-//
-//        error_exit(message);
-//    }
-//
-//    if (options.enable_parameter_dump)
-//    {
-//        std::cout << sushi::generate_processor_parameter_document(sushi.controller());
-//        std::cout << "Parameter dump completed - exiting." << std::endl;
-//        std::exit(0);
-//    }
-//    else
-//    {
-//        print_sushi_headline();
-//    }
-//
-//    sushi.start();
-//
-//    if (options.frontend_type != FrontendType::OFFLINE)
-//    {
-//        std::mutex m;
-//        std::unique_lock<std::mutex> lock(m);
-//        exit_notifier.wait(lock, exit_condition);
-//    }
-//
-//    sushi.exit();
+    sushi->init(options);
+
+    if (init_status != InitStatus::OK)
+    {
+        auto message = to_string(init_status);
+        if (init_status == InitStatus::FAILED_INVALID_FILE_PATH)
+        {
+            message.append(options.config_filename);
+        }
+
+        error_exit(message);
+    }
+
+    if (options.enable_parameter_dump)
+    {
+        std::cout << sushi::generate_processor_parameter_document(sushi->controller());
+        std::cout << "Parameter dump completed - exiting." << std::endl;
+        std::exit(0);
+    }
+    else
+    {
+        print_sushi_headline();
+    }
+
+    sushi->start();
+
+    if (options.frontend_type != FrontendType::OFFLINE)
+    {
+        std::mutex m;
+        std::unique_lock<std::mutex> lock(m);
+        exit_notifier.wait(lock, exit_condition);
+    }
+
+    sushi->exit();
 
     SUSHI_LOG_INFO("Sushi exiting normally!");
 
