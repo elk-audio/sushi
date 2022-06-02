@@ -41,6 +41,13 @@ namespace engine {
 constexpr int MAX_TRACK_BUSES = MAX_TRACK_CHANNELS / 2;
 constexpr int KEYBOARD_EVENT_QUEUE_SIZE = 256;
 
+enum class TrackType
+{
+    REGULAR,
+    MASTER_PRE,
+    MASTER_POST
+};
+
 class Track : public InternalPlugin, public RtEventPipe
 {
 public:
@@ -49,11 +56,11 @@ public:
     /**
      * @brief Create a track
      * @param host_control Host callback object
-     * @param channels The number of channels in the track, must be even if type is MULTIBUS
+     * @param channels The number of channels in the track
      * @param timer A timer object
      * @param pan_controls If true, create a pan control parameter on the track
      */
-    Track(HostControl host_control, int channels, performance::PerformanceTimer* timer, bool pan_controls);
+    Track(HostControl host_control, int channels, performance::PerformanceTimer* timer, bool pan_controls, TrackType type = TrackType::REGULAR);
 
     /**
      * @brief Create a track with a given number of stereo input and output buses
@@ -156,6 +163,11 @@ public:
         reinterpret_cast<Track*>(arg)->render();
     }
 
+    TrackType type() const
+    {
+        return _type;
+    }
+
     /* Inherited from Processor */
     void process_event(const RtEvent& event) override;
 
@@ -175,6 +187,7 @@ private:
     };
 
     void _common_init(PanMode mode);
+    void _process_chain(ChunkSampleBuffer& in, ChunkSampleBuffer& out);
     void _process_output_events();
     void _apply_pan_and_gain(ChunkSampleBuffer& buffer, bool muted);
     void _apply_pan_and_gain_per_bus(ChunkSampleBuffer& buffer, bool muted);
@@ -186,6 +199,7 @@ private:
 
     int _buses;
     PanMode _pan_mode;
+    TrackType _type;
 
     BoolParameterValue*                               _mute_parameter;
     std::array<FloatParameterValue*, MAX_TRACK_BUSES> _gain_parameters;

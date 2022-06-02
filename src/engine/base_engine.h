@@ -65,6 +65,7 @@ enum class EngineReturnStatus
     INVALID_TRACK,
     INVALID_BUS,
     INVALID_CHANNEL,
+    ALREADY_IN_USE,
     QUEUE_FULL
 };
 
@@ -268,6 +269,17 @@ public:
     {
         return {EngineReturnStatus::OK, 0};
     }
+
+    virtual std::pair<EngineReturnStatus, ObjectId> create_master_post_track(const std::string& /*name*/)
+    {
+        return {EngineReturnStatus::OK, 0};
+    }
+
+    virtual std::pair<EngineReturnStatus, ObjectId> create_master_pre_track(const std::string& /*name*/)
+    {
+        return {EngineReturnStatus::OK, 0};
+    }
+
 
     virtual EngineReturnStatus delete_track(ObjectId  /*track_id*/)
     {
