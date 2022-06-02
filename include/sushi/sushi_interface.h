@@ -126,7 +126,7 @@ public:
     AbstractSushi() = default;
     virtual ~AbstractSushi() = default;
 
-    virtual InitStatus init(const SushiOptions& options) = 0;
+    virtual void init(const SushiOptions& options) = 0;
 
     virtual void start() = 0;
 
@@ -135,29 +135,8 @@ public:
     virtual engine::Controller* controller() = 0;
 
     virtual void set_sample_rate(float sample_rate) = 0;
-
-    virtual audio_frontend::BaseAudioFrontend* audio_frontend() = 0;
-
-    virtual midi_frontend::PassiveMidiFrontend* midi_frontend() = 0;
-
-    virtual engine::BaseEngine* audio_engine() = 0;
+    virtual float sample_rate() const = 0;
 };
-
-class SushiOwner
-{
-public:
-    SushiOwner(std::unique_ptr<sushi::AbstractSushi>&& sushi) : _sushi(std::move(sushi)) {}
-    virtual ~SushiOwner() = default;
-
-    virtual InitStatus init(SushiOptions& options) = 0;
-
-    virtual void set_sample_rate(double sample_rate) = 0;
-    virtual double sample_rate() const = 0;
-
-protected:
-    std::unique_ptr<sushi::AbstractSushi> _sushi {nullptr};
-};
-
 
 } // namespace Sushi
 

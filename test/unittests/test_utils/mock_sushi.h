@@ -21,7 +21,7 @@ using namespace sushi;
 class MockSushi : public AbstractSushi
 {
 public:
-    MOCK_METHOD(InitStatus,
+    MOCK_METHOD(void,
                 init,
                 (const SushiOptions& options),
                 (override));
@@ -41,25 +41,15 @@ public:
                 (),
                 (override));
 
-    MOCK_METHOD(audio_frontend::BaseAudioFrontend*,
-                audio_frontend,
-                (),
-                (override));
-
     MOCK_METHOD(void,
                 set_sample_rate,
                 (float sample_rate),
                 (override));
 
-    MOCK_METHOD(midi_frontend::PassiveMidiFrontend*,
-                midi_frontend,
+    MOCK_METHOD(float,
+                sample_rate,
                 (),
-                (override));
-
-    MOCK_METHOD(engine::BaseEngine*,
-                audio_engine,
-                (),
-                (override));
+                (const override));
 };
 
 #endif //SUSHI_MOCK_SUSHI_H

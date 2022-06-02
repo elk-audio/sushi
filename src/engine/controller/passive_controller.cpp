@@ -25,51 +25,18 @@
 namespace sushi
 {
 
-PassiveController::PassiveController(std::unique_ptr<sushi::AbstractSushi> sushi) : SushiOwner(std::move(sushi))
+PassiveController::PassiveController(audio_frontend::PassiveFrontend* audio_frontend,
+                                     midi_frontend::PassiveMidiFrontend* midi_frontend,
+                                     sushi::engine::Transport* transport) : _audio_frontend(audio_frontend),
+                                                                            _midi_frontend(midi_frontend),
+                                                                            _transport(transport)
 {
 }
 
 PassiveController::~PassiveController()
 {
-    _sushi->exit();
-}
-
-InitStatus PassiveController::init(SushiOptions& options)
-{
-    sushi::init_logger(options); // This can only be called once.
-
-    // Overriding whatever frontend settings may or may not have been set.
-    // This also causes the MIDI frontend to be set to NullMidiFrontend in Sushi::_set_up_control.
-    options.frontend_type = sushi::FrontendType::PASSIVE;
-
-    auto sushiInitStatus = _sushi->init(options);
-
-    if (sushiInitStatus != sushi::InitStatus::OK)
-    {
-        return sushiInitStatus;
-    }
-
-    auto frontend = _sushi->audio_frontend();
-
-    _audio_frontend = static_cast<audio_frontend::PassiveFrontend*>(frontend);
-    _midi_frontend = _sushi->midi_frontend();
-    _transport = _sushi->audio_engine()->transport();
-
-    _sushi->start();
-
-    return sushiInitStatus;
-}
-
-void PassiveController::set_sample_rate(double sample_rate)
-{
-    _sample_rate = sample_rate;
-
-    _sushi->set_sample_rate(sample_rate);
-}
-
-double PassiveController::sample_rate() const
-{
-    return _sample_rate;
+// TODO: Controller no longer OWNS sushi, so it shouldn't call exit.
+//    _sushi->exit();
 }
 
 void PassiveController::set_tempo(float tempo)
@@ -168,9 +135,9 @@ void PassiveController::set_midi_callback(PassiveMidiCallback&& callback)
     _midi_frontend->set_callback(std::move(callback));
 }
 
-sushi::Time PassiveController::calculate_timestamp_from_start()
+sushi::Time PassiveController::calculate_timestamp_from_start(float sample_rate)
 {
-    uint64_t micros = _samples_since_start * 1'000'000.0 / _sample_rate;
+    uint64_t micros = _samples_since_start * 1'000'000.0 / sample_rate;
     auto timestamp = std::chrono::microseconds(micros);
     return timestamp;
 }

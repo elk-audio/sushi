@@ -502,6 +502,8 @@ set(SOURCE_FILES
     src/engine/controller/osc_controller.cpp
     src/engine/controller/session_controller.cpp
                       src/engine/controller/passive_controller.cpp
+                      src/factories/passive_factory.cpp
+                      src/factories/factory_base.cpp
                       src/library/event.cpp
                       src/library/midi_decoder.cpp
                       src/library/midi_encoder.cpp

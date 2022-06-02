@@ -1,3 +1,18 @@
+/*
+* Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+*
+* SUSHI is free software: you can redistribute it and/or modify it under the terms of
+* the GNU Affero General Public License as published by the Free Software Foundation,
+* either version 3 of the License, or (at your option) any later version.
+*
+* SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+* PURPOSE. See the GNU Affero General Public License for more details.
+*
+* You should have received a copy of the GNU Affero General Public License along with
+* SUSHI. If not, see http://www.gnu.org/licenses/
+*/
+
 #include <gmock/gmock.h>
 #include <gmock/gmock-actions.h>
 
@@ -32,60 +47,54 @@ protected:
 
     void SetUp()
     {
-        _passive_controller = std::make_unique<PassiveController>(std::make_unique<MockSushi>());
-        _mock_sushi = static_cast<MockSushi*>(_passive_controller->_sushi.get());
+        _passive_controller = std::make_unique<PassiveController>(&_audio_frontend,
+                                                                  &_midi_frontend,
+                                                                  &_transport);
+
+// TODO: ALL OF THESE TESTED THE FACTORY FUNCTIONALITY. I should write factory tests instead.
 
         // These test initialization.
         // Since Init is needed throughout the below I nonetheless keep them here,
         // to avoid repetition in the code.
-        SushiOptions options;
+//        SushiOptions options;
 
-        EXPECT_CALL(*_mock_sushi, init)
-            .Times(1)
-            .WillRepeatedly(Return(InitStatus::OK));
+//        EXPECT_CALL(*_mock_sushi, init)
+//            .Times(1);
 
-        EXPECT_CALL(*_mock_sushi, audio_frontend)
-            .Times(1)
-            .WillRepeatedly(Return(&_audio_frontend));
+//        EXPECT_CALL(*_mock_sushi, audio_frontend)
+//            .Times(1)
+//            .WillRepeatedly(Return(&_audio_frontend));
+//
+//        EXPECT_CALL(*_mock_sushi, audio_engine)
+//            .Times(1)
+//            .WillOnce(Return(&_mock_engine));
 
-        EXPECT_CALL(*_mock_sushi, midi_frontend)
-            .Times(1);
+//        EXPECT_CALL(*_mock_sushi, start)
+//            .Times(1);
 
-        EXPECT_CALL(*_mock_sushi, audio_engine)
-            .Times(1)
-            .WillOnce(Return(&_mock_engine));
-
-        EXPECT_CALL(*_mock_sushi, start)
-            .Times(1);
-
-        auto status = _passive_controller->init(options);
-
-        EXPECT_EQ(InitStatus::OK, status);
+//        auto status = _passive_controller->init(options);
+//
+//        EXPECT_EQ(InitStatus::OK, status);
     }
 
     void TearDown()
     {
-        EXPECT_CALL(*_mock_sushi, exit)
-            .Times(1);
+//        EXPECT_CALL(*_mock_sushi, exit)
+//            .Times(1);
     }
-
-    std::unique_ptr<PassiveController> _passive_controller;
-
-    MockSushi* _mock_sushi;
 
     EngineMockup _mock_engine {TEST_SAMPLE_RATE};
     PassiveFrontend _audio_frontend {&_mock_engine};
+
+    midi_dispatcher::MidiDispatcher _midi_dispatcher {_mock_engine.event_dispatcher()};
+
+    midi_frontend::PassiveMidiFrontend _midi_frontend {&_midi_dispatcher};
+
+    RtEventFifo<10> _rt_event_output;
+    Transport _transport {TEST_SAMPLE_RATE, &_rt_event_output};
+
+    std::unique_ptr<PassiveController> _passive_controller;
 };
-
-TEST_F(PassiveControllerTestFrontend, TestSushiOwnerAccessors)
-{
-    EXPECT_CALL(*_mock_sushi, set_sample_rate)
-        .Times(1);
-
-    _passive_controller->set_sample_rate(TEST_SAMPLE_RATE);
-
-    EXPECT_FLOAT_EQ(TEST_SAMPLE_RATE, _passive_controller->sample_rate());
-}
 
 TEST_F(PassiveControllerTestFrontend, TestRtControllerAudioCalls)
 {
@@ -116,7 +125,8 @@ TEST_F(PassiveControllerTestFrontend, TestRtControllerTransportCalls)
 
     EXPECT_NE(old_time_signature, new_internal_time_signature);
     EXPECT_EQ(_passive_controller->_time_signature, new_internal_time_signature);
-    EXPECT_EQ(_passive_controller->_transport->time_signature(), new_internal_time_signature); // Since we don't gmock Transport.
+    EXPECT_EQ(_passive_controller->_transport->time_signature(),
+              new_internal_time_signature); // Since we don't gmock Transport.
 
     // Playing Mode:
     auto old_playing_mode = _passive_controller->_playing_mode;

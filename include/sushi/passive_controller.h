@@ -19,11 +19,6 @@
 #include "real_time_controller.h"
 #include "sushi_interface.h"
 
-namespace
-{
-using TimePoint = std::chrono::nanoseconds;
-}
-
 namespace sushi
 {
 
@@ -44,35 +39,18 @@ namespace engine
 class Transport;
 }
 
-namespace event_timer
-{
-class EventTimer;
-}
-
 /**
- * @brief When a host application embeds Sushi, it should use this class to instantiate Sushi, and interface with it.
- *        PassiveController implements two primary API's for Sushi:
- *        - The SushiOwner specific methods for instantiating and configuring Sushi - all unsafe for real-time.
- *        - The RtController API, which is for interacting with Sushi in a real-time context.
+ * @brief When a host application embeds Sushi, it should use this class to interface with Sushi in a real-time context.
+ *        PassiveController implements the RtController API.
  */
-class PassiveController : public SushiOwner,
-                          public RtController
+class PassiveController : public RtController
 {
 public:
-    PassiveController(std::unique_ptr<sushi::AbstractSushi> sushi);
+    PassiveController(audio_frontend::PassiveFrontend* audio_frontend,
+                      midi_frontend::PassiveMidiFrontend* midi_frontend,
+                      sushi::engine::Transport* transport);
 
     ~PassiveController() override;
-
-    /// SushiOwner methods:
-    /////////////////////////////////////////////////////////////
-
-    InitStatus init(SushiOptions& options) override;
-
-    void set_sample_rate(double sample_rate) override;
-    double sample_rate() const override;
-
-    /// RtController methods:
-    /////////////////////////////////////////////////////////////
 
     /// For Transport:
     /////////////////////////////////////////////////////////////
@@ -103,17 +81,14 @@ public:
     void receive_midi(int input, MidiDataByte data, Time timestamp) override;
     void set_midi_callback(PassiveMidiCallback&& callback) override;
 
-    sushi::Time calculate_timestamp_from_start() override;
+    sushi::Time calculate_timestamp_from_start(float sample_rate) override;
     void increment_samples_since_start(uint64_t sample_count, Time timestamp) override;
 
 private:
     audio_frontend::PassiveFrontend* _audio_frontend {nullptr};
     midi_frontend::PassiveMidiFrontend* _midi_frontend {nullptr};
     sushi::engine::Transport* _transport {nullptr};
-
     uint64_t _samples_since_start {0};
-
-    double _sample_rate {0};
 
     float _tempo {0};
     sushi::TimeSignature _time_signature {0, 0};

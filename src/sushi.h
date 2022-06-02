@@ -79,15 +79,22 @@ void init_logger(const SushiOptions& options);
 class Sushi : public AbstractSushi
 {
 public:
-    Sushi();
+    Sushi(std::unique_ptr<engine::AudioEngine> engine,
+          std::unique_ptr<midi_dispatcher::MidiDispatcher> midi_dispatcher,
+          std::unique_ptr<midi_frontend::BaseMidiFrontend> midi_frontend,
+          std::unique_ptr<control_frontend::OSCFrontend> osc_frontend,
+          std::unique_ptr<audio_frontend::BaseAudioFrontend> audio_frontend,
+          std::unique_ptr<audio_frontend::BaseAudioFrontendConfiguration> frontend_config,
+          std::unique_ptr<engine::Controller> engine_controller,
+          std::unique_ptr<sushi_rpc::GrpcServer> rpc_server);
+
     ~Sushi() override;
 
     /**
      * Initializes the class.
      * @param options options for Sushi instance
-     * @return The success or failure of the init process.
      */
-    InitStatus init(const SushiOptions& options) override;
+    void init(const SushiOptions& options) override;
 
     /**
      * Given Sushi is initialized successfully, call this before the audio callback is first invoked.
@@ -105,57 +112,20 @@ public:
      */
     engine::Controller* controller() override;
 
-    /**
-     * Exposing audio frontend for the context where Sushi is embedded in another host.
-     * @return
-     */
-    // TODO: This shouldn't be here - Remove in AUD-466.
-    audio_frontend::BaseAudioFrontend* audio_frontend() override;
-
     void set_sample_rate(float sample_rate) override;
 
-    /**
-     * Exposing midi frontend for the context where Sushi is embedded in another host.
-     * @return
-     */
-    // TODO: This shouldn't be here - Remove in AUD-466.
-    midi_frontend::PassiveMidiFrontend* midi_frontend() override;
-
-    void set_sample_rate(float sample_rate);
-
-    /**
-     * Exposing audio engine for the context where Sushi is embedded in another host.
-     * Used for example to set Transport values.
-     * @return
-     */
-    // TODO: This shouldn't be here - Remove in AUD-466.
-    engine::BaseEngine* audio_engine() override;
+    float sample_rate() const override;
 
 private:
-    InitStatus _configure_from_file();
-    InitStatus _configure_with_defaults();
-
-    static InitStatus _load_json_configuration(const SushiOptions& options,
-                                               sushi::jsonconfig::JsonConfigurator* configurator,
-                                               audio_frontend::BaseAudioFrontend* audio_frontend);
-
-    InitStatus _setup_audio_frontend(const SushiOptions& options, int cv_inputs, int cv_outputs);
-
-    InitStatus _set_up_control(const SushiOptions& options,
-                               sushi::jsonconfig::JsonConfigurator* configurator,
-                               int midi_inputs,
-                               int midi_outputs);
-
     std::unique_ptr<engine::AudioEngine> _engine {nullptr};
+    std::unique_ptr<midi_dispatcher::MidiDispatcher> _midi_dispatcher {nullptr};
 
     std::unique_ptr<midi_frontend::BaseMidiFrontend> _midi_frontend {nullptr};
     std::unique_ptr<control_frontend::OSCFrontend> _osc_frontend {nullptr};
     std::unique_ptr<audio_frontend::BaseAudioFrontend> _audio_frontend {nullptr};
     std::unique_ptr<audio_frontend::BaseAudioFrontendConfiguration> _frontend_config {nullptr};
 
-    std::unique_ptr<midi_dispatcher::MidiDispatcher> _midi_dispatcher {nullptr};
-
-    std::unique_ptr<engine::Controller> _controller {nullptr};
+    std::unique_ptr<engine::Controller> _engine_controller {nullptr};
 
     std::unique_ptr<sushi_rpc::GrpcServer> _rpc_server {nullptr};
 
