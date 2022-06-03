@@ -90,30 +90,30 @@ const char* section_schema(JsonSection section)
     }
 }
 
-std::pair<JsonConfigReturnStatus, AudioConfig> JsonConfigurator::load_audio_config()
+std::pair<JsonConfigReturnStatus, ControlConfig> JsonConfigurator::load_control_config()
 {
-    AudioConfig audio_config;
+    ControlConfig control_config;
     auto [status, host_config] = _parse_section(JsonSection::HOST_CONFIG);
     if (status != JsonConfigReturnStatus::OK)
     {
-        return {status, audio_config};
+        return {status, control_config};
     }
 
     if (host_config.HasMember("cv_inputs"))
     {
-        audio_config.cv_inputs = host_config["cv_inputs"].GetInt();
+        control_config.cv_inputs = host_config["cv_inputs"].GetInt();
     }
     if (host_config.HasMember("cv_outputs"))
     {
-        audio_config.cv_outputs = host_config["cv_outputs"].GetInt();
+        control_config.cv_outputs = host_config["cv_outputs"].GetInt();
     }
     if (host_config.HasMember("midi_inputs"))
     {
-        audio_config.midi_inputs = host_config["midi_inputs"].GetInt();
+        control_config.midi_inputs = host_config["midi_inputs"].GetInt();
     }
     if (host_config.HasMember("midi_outputs"))
     {
-        audio_config.midi_outputs = host_config["midi_outputs"].GetInt();
+        control_config.midi_outputs = host_config["midi_outputs"].GetInt();
     }
 
     if (host_config.HasMember("rt_midi_input_mappings"))
@@ -127,7 +127,7 @@ std::pair<JsonConfigReturnStatus, AudioConfig> JsonConfigurator::load_audio_conf
             {
                 virtual_port = mapping["virtual_port"].GetBool();
             }
-            audio_config.rt_midi_input_mappings.emplace_back(std::make_tuple(rt_midi_device, sushi_midi_port, virtual_port));
+            control_config.rt_midi_input_mappings.emplace_back(std::make_tuple(rt_midi_device, sushi_midi_port, virtual_port));
         }
     }
 
@@ -142,11 +142,11 @@ std::pair<JsonConfigReturnStatus, AudioConfig> JsonConfigurator::load_audio_conf
             {
                 virtual_port = mapping["virtual_port"].GetBool();
             }
-            audio_config.rt_midi_output_mappings.emplace_back(std::make_tuple(rt_midi_device, sushi_midi_port, virtual_port));
+            control_config.rt_midi_output_mappings.emplace_back(std::make_tuple(rt_midi_device, sushi_midi_port, virtual_port));
         }
     }
 
-    return {JsonConfigReturnStatus::OK, audio_config};
+    return {JsonConfigReturnStatus::OK, control_config};
 }
 
 JsonConfigReturnStatus JsonConfigurator::load_host_config()

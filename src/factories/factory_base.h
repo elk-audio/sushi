@@ -55,6 +55,7 @@ class OSCFrontend;
 
 namespace jsonconfig {
 class JsonConfigurator;
+struct ControlConfig;
 }
 
 class FactoryBase
@@ -79,10 +80,10 @@ protected:
 
     InitStatus _setup_audio_frontend(const SushiOptions& options, int cv_inputs, int cv_outputs);
 
+    InitStatus _set_up_midi(const SushiOptions& options, const jsonconfig::ControlConfig& config);
+
     InitStatus _set_up_control(const SushiOptions& options,
-                               sushi::jsonconfig::JsonConfigurator* configurator,
-                               int midi_inputs,
-                               int midi_outputs);
+                               sushi::jsonconfig::JsonConfigurator* configurator);
 
     InitStatus _status {InitStatus::OK};
 

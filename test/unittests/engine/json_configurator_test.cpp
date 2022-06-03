@@ -73,12 +73,12 @@ JsonConfigReturnStatus TestJsonConfigurator::_make_track(const rapidjson::Value 
 
 TEST_F(TestJsonConfigurator, TestLoadAudioConfig)
 {
-    auto [status, audio_config] = _module_under_test->load_audio_config();
+    auto [status, control_config] = _module_under_test->load_control_config();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
-    ASSERT_TRUE(audio_config.cv_inputs.has_value());
-    ASSERT_EQ(1, audio_config.cv_inputs.value());
-    ASSERT_TRUE(audio_config.cv_outputs.has_value());
-    ASSERT_EQ(2, audio_config.cv_outputs.value());
+    ASSERT_TRUE(control_config.cv_inputs.has_value());
+    ASSERT_EQ(1, control_config.cv_inputs.value());
+    ASSERT_TRUE(control_config.cv_outputs.has_value());
+    ASSERT_EQ(2, control_config.cv_outputs.value());
 }
 
 TEST_F(TestJsonConfigurator, TestLoadHostConfig)

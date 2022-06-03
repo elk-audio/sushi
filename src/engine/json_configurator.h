@@ -65,7 +65,7 @@ enum class JsonSection
     STATE
 };
 
-struct AudioConfig
+struct ControlConfig
 {
     std::optional<int> cv_inputs;
     std::optional<int> cv_outputs;
@@ -89,12 +89,12 @@ public:
     ~JsonConfigurator() = default;
 
     /**
-     * @brief Reads the json config, and returns all audio frontend configuration options
+     * @brief Reads the json config, and returns all control frontend configuration options
      *        that are not set on the audio engine directly.
-     * @return A tuple of status and AudioConfig struct, AudioConfig is only valid if status is
+     * @return A tuple of status and AudioConfig struct, ControlConfig is only valid if status is
      *         JsonConfigReturnStatus::OK
      */
-    std::pair<JsonConfigReturnStatus, AudioConfig> load_audio_config();
+    std::pair<JsonConfigReturnStatus, ControlConfig> load_control_config();
 
     /**
      * @brief Reads the json config, and set the given host configuration options

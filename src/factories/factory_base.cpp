@@ -45,7 +45,6 @@
 
 #include "control_frontends/oscpack_osc_messenger.h"
 
-
 namespace sushi
 {
 
@@ -72,10 +71,10 @@ InitStatus FactoryBase::_configure_from_file(sushi::SushiOptions& options)
                                                                               _engine->processor_container(),
                                                                               options.config_filename);
 
-    auto [audio_config_status, audio_config] = configurator->load_audio_config();
-    if (audio_config_status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
+    auto [control_config_status, control_config] = configurator->load_control_config();
+    if (control_config_status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
-        if (audio_config_status == sushi::jsonconfig::JsonConfigReturnStatus::INVALID_FILE)
+        if (control_config_status == sushi::jsonconfig::JsonConfigReturnStatus::INVALID_FILE)
         {
             return InitStatus::FAILED_INVALID_FILE_PATH;
         }
@@ -83,22 +82,11 @@ InitStatus FactoryBase::_configure_from_file(sushi::SushiOptions& options)
         return InitStatus::FAILED_INVALID_CONFIGURATION_FILE;
     }
 
-    int midi_inputs = audio_config.midi_inputs.value_or(1);
-    int midi_outputs = audio_config.midi_outputs.value_or(1);
-
-#ifdef SUSHI_BUILD_WITH_RT_MIDI
-    auto rt_midi_input_mappings = audio_config.rt_midi_input_mappings;
-    auto rt_midi_output_mappings = audio_config.rt_midi_output_mappings;
-#endif
-
-    _midi_dispatcher->set_midi_inputs(midi_inputs);
-    _midi_dispatcher->set_midi_outputs(midi_outputs);
-
     ///////////////////////////
     // Set up Audio Frontend //
     ///////////////////////////
-    int cv_inputs = audio_config.cv_inputs.value_or(0);
-    int cv_outputs = audio_config.cv_outputs.value_or(0);
+    int cv_inputs = control_config.cv_inputs.value_or(0);
+    int cv_outputs = control_config.cv_outputs.value_or(0);
 
     auto audio_frontend_status = _setup_audio_frontend(options, cv_inputs, cv_outputs);
     if (audio_frontend_status != InitStatus::OK)
@@ -115,10 +103,19 @@ InitStatus FactoryBase::_configure_from_file(sushi::SushiOptions& options)
         return configuration_status;
     }
 
+    /////////////////
+    // Set up MIDI //
+    /////////////////
+    auto midi_status = _set_up_midi(options, control_config);
+    if (midi_status != InitStatus::OK)
+    {
+        return midi_status;
+    }
+
     /////////////////////////////////////////////
     // Set up Controller and Control Frontends //
     /////////////////////////////////////////////
-    auto control_status = _set_up_control(options, configurator.get(), midi_inputs, midi_outputs);
+    auto control_status = _set_up_control(options, configurator.get());
     if (control_status != InitStatus::OK)
     {
         return control_status;
@@ -131,6 +128,9 @@ sushi::InitStatus FactoryBase::_configure_with_defaults(sushi::SushiOptions& opt
 {
     int midi_inputs = 1;
     int midi_outputs = 1;
+    jsonconfig::ControlConfig control_config;
+    control_config.midi_inputs = midi_inputs;
+    control_config.midi_outputs = midi_outputs;
 
     _midi_dispatcher->set_midi_inputs(midi_inputs);
     _midi_dispatcher->set_midi_outputs(midi_outputs);
@@ -144,7 +144,13 @@ sushi::InitStatus FactoryBase::_configure_with_defaults(sushi::SushiOptions& opt
         return status;
     }
 
-    status = _set_up_control(options, nullptr, midi_inputs, midi_outputs);
+    status = _set_up_midi(options, control_config);
+    if (status != InitStatus::OK)
+    {
+        return status;
+    }
+
+    status = _set_up_control(options, nullptr);
     if (status != InitStatus::OK)
     {
         return status;
@@ -304,13 +310,13 @@ InitStatus FactoryBase::_setup_audio_frontend(const SushiOptions& options, int c
     return InitStatus::OK;
 }
 
-InitStatus FactoryBase::_set_up_control(const SushiOptions& options,
-                                        sushi::jsonconfig::JsonConfigurator* configurator,
-                                        int midi_inputs, int midi_outputs)
+InitStatus FactoryBase::_set_up_midi(const SushiOptions& options, const jsonconfig::ControlConfig& config)
 {
-    _engine_controller = std::make_unique<sushi::engine::Controller>(_engine.get(),
-                                                                     _midi_dispatcher.get(),
-                                                                     _audio_frontend.get());
+    int midi_inputs = config.midi_inputs.value_or(1);
+    int midi_outputs = config.midi_outputs.value_or(1);
+
+    _midi_dispatcher->set_midi_inputs(midi_inputs);
+    _midi_dispatcher->set_midi_outputs(midi_outputs);
 
     if (options.frontend_type == FrontendType::JACK ||
         options.frontend_type == FrontendType::XENOMAI_RASPA ||
@@ -321,6 +327,9 @@ InitStatus FactoryBase::_set_up_control(const SushiOptions& options,
                                                                                   midi_outputs,
                                                                                   _midi_dispatcher.get());
 #elif SUSHI_BUILD_WITH_RT_MIDI
+        auto rt_midi_input_mappings = config.rt_midi_input_mappings;
+        auto rt_midi_output_mappings = config.rt_midi_output_mappings;
+
         _midi_frontend = std::make_unique<sushi::midi_frontend::RtMidiFrontend>(midi_inputs,
                                                                                 midi_outputs,
                                                                                 std::move(rt_midi_input_mappings),
@@ -331,7 +340,32 @@ InitStatus FactoryBase::_set_up_control(const SushiOptions& options,
                                                                                   midi_outputs,
                                                                                   _midi_dispatcher.get());
 #endif
+    }
+    else
+    {
+        _midi_frontend = std::make_unique<sushi::midi_frontend::NullMidiFrontend>(_midi_dispatcher.get());
+    }
 
+    auto midi_ok = _midi_frontend->init();
+    if (!midi_ok)
+    {
+        return InitStatus::FAILED_MIDI_FRONTEND_INITIALIZATION;
+    }
+
+    _midi_dispatcher->set_frontend(_midi_frontend.get());
+}
+
+InitStatus FactoryBase::_set_up_control(const SushiOptions& options,
+                                        sushi::jsonconfig::JsonConfigurator* configurator)
+{
+    _engine_controller = std::make_unique<sushi::engine::Controller>(_engine.get(),
+                                                                     _midi_dispatcher.get(),
+                                                                     _audio_frontend.get());
+
+    if (options.frontend_type == FrontendType::JACK ||
+        options.frontend_type == FrontendType::XENOMAI_RASPA ||
+        options.frontend_type == FrontendType::PORTAUDIO)
+    {
         auto oscpack_messenger = new sushi::osc::OscpackOscMessenger(options.osc_server_port,
                                                                      options.osc_send_port,
                                                                      options.osc_send_ip);
@@ -360,17 +394,6 @@ InitStatus FactoryBase::_set_up_control(const SushiOptions& options,
             }
         }
     }
-    else
-    {
-        _midi_frontend = std::make_unique<sushi::midi_frontend::NullMidiFrontend>(_midi_dispatcher.get());
-    }
-
-    auto midi_ok = _midi_frontend->init();
-    if (!midi_ok)
-    {
-        return InitStatus::FAILED_MIDI_FRONTEND_INITIALIZATION;
-    }
-    _midi_dispatcher->set_frontend(_midi_frontend.get());
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     _rpc_server = std::make_unique<sushi_rpc::GrpcServer>(options.grpc_listening_address, _engine_controller.get());
