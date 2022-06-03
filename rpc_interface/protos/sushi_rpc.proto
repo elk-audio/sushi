@@ -820,8 +820,9 @@ message TrackState
     string                  label = 2;
     int32                   channels = 3;
     int32                   buses = 4;
-    ProcessorState          track_state = 5;
-    repeated PluginClass    processors = 6;
+    TrackType               type = 5;
+    ProcessorState          track_state = 6;
+    repeated PluginClass    processors = 7;
 }
 
 message SessionState

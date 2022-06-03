@@ -344,6 +344,7 @@ struct TrackState
     std::string     label;
     int             channels;
     int             buses;
+    TrackType       type;
     ProcessorState  track_state;
     std::vector<PluginClass>    processors;
 };

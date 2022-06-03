@@ -142,6 +142,17 @@ inline sushi_rpc::TrackType::Type to_grpc(const sushi::ext::TrackType type)
     }
 }
 
+inline sushi::ext::TrackType to_sushi_ext(const sushi_rpc::TrackType::Type type)
+{
+    switch (type)
+    {
+        case sushi_rpc::TrackType::REGULAR:      return sushi::ext::TrackType::REGULAR;
+        case sushi_rpc::TrackType::MASTER_PRE:   return sushi::ext::TrackType::MASTER_PRE;
+        case sushi_rpc::TrackType::MASTER_POST:  return sushi::ext::TrackType::MASTER_POST;
+        default:                                 return sushi::ext::TrackType::REGULAR;
+    }
+}
+
 inline const char* to_string(const sushi::ext::ControlStatus status)
 {
    switch (status)
@@ -654,6 +665,7 @@ inline void to_grpc(sushi_rpc::TrackState& dest, sushi::ext::TrackState& src)
     dest.set_label(std::move(src.label));
     dest.set_channels(src.channels);
     dest.set_buses(src.buses);
+    dest.mutable_type()->set_type(to_grpc(src.type));
     to_grpc(*dest.mutable_track_state(), src.track_state);
 
     dest.mutable_processors()->Reserve(src.processors.size());
@@ -671,6 +683,7 @@ inline sushi::ext::TrackState to_sushi_ext(const sushi_rpc::TrackState& src)
     dest.label = src.label();
     dest.channels = src.channels();
     dest.buses = src.buses();
+    dest.type = to_sushi_ext(src.type().type());
     to_sushi_ext(dest.track_state, src.track_state());
 
     dest.processors.reserve(src.processors_size());
