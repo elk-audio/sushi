@@ -37,11 +37,48 @@ void StandaloneFactory::run(SushiOptions& options)
 {
     sushi::init_logger(options);
 
-}
+    // TODO: TEST THAT THIS WORKS!
 
-std::unique_ptr<sushi::AbstractSushi> StandaloneFactory::sushi()
-{
+#ifdef SUSHI_BUILD_WITH_XENOMAI
+    auto raspa_status = sushi::audio_frontend::XenomaiRaspaFrontend::global_init();
+    if (raspa_status < 0)
+    {
+        _status = INIT_STATUS::FAILED_XENOMAI_INITIALIZATION;
+        return;
+    }
 
+    if (options.frontend_type == FrontendType::XENOMAI_RASPA)
+    {
+        twine::init_xenomai(); // must be called before setting up any worker pools
+    }
+#endif
+
+    _engine = std::make_unique<engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT,
+                                                    options.rt_cpu_cores,
+                                                    options.debug_mode_switches,
+                                                    nullptr);
+
+    _midi_dispatcher = std::make_unique<sushi::midi_dispatcher::MidiDispatcher>(_engine->event_dispatcher());
+
+    if (options.use_input_config_file)
+    {
+        _status = _configure_from_file(options);
+    }
+    else
+    {
+        _status = _configure_with_defaults(options);
+    }
+
+    _sushi = std::make_unique<sushi::Sushi>(std::move(_engine),
+                                            std::move(_midi_dispatcher),
+                                            std::move(_midi_frontend),
+                                            std::move(_osc_frontend),
+                                            std::move(_audio_frontend),
+                                            std::move(_frontend_config),
+                                            std::move(_engine_controller),
+                                            std::move(_rpc_server));
+
+    _sushi->init(options);
 }
 
 } // namespace sushi

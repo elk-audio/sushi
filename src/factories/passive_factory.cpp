@@ -41,21 +41,6 @@ void sushi::PassiveFactory::run(sushi::SushiOptions& options)
                                                     options.debug_mode_switches,
                                                     nullptr);
 
-    // TODO: FIND WHERE THIS SHOULD LIVE IN THE ACTIVE FACTORY!!!
-
-#ifdef SUSHI_BUILD_WITH_XENOMAI
-    auto raspa_status = sushi::audio_frontend::XenomaiRaspaFrontend::global_init();
-    if (raspa_status < 0)
-    {
-        return INIT_STATUS::FAILED_XENOMAI_INITIALIZATION;
-    }
-
-    if (options.frontend_type == FrontendType::XENOMAI_RASPA)
-    {
-        twine::init_xenomai(); // must be called before setting up any worker pools
-    }
-#endif
-
     _midi_dispatcher = std::make_unique<sushi::midi_dispatcher::MidiDispatcher>(_engine->event_dispatcher());
     auto midi_frontend = std::make_unique<sushi::midi_frontend::PassiveMidiFrontend>(_midi_dispatcher.get());
     _midi_frontend = std::move(midi_frontend);
@@ -70,7 +55,7 @@ void sushi::PassiveFactory::run(sushi::SushiOptions& options)
     }
 
     _real_time_controller = std::make_unique<sushi::RealTimeController>(static_cast<audio_frontend::PassiveFrontend*>(_audio_frontend.get()),
-                                                                       static_cast<midi_frontend::PassiveMidiFrontend*>(_midi_frontend.get()),
+                                                                        static_cast<midi_frontend::PassiveMidiFrontend*>(_midi_frontend.get()),
                                                                        _engine->transport());
 
     _sushi = std::make_unique<sushi::Sushi>(std::move(_engine),
@@ -83,11 +68,6 @@ void sushi::PassiveFactory::run(sushi::SushiOptions& options)
                                             std::move(_rpc_server));
 
     _sushi->init(options);
-}
-
-std::unique_ptr<sushi::AbstractSushi> sushi::PassiveFactory::sushi()
-{
-    return std::move(_sushi);
 }
 
 std::unique_ptr<sushi::RealTimeController> sushi::PassiveFactory::rt_controller()

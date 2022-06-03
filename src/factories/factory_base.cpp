@@ -55,6 +55,11 @@ FactoryBase::FactoryBase() = default;
 
 FactoryBase::~FactoryBase() = default;
 
+std::unique_ptr<sushi::AbstractSushi> FactoryBase::sushi()
+{
+    return std::move(_sushi);
+}
+
 sushi::InitStatus FactoryBase::sushi_init_status()
 {
     return _status;
@@ -354,10 +359,6 @@ InitStatus FactoryBase::_set_up_control(const SushiOptions& options,
                 return InitStatus::FAILED_LOAD_OSC;
             }
         }
-    }
-    else if (options.frontend_type == FrontendType::PASSIVE)
-    {
-        _midi_frontend = std::make_unique<sushi::midi_frontend::PassiveMidiFrontend>(_midi_dispatcher.get());
     }
     else
     {

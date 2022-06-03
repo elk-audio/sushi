@@ -65,7 +65,7 @@ public:
 
     virtual void run(sushi::SushiOptions& options) = 0;
 
-    virtual std::unique_ptr<sushi::AbstractSushi> sushi() = 0;
+    virtual std::unique_ptr<sushi::AbstractSushi> sushi();
 
     InitStatus sushi_init_status();
 

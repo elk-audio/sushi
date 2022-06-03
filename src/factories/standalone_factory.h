@@ -34,8 +34,6 @@ public:
 
     void run(sushi::SushiOptions& options) override;
 
-    std::unique_ptr<sushi::AbstractSushi> sushi() override;
-
 protected:
 
 };

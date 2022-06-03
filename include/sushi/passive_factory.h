@@ -53,8 +53,6 @@ public:
 
     void run(sushi::SushiOptions& options) override;
 
-    std::unique_ptr<sushi::AbstractSushi> sushi() override;
-
     // TODO: This should be made inside of Factory / owned by Sushi preferably
     std::unique_ptr<sushi::RealTimeController> rt_controller();
 
