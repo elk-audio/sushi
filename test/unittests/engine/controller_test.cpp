@@ -69,30 +69,41 @@ TEST_F(ControllerTest, TestMainEngineControls)
     ASSERT_TRUE(graph_controller);
     auto tracks = graph_controller->get_all_tracks();
 
-    ASSERT_EQ(4u, tracks.size());
+    ASSERT_EQ(5u, tracks.size());
     EXPECT_EQ("main", tracks[0].name);
     EXPECT_EQ("", tracks[0].label);
     EXPECT_EQ(2, tracks[0].channels);
     EXPECT_EQ(1, tracks[0].buses);
+    EXPECT_EQ(ext::TrackType::REGULAR, tracks[0].type);
     EXPECT_EQ(3u, tracks[0].processors.size());
 
     EXPECT_EQ("monotrack", tracks[1].name);
     EXPECT_EQ("", tracks[1].label);
     EXPECT_EQ(1, tracks[1].channels);
     EXPECT_EQ(1, tracks[1].buses);
+    EXPECT_EQ(ext::TrackType::REGULAR, tracks[1].type);
     EXPECT_EQ(3u, tracks[1].processors.size());
 
     EXPECT_EQ("monobustrack", tracks[2].name);
     EXPECT_EQ("", tracks[2].label);
     EXPECT_EQ(1, tracks[2].channels);
     EXPECT_EQ(1, tracks[2].buses);
+    EXPECT_EQ(ext::TrackType::REGULAR, tracks[2].type);
     EXPECT_EQ(0u, tracks[2].processors.size());
 
     EXPECT_EQ("multi", tracks[3].name);
     EXPECT_EQ("", tracks[3].label);
     EXPECT_EQ(4, tracks[3].channels);
     EXPECT_EQ(2, tracks[3].buses);
+    EXPECT_EQ(ext::TrackType::REGULAR, tracks[3].type);
     EXPECT_EQ(0u, tracks[3].processors.size());
+
+    EXPECT_EQ("master", tracks[4].name);
+    EXPECT_EQ("", tracks[4].label);
+    EXPECT_EQ(ENGINE_CHANNELS, tracks[4].channels);
+    EXPECT_EQ(1, tracks[4].buses);
+    EXPECT_EQ(ext::TrackType::MASTER_POST, tracks[4].type);
+    EXPECT_EQ(0u, tracks[4].processors.size());
 }
 
 TEST_F(ControllerTest, TestKeyboardControls)

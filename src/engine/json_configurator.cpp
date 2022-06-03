@@ -44,14 +44,15 @@ const char* section_name(JsonSection section)
 {
     switch (section)
     {
-        case JsonSection::HOST_CONFIG:  return "host_config";
-        case JsonSection::TRACKS:       return "tracks";
-        case JsonSection::MIDI:         return "midi";
-        case JsonSection::OSC:          return "osc";
-        case JsonSection::CV_GATE:      return "cv_control";
-        case JsonSection::EVENTS:       return "events";
-        case JsonSection::STATE:        return "initial_state";
-        default:                        return nullptr;
+        case JsonSection::HOST_CONFIG:   return "host_config";
+        case JsonSection::TRACKS:        return "tracks";
+        case JsonSection::MASTER_TRACKS: return "master_tracks";
+        case JsonSection::MIDI:          return "midi";
+        case JsonSection::OSC:           return "osc";
+        case JsonSection::CV_GATE:       return "cv_control";
+        case JsonSection::EVENTS:        return "events";
+        case JsonSection::STATE:         return "initial_state";
+        default:                         return nullptr;
     }
 }
 
@@ -62,7 +63,8 @@ const char* section_schema(JsonSection section)
         case JsonSection::HOST_CONFIG:  return
             #include "json_schemas/host_config_schema.json"
             ;
-        case JsonSection::TRACKS:  return
+        case JsonSection::TRACKS:
+        case JsonSection::MASTER_TRACKS:  return
             #include "json_schemas/tracks_schema.json"
             ;
         case JsonSection::MIDI: return
@@ -247,14 +249,39 @@ JsonConfigReturnStatus JsonConfigurator::load_tracks()
 
     for (auto& track : tracks.GetArray())
     {
-        status = _make_track(track);
+        status = _make_track(track, TrackType::REGULAR);
         if (status != JsonConfigReturnStatus::OK)
         {
             return status;
         }
     }
-    SUSHI_LOG_INFO("Successfully configured engine with tracks in JSON config file \"{}\"", _document_path);
-    return JsonConfigReturnStatus::OK;
+
+    auto [master_status, master_tracks] = _parse_section(JsonSection::MASTER_TRACKS);
+    if (master_status == JsonConfigReturnStatus::NOT_DEFINED)
+    {
+        return JsonConfigReturnStatus::OK;
+    }
+    else if (master_status == JsonConfigReturnStatus::OK)
+    {
+        if (master_tracks.HasMember("pre"))
+        {
+            status = _make_track(master_tracks["pre"], TrackType::MASTER_PRE);
+            if (status != JsonConfigReturnStatus::OK)
+            {
+                return status;
+            }
+        }
+        if (master_tracks.HasMember("post"))
+        {
+            status = _make_track(master_tracks["post"], TrackType::MASTER_POST);
+            if (status != JsonConfigReturnStatus::OK)
+            {
+                return status;
+            }
+        }
+    }
+
+    return master_status;
 }
 
 JsonConfigReturnStatus JsonConfigurator::load_midi()
@@ -602,8 +629,7 @@ JsonConfigReturnStatus JsonConfigurator::load_events()
     return JsonConfigReturnStatus::OK;
 }
 
-std::pair<JsonConfigReturnStatus, std::vector<Event*>>
-JsonConfigurator::load_event_list()
+std::pair<JsonConfigReturnStatus, std::vector<Event*>> JsonConfigurator::load_event_list()
 {
     std::vector<Event*> events;
     auto [status, json_events] = _parse_section(JsonSection::EVENTS);
@@ -708,19 +734,30 @@ std::pair<JsonConfigReturnStatus, const rapidjson::Value&> JsonConfigurator::_pa
     return {JsonConfigReturnStatus::OK, _json_data[name]};
 }
 
-JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &track_def)
+JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value& track_def, engine::TrackType type)
 {
     auto name = track_def["name"].GetString();
     EngineReturnStatus status = EngineReturnStatus::ERROR;
     ObjectId track_id;
 
-    if (track_def.HasMember("multibus") && track_def["multibus"].GetBool())
+    if (type == TrackType::REGULAR)
     {
-        std::tie(status, track_id) = _engine->create_multibus_track(name, track_def["buses"].GetInt());
+        if (track_def.HasMember("multibus") && track_def["multibus"].GetBool())
+        {
+            std::tie(status, track_id) = _engine->create_multibus_track(name, track_def["buses"].GetInt());
+        }
+        else if (track_def.HasMember("channels"))
+        {
+            std::tie(status, track_id) = _engine->create_track(name, track_def["channels"].GetInt());
+        }
     }
-    else if (track_def.HasMember("channels"))
+    else if (type == TrackType::MASTER_PRE)
     {
-        std::tie(status, track_id) = _engine->create_track(name, track_def["channels"].GetInt());
+        std::tie(status, track_id) = _engine->create_master_pre_track(name);
+    }
+    else if (type == TrackType::MASTER_POST)
+    {
+        std::tie(status, track_id) = _engine->create_master_post_track(name);
     }
 
     if (status == EngineReturnStatus::INVALID_PLUGIN || status == EngineReturnStatus::INVALID_PROCESSOR)
@@ -735,104 +772,25 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
     }
 
     SUSHI_LOG_DEBUG("Successfully added track \"{}\" to the engine", name);
-
-    for(const auto& con : track_def["inputs"].GetArray())
+    if (type == TrackType::REGULAR)
     {
-        if (con.HasMember("engine_bus"))
+        auto connect_status = _connect_audio_to_track(track_def, name, track_id);
+        if (connect_status != JsonConfigReturnStatus::OK)
         {
-            status = _engine->connect_audio_input_bus(con["engine_bus"].GetInt(),
-                                                      con["track_bus"].GetInt(),
-                                                      track_id);
-        }
-        else
-        {
-            status = _engine->connect_audio_input_channel(con["engine_channel"].GetInt(),
-                                                          con["track_channel"].GetInt(),
-                                                          track_id);
-        }
-        if (status != EngineReturnStatus::OK)
-        {
-            SUSHI_LOG_ERROR("Error connecting input bus to track \"{}\", error {}", name, static_cast<int>(status));
-            return JsonConfigReturnStatus::INVALID_CONFIGURATION;
-        }
-    }
-
-    for(const auto& con : track_def["outputs"].GetArray())
-    {
-        if (con.HasMember("engine_bus"))
-        {
-            status = _engine->connect_audio_output_bus(con["engine_bus"].GetInt(),
-                                                       con["track_bus"].GetInt(),
-                                                       track_id);
-        }
-        else
-        {
-            status = _engine->connect_audio_output_channel(con["engine_channel"].GetInt(),
-                                                           con["track_channel"].GetInt(),
-                                                           track_id);
-
-        }
-        if (status != EngineReturnStatus::OK)
-        {
-            SUSHI_LOG_ERROR("Error connection track \"{}\" to output bus, error {}", name, static_cast<int>(status));
-            return JsonConfigReturnStatus::INVALID_CONFIGURATION;
+            return connect_status;
         }
     }
 
     for(const auto& def : track_def["plugins"].GetArray())
     {
-        std::string plugin_uid;
-        std::string plugin_path;
-        std::string plugin_name = def["name"].GetString();
-        PluginType plugin_type;
-        std::string type = def["type"].GetString();
-        if (type == "internal")
+        auto plugin_status = _add_plugin(def, name, track_id);
+        if (plugin_status != JsonConfigReturnStatus::OK)
         {
-            plugin_type = PluginType::INTERNAL;
-            plugin_uid = def["uid"].GetString();
+            return plugin_status;
         }
-        else if (type == "vst2x")
-        {
-            plugin_type = PluginType::VST2X;
-            plugin_path = def["path"].GetString();
-        }
-        else if (type == "vst3x")
-        {
-            plugin_uid = def["uid"].GetString();
-            plugin_path = def["path"].GetString();
-            plugin_type = PluginType::VST3X;
-        }
-        else // Anything else should have been caught by the validation step before this
-        {
-            plugin_type = PluginType::LV2;
-            plugin_path = def["uri"].GetString();
-        }
-
-        PluginInfo plugin_info;
-        plugin_info.uid = plugin_uid;
-        plugin_info.path = plugin_path;
-        plugin_info.type = plugin_type;
-
-        auto [status, plugin_id] = _engine->create_processor(plugin_info, plugin_name);
-        if (status != EngineReturnStatus::OK)
-        {
-            if (status == EngineReturnStatus::INVALID_PLUGIN_UID)
-            {
-                SUSHI_LOG_ERROR("Invalid plugin uid {} in JSON config file", plugin_uid);
-                return JsonConfigReturnStatus::INVALID_PLUGIN_PATH;
-            }
-            return JsonConfigReturnStatus::INVALID_CONFIGURATION;
-        }
-        status = _engine->add_plugin_to_track(plugin_id, track_id);
-        if (status != EngineReturnStatus::OK)
-        {
-            return JsonConfigReturnStatus::INVALID_CONFIGURATION;
-        }
-        SUSHI_LOG_DEBUG("Successfully added Plugin \"{}\" to"
-                               " Chain \"{}\"", plugin_name, name);
     }
 
-    SUSHI_LOG_DEBUG("Successfully added Track {} to the engine", name);
+    SUSHI_LOG_DEBUG("Successfully added {} Track {} to the engine", type == TrackType::REGULAR? "" :"Master", name);
     return JsonConfigReturnStatus::OK;
 }
 
@@ -952,6 +910,112 @@ JsonConfigReturnStatus JsonConfigurator::_load_data()
                        config_file_contents.substr(std::max(0, err_offset - ERROR_DISPLAY_CHARS), ERROR_DISPLAY_CHARS)        );
         return JsonConfigReturnStatus::INVALID_FILE;
     }
+    return JsonConfigReturnStatus::OK;
+}
+
+JsonConfigReturnStatus JsonConfigurator::_connect_audio_to_track(const rapidjson::Value& track_def,
+                                                                 [[maybe_unused]] const std::string& track_name,
+                                                                 ObjectId track_id)
+{
+    EngineReturnStatus status;
+    for(const auto& con : track_def["inputs"].GetArray())
+    {
+        if (con.HasMember("engine_bus"))
+        {
+            status = _engine->connect_audio_input_bus(con["engine_bus"].GetInt(),
+                                                      con["track_bus"].GetInt(),
+                                                      track_id);
+        }
+        else
+        {
+            status = _engine->connect_audio_input_channel(con["engine_channel"].GetInt(),
+                                                          con["track_channel"].GetInt(),
+                                                          track_id);
+        }
+        if (status != EngineReturnStatus::OK)
+        {
+            SUSHI_LOG_ERROR("Error connecting input bus to track \"{}\", error {}", track_name, static_cast<int>(status));
+            return JsonConfigReturnStatus::INVALID_CONFIGURATION;
+        }
+    }
+
+    for(const auto& con : track_def["outputs"].GetArray())
+    {
+        if (con.HasMember("engine_bus"))
+        {
+            status = _engine->connect_audio_output_bus(con["engine_bus"].GetInt(),
+                                                       con["track_bus"].GetInt(),
+                                                       track_id);
+        }
+        else
+        {
+            status = _engine->connect_audio_output_channel(con["engine_channel"].GetInt(),
+                                                           con["track_channel"].GetInt(),
+                                                           track_id);
+
+        }
+        if (status != EngineReturnStatus::OK)
+        {
+            SUSHI_LOG_ERROR("Error connection track \"{}\" to output bus, error {}", track_name, static_cast<int>(status));
+            return JsonConfigReturnStatus::INVALID_CONFIGURATION;
+        }
+    }
+    return JsonConfigReturnStatus::OK;
+}
+
+JsonConfigReturnStatus JsonConfigurator::_add_plugin(const rapidjson::Value& plugin_def,
+                                                     [[maybe_unused]] const std::string& track_name,
+                                                     ObjectId track_id)
+{
+    std::string plugin_uid;
+    std::string plugin_path;
+    std::string plugin_name = plugin_def["name"].GetString();
+    PluginType plugin_type;
+    std::string type = plugin_def["type"].GetString();
+    if (type == "internal")
+    {
+        plugin_type = PluginType::INTERNAL;
+        plugin_uid = plugin_def["uid"].GetString();
+    }
+    else if (type == "vst2x")
+    {
+        plugin_type = PluginType::VST2X;
+        plugin_path = plugin_def["path"].GetString();
+    }
+    else if (type == "vst3x")
+    {
+        plugin_uid = plugin_def["uid"].GetString();
+        plugin_path = plugin_def["path"].GetString();
+        plugin_type = PluginType::VST3X;
+    }
+    else // Anything else should have been caught by the validation step before this
+    {
+        plugin_type = PluginType::LV2;
+        plugin_path = plugin_def["uri"].GetString();
+    }
+
+    PluginInfo plugin_info;
+    plugin_info.uid = plugin_uid;
+    plugin_info.path = plugin_path;
+    plugin_info.type = plugin_type;
+
+    auto [status, plugin_id] = _engine->create_processor(plugin_info, plugin_name);
+    if (status != EngineReturnStatus::OK)
+    {
+        if (status == EngineReturnStatus::INVALID_PLUGIN_UID)
+        {
+            SUSHI_LOG_ERROR("Invalid plugin uid {} in JSON config file", plugin_uid);
+            return JsonConfigReturnStatus::INVALID_PLUGIN_PATH;
+        }
+        return JsonConfigReturnStatus::INVALID_CONFIGURATION;
+    }
+    status = _engine->add_plugin_to_track(plugin_id, track_id);
+    if (status != EngineReturnStatus::OK)
+    {
+        return JsonConfigReturnStatus::INVALID_CONFIGURATION;
+    }
+    SUSHI_LOG_DEBUG("Successfully added Plugin \"{}\" to track: \"{}\"", plugin_name, track_name);
+
     return JsonConfigReturnStatus::OK;
 }
 

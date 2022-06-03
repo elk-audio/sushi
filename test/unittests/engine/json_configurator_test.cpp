@@ -54,7 +54,7 @@ protected:
     }
 
     /* Helper functions */
-    JsonConfigReturnStatus _make_track(const rapidjson::Value &track);
+    JsonConfigReturnStatus _make_track(const rapidjson::Value &track, TrackType type);
 
     AudioEngine _engine{SAMPLE_RATE};
     MidiDispatcher _midi_dispatcher{_engine.event_dispatcher()};
@@ -66,9 +66,9 @@ protected:
     std::string _path;
 };
 
-JsonConfigReturnStatus TestJsonConfigurator::_make_track(const rapidjson::Value &track)
+JsonConfigReturnStatus TestJsonConfigurator::_make_track(const rapidjson::Value &track, TrackType type)
 {
-    return _module_under_test->_make_track(track);
+    return _module_under_test->_make_track(track, type);
 }
 
 TEST_F(TestJsonConfigurator, TestLoadAudioConfig)
@@ -94,7 +94,7 @@ TEST_F(TestJsonConfigurator, TestLoadTracks)
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
     auto tracks = _engine.processor_container()->all_tracks();
 
-    ASSERT_EQ(4u, tracks.size());
+    ASSERT_EQ(5u, tracks.size());
     auto track_1_processors = _engine.processor_container()->processors_on_track(tracks[0]->id());
     auto track_2_processors = _engine.processor_container()->processors_on_track(tracks[1]->id());
 
@@ -199,11 +199,11 @@ TEST_F(TestJsonConfigurator, TestMakeChain)
     track.AddMember("inputs", inputs, test_cfg.GetAllocator());
     track.AddMember("outputs", outputs, test_cfg.GetAllocator());
     track.AddMember("plugins", plugins, test_cfg.GetAllocator());
-    ASSERT_EQ(_make_track(track), JsonConfigReturnStatus::OK);
+    ASSERT_EQ(_make_track(track, TrackType::REGULAR), JsonConfigReturnStatus::OK);
 
     /* Similar Plugin track but with same track id */
     track["channels"] = 2;
-    ASSERT_EQ(_make_track(track), JsonConfigReturnStatus::INVALID_TRACK_NAME);
+    ASSERT_EQ(_make_track(track, TrackType::REGULAR), JsonConfigReturnStatus::INVALID_TRACK_NAME);
 
     /* Create valid plugin track with valid plugin */
     track["name"] = "tracks_with_internal_plugin";
@@ -217,20 +217,20 @@ TEST_F(TestJsonConfigurator, TestMakeChain)
     test_plugin.AddMember("type", type, test_cfg.GetAllocator());
     test_plugin.AddMember("name", plugin_name, test_cfg.GetAllocator());
     track["plugins"].PushBack(test_plugin, test_cfg.GetAllocator());
-    ASSERT_EQ(_make_track(track), JsonConfigReturnStatus::OK);
+    ASSERT_EQ(_make_track(track, TrackType::REGULAR), JsonConfigReturnStatus::OK);
 
     rapidjson::Value& plugin = track["plugins"][0];
     track["name"] = "track_invalid_internal";
     plugin["name"] = "invalid_internal_plugin";
     plugin["uid"] = "wrong_uid";
     plugin["type"] = "internal";
-    ASSERT_EQ(_make_track(track), JsonConfigReturnStatus::INVALID_CONFIGURATION);
+    ASSERT_EQ(_make_track(track, TrackType::REGULAR), JsonConfigReturnStatus::INVALID_CONFIGURATION);
 
     track["name"] = "track_invalid_name";
     plugin["name"] = "internal_plugin";
     plugin["uid"] = "sushi.testing.gain";
     plugin["type"] = "internal";
-    ASSERT_EQ(_make_track(track), JsonConfigReturnStatus::INVALID_CONFIGURATION);
+    ASSERT_EQ(_make_track(track, TrackType::REGULAR), JsonConfigReturnStatus::INVALID_CONFIGURATION);
 }
 
 TEST_F(TestJsonConfigurator, TestValidJsonSchema)
