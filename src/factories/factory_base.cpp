@@ -82,43 +82,22 @@ InitStatus FactoryBase::_configure_from_file(sushi::SushiOptions& options)
         return InitStatus::FAILED_INVALID_CONFIGURATION_FILE;
     }
 
-    ///////////////////////////
-    // Set up Audio Frontend //
-    ///////////////////////////
-    int cv_inputs = control_config.cv_inputs.value_or(0);
-    int cv_outputs = control_config.cv_outputs.value_or(0);
-
-    auto audio_frontend_status = _setup_audio_frontend(options, cv_inputs, cv_outputs);
-    if (audio_frontend_status != InitStatus::OK)
+    auto engine_status = _configure_engine(options, control_config, configurator.get());
+    if (engine_status != InitStatus::OK)
     {
-        return audio_frontend_status;
+        return engine_status;
     }
 
-    ////////////////////////
-    // Load Configuration //
-    ////////////////////////
-    auto configuration_status = _load_json_configuration(options, configurator.get(), _audio_frontend.get());
+    auto configuration_status = _load_json_configuration(configurator.get());
     if (configuration_status != InitStatus::OK)
     {
         return configuration_status;
     }
 
-    /////////////////
-    // Set up MIDI //
-    /////////////////
-    auto midi_status = _set_up_midi(options, control_config);
-    if (midi_status != InitStatus::OK)
+    auto event_status = _load_json_events(options, configurator.get(), _audio_frontend.get());
+    if (event_status != InitStatus::OK)
     {
-        return midi_status;
-    }
-
-    /////////////////////////////////////////////
-    // Set up Controller and Control Frontends //
-    /////////////////////////////////////////////
-    auto control_status = _set_up_control(options, configurator.get());
-    if (control_status != InitStatus::OK)
-    {
-        return control_status;
+        return event_status;
     }
 
     return InitStatus::OK;
@@ -126,19 +105,21 @@ InitStatus FactoryBase::_configure_from_file(sushi::SushiOptions& options)
 
 sushi::InitStatus FactoryBase::_configure_with_defaults(sushi::SushiOptions& options)
 {
-    int midi_inputs = 1;
-    int midi_outputs = 1;
     jsonconfig::ControlConfig control_config;
-    control_config.midi_inputs = midi_inputs;
-    control_config.midi_outputs = midi_outputs;
+    control_config.midi_inputs = 1;
+    control_config.midi_outputs = 1;
+    control_config.cv_inputs = 0;
+    control_config.cv_outputs = 0;
 
-    _midi_dispatcher->set_midi_inputs(midi_inputs);
-    _midi_dispatcher->set_midi_outputs(midi_outputs);
+    return _configure_engine(options, control_config, nullptr); // nullptr for configurator
+}
 
-    int cv_inputs = 0;
-    int cv_outputs = 0;
 
-    auto status = _setup_audio_frontend(options, cv_inputs, cv_outputs);
+InitStatus FactoryBase::_configure_engine(SushiOptions& options,
+                                   const jsonconfig::ControlConfig& control_config,
+                                   sushi::jsonconfig::JsonConfigurator* configurator)
+{
+    auto status = _setup_audio_frontend(options, control_config);
     if (status != InitStatus::OK)
     {
         return status;
@@ -150,7 +131,7 @@ sushi::InitStatus FactoryBase::_configure_with_defaults(sushi::SushiOptions& opt
         return status;
     }
 
-    status = _set_up_control(options, nullptr);
+    status = _set_up_control(options, configurator);
     if (status != InitStatus::OK)
     {
         return status;
@@ -159,9 +140,7 @@ sushi::InitStatus FactoryBase::_configure_with_defaults(sushi::SushiOptions& opt
     return InitStatus::OK;
 }
 
-sushi::InitStatus FactoryBase::_load_json_configuration(const sushi::SushiOptions& options,
-                                                        sushi::jsonconfig::JsonConfigurator* configurator,
-                                                        audio_frontend::BaseAudioFrontend* audio_frontend)
+sushi::InitStatus FactoryBase::_load_json_configuration(sushi::jsonconfig::JsonConfigurator* configurator)
 {
     auto status = configurator->load_host_config();
     if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
@@ -196,6 +175,13 @@ sushi::InitStatus FactoryBase::_load_json_configuration(const sushi::SushiOption
         return InitStatus::FAILED_LOAD_PROCESSOR_STATES;
     }
 
+    return InitStatus::OK;
+}
+
+InitStatus FactoryBase::_load_json_events(const SushiOptions& options,
+                                          sushi::jsonconfig::JsonConfigurator* configurator,
+                                          audio_frontend::BaseAudioFrontend* audio_frontend)
+{
     if (options.frontend_type == FrontendType::DUMMY ||
         options.frontend_type == FrontendType::OFFLINE)
     {
@@ -211,7 +197,7 @@ sushi::InitStatus FactoryBase::_load_json_configuration(const sushi::SushiOption
     }
     else
     {
-        status = configurator->load_events();
+        auto status = configurator->load_events();
         if (status != jsonconfig::JsonConfigReturnStatus::OK &&
             status != jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
         {
@@ -222,8 +208,11 @@ sushi::InitStatus FactoryBase::_load_json_configuration(const sushi::SushiOption
     return InitStatus::OK;
 }
 
-InitStatus FactoryBase::_setup_audio_frontend(const SushiOptions& options, int cv_inputs, int cv_outputs)
+InitStatus FactoryBase::_setup_audio_frontend(const SushiOptions& options, const jsonconfig::ControlConfig& config)
 {
+    int cv_inputs = config.cv_inputs.value_or(0);
+    int cv_outputs = config.cv_outputs.value_or(0);
+
     switch (options.frontend_type)
     {
         case FrontendType::JACK:
@@ -353,10 +342,11 @@ InitStatus FactoryBase::_set_up_midi(const SushiOptions& options, const jsonconf
     }
 
     _midi_dispatcher->set_frontend(_midi_frontend.get());
+
+    return InitStatus::OK;
 }
 
-InitStatus FactoryBase::_set_up_control(const SushiOptions& options,
-                                        sushi::jsonconfig::JsonConfigurator* configurator)
+InitStatus FactoryBase::_set_up_control(const SushiOptions& options, sushi::jsonconfig::JsonConfigurator* configurator)
 {
     _engine_controller = std::make_unique<sushi::engine::Controller>(_engine.get(),
                                                                      _midi_dispatcher.get(),

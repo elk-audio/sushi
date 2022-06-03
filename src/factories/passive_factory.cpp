@@ -33,7 +33,6 @@ void sushi::PassiveFactory::run(sushi::SushiOptions& options)
     sushi::init_logger(options); // This can only be called once.
 
     // Overriding whatever frontend settings may or may not have been set.
-    // This also causes the MIDI frontend to be set to NullMidiFrontend in Sushi::_set_up_control.
     options.frontend_type = sushi::FrontendType::PASSIVE;
 
     _engine = std::make_unique<engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT,

@@ -74,16 +74,19 @@ protected:
     InitStatus _configure_from_file(sushi::SushiOptions& options);
     InitStatus _configure_with_defaults(sushi::SushiOptions& options);
 
-    static InitStatus _load_json_configuration(const SushiOptions& options,
-                                               sushi::jsonconfig::JsonConfigurator* configurator,
-                                               audio_frontend::BaseAudioFrontend* audio_frontend);
+    InitStatus _configure_engine(sushi::SushiOptions& options,
+                          const jsonconfig::ControlConfig& control_config,
+                          sushi::jsonconfig::JsonConfigurator* configurator);
 
-    InitStatus _setup_audio_frontend(const SushiOptions& options, int cv_inputs, int cv_outputs);
+    static InitStatus _load_json_configuration(sushi::jsonconfig::JsonConfigurator* configurator);
 
+    static InitStatus _load_json_events(const SushiOptions& options,
+                                        sushi::jsonconfig::JsonConfigurator* configurator,
+                                        audio_frontend::BaseAudioFrontend* audio_frontend);
+
+    InitStatus _setup_audio_frontend(const SushiOptions& options, const jsonconfig::ControlConfig& config);
     InitStatus _set_up_midi(const SushiOptions& options, const jsonconfig::ControlConfig& config);
-
-    InitStatus _set_up_control(const SushiOptions& options,
-                               sushi::jsonconfig::JsonConfigurator* configurator);
+    InitStatus _set_up_control(const SushiOptions& options, jsonconfig::JsonConfigurator* configurator);
 
     InitStatus _status {InitStatus::OK};
 
