@@ -81,13 +81,9 @@ int main(int argc, char* argv[])
 
     StandaloneFactory factory;
 
-    factory.run(options);
-
-    auto sushi = factory.sushi();
+    auto sushi = factory.run(options);
 
     auto init_status = factory.sushi_init_status();
-
-    sushi->init(options);
 
     if (init_status != InitStatus::OK)
     {

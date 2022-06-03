@@ -95,14 +95,16 @@ std::string to_string(InitStatus init_status)
 // Sushi methods                         //
 ///////////////////////////////////////////
 
-Sushi::Sushi(std::unique_ptr<engine::AudioEngine> engine,
+Sushi::Sushi(const sushi::SushiOptions& options,
+             std::unique_ptr<engine::AudioEngine> engine,
              std::unique_ptr<midi_dispatcher::MidiDispatcher> midi_dispatcher,
              std::unique_ptr<midi_frontend::BaseMidiFrontend> midi_frontend,
              std::unique_ptr<control_frontend::OSCFrontend> osc_frontend,
              std::unique_ptr<audio_frontend::BaseAudioFrontend> audio_frontend,
              std::unique_ptr<audio_frontend::BaseAudioFrontendConfiguration> frontend_config,
              std::unique_ptr<engine::Controller> engine_controller,
-             std::unique_ptr<sushi_rpc::GrpcServer> rpc_server) : _engine(std::move(engine)),
+             std::unique_ptr<sushi_rpc::GrpcServer> rpc_server) : _options(options),
+                                                                  _engine(std::move(engine)),
                                                                   _midi_dispatcher(std::move(midi_dispatcher)),
                                                                   _midi_frontend(std::move(midi_frontend)),
                                                                   _osc_frontend(std::move(osc_frontend)),
@@ -115,12 +117,6 @@ Sushi::Sushi(std::unique_ptr<engine::AudioEngine> engine,
 }
 
 Sushi::~Sushi() = default;
-
-// TODO: This init may not be needed!? Assuming I change the ifs in start and exit.
-void sushi::Sushi::init(const sushi::SushiOptions& options)
-{
-    _options = options;
-}
 
 void Sushi::start()
 {

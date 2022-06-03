@@ -22,11 +22,6 @@ class MockSushi : public AbstractSushi
 {
 public:
     MOCK_METHOD(void,
-                init,
-                (const SushiOptions& options),
-                (override));
-
-    MOCK_METHOD(void,
                 start,
                 (),
                 (override));

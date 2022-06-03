@@ -126,8 +126,6 @@ public:
     AbstractSushi() = default;
     virtual ~AbstractSushi() = default;
 
-    virtual void init(const SushiOptions& options) = 0;
-
     virtual void start() = 0;
 
     virtual void exit() = 0;

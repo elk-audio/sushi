@@ -32,7 +32,7 @@ public:
     StandaloneFactory();
     virtual ~StandaloneFactory();
 
-    void run(SushiOptions& options) override;
+    std::unique_ptr<AbstractSushi> run(SushiOptions& options) override;
 
 protected:
 

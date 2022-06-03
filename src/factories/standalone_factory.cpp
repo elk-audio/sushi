@@ -33,7 +33,7 @@ StandaloneFactory::StandaloneFactory() = default;
 
 StandaloneFactory::~StandaloneFactory() = default;
 
-void StandaloneFactory::run(SushiOptions& options)
+std::unique_ptr<AbstractSushi> StandaloneFactory::run(SushiOptions& options)
 {
     init_logger(options);
 
@@ -44,7 +44,7 @@ void StandaloneFactory::run(SushiOptions& options)
     if (raspa_status < 0)
     {
         _status = INIT_STATUS::FAILED_XENOMAI_INITIALIZATION;
-        return;
+        return nullptr;
     }
 
     if (options.frontend_type == FrontendType::XENOMAI_RASPA)
@@ -53,32 +53,24 @@ void StandaloneFactory::run(SushiOptions& options)
     }
 #endif
 
-    _engine = std::make_unique<engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT,
-                                                    options.rt_cpu_cores,
-                                                    options.debug_mode_switches,
-                                                    nullptr);
+    _instantiate_subsystems(options);
 
-    _midi_dispatcher = std::make_unique<midi_dispatcher::MidiDispatcher>(_engine->event_dispatcher());
-
-    if (options.use_input_config_file)
+    if (_status == InitStatus::OK)
     {
-        _status = _configure_from_file(options);
+        return std::make_unique<Sushi>(options,
+                                       std::move(_engine),
+                                       std::move(_midi_dispatcher),
+                                       std::move(_midi_frontend),
+                                       std::move(_osc_frontend),
+                                       std::move(_audio_frontend),
+                                       std::move(_frontend_config),
+                                       std::move(_engine_controller),
+                                       std::move(_rpc_server));
     }
     else
     {
-        _status = _configure_with_defaults(options);
+        return nullptr;
     }
-
-    _sushi = std::make_unique<Sushi>(std::move(_engine),
-                                     std::move(_midi_dispatcher),
-                                     std::move(_midi_frontend),
-                                     std::move(_osc_frontend),
-                                     std::move(_audio_frontend),
-                                     std::move(_frontend_config),
-                                     std::move(_engine_controller),
-                                     std::move(_rpc_server));
-
-    _sushi->init(options);
 }
 
 } // namespace sushi

@@ -79,7 +79,8 @@ void init_logger(const SushiOptions& options);
 class Sushi : public AbstractSushi
 {
 public:
-    Sushi(std::unique_ptr<engine::AudioEngine> engine,
+    Sushi(const sushi::SushiOptions& options,
+          std::unique_ptr<engine::AudioEngine> engine,
           std::unique_ptr<midi_dispatcher::MidiDispatcher> midi_dispatcher,
           std::unique_ptr<midi_frontend::BaseMidiFrontend> midi_frontend,
           std::unique_ptr<control_frontend::OSCFrontend> osc_frontend,
@@ -89,12 +90,6 @@ public:
           std::unique_ptr<sushi_rpc::GrpcServer> rpc_server);
 
     ~Sushi() override;
-
-    /**
-     * Initializes the class.
-     * @param options options for Sushi instance
-     */
-    void init(const SushiOptions& options) override;
 
     /**
      * Given Sushi is initialized successfully, call this before the audio callback is first invoked.

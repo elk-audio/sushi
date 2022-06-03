@@ -51,7 +51,7 @@ public:
     PassiveFactory();
     ~PassiveFactory();
 
-    void run(SushiOptions& options) override;
+    std::unique_ptr<AbstractSushi> run(SushiOptions& options) override;
 
     // TODO: This should be owned by Sushi preferably, accessible with a getter.
     std::unique_ptr<RealTimeController> rt_controller();

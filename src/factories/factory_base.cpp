@@ -44,6 +44,7 @@
 #endif
 
 #include "control_frontends/oscpack_osc_messenger.h"
+#include "sushi.h"
 
 namespace sushi
 {
@@ -54,14 +55,27 @@ FactoryBase::FactoryBase() = default;
 
 FactoryBase::~FactoryBase() = default;
 
-std::unique_ptr<AbstractSushi> FactoryBase::sushi()
-{
-    return std::move(_sushi);
-}
-
 InitStatus FactoryBase::sushi_init_status()
 {
     return _status;
+}
+
+void FactoryBase::_instantiate_subsystems(SushiOptions& options)
+{
+    _engine = std::make_unique<engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT,
+                                                    options.rt_cpu_cores,
+                                                    options.debug_mode_switches);
+
+    _midi_dispatcher = std::make_unique<midi_dispatcher::MidiDispatcher>(_engine->event_dispatcher());
+
+    if (options.use_input_config_file)
+    {
+        _status = _configure_from_file(options);
+    }
+    else
+    {
+        _status = _configure_with_defaults(options);
+    }
 }
 
 InitStatus FactoryBase::_configure_from_file(SushiOptions& options)
@@ -328,6 +342,10 @@ InitStatus FactoryBase::_set_up_midi(const SushiOptions& options, const jsonconf
                                                                            midi_outputs,
                                                                            _midi_dispatcher.get());
 #endif
+    }
+    else if (options.frontend_type == FrontendType::PASSIVE)
+    {
+        _midi_frontend = std::make_unique<midi_frontend::PassiveMidiFrontend>(_midi_dispatcher.get());
     }
     else
     {

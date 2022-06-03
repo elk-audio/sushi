@@ -64,13 +64,13 @@ public:
     FactoryBase();
     virtual ~FactoryBase();
 
-    virtual void run(SushiOptions& options) = 0;
-
-    virtual std::unique_ptr<AbstractSushi> sushi();
+    virtual std::unique_ptr<AbstractSushi> run(SushiOptions& options) = 0;
 
     InitStatus sushi_init_status();
 
 protected:
+    void _instantiate_subsystems(SushiOptions& options);
+
     InitStatus _configure_from_file(SushiOptions& options);
     InitStatus _configure_with_defaults(SushiOptions& options);
 
@@ -101,8 +101,6 @@ protected:
     std::unique_ptr<engine::Controller> _engine_controller {nullptr};
 
     std::unique_ptr<sushi_rpc::GrpcServer> _rpc_server {nullptr};
-
-    std::unique_ptr<AbstractSushi> _sushi {nullptr};
 };
 
 } // namespace sushi
