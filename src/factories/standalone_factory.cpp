@@ -35,12 +35,12 @@ StandaloneFactory::~StandaloneFactory() = default;
 
 void StandaloneFactory::run(SushiOptions& options)
 {
-    sushi::init_logger(options);
+    init_logger(options);
 
     // TODO: TEST THAT THIS WORKS!
 
 #ifdef SUSHI_BUILD_WITH_XENOMAI
-    auto raspa_status = sushi::audio_frontend::XenomaiRaspaFrontend::global_init();
+    auto raspa_status = audio_frontend::XenomaiRaspaFrontend::global_init();
     if (raspa_status < 0)
     {
         _status = INIT_STATUS::FAILED_XENOMAI_INITIALIZATION;
@@ -58,7 +58,7 @@ void StandaloneFactory::run(SushiOptions& options)
                                                     options.debug_mode_switches,
                                                     nullptr);
 
-    _midi_dispatcher = std::make_unique<sushi::midi_dispatcher::MidiDispatcher>(_engine->event_dispatcher());
+    _midi_dispatcher = std::make_unique<midi_dispatcher::MidiDispatcher>(_engine->event_dispatcher());
 
     if (options.use_input_config_file)
     {
@@ -69,14 +69,14 @@ void StandaloneFactory::run(SushiOptions& options)
         _status = _configure_with_defaults(options);
     }
 
-    _sushi = std::make_unique<sushi::Sushi>(std::move(_engine),
-                                            std::move(_midi_dispatcher),
-                                            std::move(_midi_frontend),
-                                            std::move(_osc_frontend),
-                                            std::move(_audio_frontend),
-                                            std::move(_frontend_config),
-                                            std::move(_engine_controller),
-                                            std::move(_rpc_server));
+    _sushi = std::make_unique<Sushi>(std::move(_engine),
+                                     std::move(_midi_dispatcher),
+                                     std::move(_midi_frontend),
+                                     std::move(_osc_frontend),
+                                     std::move(_audio_frontend),
+                                     std::move(_frontend_config),
+                                     std::move(_engine_controller),
+                                     std::move(_rpc_server));
 
     _sushi->init(options);
 }

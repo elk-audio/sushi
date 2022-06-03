@@ -64,24 +64,24 @@ public:
     FactoryBase();
     virtual ~FactoryBase();
 
-    virtual void run(sushi::SushiOptions& options) = 0;
+    virtual void run(SushiOptions& options) = 0;
 
-    virtual std::unique_ptr<sushi::AbstractSushi> sushi();
+    virtual std::unique_ptr<AbstractSushi> sushi();
 
     InitStatus sushi_init_status();
 
 protected:
-    InitStatus _configure_from_file(sushi::SushiOptions& options);
-    InitStatus _configure_with_defaults(sushi::SushiOptions& options);
+    InitStatus _configure_from_file(SushiOptions& options);
+    InitStatus _configure_with_defaults(SushiOptions& options);
 
-    InitStatus _configure_engine(sushi::SushiOptions& options,
-                          const jsonconfig::ControlConfig& control_config,
-                          sushi::jsonconfig::JsonConfigurator* configurator);
+    InitStatus _configure_engine(SushiOptions& options,
+                                 const jsonconfig::ControlConfig& control_config,
+                                 jsonconfig::JsonConfigurator* configurator);
 
-    static InitStatus _load_json_configuration(sushi::jsonconfig::JsonConfigurator* configurator);
+    static InitStatus _load_json_configuration(jsonconfig::JsonConfigurator* configurator);
 
     static InitStatus _load_json_events(const SushiOptions& options,
-                                        sushi::jsonconfig::JsonConfigurator* configurator,
+                                        jsonconfig::JsonConfigurator* configurator,
                                         audio_frontend::BaseAudioFrontend* audio_frontend);
 
     InitStatus _setup_audio_frontend(const SushiOptions& options, const jsonconfig::ControlConfig& config);
@@ -102,7 +102,7 @@ protected:
 
     std::unique_ptr<sushi_rpc::GrpcServer> _rpc_server {nullptr};
 
-    std::unique_ptr<sushi::AbstractSushi> _sushi {nullptr};
+    std::unique_ptr<AbstractSushi> _sushi {nullptr};
 };
 
 } // namespace sushi

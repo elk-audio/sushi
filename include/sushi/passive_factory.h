@@ -51,13 +51,13 @@ public:
     PassiveFactory();
     ~PassiveFactory();
 
-    void run(sushi::SushiOptions& options) override;
+    void run(SushiOptions& options) override;
 
-    // TODO: This should be made inside of Factory / owned by Sushi preferably
-    std::unique_ptr<sushi::RealTimeController> rt_controller();
+    // TODO: This should be owned by Sushi preferably, accessible with a getter.
+    std::unique_ptr<RealTimeController> rt_controller();
 
 private:
-    std::unique_ptr<sushi::RealTimeController> _real_time_controller {nullptr};
+    std::unique_ptr<RealTimeController> _real_time_controller {nullptr};
 };
 
 } // namespace sushi

@@ -25,23 +25,26 @@
 #include "sushi_rpc/grpc_server.h"
 #endif
 
-sushi::PassiveFactory::PassiveFactory() = default;
-sushi::PassiveFactory::~PassiveFactory() = default;
-
-void sushi::PassiveFactory::run(sushi::SushiOptions& options)
+namespace sushi
 {
-    sushi::init_logger(options); // This can only be called once.
+
+PassiveFactory::PassiveFactory() = default;
+PassiveFactory::~PassiveFactory() = default;
+
+void PassiveFactory::run(SushiOptions& options)
+{
+    init_logger(options); // This can only be called once.
 
     // Overriding whatever frontend settings may or may not have been set.
-    options.frontend_type = sushi::FrontendType::PASSIVE;
+    options.frontend_type = FrontendType::PASSIVE;
 
     _engine = std::make_unique<engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT,
                                                     options.rt_cpu_cores,
                                                     options.debug_mode_switches,
                                                     nullptr);
 
-    _midi_dispatcher = std::make_unique<sushi::midi_dispatcher::MidiDispatcher>(_engine->event_dispatcher());
-    auto midi_frontend = std::make_unique<sushi::midi_frontend::PassiveMidiFrontend>(_midi_dispatcher.get());
+    _midi_dispatcher = std::make_unique<midi_dispatcher::MidiDispatcher>(_engine->event_dispatcher());
+    auto midi_frontend = std::make_unique<midi_frontend::PassiveMidiFrontend>(_midi_dispatcher.get());
     _midi_frontend = std::move(midi_frontend);
 
     if (options.use_input_config_file)
@@ -53,23 +56,26 @@ void sushi::PassiveFactory::run(sushi::SushiOptions& options)
         _status = _configure_with_defaults(options);
     }
 
-    _real_time_controller = std::make_unique<sushi::RealTimeController>(static_cast<audio_frontend::PassiveFrontend*>(_audio_frontend.get()),
-                                                                        static_cast<midi_frontend::PassiveMidiFrontend*>(_midi_frontend.get()),
-                                                                       _engine->transport());
+    _real_time_controller = std::make_unique<RealTimeController>(
+        static_cast<audio_frontend::PassiveFrontend*>(_audio_frontend.get()),
+        static_cast<midi_frontend::PassiveMidiFrontend*>(_midi_frontend.get()),
+        _engine->transport());
 
-    _sushi = std::make_unique<sushi::Sushi>(std::move(_engine),
-                                            std::move(_midi_dispatcher),
-                                            std::move(_midi_frontend),
-                                            std::move(_osc_frontend),
-                                            std::move(_audio_frontend),
-                                            std::move(_frontend_config),
-                                            std::move(_engine_controller),
-                                            std::move(_rpc_server));
+    _sushi = std::make_unique<Sushi>(std::move(_engine),
+                                     std::move(_midi_dispatcher),
+                                     std::move(_midi_frontend),
+                                     std::move(_osc_frontend),
+                                     std::move(_audio_frontend),
+                                     std::move(_frontend_config),
+                                     std::move(_engine_controller),
+                                     std::move(_rpc_server));
 
     _sushi->init(options);
 }
 
-std::unique_ptr<sushi::RealTimeController> sushi::PassiveFactory::rt_controller()
+std::unique_ptr<RealTimeController> PassiveFactory::rt_controller()
 {
     return std::move(_real_time_controller);
+}
+
 }
