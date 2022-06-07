@@ -79,8 +79,7 @@ void init_logger(const SushiOptions& options);
 class Sushi : public AbstractSushi
 {
 public:
-    Sushi(const sushi::SushiOptions& options,
-          std::unique_ptr<engine::AudioEngine> engine,
+    Sushi(std::unique_ptr<engine::AudioEngine> engine,
           std::unique_ptr<midi_dispatcher::MidiDispatcher> midi_dispatcher,
           std::unique_ptr<midi_frontend::BaseMidiFrontend> midi_frontend,
           std::unique_ptr<control_frontend::OSCFrontend> osc_frontend,
@@ -123,8 +122,6 @@ private:
     std::unique_ptr<engine::Controller> _engine_controller {nullptr};
 
     std::unique_ptr<sushi_rpc::GrpcServer> _rpc_server {nullptr};
-
-    SushiOptions _options;
 };
 
 } // namespace Sushi

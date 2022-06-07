@@ -18,9 +18,9 @@
 
 #include "include/sushi/sushi_interface.h"
 
-namespace sushi_rpc {
-class GrpcServer;
-}
+#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+#include "sushi_rpc/grpc_server.h"
+#endif
 
 namespace sushi {
 
@@ -33,16 +33,10 @@ class Controller;
 namespace audio_frontend {
 class BaseAudioFrontendConfiguration;
 class BaseAudioFrontend;
-class XenomaiRaspaFrontend;
-class PortAudioFrontend;
-class OfflineFrontend;
-class JackFrontend;
-class PassiveFrontend;
 }
 
 namespace midi_frontend {
 class BaseMidiFrontend;
-class PassiveMidiFrontend;
 }
 
 namespace midi_dispatcher {
@@ -58,14 +52,38 @@ class JsonConfigurator;
 struct ControlConfig;
 }
 
+/**
+ * @brief Virtual base class for Sushi Factories.
+ *        This implements as much as possible that is in common for factories,
+ *        leaving a numbed of virtual methods to be populated by sub-classes.
+ *
+ *        The design choice has been to not have any switch / if clauses here,
+ *        constructing things differently depending on what frontend or other running
+ *        configuration has been made.
+ *
+ *        Ownership of all subsystem is held by the factory until the point where a Sushi class
+ *        is constructed and returned, at which point it takes over ownership.
+ *
+ *        Each factory instance is meant to be run only once and discarded.
+ */
 class FactoryBase
 {
 public:
     FactoryBase();
     virtual ~FactoryBase();
 
+    /**
+     * @brief Run this - once - to construct sushi. If construction fails,
+     *        fetch InitStatus using sushi_init_status() to find out why.
+     * @param options A populated SushiOptions structure.
+     *        Not that it is passed in by reference - factories may choose to modify it.
+     * @return a unique_ptr with the constructed instance if successful, of empty if not.
+     */
     virtual std::unique_ptr<AbstractSushi> run(SushiOptions& options) = 0;
 
+    /**
+     * @return Returns the status of the Initialization carried out by run().
+     */
     InitStatus sushi_init_status();
 
 protected:
@@ -80,13 +98,37 @@ protected:
 
     static InitStatus _load_json_configuration(jsonconfig::JsonConfigurator* configurator);
 
-    static InitStatus _load_json_events(const SushiOptions& options,
-                                        jsonconfig::JsonConfigurator* configurator,
-                                        audio_frontend::BaseAudioFrontend* audio_frontend);
+    /**
+     * @brief
+     * @param options A populated SushiOptions structure.
+     * @param config
+     * @return
+     */
+    virtual InitStatus _setup_audio_frontend(const SushiOptions& options, const jsonconfig::ControlConfig& config) = 0;
 
-    InitStatus _setup_audio_frontend(const SushiOptions& options, const jsonconfig::ControlConfig& config);
-    InitStatus _set_up_midi(const SushiOptions& options, const jsonconfig::ControlConfig& config);
-    InitStatus _set_up_control(const SushiOptions& options, jsonconfig::JsonConfigurator* configurator);
+    /**
+     * @brief
+     * @param options A populated SushiOptions structure.
+     * @return
+     */
+    virtual InitStatus _set_up_midi(const SushiOptions& options, const jsonconfig::ControlConfig& config) = 0;
+
+    /**
+     * @brief
+     * @param options A populated SushiOptions structure.
+     * @param configurator
+     * @return
+     */
+    virtual InitStatus _set_up_control(const SushiOptions& options, jsonconfig::JsonConfigurator* configurator) = 0;
+
+    /**
+     * @brief
+     * @param options A populated SushiOptions structure.
+     * @param configurator
+     * @return
+     */
+    virtual InitStatus _load_json_events(const SushiOptions& options,
+                                         jsonconfig::JsonConfigurator* configurator) = 0;
 
     InitStatus _status {InitStatus::OK};
 

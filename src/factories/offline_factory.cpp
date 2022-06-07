@@ -13,43 +13,37 @@
 * SUSHI. If not, see http://www.gnu.org/licenses/
 */
 
-#include "include/sushi/passive_factory.h"
+#include "offline_factory.h"
 
 #include "logging.h"
 
 #include "engine/audio_engine.h"
-#include "control_frontends/passive_midi_frontend.h"
-#include "audio_frontends/passive_frontend.h"
-
 #include "src/sushi.h"
 
+// TODO AUD-466: What happens if SUSHI_BUILD_WITH_RPC_INTERFACE is OFF!?
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
 #include "sushi_rpc/grpc_server.h"
 #endif
 
+#include "audio_frontends/offline_frontend.h"
+
 #include "engine/json_configurator.h"
+#include "control_frontends/oscpack_osc_messenger.h"
 
 namespace sushi
 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("sushi-factory");
 
-PassiveFactory::PassiveFactory() = default;
-PassiveFactory::~PassiveFactory() = default;
+OfflineFactory::OfflineFactory() = default;
 
-std::unique_ptr<AbstractSushi> PassiveFactory::run(SushiOptions& options)
+OfflineFactory::~OfflineFactory() = default;
+
+std::unique_ptr<AbstractSushi> OfflineFactory::run(SushiOptions& options)
 {
-    init_logger(options); // This can only be called once.
-
-    // Overriding whatever frontend choice may or may not have been set.
-    options.frontend_type = FrontendType::PASSIVE;
+    init_logger(options);
 
     _instantiate_subsystems(options);
-
-    _real_time_controller = std::make_unique<RealTimeController>(
-        static_cast<audio_frontend::PassiveFrontend*>(_audio_frontend.get()),
-        static_cast<midi_frontend::PassiveMidiFrontend*>(_midi_frontend.get()),
-        _engine->transport());
 
     if (_status == InitStatus::OK)
     {
@@ -68,47 +62,54 @@ std::unique_ptr<AbstractSushi> PassiveFactory::run(SushiOptions& options)
     }
 }
 
-std::unique_ptr<RealTimeController> PassiveFactory::rt_controller()
-{
-    return std::move(_real_time_controller);
-}
-
-InitStatus PassiveFactory::_setup_audio_frontend([[maybe_unused]] const SushiOptions& options,
+InitStatus OfflineFactory::_setup_audio_frontend(const SushiOptions& options,
                                                  const jsonconfig::ControlConfig& config)
 {
     int cv_inputs = config.cv_inputs.value_or(0);
     int cv_outputs = config.cv_outputs.value_or(0);
 
-    SUSHI_LOG_INFO("Setting up passive frontend");
-    _frontend_config = std::make_unique<audio_frontend::PassiveFrontendConfiguration>(cv_inputs, cv_outputs);
+    bool dummy = false;
 
-    _audio_frontend = std::make_unique<audio_frontend::PassiveFrontend>(_engine.get());
+    if (options.frontend_type != FrontendType::OFFLINE)
+    {
+        dummy = true;
+        SUSHI_LOG_INFO("Setting up dummy audio frontend");
+    }
+    else
+    {
+        SUSHI_LOG_INFO("Setting up offline audio frontend");
+    }
+
+    _frontend_config = std::make_unique<audio_frontend::OfflineFrontendConfiguration>(options.input_filename,
+                                                                                      options.output_filename,
+                                                                                      dummy,
+                                                                                      cv_inputs,
+                                                                                      cv_outputs);
+
+    _audio_frontend = std::make_unique<audio_frontend::OfflineFrontend>(_engine.get());
 
     return InitStatus::OK;
 }
 
-InitStatus PassiveFactory::_set_up_midi([[maybe_unused]] const SushiOptions& options,
+InitStatus OfflineFactory::_set_up_midi([[maybe_unused]] const SushiOptions& options,
                                         const jsonconfig::ControlConfig& config)
 {
-    // Will always be 1 & 1 for passive.
     int midi_inputs = config.midi_inputs.value_or(1);
     int midi_outputs = config.midi_outputs.value_or(1);
     _midi_dispatcher->set_midi_inputs(midi_inputs);
     _midi_dispatcher->set_midi_outputs(midi_outputs);
 
-    _midi_frontend = std::make_unique<midi_frontend::PassiveMidiFrontend>(_midi_dispatcher.get());
+    _midi_frontend = std::make_unique<midi_frontend::NullMidiFrontend>(_midi_dispatcher.get());
 
     return InitStatus::OK;
 }
 
-InitStatus PassiveFactory::_set_up_control([[maybe_unused]] const SushiOptions& options,
+InitStatus OfflineFactory::_set_up_control(const SushiOptions& options,
                                            [[maybe_unused]] jsonconfig::JsonConfigurator* configurator)
 {
     _engine_controller = std::make_unique<engine::Controller>(_engine.get(),
                                                               _midi_dispatcher.get(),
                                                               _audio_frontend.get());
-
-    // TODO: NO OSC MESSENGER - YET.
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     _rpc_server = std::make_unique<sushi_rpc::GrpcServer>(options.grpc_listening_address, _engine_controller.get());
@@ -118,15 +119,18 @@ InitStatus PassiveFactory::_set_up_control([[maybe_unused]] const SushiOptions& 
     return InitStatus::OK;
 }
 
-InitStatus PassiveFactory::_load_json_events([[maybe_unused]] const SushiOptions& options,
+InitStatus OfflineFactory::_load_json_events([[maybe_unused]] const SushiOptions& options,
                                              jsonconfig::JsonConfigurator* configurator)
 {
-    auto status = configurator->load_events();
+    auto [status, events] = configurator->load_event_list();
 
-    if (status != jsonconfig::JsonConfigReturnStatus::OK &&
-        status != jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
+    if (status == jsonconfig::JsonConfigReturnStatus::OK)
     {
-        return InitStatus::FAILED_LOAD_EVENTS;
+        static_cast<audio_frontend::OfflineFrontend*>(_audio_frontend.get())->add_sequencer_events(events);
+    }
+    else if (status != jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
+    {
+        return InitStatus::FAILED_LOAD_EVENT_LIST;
     }
 
     return InitStatus::OK;

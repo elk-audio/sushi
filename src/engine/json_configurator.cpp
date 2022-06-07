@@ -781,11 +781,25 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value& tra
         auto connect_status = _connect_audio_to_track(track_def, name, track_id);
         if (connect_status != JsonConfigReturnStatus::OK)
         {
-            return connect_status;
+            status = _engine->connect_audio_output_bus(con["engine_bus"].GetInt(),
+                                                       con["track_bus"].GetInt(),
+                                                       track_id);
+        }
+        else
+        {
+            status = _engine->connect_audio_output_channel(con["engine_channel"].GetInt(),
+                                                           con["track_channel"].GetInt(),
+                                                           track_id);
+
+        }
+        if (status != EngineReturnStatus::OK)
+        {
+            SUSHI_LOG_ERROR("Error connecting track \"{}\" to output bus, error {}", name, static_cast<int>(status));
+            return JsonConfigReturnStatus::INVALID_CONFIGURATION;
         }
     }
 
-    for(const auto& def : track_def["plugins"].GetArray())
+    for (const auto& def : track_def["plugins"].GetArray())
     {
         auto plugin_status = _add_plugin(def, name, track_id);
         if (plugin_status != JsonConfigReturnStatus::OK)

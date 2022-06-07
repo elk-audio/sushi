@@ -95,16 +95,14 @@ std::string to_string(InitStatus init_status)
 // Sushi methods                         //
 ///////////////////////////////////////////
 
-Sushi::Sushi(const sushi::SushiOptions& options,
-             std::unique_ptr<engine::AudioEngine> engine,
+Sushi::Sushi(std::unique_ptr<engine::AudioEngine> engine,
              std::unique_ptr<midi_dispatcher::MidiDispatcher> midi_dispatcher,
              std::unique_ptr<midi_frontend::BaseMidiFrontend> midi_frontend,
              std::unique_ptr<control_frontend::OSCFrontend> osc_frontend,
              std::unique_ptr<audio_frontend::BaseAudioFrontend> audio_frontend,
              std::unique_ptr<audio_frontend::BaseAudioFrontendConfiguration> frontend_config,
              std::unique_ptr<engine::Controller> engine_controller,
-             std::unique_ptr<sushi_rpc::GrpcServer> rpc_server) : _options(options),
-                                                                  _engine(std::move(engine)),
+             std::unique_ptr<sushi_rpc::GrpcServer> rpc_server) : _engine(std::move(engine)),
                                                                   _midi_dispatcher(std::move(midi_dispatcher)),
                                                                   _midi_frontend(std::move(midi_frontend)),
                                                                   _osc_frontend(std::move(osc_frontend)),
@@ -120,24 +118,16 @@ Sushi::~Sushi() = default;
 
 void Sushi::start()
 {
-    if (_options.enable_timings)
-    {
-        _engine->performance_timer()->enable(true);
-    }
-
     _audio_frontend->run();
     _engine->event_dispatcher()->run();
     _midi_frontend->run();
 
-    if (_options.frontend_type == FrontendType::JACK ||
-        _options.frontend_type == FrontendType::XENOMAI_RASPA ||
-        _options.frontend_type == FrontendType::PORTAUDIO)
+    if (_osc_frontend != nullptr)
     {
         _osc_frontend->run();
     }
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
-    SUSHI_LOG_INFO("Starting gRPC server with address: {}", _options.grpc_listening_address);
     _rpc_server->start();
 #endif
 }
@@ -147,13 +137,12 @@ void Sushi::exit()
     _audio_frontend->cleanup();
     _engine->event_dispatcher()->stop();
 
-    if (_options.frontend_type == FrontendType::JACK ||
-        _options.frontend_type == FrontendType::XENOMAI_RASPA ||
-        _options.frontend_type == FrontendType::PORTAUDIO)
+    if (_osc_frontend != nullptr)
     {
         _osc_frontend->stop();
-        _midi_frontend->stop();
     }
+
+    _midi_frontend->stop();
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     _rpc_server->stop();

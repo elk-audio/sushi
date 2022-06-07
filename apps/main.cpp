@@ -21,6 +21,8 @@
 #include <iostream>
 #include <csignal>
 
+#include <condition_variable>
+
 #include "sushi.h"
 
 #include "include/sushi/terminal_utilities.h"
@@ -29,8 +31,7 @@
 #include "compile_time_settings.h"
 
 #include "factories/standalone_factory.h"
-
-#include <condition_variable>
+#include "factories/offline_factory.h"
 
 #include "logging.h"
 
@@ -79,11 +80,29 @@ int main(int argc, char* argv[])
     else if (option_status == ParseStatus::MISSING_ARGUMENTS) return 2;
     else if (option_status == ParseStatus::EXIT)              return 0;
 
-    StandaloneFactory factory;
+    std::unique_ptr<FactoryBase> factory;
 
-    auto sushi = factory.run(options);
+    if (options.frontend_type == FrontendType::DUMMY ||
+        options.frontend_type == FrontendType::PASSIVE)
+    {
+        factory = std::make_unique<OfflineFactory>();
+    }
+    else if (options.frontend_type == FrontendType::XENOMAI_RASPA ||
+             options.frontend_type == FrontendType::JACK ||
+             options.frontend_type == FrontendType::PORTAUDIO)
+    {
+        factory = std::make_unique<StandaloneFactory>();
+    }
+    else
+    {
+        // Invalid frontend configuration.
+        // Passive, or None, are not supported when standalone.
+        return 3;
+    }
 
-    auto init_status = factory.sushi_init_status();
+    auto sushi = factory->run(options);
+
+    auto init_status = factory->sushi_init_status();
 
     if (init_status != InitStatus::OK)
     {

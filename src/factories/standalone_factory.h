@@ -26,16 +26,29 @@ class GrpcServer;
 
 namespace sushi {
 
+/**
+ * @brief Factory for when Sushi will run in real-time standalone mode.
+ */
 class StandaloneFactory : public FactoryBase
 {
 public:
     StandaloneFactory();
-    virtual ~StandaloneFactory();
+    ~StandaloneFactory() override;
 
     std::unique_ptr<AbstractSushi> run(SushiOptions& options) override;
 
 protected:
+    InitStatus _setup_audio_frontend(const SushiOptions& options,
+                                     const jsonconfig::ControlConfig& config) override;
 
+    InitStatus _set_up_midi(const SushiOptions& options,
+                            const jsonconfig::ControlConfig& config) override;
+
+    InitStatus _set_up_control(const SushiOptions& options,
+                               jsonconfig::JsonConfigurator* configurator) override;
+
+    InitStatus _load_json_events([[maybe_unused]] const SushiOptions& options,
+                                 jsonconfig::JsonConfigurator* configurator) override;
 };
 
 } // namespace sushi

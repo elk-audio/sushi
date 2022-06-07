@@ -505,6 +505,7 @@ set(SOURCE_FILES
                       src/factories/factory_base.cpp
                       src/factories/passive_factory.cpp
                       src/factories/standalone_factory.cpp
+                      src/factories/offline_factory.cpp
                       src/library/event.cpp
                       src/library/midi_decoder.cpp
                       src/library/midi_encoder.cpp
