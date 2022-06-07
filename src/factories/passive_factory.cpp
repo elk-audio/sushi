@@ -51,21 +51,7 @@ std::unique_ptr<AbstractSushi> PassiveFactory::run(SushiOptions& options)
         static_cast<midi_frontend::PassiveMidiFrontend*>(_midi_frontend.get()),
         _engine->transport());
 
-    if (_status == InitStatus::OK)
-    {
-        return std::make_unique<Sushi>(std::move(_engine),
-                                       std::move(_midi_dispatcher),
-                                       std::move(_midi_frontend),
-                                       std::move(_osc_frontend),
-                                       std::move(_audio_frontend),
-                                       std::move(_frontend_config),
-                                       std::move(_engine_controller),
-                                       std::move(_rpc_server));
-    }
-    else
-    {
-        return nullptr;
-    }
+    return _make_sushi();
 }
 
 std::unique_ptr<RealTimeController> PassiveFactory::rt_controller()

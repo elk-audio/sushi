@@ -45,21 +45,7 @@ std::unique_ptr<AbstractSushi> OfflineFactory::run(SushiOptions& options)
 
     _instantiate_subsystems(options);
 
-    if (_status == InitStatus::OK)
-    {
-        return std::make_unique<Sushi>(std::move(_engine),
-                                       std::move(_midi_dispatcher),
-                                       std::move(_midi_frontend),
-                                       std::move(_osc_frontend),
-                                       std::move(_audio_frontend),
-                                       std::move(_frontend_config),
-                                       std::move(_engine_controller),
-                                       std::move(_rpc_server));
-    }
-    else
-    {
-        return nullptr;
-    }
+    return _make_sushi();
 }
 
 InitStatus OfflineFactory::_setup_audio_frontend(const SushiOptions& options,

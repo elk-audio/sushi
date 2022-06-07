@@ -36,6 +36,8 @@ class GrpcServer;
 
 namespace sushi {
 
+class FactoryBase;
+
 namespace engine {
 class JsonConfigurator;
 class AudioEngine;
@@ -75,19 +77,9 @@ class JsonConfigurator;
  */
 void init_logger(const SushiOptions& options);
 
-
 class Sushi : public AbstractSushi
 {
 public:
-    Sushi(std::unique_ptr<engine::AudioEngine> engine,
-          std::unique_ptr<midi_dispatcher::MidiDispatcher> midi_dispatcher,
-          std::unique_ptr<midi_frontend::BaseMidiFrontend> midi_frontend,
-          std::unique_ptr<control_frontend::OSCFrontend> osc_frontend,
-          std::unique_ptr<audio_frontend::BaseAudioFrontend> audio_frontend,
-          std::unique_ptr<audio_frontend::BaseAudioFrontendConfiguration> frontend_config,
-          std::unique_ptr<engine::Controller> engine_controller,
-          std::unique_ptr<sushi_rpc::GrpcServer> rpc_server);
-
     ~Sushi() override;
 
     /**
@@ -109,6 +101,21 @@ public:
     void set_sample_rate(float sample_rate) override;
 
     float sample_rate() const override;
+
+protected:
+    /**
+     * @brief To create a Sushi instance, call _make_sushi(...) from inside a class inheriting from FactoryBase.
+     */
+    Sushi(std::unique_ptr<engine::AudioEngine> engine,
+          std::unique_ptr<midi_dispatcher::MidiDispatcher> midi_dispatcher,
+          std::unique_ptr<midi_frontend::BaseMidiFrontend> midi_frontend,
+          std::unique_ptr<control_frontend::OSCFrontend> osc_frontend,
+          std::unique_ptr<audio_frontend::BaseAudioFrontend> audio_frontend,
+          std::unique_ptr<audio_frontend::BaseAudioFrontendConfiguration> frontend_config,
+          std::unique_ptr<engine::Controller> engine_controller,
+          std::unique_ptr<sushi_rpc::GrpcServer> rpc_server);
+
+    friend class FactoryBase;
 
 private:
     std::unique_ptr<engine::AudioEngine> _engine {nullptr};

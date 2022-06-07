@@ -87,6 +87,8 @@ public:
     InitStatus sushi_init_status();
 
 protected:
+    std::unique_ptr<AbstractSushi> _make_sushi();
+
     void _instantiate_subsystems(SushiOptions& options);
 
     InitStatus _configure_from_file(SushiOptions& options);
