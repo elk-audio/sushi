@@ -123,40 +123,31 @@ InitStatus StandaloneFactory::_setup_audio_frontend(const SushiOptions& options,
     return InitStatus::OK;
 }
 
-InitStatus StandaloneFactory::_set_up_midi(const SushiOptions& options, const jsonconfig::ControlConfig& config)
+InitStatus StandaloneFactory::_set_up_midi([[maybe_unused]] const SushiOptions& options, const jsonconfig::ControlConfig& config)
 {
     int midi_inputs = config.midi_inputs.value_or(1);
     int midi_outputs = config.midi_outputs.value_or(1);
     _midi_dispatcher->set_midi_inputs(midi_inputs);
     _midi_dispatcher->set_midi_outputs(midi_outputs);
 
-    if (options.frontend_type == FrontendType::JACK ||
-        options.frontend_type == FrontendType::XENOMAI_RASPA ||
-        options.frontend_type == FrontendType::PORTAUDIO)
-    {
 #ifdef SUSHI_BUILD_WITH_ALSA_MIDI
-        _midi_frontend = std::make_unique<midi_frontend::AlsaMidiFrontend>(midi_inputs,
-                                                                           midi_outputs,
-                                                                           _midi_dispatcher.get());
+    _midi_frontend = std::make_unique<midi_frontend::AlsaMidiFrontend>(midi_inputs,
+                                                                       midi_outputs,
+                                                                       _midi_dispatcher.get());
 #elif SUSHI_BUILD_WITH_RT_MIDI
-        auto rt_midi_input_mappings = config.rt_midi_input_mappings;
-        auto rt_midi_output_mappings = config.rt_midi_output_mappings;
+    auto rt_midi_input_mappings = config.rt_midi_input_mappings;
+    auto rt_midi_output_mappings = config.rt_midi_output_mappings;
 
-        _midi_frontend = std::make_unique<midi_frontend::RtMidiFrontend>(midi_inputs,
-                                                                         midi_outputs,
-                                                                         std::move(rt_midi_input_mappings),
-                                                                         std::move(rt_midi_output_mappings),
-                                                                         _midi_dispatcher.get());
+    _midi_frontend = std::make_unique<midi_frontend::RtMidiFrontend>(midi_inputs,
+                                                                     midi_outputs,
+                                                                     std::move(rt_midi_input_mappings),
+                                                                     std::move(rt_midi_output_mappings),
+                                                                     _midi_dispatcher.get());
 #else
-        _midi_frontend = std::make_unique<midi_frontend::NullMidiFrontend>(midi_inputs,
-                                                                           midi_outputs,
-                                                                           _midi_dispatcher.get());
+    _midi_frontend = std::make_unique<midi_frontend::NullMidiFrontend>(midi_inputs,
+                                                                       midi_outputs,
+                                                                       _midi_dispatcher.get());
 #endif
-    }
-    else
-    {
-        _midi_frontend = std::make_unique<midi_frontend::NullMidiFrontend>(_midi_dispatcher.get());
-    }
 
     return InitStatus::OK;
 }

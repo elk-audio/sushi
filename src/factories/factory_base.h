@@ -101,7 +101,7 @@ protected:
     static InitStatus _load_json_configuration(jsonconfig::JsonConfigurator* configurator);
 
     /**
-     * @brief
+     * @brief Inherit and populate this to instantiate and configure the audio frontend.
      * @param options A populated SushiOptions structure.
      * @param config
      * @return
@@ -109,14 +109,14 @@ protected:
     virtual InitStatus _setup_audio_frontend(const SushiOptions& options, const jsonconfig::ControlConfig& config) = 0;
 
     /**
-     * @brief
+     * @brief Inherit and populate this to instantiate and configure the midi frontend.
      * @param options A populated SushiOptions structure.
      * @return
      */
     virtual InitStatus _set_up_midi(const SushiOptions& options, const jsonconfig::ControlConfig& config) = 0;
 
     /**
-     * @brief
+     * @brief Inherit and populate this to instantiate and configure sgRPC, OSC, and eventual other control.
      * @param options A populated SushiOptions structure.
      * @param configurator
      * @return
@@ -124,7 +124,7 @@ protected:
     virtual InitStatus _set_up_control(const SushiOptions& options, jsonconfig::JsonConfigurator* configurator) = 0;
 
     /**
-     * @brief
+     * @brief Handle sequenced events from configuration file here.
      * @param options A populated SushiOptions structure.
      * @param configurator
      * @return

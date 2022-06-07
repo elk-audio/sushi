@@ -35,8 +35,6 @@ RealTimeController::RealTimeController(audio_frontend::PassiveFrontend* audio_fr
 
 RealTimeController::~RealTimeController()
 {
-// TODO: Controller no longer OWNS sushi, so it shouldn't call exit.
-//    _sushi->exit();
 }
 
 void RealTimeController::set_tempo(float tempo)

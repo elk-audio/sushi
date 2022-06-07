@@ -41,7 +41,7 @@ protected:
     InitStatus _setup_audio_frontend(const SushiOptions& options,
                                      const jsonconfig::ControlConfig& config) override;
 
-    InitStatus _set_up_midi(const SushiOptions& options,
+    InitStatus _set_up_midi([[maybe_unused]] const SushiOptions& options,
                             const jsonconfig::ControlConfig& config) override;
 
     InitStatus _set_up_control(const SushiOptions& options,
