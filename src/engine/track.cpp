@@ -160,8 +160,19 @@ void Track::process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& out)
 
     auto track_timestamp = _timer->start_timer();
 
-    /* Process all the plugins in the chain */
-    _process_chain(const_cast<ChunkSampleBuffer&>(in), out);
+    /* Process all the plugins in the chain, to guarantee that memory declared const is never
+     * written to, the const cast below is only done if in already points to _input_buffer
+     * (which is the case if process_audio() is called from render()), or if there is max 1
+     * plugin in the chain, in which case there will be no ping-pong copying between buffers. */
+    if (in.channel(0) == _input_buffer.channel(0) || _processors.size() <= 1)
+    {
+        _process_chain(const_cast<ChunkSampleBuffer&>(in), out);
+    }
+    else
+    {
+        _input_buffer.replace(in);
+        _process_chain(_input_buffer, out);
+    }
 
     /* If there are keyboard events not consumed, pass them on upwards so the engine can process them */
     _process_output_events();
