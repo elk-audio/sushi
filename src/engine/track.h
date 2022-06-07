@@ -187,7 +187,7 @@ private:
     };
 
     void _common_init(PanMode mode);
-    void _process_chain(ChunkSampleBuffer& in, ChunkSampleBuffer& out);
+    void _process_plugins(ChunkSampleBuffer& in, ChunkSampleBuffer& out);
     void _process_output_events();
     void _apply_pan_and_gain(ChunkSampleBuffer& buffer, bool muted);
     void _apply_pan_and_gain_per_bus(ChunkSampleBuffer& buffer, bool muted);

@@ -575,7 +575,7 @@ private:
      * @param track The track to add
      * @return True if successful, false otherwise
      */
-    bool _add_track_rt(Track* track);
+    bool _add_track(Track* track);
 
     /**
      * @brief Remove a track from the audio engine, if engine is running, this must be called from
@@ -584,7 +584,7 @@ private:
      * @param track The track to remove.
      * @return True if successful, false otherwise
  */
-    bool _remove_track_rt(Track* track);
+    bool _remove_track(Track* track);
 
     void print_timings_to_file(const std::string& filename);
 

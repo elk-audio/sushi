@@ -643,7 +643,7 @@ EngineReturnStatus AudioEngine::delete_track(ObjectId track_id)
     }
     else
     {
-        _remove_track_rt(track.get());
+        _remove_track(track.get());
         [[maybe_unused]] bool removed = _remove_processor_from_realtime_part(track->id());
         SUSHI_LOG_WARNING_IF(removed == false, "Plugin track {} was not in the audio graph", track_id)
     }
@@ -862,7 +862,7 @@ EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, std
     }
     else
     {
-        if (_add_track_rt(track.get()) == false)
+        if (_add_track(track.get()) == false)
         {
 
             SUSHI_LOG_ERROR_IF(track->type() == TrackType::REGULAR, "Error adding track {}, max number of tracks reached", track->name());
@@ -1060,14 +1060,14 @@ void AudioEngine::_process_internal_rt_events()
             {
                 auto typed_event = event.processor_reorder_event();
                 auto track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
-                typed_event->set_handled(track? _add_track_rt(track) : false);
+                typed_event->set_handled(track ? _add_track(track) : false);
                 break;
             }
             case RtEventType::REMOVE_TRACK:
             {
                 auto typed_event = event.processor_reorder_event();
                 auto track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
-                typed_event->set_handled(track? _remove_track_rt(track) : false);
+                typed_event->set_handled(track ? _remove_track(track) : false);
                 break;
             }
             case RtEventType::ADD_AUDIO_CONNECTION:
@@ -1204,7 +1204,7 @@ void print_single_timings_for_node(std::fstream& f, performance::PerformanceTime
     }
 }
 
-bool AudioEngine::_add_track_rt(Track* track)
+bool AudioEngine::_add_track(Track* track)
 {
     bool added = false;
     switch (track->type())
@@ -1231,7 +1231,7 @@ bool AudioEngine::_add_track_rt(Track* track)
     return added;
 }
 
-bool AudioEngine::_remove_track_rt(Track* track)
+bool AudioEngine::_remove_track(Track* track)
 {
     bool removed = false;
     switch (track->type())

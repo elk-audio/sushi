@@ -166,12 +166,12 @@ void Track::process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& out)
      * plugin in the chain, in which case there will be no ping-pong copying between buffers. */
     if (in.channel(0) == _input_buffer.channel(0) || _processors.size() <= 1)
     {
-        _process_chain(const_cast<ChunkSampleBuffer&>(in), out);
+        _process_plugins(const_cast<ChunkSampleBuffer&>(in), out);
     }
     else
     {
         _input_buffer.replace(in);
-        _process_chain(_input_buffer, out);
+        _process_plugins(_input_buffer, out);
     }
 
     /* If there are keyboard events not consumed, pass them on upwards so the engine can process them */
@@ -277,7 +277,7 @@ void Track::_common_init(PanMode mode)
     }
 }
 
-void Track::_process_chain(ChunkSampleBuffer& in, ChunkSampleBuffer& out)
+void Track::_process_plugins(ChunkSampleBuffer& in, ChunkSampleBuffer& out)
 {
     /* Alias the buffers, so we can swap them cheaply, without copying the underlying data */
 
