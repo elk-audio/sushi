@@ -95,25 +95,7 @@ std::string to_string(InitStatus init_status)
 // Sushi methods                         //
 ///////////////////////////////////////////
 
-Sushi::Sushi(std::unique_ptr<engine::AudioEngine> engine,
-             std::unique_ptr<midi_dispatcher::MidiDispatcher> midi_dispatcher,
-             std::unique_ptr<midi_frontend::BaseMidiFrontend> midi_frontend,
-             std::unique_ptr<control_frontend::OSCFrontend> osc_frontend,
-             std::unique_ptr<audio_frontend::BaseAudioFrontend> audio_frontend,
-             std::unique_ptr<audio_frontend::BaseAudioFrontendConfiguration> frontend_config,
-             std::unique_ptr<engine::Controller> engine_controller,
-             std::unique_ptr<sushi_rpc::GrpcServer> rpc_server) : _engine(std::move(engine)),
-                                                                  _midi_dispatcher(std::move(midi_dispatcher)),
-                                                                  _midi_frontend(std::move(midi_frontend)),
-                                                                  _osc_frontend(std::move(osc_frontend)),
-                                                                  _audio_frontend(std::move(audio_frontend)),
-                                                                  _frontend_config(std::move(frontend_config)),
-                                                                  _engine_controller(std::move(engine_controller)),
-                                                                  _rpc_server(std::move(rpc_server))
-{
-
-}
-
+Sushi::Sushi() = default;
 Sushi::~Sushi() = default;
 
 void Sushi::start()

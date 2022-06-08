@@ -144,7 +144,9 @@ protected:
 
     std::unique_ptr<engine::Controller> _engine_controller {nullptr};
 
+#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     std::unique_ptr<sushi_rpc::GrpcServer> _rpc_server {nullptr};
+#endif
 };
 
 } // namespace sushi

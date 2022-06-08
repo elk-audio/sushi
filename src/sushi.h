@@ -106,18 +106,10 @@ protected:
     /**
      * @brief To create a Sushi instance, call _make_sushi(...) from inside a class inheriting from FactoryBase.
      */
-    Sushi(std::unique_ptr<engine::AudioEngine> engine,
-          std::unique_ptr<midi_dispatcher::MidiDispatcher> midi_dispatcher,
-          std::unique_ptr<midi_frontend::BaseMidiFrontend> midi_frontend,
-          std::unique_ptr<control_frontend::OSCFrontend> osc_frontend,
-          std::unique_ptr<audio_frontend::BaseAudioFrontend> audio_frontend,
-          std::unique_ptr<audio_frontend::BaseAudioFrontendConfiguration> frontend_config,
-          std::unique_ptr<engine::Controller> engine_controller,
-          std::unique_ptr<sushi_rpc::GrpcServer> rpc_server);
+    Sushi();
 
     friend class FactoryBase;
 
-private:
     std::unique_ptr<engine::AudioEngine> _engine {nullptr};
     std::unique_ptr<midi_dispatcher::MidiDispatcher> _midi_dispatcher {nullptr};
 
@@ -128,7 +120,9 @@ private:
 
     std::unique_ptr<engine::Controller> _engine_controller {nullptr};
 
+#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     std::unique_ptr<sushi_rpc::GrpcServer> _rpc_server {nullptr};
+#endif
 };
 
 } // namespace Sushi

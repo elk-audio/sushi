@@ -36,14 +36,20 @@ std::unique_ptr<AbstractSushi> FactoryBase::_make_sushi()
     if (_status == InitStatus::OK)
     {
         // It's clearer to have FactoryBase as friend of Sushi.
-        return std::unique_ptr<Sushi>( new Sushi(std::move(_engine),
-                                                 std::move(_midi_dispatcher),
-                                                 std::move(_midi_frontend),
-                                                 std::move(_osc_frontend),
-                                                 std::move(_audio_frontend),
-                                                 std::move(_frontend_config),
-                                                 std::move(_engine_controller),
-                                                 std::move(_rpc_server)));
+        auto sushi = std::unique_ptr<Sushi>(new Sushi());
+
+        sushi->_engine = std::move(_engine);
+        sushi->_midi_dispatcher = std::move(_midi_dispatcher);
+        sushi->_midi_frontend = std::move(_midi_frontend);
+        sushi->_osc_frontend = std::move(_osc_frontend);
+        sushi->_audio_frontend = std::move(_audio_frontend);
+        sushi->_frontend_config = std::move(_frontend_config);
+        sushi->_engine_controller = std::move(_engine_controller);
+
+#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+        sushi->_rpc_server = std::move(_rpc_server);
+#endif
+        return sushi;
     }
     else
     {
