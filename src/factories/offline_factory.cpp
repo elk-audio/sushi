@@ -20,7 +20,6 @@
 #include "engine/audio_engine.h"
 #include "src/sushi.h"
 
-// TODO AUD-466: What happens if SUSHI_BUILD_WITH_RPC_INTERFACE is OFF!?
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
 #include "sushi_rpc/grpc_server.h"
 #endif

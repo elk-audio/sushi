@@ -90,7 +90,6 @@ public:
     /**
      * Stops the Sushi instance from running.
      */
-//  TODO: Currently, once called, the instance will crash if is you subsequently again invoke start(...).
     void exit() override;
 
     /**
