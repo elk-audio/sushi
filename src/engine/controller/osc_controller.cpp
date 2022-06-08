@@ -66,7 +66,7 @@ std::vector<std::string> OscController::get_enabled_parameter_outputs() const
 
 ext::ControlStatus OscController::enable_output_for_parameter(int processor_id, int parameter_id)
 {
-    if (!_osc_frontend)
+    if (_osc_frontend == nullptr)
     {
         return ext::ControlStatus::UNSUPPORTED_OPERATION;
     }
@@ -105,7 +105,7 @@ ext::ControlStatus OscController::enable_output_for_parameter(int processor_id, 
 
 ext::ControlStatus OscController::disable_output_for_parameter(int processor_id, int parameter_id)
 {
-    if (!_osc_frontend)
+    if (_osc_frontend == nullptr)
     {
         return ext::ControlStatus::UNSUPPORTED_OPERATION;
     }
@@ -149,7 +149,7 @@ void OscController::set_osc_frontend(control_frontend::OSCFrontend* osc_frontend
 
 ext::ControlStatus OscController::enable_all_output()
 {
-    if (!_osc_frontend)
+    if (_osc_frontend == nullptr)
     {
         return ext::ControlStatus::UNSUPPORTED_OPERATION;
     }
@@ -167,7 +167,7 @@ ext::ControlStatus OscController::enable_all_output()
 
 ext::ControlStatus OscController::disable_all_output()
 {
-    if (!_osc_frontend)
+    if (_osc_frontend == nullptr)
     {
         return ext::ControlStatus::UNSUPPORTED_OPERATION;
     }
