@@ -53,7 +53,9 @@ enum class FrontendType
     DUMMY,
     JACK,
     PORTAUDIO,
+#ifdef SUSHI_BUILD_WITH_XENOMAI
     XENOMAI_RASPA,
+#endif
     PASSIVE,
     NONE
 };

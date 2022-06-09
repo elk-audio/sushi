@@ -87,8 +87,10 @@ int main(int argc, char* argv[])
     {
         factory = std::make_unique<OfflineFactory>();
     }
-    else if (options.frontend_type == FrontendType::XENOMAI_RASPA ||
-             options.frontend_type == FrontendType::JACK ||
+    else if (options.frontend_type == FrontendType::JACK ||
+#ifdef SUSHI_BUILD_WITH_XENOMAI
+             options.frontend_type == FrontendType::XENOMAI_RASPA ||
+#endif
              options.frontend_type == FrontendType::PORTAUDIO)
     {
         factory = std::make_unique<StandaloneFactory>();

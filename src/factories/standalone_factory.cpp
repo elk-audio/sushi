@@ -104,6 +104,7 @@ InitStatus StandaloneFactory::_setup_audio_frontend(const SushiOptions& options,
             _audio_frontend = std::make_unique<audio_frontend::PortAudioFrontend>(_engine.get());
             break;
         }
+#ifdef SUSHI_BUILD_WITH_XENOMAI
         case FrontendType::XENOMAI_RASPA:
         {
             SUSHI_LOG_INFO("Setting up Xenomai RASPA frontend");
@@ -114,6 +115,7 @@ InitStatus StandaloneFactory::_setup_audio_frontend(const SushiOptions& options,
             _audio_frontend = std::make_unique<audio_frontend::XenomaiRaspaFrontend>(_engine.get());
             break;
         }
+#endif
         default:
         {
             return InitStatus::FAILED_AUDIO_FRONTEND_MISSING;

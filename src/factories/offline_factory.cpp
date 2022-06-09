@@ -89,7 +89,7 @@ InitStatus OfflineFactory::_set_up_midi([[maybe_unused]] const SushiOptions& opt
     return InitStatus::OK;
 }
 
-InitStatus OfflineFactory::_set_up_control(const SushiOptions& options,
+InitStatus OfflineFactory::_set_up_control([[maybe_unused]] const SushiOptions& options,
                                            [[maybe_unused]] jsonconfig::JsonConfigurator* configurator)
 {
     _engine_controller = std::make_unique<engine::Controller>(_engine.get(),
