@@ -35,7 +35,7 @@ namespace sushi
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("sushi");
 
-void init_logger(const SushiOptions& options)
+void init_logger([[maybe_unused]] const SushiOptions& options)
 {
     auto ret_code = SUSHI_INITIALIZE_LOGGER(options.log_filename,
                                             "Logger",
@@ -150,6 +150,5 @@ float Sushi::sample_rate() const
 {
     return _engine->sample_rate();
 }
-
 
 } // namespace Sushi

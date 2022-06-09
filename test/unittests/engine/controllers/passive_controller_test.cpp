@@ -28,7 +28,6 @@
 #include "test_utils/audio_frontend_mockup.h"
 #include "test_utils/engine_mockup.h"
 #include "test_utils/control_mockup.h"
-#include "test_utils/mock_sushi.h"
 
 using namespace std::chrono_literals;
 
@@ -48,40 +47,11 @@ protected:
     void SetUp()
     {
         _passive_controller = std::make_unique<RealTimeController>(&_audio_frontend,
-                                                                  &_midi_frontend,
-                                                                  &_transport);
-
-// TODO: ALL OF THESE TESTED THE FACTORY FUNCTIONALITY. I should write factory tests instead.
-
-        // These test initialization.
-        // Since Init is needed throughout the below I nonetheless keep them here,
-        // to avoid repetition in the code.
-//        SushiOptions options;
-
-//        EXPECT_CALL(*_mock_sushi, init)
-//            .Times(1);
-
-//        EXPECT_CALL(*_mock_sushi, audio_frontend)
-//            .Times(1)
-//            .WillRepeatedly(Return(&_audio_frontend));
-//
-//        EXPECT_CALL(*_mock_sushi, audio_engine)
-//            .Times(1)
-//            .WillOnce(Return(&_mock_engine));
-
-//        EXPECT_CALL(*_mock_sushi, start)
-//            .Times(1);
-
-//        auto status = _passive_controller->init(options);
-//
-//        EXPECT_EQ(InitStatus::OK, status);
+                                                                   &_midi_frontend,
+                                                                   &_transport);
     }
 
-    void TearDown()
-    {
-//        EXPECT_CALL(*_mock_sushi, exit)
-//            .Times(1);
-    }
+    void TearDown() {}
 
     EngineMockup _mock_engine {TEST_SAMPLE_RATE};
     PassiveFrontend _audio_frontend {&_mock_engine};
@@ -164,4 +134,3 @@ TEST_F(PassiveControllerTestFrontend, TestRtControllerMidiCalls)
     // TODO: Currently the Passive Controller MIDI handling over the Passive MIDI frontend, is unfinished,
     //   and not real-time safe. Once it's finished (story AUD-456), we should add relevant tests also here.
 }
-

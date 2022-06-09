@@ -19,7 +19,7 @@
 #include "rt_controller.h"
 #include "sushi_interface.h"
 
-#include "src/factories/factory_base.h"
+#include "factories/factory_base.h"
 #include "real_time_controller.h"
 
 namespace sushi_rpc {

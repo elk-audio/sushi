@@ -1,0 +1,178 @@
+{
+    "host_config" : {
+        "samplerate" : 48000,
+        "tempo" : 100,
+        "time_signature" :
+        {
+            "numerator" : 4,
+            "denominator": 4
+        },
+        "playing_mode" : "playing",
+        "tempo_sync" : "internal",
+        "cv_inputs" : 1,
+        "cv_outputs" : 2,
+        "audio_clip_detection" :
+        {
+            "inputs" : false,
+            "outputs" : true
+        }
+    },
+    "tracks" : [
+        {
+            "name" : "main",
+            "mode" : "stereo",
+            "inputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "uid" : "sushi.testing.passthrough",
+                    "name" : "passthrough_0_l",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.testing.gain",
+                    "name" : "gain_0_l",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.testing.equalizer",
+                    "name" : "equalizer_0_l",
+                    "type" : "internal"
+                }
+            ]
+        }
+    ],
+    "events" : [
+        {
+            "time" : 0.9,
+            "type" : "parameter_change",
+            "data" : {
+                "plugin_name" : "gain_0_r",
+                "parameter_name" : "gain",
+                "value" : -23.0
+            }
+        },
+        {
+            "time" : 0.1,
+            "type" : "parameter_change",
+            "data" : {
+                "plugin_name" : "gain_0_l",
+                "parameter_name" : "gain",
+                "value" : -12.0
+            }
+        },
+        {
+            "time" : 0.5,
+            "type" : "parameter_change",
+            "data" : {
+                "plugin_name" : "gain_0_r",
+                "parameter_name" : "gain",
+                "value" : -6.0
+            }
+        },
+        {
+            "time" : 0.85,
+            "type" : "parameter_change",
+            "data" : {
+                "plugin_name" : "gain_0_l",
+                "parameter_name" : "gain",
+                "value" : 0.0
+            }
+        }
+
+    ],
+    "midi" : {
+        "track_connections": [
+            {
+                "port": 0,
+                "channel": "all",
+                "track": "main",
+                "raw_midi": false
+            }
+        ],
+        "cc_mappings": [
+            {
+                "port": 0,
+                "channel": 0,
+                "cc_number": 27,
+                "plugin_name": "equalizer_0_l",
+                "parameter_name": "gain",
+                "min_range": -24,
+                "max_range": 24
+            }
+        ]
+    },
+    "osc" : {
+        "enabled_processor_outputs" : [
+            {
+                "processor" : "gain_0_l"
+            }
+        ]
+    },
+    "cv_control" : {
+        "cv_inputs" : [
+            {
+                "cv" : 0,
+                "processor" : "gain_0_l",
+                "parameter" : "gain"
+            },
+            {
+                "cv" : 1,
+                "processor" : "synth",
+                "parameter" : "cutoff"
+            }
+        ],
+        "gate_inputs" : [
+            {
+                "gate" : 0,
+                "mode" : "note_event",
+                "note_no" : 20,
+                "processor" : "synth",
+                "channel" : 0
+            },
+            {
+                "gate" : 1,
+                "mode" : "sync",
+                "ppq_ticks" : 2
+            }
+        ],
+        "gate_outputs" : [
+            {
+                "gate" : 0,
+                "mode" : "note_event",
+                "note_no" : 0,
+                "processor" : "seq",
+                "channel" : 0
+            }
+        ]
+    },
+    "initial_state" :
+    [
+        {
+            "processor" : "main",
+            "program" : 24,
+            "bypassed" : false,
+            "parameters" : {
+                "pan" : 0.35,
+                "gain" : 0.60
+            }
+        },
+        {
+            "processor" : "gain_0_l",
+            "program" : 0,
+            "parameters" : {
+                "gain" : 0.60
+            }
+        }
+    ]
+}
