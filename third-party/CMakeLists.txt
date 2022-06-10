@@ -2,6 +2,8 @@ add_subdirectory(fifo EXCLUDE_FROM_ALL)
 
 add_subdirectory(lv2_host)
 
+add_subdirectory(sentry-native)
+
 ###########################
 # oscpack compile options #
 ###########################

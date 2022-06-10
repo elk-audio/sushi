@@ -53,6 +53,7 @@ set(SUSHI_WITH_LINK_DEFAULT ON)
 set(SUSHI_WITH_RPC_INTERFACE_DEFAULT ON)
 set(SUSHI_TWINE_STATIC_DEFAULT OFF)
 set(SUSHI_AUDIO_BUFFER_SIZE_DEFAULT 64)
+option(SUSHI_WITH_SENTRY "Enable sentry.io support" ON)
 
 if (APPLE)
     # macOS defaults
@@ -406,6 +407,19 @@ if (${SUSHI_WITH_LINK})
 endif()
 
 message("Configured audio buffer size: " ${SUSHI_AUDIO_BUFFER_SIZE} " samples")
+
+###################
+# sentry.io setup #
+###################
+
+if (${WITH_SENTRY})
+    message("Building with sentry.io support.")
+
+    set(SENTRY_DSN "" CACHE STRING "The DSN to upload the sentry logs and crash reports to")
+
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} sentry)
+    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_SENTRY -DSUSHI_SENTRY_DSN=${SENTRY_DSN})
+endif()
 
 ####################
 #  Main Target     #

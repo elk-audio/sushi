@@ -27,6 +27,10 @@
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/async.h"
 
+#ifdef SUSHI_BUILD_WITH_SENTRY
+#include "sentry_log_sink.h"
+#endif
+
 namespace elk {
 
 std::string Logger::_logger_file_name = "/tmp/sushi.log";
@@ -48,7 +52,7 @@ SUSHI_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
     level_map["warning"] = spdlog::level::warn;
     level_map["error"] = spdlog::level::err;
     level_map["critical"] = spdlog::level::critical;
-   
+
     std::string log_level_lowercase = min_log_level;
     std::transform(min_log_level.begin(), min_log_level.end(), log_level_lowercase.begin(), ::tolower);
     spdlog::set_pattern("[%Y-%m-%d %T.%e] [%l] %v");
@@ -68,7 +72,7 @@ SUSHI_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
         {
             return SUSHI_LOG_ERROR_CODE_INVALID_FLUSH_INTERVAL;
         }
-        
+
     }
 
     if (logger_instance == nullptr)
@@ -108,6 +112,10 @@ std::shared_ptr<spdlog::logger> Logger::setup_logging()
                                                                                _logger_file_name,
                                                                                MAX_LOG_FILE_SIZE,
                                                                                1);
+
+#ifdef SUSHI_BUILD_WITH_SENTRY
+    async_file_logger->sinks().push_back(std::make_shared<sentry_sink_mt>());
+#endif
 
     async_file_logger->flush_on(MIN_FLUSH_LEVEL);
     async_file_logger->warn("#############################");
