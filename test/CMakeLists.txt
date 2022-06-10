@@ -67,6 +67,7 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/engine/audio_graph_test.cpp
                unittests/engine/track_test.cpp
                unittests/engine/engine_test.cpp
+               unittests/engine/parameter_manager_test.cpp
                unittests/engine/processor_container_test.cpp
                unittests/engine/midi_dispatcher_test.cpp
                unittests/engine/json_configurator_test.cpp
