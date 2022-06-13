@@ -90,6 +90,9 @@ public:
     virtual bool is_keyboard_event() const {return false;}
 
     /* Convertible to ParameterChangeNotification */
+    virtual bool is_parameter_change_event() const {return false;}
+
+    /* Convertible to ParameterChangeNotification */
     virtual bool is_parameter_change_notification() const {return false;}
 
     /* Convertible to EngineEvent */
@@ -231,6 +234,8 @@ public:
 
     RtEvent to_rt_event(int sample_offset) const override;
 
+    bool is_parameter_change_event() const override {return true;}
+
     Subtype             subtype() const {return _subtype;}
     ObjectId            processor_id() const {return _processor_id;}
     ObjectId            parameter_id() const {return _parameter_id;}
@@ -330,6 +335,8 @@ public:
                                                        _subtype(subtype) {}
 
     bool is_parameter_change_notification() const override {return true;}
+
+    bool is_parameter_change_event() const override {return false;}
 
     bool maps_to_rt_event() const override {return false;}
 
@@ -497,6 +504,7 @@ public:
         PROCESSOR_DELETED,
         PROCESSOR_ADDED_TO_TRACK,
         PROCESSOR_REMOVED_FROM_TRACK,
+        PROCESSOR_UPDATED,
         TRACK_CREATED,
         TRACK_DELETED
     };

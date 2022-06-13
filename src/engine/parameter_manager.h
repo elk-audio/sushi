@@ -48,7 +48,7 @@ public:
      * @param update_rate The minimum time between 2 consecutive updates for a specific parameter
      * @param processor_container A ProcessorContainer object used to retrieve processors
      */
-    ParameterManager(Time update_rate, engine::BaseProcessorContainer* processor_container);
+    ParameterManager(Time update_rate, const engine::BaseProcessorContainer* processor_container);
 
     /**
      * @brief Add a processor whose parameters should be managed
@@ -87,7 +87,6 @@ public:
     void output_parameter_notifications(dispatcher::BaseEventDispatcher* dispatcher, Time target_time);
 
 private:
-
     void _output_parameter_notifications(dispatcher::BaseEventDispatcher* dispatcher, Time timestamp);
 
     void _output_processor_notifications(dispatcher::BaseEventDispatcher* dispatcher, Time timestamp);
@@ -114,7 +113,7 @@ private:
     std::vector<ProcessorUpdate> _processor_change_queue;
     std::vector<ParameterUpdate> _parameter_change_queue;
 
-    engine::BaseProcessorContainer* _processors;
+    const engine::BaseProcessorContainer* _processors;
     Time _update_rate;
 
     // Note this is only accessed from the event loop thread, so no mutex is needed

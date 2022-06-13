@@ -38,8 +38,8 @@ inline void output_parameter_value(ObjectId processor_id,
 }
 
 ParameterManager::ParameterManager(Time update_rate,
-                                   sushi::engine::BaseProcessorContainer* processor_container) : _processors(processor_container),
-                                                                                                 _update_rate(update_rate)
+                                   const sushi::engine::BaseProcessorContainer* processor_container) : _processors(processor_container),
+                                                                                                       _update_rate(update_rate)
 {
 
 }
@@ -74,8 +74,8 @@ void ParameterManager::mark_parameter_changed(ObjectId processor_id, ObjectId pa
 void ParameterManager::mark_processor_changed(ObjectId processor_id, Time timestamp)
 {
     auto entry = std::find_if(_processor_change_queue.begin(),
-                           _processor_change_queue.end(),
-                           [&](const auto& i){return i.processor_id == processor_id;});
+                              _processor_change_queue.end(),
+                              [&](const auto& i){return i.processor_id == processor_id;});
     if (entry == _processor_change_queue.end())
     {
         _processor_change_queue.push_back(ProcessorUpdate{processor_id, timestamp});
@@ -98,29 +98,32 @@ void ParameterManager::_output_parameter_notifications(dispatcher::BaseEventDisp
     auto swap_iter = i;
     while (i != _parameter_change_queue.end())
     {
-        auto& entry = _parameters[i->processor_id][i->parameter_id];
-
-        /* Send update if the update time has passed and the last update was sent
-         * longer than _update_rate ago */
-        if (i->update_time <= timestamp && (entry.last_update + _update_rate) <= timestamp)
+        if (auto proc_entry = _parameters.find(i->processor_id); proc_entry != _parameters.end())
         {
-            if (auto processor = _processors->processor(i->processor_id))
+            auto& entry = proc_entry->second[i->parameter_id];
+
+            /* Send update if the update time has passed and the last update was sent
+             * longer than _update_rate ago */
+            if (i->update_time <= timestamp && (entry.last_update + _update_rate) <= timestamp)
             {
-                float value = processor->parameter_value(i->parameter_id).second;
-                if (value != entry.value)
+                if (auto processor = _processors->processor(i->processor_id))
                 {
-                    output_parameter_value(i->processor_id, i->parameter_id, value, dispatcher);
-                    entry.last_update = timestamp;
-                    entry.value = value;
+                    float value = processor->parameter_value(i->parameter_id).second;
+                    if (value != entry.value)
+                    {
+                        output_parameter_value(i->processor_id, i->parameter_id, value, dispatcher);
+                        entry.last_update = timestamp;
+                        entry.value = value;
+                    }
                 }
             }
-        }
-        /* If this parameter was not a duplicate, but still updated too recently,
-         * put it at the front of the queue and check next time */
-        else if (entry.last_update != timestamp)
-        {
-            std::iter_swap(i, swap_iter);
-            swap_iter++;
+            /* If this parameter was not a duplicate, but still updated too recently,
+             * put it at the front of the queue and check next time */
+            else if (entry.last_update != timestamp)
+            {
+                std::iter_swap(i, swap_iter);
+                swap_iter++;
+            }
         }
         i++;
     }
@@ -140,17 +143,14 @@ void ParameterManager::_output_processor_notifications(dispatcher::BaseEventDisp
             if (auto processor = _processors->processor(i->processor_id))
             {
                 auto& param_entries = _parameters[i->processor_id];
-
                 for (const auto& p: param_entries)
                 {
-                    {
-                        auto& entry = param_entries[p.first];
-                        float value = processor->parameter_value(p.first).second;
-                        // TODO: Should we send even if value didn't change?
-                        output_parameter_value(i->processor_id, p.first, value, dispatcher);
-                        entry.last_update = timestamp;
-                        entry.value = value;
-                    }
+                    auto& entry = param_entries[p.first];
+                    float value = processor->parameter_value(p.first).second;
+                    // TODO: Should we send even if value didn't change?
+                    output_parameter_value(i->processor_id, p.first, value, dispatcher);
+                    entry.last_update = timestamp;
+                    entry.value = value;
                 }
             }
         }
