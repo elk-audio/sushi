@@ -345,6 +345,11 @@ ProcessorReturnCode LV2_Wrapper::set_state(ProcessorState* state, bool realtime_
         auto event = new RtStateEvent(this->id(), std::move(rt_state), IMMEDIATE_PROCESS);
         _host_control.post_event(event);
     }
+    else
+    {
+        _host_control.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
+                                                                 this->id(), 0, IMMEDIATE_PROCESS));
+    }
 
     return ProcessorReturnCode::OK;
 }
@@ -476,6 +481,7 @@ void LV2_Wrapper::process_event(const RtEvent& event)
             port->set_control_value(parameter.second);
         }
         async_delete(state);
+        notify_state_change_rt();
     }
 }
 
@@ -1042,6 +1048,8 @@ void LV2_Wrapper::_set_binary_state(ProcessorState* state)
     {
         auto state_handler = _model->state();
         state_handler->apply_state(lilv_state, true);
+        _host_control.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
+                                                                 this->id(), 0, IMMEDIATE_PROCESS));
     }
     SUSHI_LOG_ERROR_IF(lilv_state == nullptr, "Failed to decode lilv state from binary state");
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -394,6 +394,9 @@ void EventDispatcher::_handle_engine_notifications_internally(EngineNotification
 
             case AudioGraphNotificationEvent::Action::TRACK_DELETED:
                 _parameter_manager.remove_processor(typed_event->track());
+                break;
+
+            default:
                 break;
         }
     }

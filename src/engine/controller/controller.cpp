@@ -186,8 +186,7 @@ void Controller::_handle_audio_graph_notifications(const AudioGraphNotificationE
             _notify_track_listeners(event, ext::TrackAction::DELETED);
             break;
         }
-        case AudioGraphNotificationEvent::Action::PROCESSOR_CREATED:
-        case AudioGraphNotificationEvent::Action::PROCESSOR_DELETED:
+        default:
             // External listeners are only notified once processors are added to a track
             break;
     }

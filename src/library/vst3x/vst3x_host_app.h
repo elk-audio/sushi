@@ -37,6 +37,8 @@
 #pragma GCC diagnostic pop
 
 namespace sushi {
+class HostControl;
+
 namespace vst3 {
 
 class Vst3xWrapper;
@@ -54,7 +56,7 @@ class ComponentHandler : public Steinberg::Vst::IComponentHandler, public Steinb
 public:
     SUSHI_DECLARE_NON_COPYABLE(ComponentHandler);
 
-    explicit ComponentHandler(Vst3xWrapper* wrapper_instance);
+    explicit ComponentHandler(Vst3xWrapper* wrapper_instance, HostControl* host_control);
     Steinberg::tresult PLUGIN_API beginEdit (Steinberg::Vst::ParamID /*id*/) override {return Steinberg::kNotImplemented;}
     Steinberg::tresult PLUGIN_API performEdit (Steinberg::Vst::ParamID parameter_id, Steinberg::Vst::ParamValue normalized_value) override;
     Steinberg::tresult PLUGIN_API endEdit (Steinberg::Vst::ParamID /*parameter_id*/) override {return Steinberg::kNotImplemented;}
@@ -65,6 +67,7 @@ public:
 
 private:
     Vst3xWrapper* _wrapper_instance;
+    HostControl*  _host_control;
 };
 
 /**

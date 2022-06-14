@@ -180,6 +180,18 @@ Event* Event::from_rt_event(const RtEvent& rt_event, Time timestamp)
             auto typed_ev = rt_event.delete_data_event();
             return new AsynchronousDeleteEvent(typed_ev->data(), timestamp);
         }
+        case RtEventType::NOTIFY:
+        {
+            auto typed_ev = rt_event.processor_notify_event();
+            if (typed_ev->action() == ProcessorNotifyRtEvent::Action::PARAMETER_UPDATE)
+            {
+                return new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
+                                                       typed_ev->processor_id(),
+                                                       0,
+                                                       timestamp);
+            }
+            break;
+        }
         case RtEventType::TIMING_TICK:
         {
             auto typed_ev = rt_event.timing_tick_event();

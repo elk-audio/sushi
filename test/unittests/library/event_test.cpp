@@ -256,6 +256,13 @@ TEST(EventTest, TestFromRtEvent)
     EXPECT_TRUE(event->process_asynchronously());
     delete event;
 
+    auto notify_event = RtEvent::make_processor_notify_event(30, ProcessorNotifyRtEvent::Action::PARAMETER_UPDATE);
+    event = Event::from_rt_event(notify_event, IMMEDIATE_PROCESS);
+    ASSERT_TRUE(event != nullptr);
+    EXPECT_TRUE(event->is_engine_notification());
+    EXPECT_EQ(static_cast<AudioGraphNotificationEvent*>(event)->action(), AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED);
+    delete event;
+
     auto tick_event = RtEvent::make_timing_tick_event(14, 12);
     event = Event::from_rt_event(tick_event, IMMEDIATE_PROCESS);
     ASSERT_TRUE(event != nullptr);

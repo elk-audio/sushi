@@ -117,6 +117,11 @@ TEST_F(TestParameterManager, TestParameterUpdates)
 
 TEST_F(TestParameterManager, TestProcessorUpdates)
 {
+    // Change every parameter value
+    for (auto p : _test_track->all_parameters())
+    {
+        _test_track->process_event(RtEvent::make_parameter_change_event(_test_track->id(), 0, p->id(), 0.12345f));
+    }
     _module_under_test.mark_processor_changed(_test_track->id(), TEST_MAX_INTERVAL);
 
     // Expect no notifications because time has not yet reached TEST_MAX_INTERVAL

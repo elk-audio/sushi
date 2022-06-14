@@ -251,6 +251,8 @@ ProcessorReturnCode Vst2xWrapper::set_program(int program)
         /* Vst2 lacks a mechanism for signaling that the program change was successful */
         _vst_dispatcher(effSetProgram, 0, program, nullptr, 0);
         _vst_dispatcher(effEndSetProgram, 0, 0, nullptr, 0);
+        _host_control.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
+                                                                 this->id(), 0, IMMEDIATE_PROCESS));
         return ProcessorReturnCode::OK;
     }
     return ProcessorReturnCode::UNSUPPORTED_OPERATION;
@@ -346,22 +348,8 @@ void Vst2xWrapper::process_event(const RtEvent& event)
         case RtEventType::SET_STATE:
         {
             auto state = event.processor_state_event()->state();
-
-            if (state->bypassed().has_value())
-            {
-                _set_bypass_rt(*state->bypassed());
-            }
-
-            for (const auto& parameter : state->parameters())
-            {
-                VstInt32 id = parameter.first;
-                float value = parameter.second;
-                if (id < _plugin_handle->numParams)
-                {
-                    _plugin_handle->setParameter(_plugin_handle, id, value);
-                }
-            }
-            async_delete(state);
+            _set_state_rt(state);
+            break;
         }
 
         default:
@@ -558,6 +546,26 @@ void Vst2xWrapper::_set_bypass_rt(bool bypassed)
     {
         _vst_dispatcher(effSetBypass, 0, bypassed ? 1 : 0, nullptr, 0.0f);
     }
+}
+
+void Vst2xWrapper::_set_state_rt(RtState* state)
+{
+    if (state->bypassed().has_value())
+    {
+        _set_bypass_rt(*state->bypassed());
+    }
+
+    for (const auto& parameter : state->parameters())
+    {
+        VstInt32 id = parameter.first;
+        float value = parameter.second;
+        if (id < _plugin_handle->numParams)
+        {
+            _plugin_handle->setParameter(_plugin_handle, id, value);
+        }
+    }
+    async_delete(state);
+    notify_state_change_rt();
 }
 
 VstSpeakerArrangementType arrangement_from_channels(int channels)

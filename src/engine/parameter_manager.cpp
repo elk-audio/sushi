@@ -147,10 +147,12 @@ void ParameterManager::_output_processor_notifications(dispatcher::BaseEventDisp
                 {
                     auto& entry = param_entries[p.first];
                     float value = processor->parameter_value(p.first).second;
-                    // TODO: Should we send even if value didn't change?
-                    output_parameter_value(i->processor_id, p.first, value, dispatcher);
-                    entry.last_update = timestamp;
-                    entry.value = value;
+                    if (value != entry.value)
+                    {
+                        output_parameter_value(i->processor_id, p.first, value, dispatcher);
+                        entry.value = value;
+                        entry.last_update = timestamp;
+                    }
                 }
             }
         }

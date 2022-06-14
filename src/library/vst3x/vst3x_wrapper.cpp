@@ -288,11 +288,7 @@ void Vst3xWrapper::process_event(const RtEvent& event)
         case RtEventType::SET_STATE:
         {
             auto state = event.processor_state_event()->state();
-            for (const auto& parameter : state->parameters())
-            {
-                _add_parameter_change(parameter.first, parameter.second, 0);
-            }
-            async_delete(state);
+            _set_state_rt(state);
             break;
         }
         default:
@@ -594,6 +590,11 @@ ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool realtime
     {
         auto event = new RtStateEvent(this->id(), std::move(rt_state), IMMEDIATE_PROCESS);
         _host_control.post_event(event);
+    }
+    else
+    {
+        _host_control.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
+                                                                 this->id(), 0, IMMEDIATE_PROCESS));
     }
 
     return ProcessorReturnCode::OK;
@@ -1106,7 +1107,19 @@ void Vst3xWrapper::_set_binary_state(std::vector<std::byte>& state)
 
     stream.seek(0, Steinberg::MemoryStream::kIBSeekSet, nullptr);
     res = _instance.component()->setState(&stream);
-    SUSHI_LOG_ERROR_IF(res != Steinberg::kResultOk, "Failed to set component state ({})", res);
+    SUSHI_LOG_ERROR_IF(res , "Failed to set component state ({})", res);
+    _host_control.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
+                                                             this->id(), 0, IMMEDIATE_PROCESS));
+}
+
+void Vst3xWrapper::_set_state_rt(RtState* state)
+{
+    for (const auto& parameter : state->parameters())
+    {
+        _add_parameter_change(parameter.first, parameter.second, 0);
+    }
+    async_delete(state);
+    notify_state_change_rt();
 }
 
 Steinberg::Vst::SpeakerArrangement speaker_arr_from_channels(int channels)
