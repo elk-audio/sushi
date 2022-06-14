@@ -716,9 +716,7 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value &tra
 
     if (track_def.HasMember("multibus") && track_def["multibus"].GetBool())
     {
-        std::tie(status, track_id) = _engine->create_multibus_track(name,
-                                                                    track_def["input_buses"].GetInt(),
-                                                                    track_def["output_buses"].GetInt());
+        std::tie(status, track_id) = _engine->create_multibus_track(name, track_def["buses"].GetInt());
     }
     else if (track_def.HasMember("channels"))
     {

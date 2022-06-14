@@ -6,8 +6,7 @@
         {
             "name" : "main",
             "multibus" : true,
-            "input_buses" : 2,
-            "output_buses" : 3,
+            "buses" : 3,
             "inputs" : [
                 {
                     "engine_bus" : 0,

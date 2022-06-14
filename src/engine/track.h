@@ -47,19 +47,22 @@ public:
     SUSHI_DECLARE_NON_COPYABLE(Track);
 
     /**
-     * @brief Create a track with a given number of channels
-     * @param channels The number of channels in the track.
-     *                 Note that even mono tracks have a stereo output bus
+     * @brief Create a track
+     * @param host_control Host callback object
+     * @param channels The number of channels in the track, must be even if type is MULTIBUS
+     * @param timer A timer object
+     * @param pan_controls If true, create a pan control parameter on the track
      */
-    Track(HostControl host_control, int channels, performance::PerformanceTimer* timer, bool pan_controls = true);
+    Track(HostControl host_control, int channels, performance::PerformanceTimer* timer, bool pan_controls);
 
     /**
      * @brief Create a track with a given number of stereo input and output buses
      *        buses are an abstraction for buses*2 channels internally.
-     * @param input_buffers The number of input buses
-     * @param output_buffers The number of output buses
+     * @param host_control Host callback object
+     * @param timer A timer object
+     * @param buses The number of stereo audio buses
      */
-    Track(HostControl host_control, int input_buses, int output_buses, performance::PerformanceTimer* timer, bool pan_controls_per_bus = true);
+    Track(HostControl host_control, int buses, performance::PerformanceTimer* timer);
 
     ~Track() override = default;
 
@@ -92,7 +95,7 @@ public:
      */
     ChunkSampleBuffer input_bus(int bus)
     {
-        assert(bus < _input_buses);
+        assert(bus < _buses);
         return ChunkSampleBuffer::create_non_owning_buffer(_input_buffer, bus * 2, 2);
     }
 
@@ -103,7 +106,7 @@ public:
     */
     ChunkSampleBuffer output_bus(int bus)
     {
-        assert(bus < _output_buses);
+        assert(bus < _buses);
         return ChunkSampleBuffer::create_non_owning_buffer(_output_buffer, bus * 2, 2);
     }
 
@@ -130,21 +133,12 @@ public:
     }
 
     /**
-     * @brief Return the number of input buses of the track.
-     * @return The number of input buses on the track.
+     * @brief Return the number of stereo buses of the track.
+     * @return The number of stereo buses on the track.
      */
-    int input_buses() const
+    int buses() const
     {
-        return _input_buses;
-    }
-
-    /**
-     * @brief Return the number of input buses of the track.
-     * @return The number of input buses on the track.
-     */
-    int output_buses() const
-    {
-        return _output_buses;
+        return _buses;
     }
 
     /**
@@ -190,11 +184,10 @@ private:
     ChunkSampleBuffer _input_buffer;
     ChunkSampleBuffer _output_buffer;
 
-    int _input_buses;
-    int _output_buses;
+    int _buses;
     PanMode _pan_mode;
 
-    BoolParameterValue*                                _mute_parameter;
+    BoolParameterValue*                               _mute_parameter;
     std::array<FloatParameterValue*, MAX_TRACK_BUSES> _gain_parameters;
     std::array<FloatParameterValue*, MAX_TRACK_BUSES> _pan_parameters;
     std::vector<std::array<ValueSmootherFilter<float>, 2>> _smoothers;

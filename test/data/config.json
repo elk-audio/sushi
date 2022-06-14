@@ -105,8 +105,7 @@
         {
             "name" : "multi",
             "multibus" : true,
-            "input_buses" : 2,
-            "output_buses" : 2,
+            "buses" : 2,
             "inputs" : [],
             "outputs" : [
                 {

@@ -47,14 +47,15 @@ inline std::pair<float, float> calc_l_r_gain(float gain, float pan)
     return {left_gain, right_gain};
 }
 
-Track::Track(HostControl host_control, int channels,
-             performance::PerformanceTimer* timer, bool pan_controls) : InternalPlugin(host_control),
-                                                                        _input_buffer{std::max(channels, 2)},
-                                                                        _output_buffer{std::max(channels, 2)},
-                                                                        _input_buses{1},
-                                                                        _output_buses{1},
-                                                                        _timer{timer}
-    {
+Track::Track(HostControl host_control,
+             int channels,
+             performance::PerformanceTimer* timer,
+             bool pan_controls) : InternalPlugin(host_control),
+                                  _input_buffer{std::max(channels, 2)},
+                                  _output_buffer{std::max(channels, 2)},
+                                  _buses{1},
+                                  _timer{timer}
+{
     _max_input_channels = channels;
     _max_output_channels = std::max(channels, 2);
     _current_input_channels = channels;
@@ -62,20 +63,18 @@ Track::Track(HostControl host_control, int channels,
     _common_init((pan_controls && channels <= 2) ? PanMode::PAN_AND_GAIN : PanMode::GAIN_ONLY);
 }
 
-Track::Track(HostControl host_control, int input_buses, int output_buses,
-             performance::PerformanceTimer* timer, bool pan_controls) :  InternalPlugin(host_control),
-                                                                         _input_buffer{std::max(input_buses, output_buses) * 2},
-                                                                         _output_buffer{std::max(input_buses, output_buses) * 2},
-                                                                         _input_buses{input_buses},
-                                                                         _output_buses{output_buses},
-                                                                         _timer{timer}
+Track::Track(HostControl host_control, int buses, performance::PerformanceTimer* timer) : InternalPlugin(host_control),
+                                                                                          _input_buffer{buses * 2},
+                                                                                          _output_buffer{buses * 2},
+                                                                                          _buses{buses},
+                                                                                          _timer{timer}
 {
-    int channels = std::max(input_buses, output_buses) * 2;
+    int channels = buses * 2;
     _max_input_channels = channels;
     _max_output_channels = channels;
     _current_input_channels = channels;
     _current_output_channels = channels;
-    _common_init(pan_controls? PanMode::PAN_AND_GAIN_PER_BUS : PanMode::GAIN_ONLY);
+    _common_init(PanMode::PAN_AND_GAIN_PER_BUS);
 }
 
 ProcessorReturnCode Track::init(float sample_rate)
@@ -287,7 +286,7 @@ void Track::_common_init(PanMode mode)
 
     if (mode == PanMode::PAN_AND_GAIN_PER_BUS)
     {
-        for (int bus = 1; bus < _output_buses; ++bus)
+        for (int bus = 1; bus < _buses; ++bus)
         {
             _gain_parameters.at(bus) = register_float_parameter("gain_sub_" + std::to_string(bus), "Gain", "dB",
                                                                 0.0f, -120.0f, 24.0f,
@@ -396,7 +395,7 @@ void Track::_apply_pan_and_gain(ChunkSampleBuffer& buffer, bool muted)
 
 void Track::_apply_pan_and_gain_per_bus(ChunkSampleBuffer& buffer, bool muted)
 {
-    for (int bus = 0; bus < _output_buses; ++bus)
+    for (int bus = 0; bus < _buses; ++bus)
     {
         auto bus_buffer = ChunkSampleBuffer::create_non_owning_buffer(buffer, bus * 2, 2);
         float gain = muted ? 0.0f : _gain_parameters[bus]->processed_value();

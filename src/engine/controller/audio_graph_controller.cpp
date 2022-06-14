@@ -42,10 +42,8 @@ inline ext::TrackInfo to_external(const Track* track, std::vector<int> proc_ids)
     return ext::TrackInfo{.id = static_cast<int>(track->id()),
                           .label = track->label(),
                           .name = track->name(),
-                          .input_channels = track->input_channels(),
-                          .input_buses = track->input_buses(),
-                          .output_channels = track->output_channels(),
-                          .output_buses = track->output_buses(),
+                          .channels = track->input_channels(),
+                          .buses = track->buses(),
                           .processors = std::move(proc_ids)};
 }
 
@@ -243,15 +241,12 @@ ext::ControlStatus AudioGraphController::create_track(const std::string& name, i
     return ext::ControlStatus::OK;
 }
 
-ext::ControlStatus AudioGraphController::create_multibus_track(const std::string& name,
-                                                               int input_buses,
-                                                               int output_buses)
+ext::ControlStatus AudioGraphController::create_multibus_track(const std::string& name, int buses)
 {
-    SUSHI_LOG_DEBUG("create_multibus_track called with name {}, {} input buses and {} output buses",
-                                                                  name, input_buses, output_buses);
+    SUSHI_LOG_DEBUG("create_multibus_track called with name {} and {} buses ", name, buses);
     auto lambda = [=] () -> int
     {
-        auto [status, track_id] = _engine->create_multibus_track(name, input_buses, output_buses);
+        auto [status, track_id] = _engine->create_multibus_track(name, buses);
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
     };
 

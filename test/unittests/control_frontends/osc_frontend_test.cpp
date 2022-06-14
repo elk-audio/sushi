@@ -74,7 +74,7 @@ protected:
 
         _module_under_test = std::make_unique<OSCFrontend>(&_mock_engine, &_mock_controller, _mock_osc_interface);
         _test_processor = std::make_shared<DummyProcessor>(_host_control_mockup.make_host_control_mockup());
-        _test_track = std::make_shared<Track>(_host_control_mockup.make_host_control_mockup(), 2, nullptr);
+        _test_track = std::make_shared<Track>(_host_control_mockup.make_host_control_mockup(), 2, nullptr, true);
         _test_track->set_name(TEST_TRACK_NAME);
         _test_processor->set_name(TEST_PROCESSOR_NAME);
 
