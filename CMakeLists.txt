@@ -418,7 +418,7 @@ if (${WITH_SENTRY})
     set(SENTRY_DSN "" CACHE STRING "The DSN to upload the sentry logs and crash reports to")
 
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} sentry)
-    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_SENTRY -DSUSHI_SENTRY_DSN=${SENTRY_DSN})
+    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_SENTRY -DSUSHI_SENTRY_DSN="${SENTRY_DSN}" -DSUSHI_CRASH_HANDLER_PATH="/Users/rubensvensson/workspace/ELK/sentry-test/install/bin/crashpad_handler")#"$<TARGET_FILE:crashpad_handler>")
 endif()
 
 ####################

@@ -24,6 +24,7 @@
 #include "iostream"
 
 #include "spdlog/sinks/base_sink.h"
+#include "sentry.h"
 
 namespace elk {
 
@@ -31,24 +32,60 @@ template<typename Mutex>
 class SentrySink : public spdlog::sinks::base_sink<Mutex>
 {
 public:
-    SentrySink() : spdlog::sinks::base_sink<Mutex>() { std::cout << "started sink" << std::endl; }
-    explicit SentrySink(std::unique_ptr<spdlog::formatter> formatter) : spdlog::sinks::base_sink<Mutex>(formatter) {std::cout << "started sink" << std::endl; }
+    SentrySink() : spdlog::sinks::base_sink<Mutex>() { init(); }
+    explicit SentrySink(std::unique_ptr<spdlog::formatter> formatter) : spdlog::sinks::base_sink<Mutex>(formatter) { init(); }
+
+    void init()
+    {
+        std::cout << "using crash handler: " << SUSHI_CRASH_HANDLER_PATH << std::endl;
+        std::cout << "started sink with dsn: " << SUSHI_SENTRY_DSN << std::endl;
+        sentry_options_t *options = sentry_options_new();
+        sentry_options_set_handler_path(options, SUSHI_CRASH_HANDLER_PATH);
+        sentry_options_set_dsn(options, SUSHI_SENTRY_DSN);
+        sentry_init(options);
+    }
+
+    ~SentrySink()
+    {
+        std::cout << "Destroying sentry sink" << std::endl;
+        sentry_close();
+    }
 protected:
     void sink_it_(const spdlog::details::log_msg& msg) override
     {
+        // spdlog::memory_buf_t formatted;
+        // spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
+        const std::string payload(msg.payload.begin(), msg.payload.end());
+        const std::string logger_name(msg.logger_name.begin(), msg.logger_name.end());
+        switch (msg.level)
+        {
+        case spdlog::level::info: _add_breadcrumb(payload, logger_name, "info"); break;
+        case spdlog::level::debug: _add_breadcrumb(payload, logger_name, "debug"); break;
+        case spdlog::level::warn: _add_breadcrumb(payload, logger_name, "warning"); break;
+        case spdlog::level::err:
+            sentry_capture_event(sentry_value_new_message_event(
+            /*   level */ SENTRY_LEVEL_ERROR,
+            /*  logger */ logger_name.c_str(),
+            /* message */ payload.c_str()
+            ));
+            break;
 
-    // log_msg is a struct containing the log entry info like level, timestamp, thread id etc.
-    // msg.raw contains pre formatted log
-
-    // If needed (very likely but not mandatory), the sink formats the message before sending it to its final destination:
-    spdlog::memory_buf_t formatted;
-    spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
-    std::cout << fmt::to_string(formatted);
+        default:
+            break;
+        }
     }
 
     void flush_() override
     {
-       std::cout << std::flush;
+       sentry_flush(1000);
+    }
+private:
+    void _add_breadcrumb(const std::string& message, const std::string& category, const std::string& level)
+    {
+        sentry_value_t crumb = sentry_value_new_breadcrumb("log", message.c_str());
+        sentry_value_set_by_key(crumb, "category", sentry_value_new_string(category.c_str()));
+        sentry_value_set_by_key(crumb, "level", sentry_value_new_string(level.c_str()));
+        sentry_add_breadcrumb(crumb);
     }
 };
 
