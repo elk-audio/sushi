@@ -23,17 +23,12 @@
 
 #include <unordered_map>
 #include <vector>
-#include <deque>
-
-#include "fifo/circularfifo_memory_relaxed_aquire_release.h"
 
 #include "library/types.h"
 #include "library/constants.h"
 #include "library/plugin_parameters.h"
 #include "library/event_interface.h"
 #include "library/event.h"
-//#include "engine/base_event_dispatcher.h"
-//#include "engine/base_processor_container.h"
 
 namespace sushi {
 
