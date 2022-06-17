@@ -367,6 +367,12 @@ int main(int argc, char* argv[])
         }
         error_exit("Error reading host config, check logs for details.");
     }
+    auto status = configurator->load_host_config();
+    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
+    {
+        error_exit("Failed to load host configuration from config file");
+    }
+
     int cv_inputs = audio_config.cv_inputs.value_or(0);
     int cv_outputs = audio_config.cv_outputs.value_or(0);
     int midi_inputs = audio_config.midi_inputs.value_or(1);
@@ -457,11 +463,6 @@ int main(int argc, char* argv[])
     // Load Configuration //
     ////////////////////////////////////////////////////////////////////////////////
 
-    auto status = configurator->load_host_config();
-    if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
-    {
-        error_exit("Failed to load host configuration from config file");
-    }
     status = configurator->load_tracks();
     if (status != sushi::jsonconfig::JsonConfigReturnStatus::OK)
     {
