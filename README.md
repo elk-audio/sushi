@@ -18,7 +18,7 @@ With JACK, sushi creates 8 virtual input and output ports that you can connect t
 
 ## Configuration file examples
 
-See directory `example_configs` for the JSON-schema definition and some example configurations.
+See directory [config_files](./misc/config_files/) for the JSON-schema definition and some example configurations.
 Configuration files are used for global host configs, track and plugins configuration, MIDI routing and mapping, events sequencing.
 
 ## Building Sushi
@@ -50,8 +50,8 @@ WITH_JACK                       | on / off | on      | Build Sushi with Jack Aud
 WITH_VST2                       | on / off | on      | Include support for loading Vst 2.x plugins in Sushi.
 VST2_SDK_PATH                   | path     | empty   | Path to external Vst 2.4 SDK. Not included and required if WITH_VST2 is enabled.
 WITH_VST3                       | on / off | on      | Include support for loading Vst 3.x plugins in Sushi.
-WITH_LV2                        | on / off | on      | Include support for loading LV2 plugins in Sushi. 
-WITH_LV2_MDA_TESTS              | on / off | on      | Include LV2 unit tests which depends on the LV2 drobilla port of the mda plugins being installed. 
+WITH_LV2                        | on / off | on      | Include support for loading LV2 plugins in Sushi.
+WITH_LV2_MDA_TESTS              | on / off | on      | Include LV2 unit tests which depends on the LV2 drobilla port of the mda plugins being installed.
 WITH_RPC_INTERFACE              | on / off | on      | Build gRPC external control interface, requires gRPC development files.
 WITH_TWINE                      | on / off | on      | Build and link with the included version of TWINE, tries to link with system wide TWINE if option is disabled.
 WITH_UNIT_TESTS                 | on / off | on      | Build and run unit tests together with building Sushi.
