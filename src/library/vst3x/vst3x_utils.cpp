@@ -106,13 +106,13 @@ Steinberg::tresult StateParamValue::getPoint(Steinberg::int32 /*id*/,
     return Steinberg::kResultOk;
 }
 
-Steinberg::int32 StateParameterChanges::getParameterCount()
+Steinberg::int32 Vst3xRtState::getParameterCount()
 {
     return _parameter_changes.size();
 }
 
 
-Steinberg::Vst::IParamValueQueue* StateParameterChanges::getParameterData(Steinberg::int32 index)
+Steinberg::Vst::IParamValueQueue* Vst3xRtState::getParameterData(Steinberg::int32 index)
 {
     if (static_cast<size_t>(index) >= _parameter_changes.size())
     {
@@ -123,8 +123,8 @@ Steinberg::Vst::IParamValueQueue* StateParameterChanges::getParameterData(Steinb
     return &_transfer_value;
 }
 
-Steinberg::Vst::IParamValueQueue* StateParameterChanges::addParameterData(const Steinberg::Vst::ParamID& /*id*/,
-                                                                          Steinberg::int32& /*index*/)
+Steinberg::Vst::IParamValueQueue* Vst3xRtState::addParameterData(const Steinberg::Vst::ParamID& /*id*/,
+                                                                 Steinberg::int32& /*index*/)
 {
     return nullptr;
 }

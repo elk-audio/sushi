@@ -125,6 +125,9 @@ Steinberg::Vst::Event convert_note_off_event(const KeyboardRtEvent* event);
  */
 Steinberg::Vst::Event convert_aftertouch_event(const KeyboardRtEvent* event);
 
+/**
+ * @brief Custom implementation of IParamValueQueue to work with Vst3xRtState below
+ */
 class StateParamValue : public Steinberg::Vst::IParamValueQueue
 {
 public:
@@ -159,14 +162,15 @@ private:
     float _value;
 };
 
-/* The implementation of Steinberg::Vst::ParameterChanges supplied with the vst sdk is much
- * too inefficient for setting a large number of parameters during one audio process call.
- * Hence we wrap RtState, which has parameter changes stored sequentially in a contiguous
- * block of memory in an interface that plugins can access */
-class StateParameterChanges : public RtState, public Steinberg::Vst::IParameterChanges
+/**
+ * @brief The implementation of Steinberg::Vst::ParameterChanges supplied with the vst sdk is
+ * much too inefficient for setting a large number of parameters during one audio process call.
+ * Instead we wrap RtState, which has parameter changes stored sequentially in a contiguous
+ * block of memory in an interface that plugins can access directly */
+class Vst3xRtState : public RtState, public Steinberg::Vst::IParameterChanges
 {
 public:
-    explicit StateParameterChanges(const ProcessorState& state) : RtState(state) {}
+    explicit Vst3xRtState(const ProcessorState& state) : RtState(state) {}
 
     Steinberg::int32 getParameterCount () override;
 

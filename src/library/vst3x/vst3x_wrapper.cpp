@@ -291,7 +291,7 @@ void Vst3xWrapper::process_event(const RtEvent& event)
         }
         case RtEventType::SET_STATE:
         {
-            auto state = static_cast<StateParameterChanges*>(event.processor_state_event()->state());
+            auto state = static_cast<Vst3xRtState*>(event.processor_state_event()->state());
             if (_state_parameter_changes)
             {
                 // If a parameter batch is already queued, just throw it away and use the new one.
@@ -579,10 +579,10 @@ ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool realtime
         return ProcessorReturnCode::OK;
     }
 
-    std::unique_ptr<StateParameterChanges> rt_state;
+    std::unique_ptr<Vst3xRtState> rt_state;
     if (realtime_running)
     {
-        rt_state = std::make_unique<StateParameterChanges>(*state);
+        rt_state = std::make_unique<Vst3xRtState>(*state);
     }
 
     if (state->program().has_value())
