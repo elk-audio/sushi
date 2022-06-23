@@ -16,8 +16,8 @@
 #ifndef PASSIVE_CONTROLLER_H
 #define PASSIVE_CONTROLLER_H
 
-#include "rt_controller.h"
-#include "sushi_interface.h"
+#include "include/sushi/rt_controller.h"
+#include "include/sushi/sushi_interface.h"
 
 namespace sushi
 {

@@ -14,7 +14,6 @@
 */
 
 #include "include/sushi/passive_factory.h"
-#include "include/sushi/real_time_controller.h"
 
 #include "logging.h"
 
@@ -29,6 +28,8 @@
 #endif
 
 #include "engine/json_configurator.h"
+
+#include "engine/controller/real_time_controller.h"
 
 namespace sushi
 {

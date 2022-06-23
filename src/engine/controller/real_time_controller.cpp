@@ -13,7 +13,7 @@
 * SUSHI. If not, see http://www.gnu.org/licenses/
 */
 
-#include "include/sushi/real_time_controller.h"
+#include "real_time_controller.h"
 
 #include "control_frontends/passive_midi_frontend.h"
 #include "audio_frontends/passive_frontend.h"
