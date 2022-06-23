@@ -2053,6 +2053,11 @@ void NotificationControlService::notification(const sushi::ext::ControlNotificat
             _forward_parameter_notification_to_subscribers(notification);
             break;
         }
+        case sushi::ext::NotificationType::PROPERTY_CHANGE:
+        {
+            _forward_property_notification_to_subscribers(notification);
+            break;
+        }
         default:
             break;
     }
@@ -2206,6 +2211,21 @@ void NotificationControlService::_forward_parameter_notification_to_subscribers(
     }
 }
 
+void NotificationControlService::_forward_property_notification_to_subscribers(const sushi::ext::ControlNotification* notification)
+{
+    auto typed_notification = static_cast<const sushi::ext::PropertyChangeNotification*>(notification);
+    auto notification_content = std::make_shared<PropertyValue>();
+    notification_content->set_value(typed_notification->value());
+    notification_content->mutable_property()->set_property_id(typed_notification->parameter_id());
+    notification_content->mutable_property()->set_processor_id(typed_notification->processor_id());
+
+    std::scoped_lock lock(_property_subscriber_lock);
+    for (auto& subscriber : _property_subscribers)
+    {
+        subscriber->push(notification_content);
+    }
+}
+
 void NotificationControlService::subscribe(SubscribeToTransportChangesCallData* subscriber)
 {
     std::scoped_lock lock(_transport_subscriber_lock);
@@ -2276,6 +2296,20 @@ void NotificationControlService::unsubscribe(SubscribeToParameterUpdatesCallData
                                              subscriber));
 }
 
+void NotificationControlService::subscribe(SubscribeToPropertyUpdatesCallData* subscriber)
+{
+    std::scoped_lock lock(_property_subscriber_lock);
+    _property_subscribers.push_back(subscriber);
+}
+
+void NotificationControlService::unsubscribe(SubscribeToPropertyUpdatesCallData* subscriber)
+{
+    std::scoped_lock lock(_property_subscriber_lock);
+    _property_subscribers.erase(std::remove(_property_subscribers.begin(),
+                                            _property_subscribers.end(),
+                                             subscriber));
+}
+
 void NotificationControlService::delete_all_subscribers()
 {
     /* Unsubscribe and delete CallData subscribers directly, without
@@ -2326,5 +2360,6 @@ void NotificationControlService::delete_all_subscribers()
         _processor_subscribers.clear();
     }
 }
+
 
 } // sushi_rpc

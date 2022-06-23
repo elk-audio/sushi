@@ -226,7 +226,8 @@ enum class NotificationType
     CPU_TIMING_UPDATE,
     TRACK_UPDATE,
     PROCESSOR_UPDATE,
-    PARAMETER_CHANGE
+    PARAMETER_CHANGE,
+    PROPERTY_CHANGE
 };
 
 enum class ProcessorAction

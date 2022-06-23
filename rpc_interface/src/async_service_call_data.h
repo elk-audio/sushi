@@ -226,5 +226,27 @@ private:
     std::unordered_map<int64_t, bool> _blocklist;
 };
 
+class SubscribeToPropertyUpdatesCallData : public SubscribeToUpdatesCallData<PropertyValue, GenericVoidValue>
+{
+public:
+    SubscribeToPropertyUpdatesCallData(NotificationControlService* service,
+                                       grpc::ServerCompletionQueue* async_rpc_queue)
+            : SubscribeToUpdatesCallData(service, async_rpc_queue)
+    {
+        proceed();
+    }
+
+    ~SubscribeToPropertyUpdatesCallData() = default;
+
+protected:
+    void _respawn() override;
+    void _subscribe() override;
+    void _unsubscribe() override;
+    bool _check_if_blocklisted(const PropertyValue& reply) override;
+    void _populate_blocklist() override;
+
+private:
+};
+
 }
 #endif // SUSHI_ASYNCSERVICECALLDATA_H

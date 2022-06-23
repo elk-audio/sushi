@@ -159,7 +159,7 @@ int EventDispatcher::process(Event* event)
         _waiting_list.push_front(event);
         return EventStatus::QUEUED_HANDLING;
     }
-    if (event->is_parameter_change_notification())
+    if (event->is_parameter_change_notification() || event->is_property_change_notification())
     {
         _publish_parameter_events(event);
         return EventStatus::HANDLED_OK;

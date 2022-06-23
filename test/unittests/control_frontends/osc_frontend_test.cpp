@@ -280,6 +280,26 @@ TEST_F(TestOSCFrontend, TestParamChangeNotification)
     _module_under_test->process(&event); // But this should - the one expected.
 }
 
+/*TEST_F(TestOSCFrontend, TestPropertyChangeNotification)
+{
+    EXPECT_CALL(*_mock_osc_interface, send(StrEq("/parameter/proc/property_1"), testing::Matcher<float>(0.5f))).Times(1);
+
+    ObjectId processor_id = _test_processor->id();
+    ObjectId parameter_id = _test_processor->parameter_from_name("param 1")->id();
+
+    auto event = ParameterChangeNotificationEvent(ParameterChangeNotificationEvent::Subtype::FLOAT_PARAMETER_CHANGE_NOT,
+                                                  processor_id,
+                                                  parameter_id,
+                                                  0.5f,
+                                                  IMMEDIATE_PROCESS);
+
+    _module_under_test->process(&event); // Since nothing is connected this should not cause a call.
+
+    _module_under_test->connect_from_all_parameters();
+
+    _module_under_test->process(&event); // But this should - the one expected.
+}*/
+
 TEST_F(TestOSCFrontend, TestStateHandling)
 {
     _module_under_test->set_connect_from_all_parameters(true);

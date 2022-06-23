@@ -206,6 +206,7 @@ service NotificationController
     rpc SubscribeToTrackChanges (GenericVoidValue) returns (stream TrackUpdate) {}
     rpc SubscribeToProcessorChanges (GenericVoidValue) returns (stream ProcessorUpdate) {}
     rpc SubscribeToParameterUpdates (ParameterNotificationBlocklist) returns (stream ParameterValue) {}
+    rpc SubscribeToPropertyUpdates (GenericVoidValue) returns (stream PropertyValue) {}
 }
 
 /**

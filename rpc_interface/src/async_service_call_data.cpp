@@ -103,6 +103,7 @@ template class SubscribeToUpdatesCallData<CpuTimings, GenericVoidValue>;
 template class SubscribeToUpdatesCallData<TrackUpdate, GenericVoidValue>;
 template class SubscribeToUpdatesCallData<ProcessorUpdate, GenericVoidValue>;
 template class SubscribeToUpdatesCallData<ParameterValue, ParameterNotificationBlocklist>;
+template class SubscribeToUpdatesCallData<PropertyValue, GenericVoidValue>;
 
 void SubscribeToTransportChangesCallData::_respawn()
 {
@@ -246,4 +247,28 @@ void SubscribeToParameterUpdatesCallData::_populate_blocklist()
     }
 }
 
+void SubscribeToPropertyUpdatesCallData::_respawn()
+{
+    new SubscribeToParameterUpdatesCallData(_service, _async_rpc_queue);
+}
+
+void SubscribeToPropertyUpdatesCallData::_subscribe()
+{
+    _service->subscribe(this);
+}
+
+void SubscribeToPropertyUpdatesCallData::_unsubscribe()
+{
+    _service->unsubscribe(this);
+}
+
+bool SubscribeToPropertyUpdatesCallData::_check_if_blocklisted(const PropertyValue& reply)
+{
+    return false;
+}
+
+void SubscribeToPropertyUpdatesCallData::_populate_blocklist()
+{
+
+}
 } // namespace sushi_rpc

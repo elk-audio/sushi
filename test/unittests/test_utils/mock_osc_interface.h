@@ -72,6 +72,11 @@ public:
                 send,
                 (const char* address_pattern, int payload),
                 (override));
+
+    MOCK_METHOD(void,
+                send,
+                (const char* address_pattern, const std::string& payload),
+                (override));
 };
 
 #endif // SUSHI_MOCK_OSC_INTERFACE_H
