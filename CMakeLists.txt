@@ -488,21 +488,21 @@ set(SOURCE_FILES
     src/engine/transport.cppsrc/engine/parameter_manager.cpp
     src/engine/processor_container.cpp
     src/engine/plugin_library.cpp
-    src/engine/controller/controller.cpp
-    src/engine/controller/system_controller.cpp
-    src/engine/controller/transport_controller.cpp
-    src/engine/controller/timing_controller.cpp
-    src/engine/controller/keyboard_controller.cpp
-    src/engine/controller/audio_graph_controller.cpp
-    src/engine/controller/parameter_controller.cpp
-    src/engine/controller/program_controller.cpp
-    src/engine/controller/midi_controller.cpp
-    src/engine/controller/audio_routing_controller.cpp
-    src/engine/controller/cv_gate_controller.cpp
-    src/engine/controller/osc_controller.cpp
-    src/engine/controller/session_controller.cpp
-    src/engine/controller/real_time_controller.cpp
-    src/factories/factory_base.cpp
+                      src/engine/controller/controller.cpp
+                      src/engine/controller/system_controller.cpp
+                      src/engine/controller/transport_controller.cpp
+                      src/engine/controller/timing_controller.cpp
+                      src/engine/controller/keyboard_controller.cpp
+                      src/engine/controller/audio_graph_controller.cpp
+                      src/engine/controller/parameter_controller.cpp
+                      src/engine/controller/program_controller.cpp
+                      src/engine/controller/midi_controller.cpp
+                      src/engine/controller/audio_routing_controller.cpp
+                      src/engine/controller/cv_gate_controller.cpp
+                      src/engine/controller/osc_controller.cpp
+                      src/engine/controller/session_controller.cpp
+                      src/engine/controller/real_time_controller.cpp
+        src/factories/base_factory.cpp
     src/factories/passive_factory.cpp
     src/factories/standalone_factory.cpp
     src/factories/offline_factory.cpp

@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
     else if (option_status == ParseStatus::MISSING_ARGUMENTS) return 2;
     else if (option_status == ParseStatus::EXIT)              return 0;
 
-    std::unique_ptr<FactoryBase> factory;
+    std::unique_ptr<BaseFactory> factory;
 
     if (options.frontend_type == FrontendType::DUMMY ||
         options.frontend_type == FrontendType::PASSIVE)

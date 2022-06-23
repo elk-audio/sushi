@@ -36,7 +36,7 @@ class GrpcServer;
 
 namespace sushi {
 
-class FactoryBase;
+class BaseFactory;
 
 namespace engine {
 class JsonConfigurator;
@@ -107,7 +107,7 @@ protected:
      */
 ConcreteSushi();
 
-    friend class FactoryBase;
+    friend class BaseFactory;
 
     std::unique_ptr<engine::AudioEngine> _engine {nullptr};
     std::unique_ptr<midi_dispatcher::MidiDispatcher> _midi_dispatcher {nullptr};

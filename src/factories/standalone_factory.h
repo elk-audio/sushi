@@ -18,7 +18,7 @@
 
 #include "include/sushi/sushi.h"
 
-#include "src/factories/factory_base.h"
+#include "src/factories/base_factory.h"
 
 namespace sushi_rpc {
 class GrpcServer;
@@ -29,7 +29,7 @@ namespace sushi {
 /**
  * @brief Factory for when Sushi will run in real-time standalone mode.
  */
-class StandaloneFactory : public FactoryBase
+class StandaloneFactory : public BaseFactory
 {
 public:
     StandaloneFactory();

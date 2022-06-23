@@ -15,7 +15,7 @@
 
 #include "logging.h"
 
-#include "factory_base.h"
+#include "base_factory.h"
 
 #include "engine/audio_engine.h"
 #include "engine/json_configurator.h"
@@ -27,11 +27,11 @@ namespace sushi
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("sushi-factory");
 
-FactoryBase::FactoryBase() = default;
+BaseFactory::BaseFactory() = default;
 
-FactoryBase::~FactoryBase() = default;
+BaseFactory::~BaseFactory() = default;
 
-std::unique_ptr<Sushi> FactoryBase::_make_sushi()
+std::unique_ptr<Sushi> BaseFactory::_make_sushi()
 {
     if (_status == InitStatus::OK)
     {
@@ -57,12 +57,12 @@ std::unique_ptr<Sushi> FactoryBase::_make_sushi()
     }
 }
 
-InitStatus FactoryBase::sushi_init_status()
+InitStatus BaseFactory::sushi_init_status()
 {
     return _status;
 }
 
-void FactoryBase::_instantiate_subsystems(SushiOptions& options)
+void BaseFactory::_instantiate_subsystems(SushiOptions& options)
 {
     _engine = std::make_unique<engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT,
                                                     options.rt_cpu_cores,
@@ -85,7 +85,7 @@ void FactoryBase::_instantiate_subsystems(SushiOptions& options)
     }
 }
 
-InitStatus FactoryBase::_configure_from_file(SushiOptions& options)
+InitStatus BaseFactory::_configure_from_file(SushiOptions& options)
 {
     auto configurator = std::make_unique<jsonconfig::JsonConfigurator>(_engine.get(),
                                                                        _midi_dispatcher.get(),
@@ -124,7 +124,7 @@ InitStatus FactoryBase::_configure_from_file(SushiOptions& options)
     return InitStatus::OK;
 }
 
-InitStatus FactoryBase::_configure_with_defaults(SushiOptions& options)
+InitStatus BaseFactory::_configure_with_defaults(SushiOptions& options)
 {
     jsonconfig::ControlConfig control_config;
     control_config.midi_inputs = 1;
@@ -135,7 +135,7 @@ InitStatus FactoryBase::_configure_with_defaults(SushiOptions& options)
     return _configure_engine(options, control_config, nullptr); // nullptr for configurator
 }
 
-InitStatus FactoryBase::_configure_engine(SushiOptions& options,
+InitStatus BaseFactory::_configure_engine(SushiOptions& options,
                                           const jsonconfig::ControlConfig& control_config,
                                           jsonconfig::JsonConfigurator* configurator)
 {
@@ -176,7 +176,7 @@ InitStatus FactoryBase::_configure_engine(SushiOptions& options,
     return InitStatus::OK;
 }
 
-InitStatus FactoryBase::_load_json_configuration(jsonconfig::JsonConfigurator* configurator)
+InitStatus BaseFactory::_load_json_configuration(jsonconfig::JsonConfigurator* configurator)
 {
     auto status = configurator->load_host_config();
     if (status != jsonconfig::JsonConfigReturnStatus::OK)

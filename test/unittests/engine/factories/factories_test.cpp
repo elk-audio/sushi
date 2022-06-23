@@ -27,7 +27,7 @@
 #endif
 
 #include "concrete_sushi.cpp"
-#include "factories/factory_base.cpp"
+#include "factories/base_factory.cpp"
 #include "factories/passive_factory.cpp"
 #include "factories/offline_factory.cpp"
 

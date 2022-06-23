@@ -66,11 +66,11 @@ struct ControlConfig;
  *
  *        Each factory instance is meant to be run only once and discarded.
  */
-class FactoryBase
+class BaseFactory
 {
 public:
-    FactoryBase();
-    virtual ~FactoryBase();
+    BaseFactory();
+    virtual ~BaseFactory();
 
     /**
      * @brief Run this - once - to construct sushi. If construction fails,

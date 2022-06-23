@@ -17,14 +17,14 @@
 #define SUSHI_OFFLINE_FACTORY_H
 
 #include "include/sushi/sushi.h"
-#include "src/factories/factory_base.h"
+#include "src/factories/base_factory.h"
 
 namespace sushi {
 
 /**
  * @brief Factory for when Sushi is running in offline / dummy mode.
  */
-class OfflineFactory : public FactoryBase
+class OfflineFactory : public BaseFactory
 {
 public:
     OfflineFactory();

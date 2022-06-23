@@ -19,7 +19,7 @@
 #include "rt_controller.h"
 #include "sushi.h"
 
-#include "factories/factory_base.h"
+#include "factories/base_factory.h"
 
 namespace sushi_rpc {
 class GrpcServer;
@@ -45,7 +45,7 @@ class Transport;
  * @brief Factory for when Sushi will be embedded into another audio host or into a plugin,
  *        and will only use Passive frontends for audio and MIDI.
  */
-class PassiveFactory : public FactoryBase
+class PassiveFactory : public BaseFactory
 {
 public:
     PassiveFactory();
