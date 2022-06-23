@@ -95,7 +95,7 @@ public:
     /**
      * @return an instance of the Sushi controller - assuming Sushi has first been initialized.
      */
-    engine::Controller* controller() override;
+    ext::SushiControl* controller() override;
 
     void set_sample_rate(float sample_rate) override;
 

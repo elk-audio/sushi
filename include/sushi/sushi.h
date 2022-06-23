@@ -31,9 +31,12 @@
 
 namespace sushi {
 
+namespace ext {
+class SushiControl;
+}
+
 namespace engine {
 class AudioEngine;
-class Controller;
 }
 
 namespace audio_frontend {
@@ -130,7 +133,7 @@ public:
 
     virtual void exit() = 0;
 
-    virtual engine::Controller* controller() = 0;
+    virtual ext::SushiControl* controller() = 0;
 
     virtual void set_sample_rate(float sample_rate) = 0;
     virtual float sample_rate() const = 0;
