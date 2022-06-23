@@ -26,7 +26,7 @@
 #include <chrono>
 #include <optional>
 
-#include "include/sushi/sushi_interface.h"
+#include "include/sushi/sushi.h"
 
 #include "compile_time_settings.h"
 
@@ -77,10 +77,10 @@ class JsonConfigurator;
  */
 void init_logger(const SushiOptions& options);
 
-class Sushi : public AbstractSushi
+class ConcreteSushi : public Sushi
 {
 public:
-    ~Sushi() override;
+    ~ConcreteSushi() override;
 
     /**
      * Given Sushi is initialized successfully, call this before the audio callback is first invoked.
@@ -105,7 +105,7 @@ protected:
     /**
      * @brief To create a Sushi instance, call _make_sushi(...) from inside a class inheriting from FactoryBase.
      */
-    Sushi();
+ConcreteSushi();
 
     friend class FactoryBase;
 

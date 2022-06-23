@@ -18,7 +18,7 @@
 #include "logging.h"
 
 #include "engine/audio_engine.h"
-#include "src/sushi.h"
+#include "src/concrete_sushi.h"
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
 #include "sushi_rpc/grpc_server.h"
@@ -38,7 +38,7 @@ OfflineFactory::OfflineFactory() = default;
 
 OfflineFactory::~OfflineFactory() = default;
 
-std::unique_ptr<AbstractSushi> OfflineFactory::run(SushiOptions& options)
+std::unique_ptr<Sushi> OfflineFactory::run(SushiOptions& options)
 {
     init_logger(options);
 

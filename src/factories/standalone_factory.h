@@ -16,7 +16,7 @@
 #ifndef SUSHI_STANDALONE_FACTORY_H
 #define SUSHI_STANDALONE_FACTORY_H
 
-#include "include/sushi/sushi_interface.h"
+#include "include/sushi/sushi.h"
 
 #include "src/factories/factory_base.h"
 
@@ -35,7 +35,7 @@ public:
     StandaloneFactory();
     ~StandaloneFactory() override;
 
-    std::unique_ptr<AbstractSushi> run(SushiOptions& options) override;
+    std::unique_ptr<Sushi> run(SushiOptions& options) override;
 
 protected:
     InitStatus _setup_audio_frontend(const SushiOptions& options,

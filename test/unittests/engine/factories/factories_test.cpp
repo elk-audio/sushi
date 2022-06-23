@@ -26,7 +26,7 @@
 #include "third-party/oscpack/ip/UdpSocket.h"
 #endif
 
-#include "sushi.cpp"
+#include "concrete_sushi.cpp"
 #include "factories/factory_base.cpp"
 #include "factories/passive_factory.cpp"
 #include "factories/offline_factory.cpp"
@@ -78,7 +78,7 @@ TEST_F(PassiveFactoryTest, TestPassiveFactoryWithDefaultConfig)
 
     ASSERT_NE(sushi.get(), nullptr);
 
-    auto sushi_cast = static_cast<Sushi*>(sushi.get());
+    auto sushi_cast = static_cast<ConcreteSushi*>(sushi.get());
 
     ASSERT_NE(sushi_cast, nullptr);
 
@@ -114,7 +114,7 @@ TEST_F(PassiveFactoryTest, TestPassiveFactoryWithConfigFile)
 
     ASSERT_NE(sushi.get(), nullptr);
 
-    auto sushi_cast = static_cast<Sushi*>(sushi.get());
+    auto sushi_cast = static_cast<ConcreteSushi*>(sushi.get());
 
     ASSERT_NE(sushi_cast, nullptr);
 
@@ -172,7 +172,7 @@ TEST_F(OfflineFactoryTest, TestOfflineFactoryWithDefaultConfig)
 
     ASSERT_NE(sushi.get(), nullptr);
 
-    auto sushi_cast = static_cast<Sushi*>(sushi.get());
+    auto sushi_cast = static_cast<ConcreteSushi*>(sushi.get());
 
     ASSERT_NE(sushi_cast, nullptr);
 
@@ -202,7 +202,7 @@ TEST_F(OfflineFactoryTest, TestOfflineFactoryWithConfigFile)
 
     ASSERT_NE(sushi.get(), nullptr);
 
-    auto sushi_cast = static_cast<Sushi*>(sushi.get());
+    auto sushi_cast = static_cast<ConcreteSushi*>(sushi.get());
 
     ASSERT_NE(sushi_cast, nullptr);
 
@@ -258,7 +258,7 @@ TEST_F(StandaloneFactoryTest, TestStandaloneFactoryWithDefaultConfig)
 
     ASSERT_NE(sushi.get(), nullptr);
 
-    auto sushi_cast = static_cast<Sushi*>(sushi.get());
+    auto sushi_cast = static_cast<ConcreteSushi*>(sushi.get());
 
     ASSERT_NE(sushi_cast, nullptr);
 
@@ -288,7 +288,7 @@ TEST_F(StandaloneFactoryTest, TestStandaloneFactoryWithConfigFile)
 
     ASSERT_NE(sushi.get(), nullptr);
 
-    auto sushi_cast = static_cast<Sushi*>(sushi.get());
+    auto sushi_cast = static_cast<ConcreteSushi*>(sushi.get());
 
     ASSERT_NE(sushi_cast, nullptr);
 

@@ -120,11 +120,11 @@ struct SushiOptions
  */
 void init_logger(const SushiOptions& options);
 
-class AbstractSushi
+class Sushi
 {
 public:
-    AbstractSushi() = default;
-    virtual ~AbstractSushi() = default;
+    Sushi() = default;
+    virtual ~Sushi() = default;
 
     virtual void start() = 0;
 

@@ -8,7 +8,7 @@
 
 #include <gmock/gmock.h>
 
-#include "include/sushi/sushi_interface.h"
+#include "include/sushi/sushi.h"
 
 namespace sushi
 {

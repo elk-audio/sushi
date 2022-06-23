@@ -17,12 +17,12 @@
 #define PASSIVE_CONTROLLER_H
 
 #include "include/sushi/rt_controller.h"
-#include "include/sushi/sushi_interface.h"
+#include "include/sushi/sushi.h"
 
 namespace sushi
 {
 
-class Sushi;
+class ConcreteSushi;
 
 namespace audio_frontend
 {

@@ -17,7 +17,7 @@
 #define PASSIVE_FACTORY_H
 
 #include "rt_controller.h"
-#include "sushi_interface.h"
+#include "sushi.h"
 
 #include "factories/factory_base.h"
 
@@ -27,7 +27,7 @@ class GrpcServer;
 
 namespace sushi {
 
-class Sushi;
+class ConcreteSushi;
 
 namespace audio_frontend {
 class PassiveFrontend;
@@ -51,7 +51,7 @@ public:
     PassiveFactory();
     ~PassiveFactory() override;
 
-    std::unique_ptr<AbstractSushi> run(SushiOptions& options) override;
+    std::unique_ptr<Sushi> run(SushiOptions& options) override;
 
     /**
      * @brief Returns an instance of a RealTimeController, if run() completed successfully.

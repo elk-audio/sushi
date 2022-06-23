@@ -22,7 +22,7 @@
 
 #include "logging.h"
 
-#include "sushi.h"
+#include "concrete_sushi.h"
 
 #include "engine/audio_engine.h"
 
@@ -95,10 +95,10 @@ std::string to_string(InitStatus init_status)
 // Sushi methods                         //
 ///////////////////////////////////////////
 
-Sushi::Sushi() = default;
-Sushi::~Sushi() = default;
+ConcreteSushi::ConcreteSushi() = default;
+ConcreteSushi::~ConcreteSushi() = default;
 
-void Sushi::start()
+void ConcreteSushi::start()
 {
     _audio_frontend->run();
     _engine->event_dispatcher()->run();
@@ -114,7 +114,7 @@ void Sushi::start()
 #endif
 }
 
-void Sushi::exit()
+void ConcreteSushi::exit()
 {
     _audio_frontend->cleanup();
     _engine->event_dispatcher()->stop();
@@ -131,7 +131,7 @@ void Sushi::exit()
 #endif
 }
 
-engine::Controller* Sushi::controller()
+engine::Controller* ConcreteSushi::controller()
 {
     return _engine_controller.get();
 }
@@ -141,12 +141,12 @@ engine::Controller* Sushi::controller()
     return _controller.get();
 }
 
-void Sushi::set_sample_rate(float sample_rate)
+void ConcreteSushi::set_sample_rate(float sample_rate)
 {
     _engine->set_sample_rate(sample_rate);
 }
 
-float Sushi::sample_rate() const
+float ConcreteSushi::sample_rate() const
 {
     return _engine->sample_rate();
 }

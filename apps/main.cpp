@@ -23,7 +23,7 @@
 
 #include <condition_variable>
 
-#include "sushi.h"
+#include "concrete_sushi.h"
 
 #include "include/sushi/terminal_utilities.h"
 

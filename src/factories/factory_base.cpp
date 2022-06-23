@@ -20,7 +20,7 @@
 #include "engine/audio_engine.h"
 #include "engine/json_configurator.h"
 
-#include "sushi.h"
+#include "concrete_sushi.h"
 
 namespace sushi
 {
@@ -31,12 +31,12 @@ FactoryBase::FactoryBase() = default;
 
 FactoryBase::~FactoryBase() = default;
 
-std::unique_ptr<AbstractSushi> FactoryBase::_make_sushi()
+std::unique_ptr<Sushi> FactoryBase::_make_sushi()
 {
     if (_status == InitStatus::OK)
     {
         // It's clearer to have FactoryBase as friend of Sushi.
-        auto sushi = std::unique_ptr<Sushi>(new Sushi());
+        auto sushi = std::unique_ptr<ConcreteSushi>(new ConcreteSushi());
 
         sushi->_engine = std::move(_engine);
         sushi->_midi_dispatcher = std::move(_midi_dispatcher);

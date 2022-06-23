@@ -21,7 +21,7 @@
 #include "control_frontends/passive_midi_frontend.h"
 #include "audio_frontends/passive_frontend.h"
 
-#include "src/sushi.h"
+#include "src/concrete_sushi.h"
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
 #include "sushi_rpc/grpc_server.h"
@@ -39,7 +39,7 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("sushi-factory");
 PassiveFactory::PassiveFactory() = default;
 PassiveFactory::~PassiveFactory() = default;
 
-std::unique_ptr<AbstractSushi> PassiveFactory::run(SushiOptions& options)
+std::unique_ptr<Sushi> PassiveFactory::run(SushiOptions& options)
 {
     init_logger(options); // This can only be called once.
 

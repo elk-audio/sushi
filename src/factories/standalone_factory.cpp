@@ -18,7 +18,7 @@
 #include "logging.h"
 
 #include "engine/audio_engine.h"
-#include "src/sushi.h"
+#include "src/concrete_sushi.h"
 
 #ifdef SUSHI_BUILD_WITH_ALSA_MIDI
 #include "control_frontends/alsa_midi_frontend.h"
@@ -48,7 +48,7 @@ StandaloneFactory::StandaloneFactory() = default;
 
 StandaloneFactory::~StandaloneFactory() = default;
 
-std::unique_ptr<AbstractSushi> StandaloneFactory::run(SushiOptions& options)
+std::unique_ptr<Sushi> StandaloneFactory::run(SushiOptions& options)
 {
     init_logger(options);
 

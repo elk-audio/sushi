@@ -16,7 +16,7 @@
 #ifndef SUSHI_FACTORY_BASE_H
 #define SUSHI_FACTORY_BASE_H
 
-#include "include/sushi/sushi_interface.h"
+#include "include/sushi/sushi.h"
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
 #include "sushi_rpc/grpc_server.h"
@@ -79,7 +79,7 @@ public:
      *        Not that it is passed in by reference - factories may choose to modify it.
      * @return a unique_ptr with the constructed instance if successful, of empty if not.
      */
-    virtual std::unique_ptr<AbstractSushi> run(SushiOptions& options) = 0;
+    virtual std::unique_ptr<Sushi> run(SushiOptions& options) = 0;
 
     /**
      * @return Returns the status of the Initialization carried out by run().
@@ -87,7 +87,7 @@ public:
     InitStatus sushi_init_status();
 
 protected:
-    std::unique_ptr<AbstractSushi> _make_sushi();
+    std::unique_ptr<Sushi> _make_sushi();
 
     void _instantiate_subsystems(SushiOptions& options);
 

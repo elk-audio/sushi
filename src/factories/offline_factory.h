@@ -16,7 +16,7 @@
 #ifndef SUSHI_OFFLINE_FACTORY_H
 #define SUSHI_OFFLINE_FACTORY_H
 
-#include "include/sushi/sushi_interface.h"
+#include "include/sushi/sushi.h"
 #include "src/factories/factory_base.h"
 
 namespace sushi {
@@ -30,7 +30,7 @@ public:
     OfflineFactory();
     ~OfflineFactory() override;
 
-    std::unique_ptr<AbstractSushi> run(SushiOptions& options) override;
+    std::unique_ptr<Sushi> run(SushiOptions& options) override;
 
 protected:
     InitStatus _setup_audio_frontend(const SushiOptions& options,
