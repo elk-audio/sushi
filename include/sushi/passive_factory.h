@@ -20,7 +20,6 @@
 #include "sushi_interface.h"
 
 #include "factories/factory_base.h"
-#include "real_time_controller.h"
 
 namespace sushi_rpc {
 class GrpcServer;
@@ -57,9 +56,9 @@ public:
     /**
      * @brief Returns an instance of a RealTimeController, if run() completed successfully.
      *        If not, it returns an empty unique_ptr.
-     * @return A unique_ptr with a RealTimeController, or not, depending on InitStatus.
+     * @return A unique_ptr with a RtController sub-class, or not, depending on InitStatus.
      */
-    std::unique_ptr<RealTimeController> rt_controller();
+    std::unique_ptr<RtController> rt_controller();
 
 protected:
     InitStatus _setup_audio_frontend([[maybe_unused]] const SushiOptions& options,
@@ -75,7 +74,7 @@ protected:
                                  jsonconfig::JsonConfigurator* configurator) override;
 
 private:
-    std::unique_ptr<RealTimeController> _real_time_controller {nullptr};
+    std::unique_ptr<RtController> _real_time_controller {nullptr};
 };
 
 } // namespace sushi

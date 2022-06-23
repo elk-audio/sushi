@@ -14,6 +14,7 @@
 */
 
 #include "include/sushi/passive_factory.h"
+#include "include/sushi/real_time_controller.h"
 
 #include "logging.h"
 
@@ -54,7 +55,7 @@ std::unique_ptr<AbstractSushi> PassiveFactory::run(SushiOptions& options)
     return _make_sushi();
 }
 
-std::unique_ptr<RealTimeController> PassiveFactory::rt_controller()
+std::unique_ptr<RtController> PassiveFactory::rt_controller()
 {
     return std::move(_real_time_controller);
 }
