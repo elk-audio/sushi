@@ -47,9 +47,7 @@ class Controller;
 namespace audio_frontend {
 class BaseAudioFrontendConfiguration;
 class BaseAudioFrontend;
-#ifdef SUSHI_BUILD_WITH_XENOMAI
 class XenomaiRaspaFrontend;
-#endif
 class PortAudioFrontend;
 class OfflineFrontend;
 class JackFrontend;

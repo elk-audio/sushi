@@ -165,11 +165,9 @@ ParseStatus parse_options(int argc, char* argv[], sushi::SushiOptions& options)
             case OPT_IDX_JACK_SERVER:
                 options.jack_server_name.assign(opt.arg);
                 break;
-#ifdef SUSHI_BUILD_WITH_XENOMAI
             case OPT_IDX_USE_XENOMAI_RASPA:
                 options.frontend_type = FrontendType::XENOMAI_RASPA;
                 break;
-#endif
             case OPT_IDX_XENOMAI_DEBUG_MODE_SW:
                 options.debug_mode_switches = true;
                 break;
