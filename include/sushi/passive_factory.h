@@ -51,7 +51,7 @@ public:
     PassiveFactory();
     ~PassiveFactory() override;
 
-    std::unique_ptr<Sushi> run(SushiOptions& options) override;
+    std::pair<std::unique_ptr<Sushi>, InitStatus> new_instance(SushiOptions& options) override;
 
     /**
      * @brief Returns an instance of a RealTimeController, if run() completed successfully.

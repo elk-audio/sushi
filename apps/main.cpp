@@ -100,9 +100,7 @@ int main(int argc, char* argv[])
         return 3;
     }
 
-    auto sushi = factory->run(options);
-
-    auto init_status = factory->sushi_init_status();
+    auto [sushi, init_status] = factory->new_instance(options);
 
     if (init_status != InitStatus::OK)
     {

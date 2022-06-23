@@ -38,13 +38,13 @@ OfflineFactory::OfflineFactory() = default;
 
 OfflineFactory::~OfflineFactory() = default;
 
-std::unique_ptr<Sushi> OfflineFactory::run(SushiOptions& options)
+std::pair<std::unique_ptr<Sushi>, InitStatus> OfflineFactory::new_instance(SushiOptions& options)
 {
     init_logger(options);
 
     _instantiate_subsystems(options);
 
-    return _make_sushi();
+    return {_make_sushi(), _status};
 }
 
 InitStatus OfflineFactory::_setup_audio_frontend(const SushiOptions& options,

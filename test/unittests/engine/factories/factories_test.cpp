@@ -74,7 +74,7 @@ TEST_F(PassiveFactoryTest, TestPassiveFactoryWithDefaultConfig)
     options.config_filename = "NONE";
     options.use_input_config_file = false;
 
-    auto sushi = _passive_factory.run(options);
+    auto [sushi, status] = _passive_factory.new_instance(options);
 
     ASSERT_NE(sushi.get(), nullptr);
 
@@ -110,7 +110,7 @@ TEST_F(PassiveFactoryTest, TestPassiveFactoryWithConfigFile)
     options.config_filename = _path;
     options.use_input_config_file = true;
 
-    auto sushi = _passive_factory.run(options);
+    auto [sushi, status] = _passive_factory.new_instance(options);
 
     ASSERT_NE(sushi.get(), nullptr);
 
@@ -168,7 +168,7 @@ TEST_F(OfflineFactoryTest, TestOfflineFactoryWithDefaultConfig)
     options.config_filename = "NONE";
     options.use_input_config_file = false;
 
-    auto sushi = _offline_factory.run(options);
+    auto [sushi, status] = _offline_factory.new_instance(options);
 
     ASSERT_NE(sushi.get(), nullptr);
 
@@ -198,7 +198,7 @@ TEST_F(OfflineFactoryTest, TestOfflineFactoryWithConfigFile)
     options.config_filename = _path;
     options.use_input_config_file = true;
 
-    auto sushi = _offline_factory.run(options);
+    auto [sushi, status] = _offline_factory.new_instance(options);
 
     ASSERT_NE(sushi.get(), nullptr);
 
@@ -254,7 +254,7 @@ TEST_F(StandaloneFactoryTest, TestStandaloneFactoryWithDefaultConfig)
     options.use_input_config_file = false;
     options.frontend_type = FrontendType::JACK;
 
-    auto sushi = _standalone_factory.run(options);
+    auto [sushi, status] = _standalone_factory.new_instance(options);
 
     ASSERT_NE(sushi.get(), nullptr);
 
@@ -284,7 +284,7 @@ TEST_F(StandaloneFactoryTest, TestStandaloneFactoryWithConfigFile)
     options.use_input_config_file = true;
     options.frontend_type = FrontendType::JACK;
 
-    auto sushi = _standalone_factory.run(options);
+    auto [sushi, status] = _standalone_factory.new_instance(options);
 
     ASSERT_NE(sushi.get(), nullptr);
 

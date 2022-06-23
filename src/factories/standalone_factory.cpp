@@ -48,7 +48,7 @@ StandaloneFactory::StandaloneFactory() = default;
 
 StandaloneFactory::~StandaloneFactory() = default;
 
-std::unique_ptr<Sushi> StandaloneFactory::run(SushiOptions& options)
+std::pair<std::unique_ptr<Sushi>, InitStatus> StandaloneFactory::new_instance(SushiOptions& options)
 {
     init_logger(options);
 
@@ -70,7 +70,7 @@ std::unique_ptr<Sushi> StandaloneFactory::run(SushiOptions& options)
 
     _instantiate_subsystems(options);
 
-    return _make_sushi();
+    return {_make_sushi(), _status};
 }
 
 InitStatus StandaloneFactory::_setup_audio_frontend(const SushiOptions& options,

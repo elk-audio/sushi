@@ -57,11 +57,6 @@ std::unique_ptr<Sushi> BaseFactory::_make_sushi()
     }
 }
 
-InitStatus BaseFactory::sushi_init_status()
-{
-    return _status;
-}
-
 void BaseFactory::_instantiate_subsystems(SushiOptions& options)
 {
     _engine = std::make_unique<engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT,

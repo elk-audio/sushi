@@ -39,7 +39,7 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("passive-factory");
 PassiveFactory::PassiveFactory() = default;
 PassiveFactory::~PassiveFactory() = default;
 
-std::unique_ptr<Sushi> PassiveFactory::run(SushiOptions& options)
+std::pair<std::unique_ptr<Sushi>, InitStatus> PassiveFactory::new_instance(SushiOptions& options)
 {
     init_logger(options); // This can only be called once.
 
@@ -53,7 +53,7 @@ std::unique_ptr<Sushi> PassiveFactory::run(SushiOptions& options)
         static_cast<midi_frontend::PassiveMidiFrontend*>(_midi_frontend.get()),
         _engine->transport());
 
-    return _make_sushi();
+    return {_make_sushi(), _status};
 }
 
 std::unique_ptr<RtController> PassiveFactory::rt_controller()

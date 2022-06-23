@@ -30,7 +30,7 @@ public:
     OfflineFactory();
     ~OfflineFactory() override;
 
-    std::unique_ptr<Sushi> run(SushiOptions& options) override;
+    std::pair<std::unique_ptr<Sushi>, InitStatus> new_instance(SushiOptions& options) override;
 
 protected:
     InitStatus _setup_audio_frontend(const SushiOptions& options,
