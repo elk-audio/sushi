@@ -42,7 +42,7 @@
 namespace sushi
 {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("sushi-factory");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("standalone-factory");
 
 StandaloneFactory::StandaloneFactory() = default;
 

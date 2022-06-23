@@ -32,7 +32,7 @@
 namespace sushi
 {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("sushi-factory");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("offline-factory");
 
 OfflineFactory::OfflineFactory() = default;
 
