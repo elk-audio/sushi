@@ -191,6 +191,10 @@ int OSCFrontend::process(Event* event)
     {
         _handle_param_change_notification(static_cast<ParameterChangeNotificationEvent*>(event));
     }
+    else if (event->is_property_change_notification())
+    {
+        _handle_property_change_notification(static_cast<PropertyChangeNotificationEvent*>(event));
+    }
     else if (event->is_engine_notification())
     {
         _handle_engine_notification(static_cast<EngineNotificationEvent*>(event));
