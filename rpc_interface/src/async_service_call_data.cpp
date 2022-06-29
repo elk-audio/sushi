@@ -254,6 +254,12 @@ void SubscribeToPropertyUpdatesCallData::_respawn()
 
 void SubscribeToPropertyUpdatesCallData::_subscribe()
 {
+    _service->RequestSubscribeToPropertyUpdates(&_ctx,
+                                                &_notification_blocklist,
+                                                &_responder,
+                                                _async_rpc_queue,
+                                                _async_rpc_queue,
+                                                this);
     _service->subscribe(this);
 }
 
@@ -262,7 +268,7 @@ void SubscribeToPropertyUpdatesCallData::_unsubscribe()
     _service->unsubscribe(this);
 }
 
-bool SubscribeToPropertyUpdatesCallData::_check_if_blocklisted(const PropertyValue& reply)
+bool SubscribeToPropertyUpdatesCallData::_check_if_blocklisted(const PropertyValue& /*reply*/)
 {
     return false;
 }

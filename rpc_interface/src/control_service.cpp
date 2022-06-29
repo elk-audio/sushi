@@ -2022,6 +2022,7 @@ NotificationControlService::NotificationControlService(sushi::ext::SushiControl*
     _controller->subscribe_to_notifications(sushi::ext::NotificationType::TRACK_UPDATE, this);
     _controller->subscribe_to_notifications(sushi::ext::NotificationType::PROCESSOR_UPDATE, this);
     _controller->subscribe_to_notifications(sushi::ext::NotificationType::PARAMETER_CHANGE, this);
+    _controller->subscribe_to_notifications(sushi::ext::NotificationType::PROPERTY_CHANGE, this);
 }
 
 void NotificationControlService::notification(const sushi::ext::ControlNotification* notification)
@@ -2349,6 +2350,15 @@ void NotificationControlService::delete_all_subscribers()
             delete subscriber;
         }
         _parameter_subscribers.clear();
+    }
+
+    {
+        std::scoped_lock lock(_property_subscriber_lock);
+        for (auto& subscriber : _property_subscribers)
+        {
+            delete subscriber;
+        }
+        _processor_subscribers.clear();
     }
 
     {
