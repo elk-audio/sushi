@@ -81,7 +81,7 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
 
     if (_engine->sample_rate() != raspa_sample_rate)
     {
-        SUSHI_LOG_WARNING("Sample rate mismatch between engine ({}) and jack ({}), setting to {}",
+        SUSHI_LOG_WARNING("Sample rate mismatch between engine ({}) and Raspa ({}), setting to {}",
                           _engine->sample_rate(), _sample_rate, _sample_rate);
         _engine->set_sample_rate(raspa_sample_rate);
     }
