@@ -147,7 +147,12 @@ if (${WITH_PORTAUDIO})
 endif()
 
 if (${WITH_VST2})
-    target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_VST2 -DVST2_TEST_PLUGIN_PATH="$<IF:$<PLATFORM_ID:Darwin>,$<TARGET_BUNDLE_DIR:vst2_test_plugin>,$<TARGET_FILE:vst2_test_plugin>>")
+    target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_VST2)
+    if (APPLE)
+        target_compile_definitions(unit_tests PRIVATE -DVST2_TEST_PLUGIN_PATH="$<TARGET_BUNDLE_DIR:vst2_test_plugin>")
+    else()
+        target_compile_definitions(unit_tests PRIVATE -DVST2_TEST_PLUGIN_PATH="$<TARGET_FILE:vst2_test_plugin>")
+    endif()
 endif()
 
 if (${WITH_VST3})
