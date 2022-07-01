@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Sushi Async gRPC Call Data implementation. Objects to handle async calls to sushi.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include "async_service_call_data.h"
@@ -23,6 +23,11 @@
 #include "control_service.h"
 
 namespace sushi_rpc {
+
+inline BlocklistKey create_key(int parameter_id, int processor_id)
+{
+    return (static_cast<BlocklistKey>(parameter_id) << 32) | processor_id;
+}
 
 void CallData::_alert()
 {
@@ -103,7 +108,7 @@ template class SubscribeToUpdatesCallData<CpuTimings, GenericVoidValue>;
 template class SubscribeToUpdatesCallData<TrackUpdate, GenericVoidValue>;
 template class SubscribeToUpdatesCallData<ProcessorUpdate, GenericVoidValue>;
 template class SubscribeToUpdatesCallData<ParameterValue, ParameterNotificationBlocklist>;
-template class SubscribeToUpdatesCallData<PropertyValue, GenericVoidValue>;
+template class SubscribeToUpdatesCallData<PropertyValue, PropertyNotificationBlocklist>;
 
 void SubscribeToTransportChangesCallData::_respawn()
 {
@@ -232,9 +237,7 @@ void SubscribeToParameterUpdatesCallData::_unsubscribe()
 
 bool SubscribeToParameterUpdatesCallData::_check_if_blocklisted(const ParameterValue& reply)
 {
-    auto key =  _map_key(reply.parameter().parameter_id(),
-                         reply.parameter().processor_id());
-
+    auto key = create_key(reply.parameter().parameter_id(), reply.parameter().processor_id());
     return !(_blocklist.find(key) == _blocklist.end());
 }
 
@@ -242,14 +245,13 @@ void SubscribeToParameterUpdatesCallData::_populate_blocklist()
 {
     for (auto& identifier : _notification_blocklist.parameters())
     {
-        _blocklist[_map_key(identifier.parameter_id(),
-                            identifier.processor_id())] = false;
+        _blocklist[create_key(identifier.parameter_id(), identifier.processor_id())] = false;
     }
 }
 
 void SubscribeToPropertyUpdatesCallData::_respawn()
 {
-    new SubscribeToParameterUpdatesCallData(_service, _async_rpc_queue);
+    new SubscribeToPropertyUpdatesCallData(_service, _async_rpc_queue);
 }
 
 void SubscribeToPropertyUpdatesCallData::_subscribe()
@@ -268,13 +270,17 @@ void SubscribeToPropertyUpdatesCallData::_unsubscribe()
     _service->unsubscribe(this);
 }
 
-bool SubscribeToPropertyUpdatesCallData::_check_if_blocklisted(const PropertyValue& /*reply*/)
+bool SubscribeToPropertyUpdatesCallData::_check_if_blocklisted(const PropertyValue& reply)
 {
-    return false;
+    auto key = create_key(reply.property().property_id(), reply.property().processor_id());
+    return !(_blocklist.find(key) == _blocklist.end());
 }
 
 void SubscribeToPropertyUpdatesCallData::_populate_blocklist()
 {
-
+    for (auto& identifier : _notification_blocklist.properties())
+    {
+        _blocklist[create_key(identifier.property_id(), identifier.processor_id())] = false;
+    }
 }
 } // namespace sushi_rpc

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Sushi Async gRPC Call Data. Objects to handle the async calls to sushi.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_ASYNCSERVICECALLDATA_H
@@ -33,6 +33,8 @@
 #include "control_service.h"
 
 namespace sushi_rpc {
+
+using BlocklistKey = int64_t;
 
 class CallData
 {
@@ -218,15 +220,10 @@ protected:
     void _populate_blocklist() override;
 
 private:
-    int64_t _map_key(int parameter_id, int processor_id) const
-    {
-        return (static_cast<int64_t>(parameter_id) << 32) | processor_id;
-    }
-
-    std::unordered_map<int64_t, bool> _blocklist;
+    std::unordered_map<BlocklistKey, bool> _blocklist;
 };
 
-class SubscribeToPropertyUpdatesCallData : public SubscribeToUpdatesCallData<PropertyValue, GenericVoidValue>
+class SubscribeToPropertyUpdatesCallData : public SubscribeToUpdatesCallData<PropertyValue, PropertyNotificationBlocklist>
 {
 public:
     SubscribeToPropertyUpdatesCallData(NotificationControlService* service,
@@ -246,6 +243,7 @@ protected:
     void _populate_blocklist() override;
 
 private:
+    std::unordered_map<BlocklistKey, bool> _blocklist;
 };
 
 }
