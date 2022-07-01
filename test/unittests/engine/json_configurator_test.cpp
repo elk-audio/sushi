@@ -115,6 +115,7 @@ TEST_F(TestJsonConfigurator, TestLoadMidi)
     auto status = _module_under_test->load_tracks();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
     _midi_dispatcher.set_midi_inputs(1);
+    _midi_dispatcher.set_midi_outputs(1);
 
     status = _module_under_test->load_midi();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
@@ -122,6 +123,7 @@ TEST_F(TestJsonConfigurator, TestLoadMidi)
     ASSERT_EQ(1u, _midi_dispatcher._cc_routes.size());
     ASSERT_EQ(1u, _midi_dispatcher._raw_routes_in.size());
     ASSERT_EQ(1u, _midi_dispatcher._pc_routes.size());
+    ASSERT_TRUE(_midi_dispatcher.midi_clock_enabled(0));
 }
 
 TEST_F(TestJsonConfigurator, TestLoadOsc)

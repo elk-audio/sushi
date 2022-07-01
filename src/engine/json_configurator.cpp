@@ -424,6 +424,19 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
         }
     }
 
+    if (midi.HasMember("clock_output"))
+    {
+        for (const auto& port : midi["clock_output"]["enabled_ports"].GetArray())
+        {
+            auto status = _midi_dispatcher->enable_midi_clock(true, port.GetInt());
+            if (status != midi_dispatcher::MidiDispatcherStatus::OK)
+            {
+                SUSHI_LOG_ERROR("Failed to enable midi clock output on port {}", port.GetInt());
+                return JsonConfigReturnStatus::INVALID_MIDI_PORT;
+            }
+        }
+    }
+
     return JsonConfigReturnStatus::OK;
 }
 
@@ -433,6 +446,12 @@ JsonConfigReturnStatus JsonConfigurator::load_osc()
     if (status != JsonConfigReturnStatus::OK)
     {
         return status;
+    }
+
+    if (!_osc_frontend)
+    {
+        SUSHI_LOG_WARNING("OSC not enabled");
+        return JsonConfigReturnStatus::INVALID_CONFIGURATION;
     }
 
     if (osc_config.HasMember("enable_all_processor_outputs"))

@@ -15,7 +15,7 @@
 
 /**
  * @brief Example unit gain plugin. Passes audio unprocessed from input to output
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef PASSTHROUGH_PLUGIN_H
@@ -34,17 +34,11 @@ public:
 
     ~PassthroughPlugin() override;
 
-    void process_event(const RtEvent& event) override
-    {
-        _event_queue.push(event);
-    };
-
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
     static std::string_view static_uid();
 
 private:
-    RtSafeRtEventFifo _event_queue;
 };
 
 }// namespace passthrough_plugin

@@ -26,7 +26,7 @@
 #include <chrono>
 
 /* The number of samples to process in one chunk. It is defined as a
-compile time constant to give more room for optimizations */
+compile-time constant to give more room for optimizations */
 #ifdef SUSHI_CUSTOM_AUDIO_CHUNK_SIZE
 constexpr int AUDIO_CHUNK_SIZE = SUSHI_CUSTOM_AUDIO_CHUNK_SIZE;
 #else
@@ -41,6 +41,8 @@ constexpr int MAX_TRACK_CHANNELS = 16;
 
 constexpr float PAN_GAIN_3_DB = 1.412537f;
 constexpr auto GAIN_SMOOTHING_TIME = std::chrono::milliseconds(20);
+
+constexpr int SUSHI_PPQN_TICK = 24;
 
 /* Use in class declaration to disallow copying of this class.
  * Note that this marks copy constructor and assignment operator

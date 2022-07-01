@@ -109,9 +109,6 @@ TEST (TestRealtimeEvents, TestFactoryFunction)
     EXPECT_EQ(131u, event.processor_id());
     EXPECT_TRUE(event.processor_command_event()->value());
 
-    event = RtEvent::make_stop_engine_event();
-    EXPECT_EQ(RtEventType::STOP_ENGINE, event.type());
-
     event = RtEvent::make_insert_processor_event(nullptr);
     EXPECT_EQ(RtEventType::INSERT_PROCESSOR, event.type());
     EXPECT_EQ(nullptr, event.processor_operation_event()->instance());
@@ -217,12 +214,17 @@ TEST (TestRealtimeEvents, TestFactoryFunction)
     event = RtEvent::make_remove_gate_output_connection_event(gate_con);
     EXPECT_EQ(RtEventType::REMOVE_GATE_CONNECTION, event.type());
     EXPECT_TRUE(event.gate_connection_event()->output_connection());
+
+    event = RtEvent::make_timing_tick_event(29, 12);
+    EXPECT_EQ(RtEventType::TIMING_TICK, event.type());
+    EXPECT_EQ(29, event.timing_tick_event()->sample_offset());
+    EXPECT_EQ(12, event.timing_tick_event()->tick_count());
 }
 
 TEST(TestRealtimeEvents, TestReturnableEvents)
 {
-    auto event = RtEvent::make_stop_engine_event();
-    auto event2 = RtEvent::make_stop_engine_event();
+    auto event = RtEvent::make_insert_processor_event(nullptr);
+    auto event2 = RtEvent::make_insert_processor_event(nullptr);
     auto typed_event = event.returnable_event();
     /* Assert that 2 events don't share the same id */
     EXPECT_NE(event2.returnable_event()->event_id(), typed_event->event_id());

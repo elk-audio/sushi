@@ -133,6 +133,25 @@ std::vector<ext::MidiPCConnection> MidiController::get_all_pc_input_connections(
     return returns;
 }
 
+
+bool MidiController::get_midi_clock_output_enabled(int port) const
+{
+    return _midi_dispatcher->midi_clock_enabled(port);
+}
+
+ext::ControlStatus MidiController::set_midi_clock_output_enabled(bool enabled, int port)
+{
+    auto lambda = [=] () -> int
+    {
+        auto status = _midi_dispatcher->enable_midi_clock(enabled, port);
+        return status == midi_dispatcher::MidiDispatcherStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
+    };
+
+    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
+    _event_dispatcher->post_event(event);
+    return ext::ControlStatus::OK;
+}
+
 std::pair<ext::ControlStatus, std::vector<ext::MidiCCConnection>>
 MidiController::get_cc_input_connections_for_processor(int processor_id) const
 {

@@ -49,6 +49,8 @@ enum class PlayStateChange
 
 namespace engine {
 
+class SushiLink;
+
 constexpr float DEFAULT_TEMPO = 120;
 
 class Transport
@@ -217,6 +219,7 @@ private:
     void _update_internals();
     void _update_internal_sync(int64_t samples);
     void _update_link_sync(Time timestamp);
+    void _output_ppqn_ticks();
     void _set_link_playing(bool playing);
     void _set_link_tempo(float tempo);
     void _set_link_quantum(TimeSignature signature);
@@ -228,8 +231,10 @@ private:
     double          _beat_count{0.0};
     double          _bar_start_beat_count{0};
     double          _beats_per_chunk{0};
-    double          _beats_per_bar;
-    float           _samplerate;
+    double          _beats_per_bar{0};
+    float           _samplerate{0};
+
+    double          _last_tick_sent{0};
 
     float           _tempo{DEFAULT_TEMPO};
     float           _set_tempo{_tempo};
@@ -241,7 +246,7 @@ private:
 
     RtEventPipe*    _rt_event_dispatcher;
 
-    std::unique_ptr<ableton::Link>  _link_controller;
+    std::unique_ptr<SushiLink>  _link_controller;
 };
 
 } // namespace engine

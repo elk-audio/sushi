@@ -186,6 +186,8 @@ public:
     grpc::Status GetAllPCInputConnections(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::MidiPCConnectionList* response) override;
     grpc::Status GetCCInputConnectionsForProcessor(grpc::ServerContext* context, const sushi_rpc::ProcessorIdentifier* request, sushi_rpc::MidiCCConnectionList* response) override;
     grpc::Status GetPCInputConnectionsForProcessor(grpc::ServerContext* context, const sushi_rpc::ProcessorIdentifier* request, sushi_rpc::MidiPCConnectionList* response) override;
+    grpc::Status GetMidiClockOutputEnabled(grpc::ServerContext* context, const sushi_rpc::GenericIntValue* request, sushi_rpc::GenericBoolValue* response) override;
+    grpc::Status SetMidiClockOutputEnabled(grpc::ServerContext* context, const sushi_rpc::MidiClockSetRequest* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status ConnectKbdInputToTrack(grpc::ServerContext* context, const sushi_rpc::MidiKbdConnection* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status ConnectKbdOutputFromTrack(grpc::ServerContext* context, const sushi_rpc::MidiKbdConnection* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status ConnectCCToParameter(grpc::ServerContext* context, const sushi_rpc::MidiCCConnection* request, sushi_rpc::GenericVoidValue* response) override;

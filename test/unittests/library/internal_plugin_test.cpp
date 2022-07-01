@@ -341,3 +341,14 @@ TEST_F(InternalPluginTest, TestStateSaving)
     ASSERT_EQ(param_val, _module_under_test->parameter_value(parameter->descriptor()->id()).second);
     ASSERT_EQ(str_val, _module_under_test->property_value(descriptor->id()).second);
 }
+
+TEST_F(InternalPluginTest, TestKeyboardEventPassthrough)
+{
+    _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 1, 28, 0.5f));
+    ASSERT_EQ(1u, _host_control._event_output.size());
+    ASSERT_EQ(RtEventType::NOTE_ON, _host_control._event_output.pop().type());
+
+    // Non-keyboard events should not pass through
+    _module_under_test->process_event(RtEvent::make_cv_event(0, 0, 1, 0.5f));
+    ASSERT_TRUE(_host_control._event_output.empty());
+}

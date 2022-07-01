@@ -180,7 +180,11 @@ Event* Event::from_rt_event(const RtEvent& rt_event, Time timestamp)
             auto typed_ev = rt_event.delete_data_event();
             return new AsynchronousDeleteEvent(typed_ev->data(), timestamp);
         }
-
+        case RtEventType::TIMING_TICK:
+        {
+            auto typed_ev = rt_event.timing_tick_event();
+            return new EngineTimingTickNotificationEvent(typed_ev->tick_count(), timestamp);
+        }
         default:
             return nullptr;
 

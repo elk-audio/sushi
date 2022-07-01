@@ -179,14 +179,13 @@ void Track::process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& ou
     for (auto &processor : _processors)
     {
         auto processor_timestamp = _timer->start_timer();
-        while (!_kb_event_buffer.empty())
+        /* Note that processors can put events back into this queue, hence we're not draining the queue
+         * but checking the size first to avoid an infinite loop */
+        for (int kb_events = _kb_event_buffer.size(); kb_events > 0; --kb_events)
         {
-            RtEvent event;
-            if (_kb_event_buffer.pop(event))
-            {
-                processor->process_event(event);
-            }
+            processor->process_event(_kb_event_buffer.pop());
         }
+
         ChunkSampleBuffer proc_in = ChunkSampleBuffer::create_non_owning_buffer(aliased_in, 0, processor->input_channels());
         ChunkSampleBuffer proc_out = ChunkSampleBuffer::create_non_owning_buffer(aliased_out, 0, processor->output_channels());
         processor->process_audio(proc_in, proc_out);
@@ -304,54 +303,52 @@ void Track::_process_output_events()
 {
     while (!_kb_event_buffer.empty())
     {
-        RtEvent event;
-        if (_kb_event_buffer.pop(event))
+        const RtEvent& event = _kb_event_buffer.pop();
+        switch (event.type())
         {
-            switch (event.type())
-            {
-                case RtEventType::NOTE_ON:
-                    output_event(RtEvent::make_note_on_event(id(), event.sample_offset(),
-                                                             event.keyboard_event()->channel(),
-                                                             event.keyboard_event()->note(),
-                                                             event.keyboard_event()->velocity()));
-                    break;
-                case RtEventType::NOTE_OFF:
-                    output_event(RtEvent::make_note_off_event(id(), event.sample_offset(),
-                                                              event.keyboard_event()->channel(),
-                                                              event.keyboard_event()->note(),
-                                                              event.keyboard_event()->velocity()));
-                    break;
-                case RtEventType::NOTE_AFTERTOUCH:
-                    output_event(RtEvent::make_note_aftertouch_event(id(), event.sample_offset(),
-                                                                     event.keyboard_event()->channel(),
-                                                                     event.keyboard_event()->note(),
-                                                                     event.keyboard_event()->velocity()));
-                    break;
-                case RtEventType::AFTERTOUCH:
-                    output_event(RtEvent::make_aftertouch_event(id(), event.sample_offset(),
-                                                                event.keyboard_common_event()->channel(),
-                                                                event.keyboard_common_event()->value()));
-                    break;
-                case RtEventType::PITCH_BEND:
-                    output_event(RtEvent::make_pitch_bend_event(id(), event.sample_offset(),
-                                                                event.keyboard_common_event()->channel(),
-                                                                event.keyboard_common_event()->value()));
-                    break;
-                case RtEventType::MODULATION:
-                    output_event(RtEvent::make_kb_modulation_event(id(), event.sample_offset(),
-                                                                   event.keyboard_common_event()->channel(),
-                                                                   event.keyboard_common_event()->value()));
-                    break;
-                case RtEventType::WRAPPED_MIDI_EVENT:
-                    output_event(RtEvent::make_wrapped_midi_event(id(), event.sample_offset(),
-                                                                  event.wrapped_midi_event()->midi_data()));
-                    break;
+            case RtEventType::NOTE_ON:
+                output_event(RtEvent::make_note_on_event(id(), event.sample_offset(),
+                                                         event.keyboard_event()->channel(),
+                                                         event.keyboard_event()->note(),
+                                                         event.keyboard_event()->velocity()));
+                break;
+            case RtEventType::NOTE_OFF:
+                output_event(RtEvent::make_note_off_event(id(), event.sample_offset(),
+                                                          event.keyboard_event()->channel(),
+                                                          event.keyboard_event()->note(),
+                                                          event.keyboard_event()->velocity()));
+                break;
+            case RtEventType::NOTE_AFTERTOUCH:
+                output_event(RtEvent::make_note_aftertouch_event(id(), event.sample_offset(),
+                                                                 event.keyboard_event()->channel(),
+                                                                 event.keyboard_event()->note(),
+                                                                 event.keyboard_event()->velocity()));
+                break;
+            case RtEventType::AFTERTOUCH:
+                output_event(RtEvent::make_aftertouch_event(id(), event.sample_offset(),
+                                                            event.keyboard_common_event()->channel(),
+                                                            event.keyboard_common_event()->value()));
+                break;
+            case RtEventType::PITCH_BEND:
+                output_event(RtEvent::make_pitch_bend_event(id(), event.sample_offset(),
+                                                            event.keyboard_common_event()->channel(),
+                                                            event.keyboard_common_event()->value()));
+                break;
+            case RtEventType::MODULATION:
+                output_event(RtEvent::make_kb_modulation_event(id(), event.sample_offset(),
+                                                               event.keyboard_common_event()->channel(),
+                                                               event.keyboard_common_event()->value()));
+                break;
+            case RtEventType::WRAPPED_MIDI_EVENT:
+                output_event(RtEvent::make_wrapped_midi_event(id(), event.sample_offset(),
+                                                              event.wrapped_midi_event()->midi_data()));
+                break;
 
-                default:
-                    output_event(event);
-            }
+            default:
+                output_event(event);
         }
     }
+    _kb_event_buffer.clear(); // Reset the read & write index to reuse the same memory area every time.
 }
 
 void Track::_apply_pan_and_gain(ChunkSampleBuffer& buffer, int bus, bool muted)
