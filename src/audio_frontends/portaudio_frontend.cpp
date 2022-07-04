@@ -109,7 +109,11 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
         SUSHI_LOG_ERROR("Failed to configure samplerate");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
-    _engine->set_sample_rate(samplerate);
+    if (samplerate != _engine->sample_rate())
+    {
+        SUSHI_LOG_WARNING("Failed to use engine samplerate ({}), using {} instead", _engine->sample_rate(), samplerate);
+        _engine->set_sample_rate(samplerate);
+    }
 
     // Open the stream
     // In case there is no input device available we only want to use output

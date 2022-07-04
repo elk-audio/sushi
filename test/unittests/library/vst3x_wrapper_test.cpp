@@ -51,6 +51,37 @@ TEST(TestVst3xPluginInstance, TestLoadPluginFromErroneousFilename)
     free(full_test_plugin_path);
 }
 
+TEST(TestVst3xRtState, TestOperation)
+{
+    ProcessorState state;
+    state.add_parameter_change(3, 0.5f);
+    state.add_parameter_change(10, 0.25f);
+    Vst3xRtState module_under_test(state);
+
+    EXPECT_EQ(2, module_under_test.getParameterCount());
+    auto data = module_under_test.getParameterData(0);
+    ASSERT_TRUE(data);
+    EXPECT_EQ(1, data->getPointCount());
+    EXPECT_EQ(3, data->getParameterId());
+    Steinberg::Vst::ParamValue value = 0;
+    Steinberg::int32 offset = -1;
+
+    EXPECT_EQ(Steinberg::kResultOk, data->getPoint(0, offset, value));
+    EXPECT_FLOAT_EQ(0.5, value);
+    EXPECT_EQ(0, offset);
+
+    data = module_under_test.getParameterData(1);
+    ASSERT_TRUE(data);
+    EXPECT_EQ(10, data->getParameterId());
+    EXPECT_EQ(Steinberg::kResultOk, data->getPoint(0, offset, value));
+    EXPECT_FLOAT_EQ(0.25, value);
+    EXPECT_EQ(0, offset);
+
+    data = module_under_test.getParameterData(2);
+    EXPECT_FALSE(data);
+}
+
+
 class TestVst3xWrapper : public ::testing::Test
 {
 protected:

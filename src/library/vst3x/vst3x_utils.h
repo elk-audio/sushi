@@ -33,6 +33,7 @@
 #include "library/sample_buffer.h"
 #include "library/rt_event.h"
 #include "library/constants.h"
+#include "library/processor_state.h"
 
 namespace sushi {
 namespace vst3 {
@@ -124,6 +125,72 @@ Steinberg::Vst::Event convert_note_off_event(const KeyboardRtEvent* event);
  */
 Steinberg::Vst::Event convert_aftertouch_event(const KeyboardRtEvent* event);
 
+/**
+ * @brief Custom implementation of IParamValueQueue to work with Vst3xRtState below
+ */
+class StateParamValue : public Steinberg::Vst::IParamValueQueue
+{
+public:
+    StateParamValue(ObjectId id, const float value) : _id(id), _value(value) {}
+
+    void set_values(const ObjectId& id, const float& value);
+
+    // Inherited from IParamValueQueue
+    Steinberg::Vst::ParamID getParameterId() override {return _id;};
+
+    Steinberg::int32 getPointCount() override {return 1;}
+
+    Steinberg::tresult getPoint(Steinberg::int32 /*index*/, Steinberg::int32& sampleOffset /*out*/,
+                                Steinberg::Vst::ParamValue& value /*out*/) override;
+
+    // The functions below should not be called, as this container should not be added too
+    Steinberg::tresult addPoint(Steinberg::int32 /*sampleOffset*/, Steinberg::Vst::ParamValue /*value*/,
+                                Steinberg::int32& /*index*/) override {return Steinberg::kResultFalse;};
+
+    // These are added for completeness, but this class should not be used with Steinbergs reference counters pointers
+    Steinberg::tresult queryInterface(const Steinberg::TUID /*_iid*/, void** /*obj*/) override
+    {
+        return Steinberg::kNotImplemented;
+    }
+
+    Steinberg::uint32 addRef() override {return 1;}
+
+    Steinberg::uint32 release() override {return 1;}
+
+private:
+    ObjectId _id;
+    float _value;
+};
+
+/**
+ * @brief The implementation of Steinberg::Vst::ParameterChanges supplied with the vst sdk is
+ * much too inefficient for setting a large number of parameters during one audio process call.
+ * Instead we wrap RtState, which has parameter changes stored sequentially in a contiguous
+ * block of memory in an interface that plugins can access directly */
+class Vst3xRtState : public RtState, public Steinberg::Vst::IParameterChanges
+{
+public:
+    explicit Vst3xRtState(const ProcessorState& state) : RtState(state) {}
+
+    Steinberg::int32 getParameterCount () override;
+
+    Steinberg::Vst::IParamValueQueue* getParameterData (Steinberg::int32 index) override;
+
+    Steinberg::Vst::IParamValueQueue* addParameterData (const Steinberg::Vst::ParamID& /*id*/, Steinberg::int32& /*index*/) override;
+
+    // These are added for completeness, but this class should not be used with Steinbergs reference counters pointers
+    Steinberg::tresult queryInterface (const Steinberg::TUID /*_iid*/, void** /*obj*/) override
+    {
+        return Steinberg::kNotImplemented;
+    };
+
+    Steinberg::uint32 addRef() override {return 1;};
+
+    Steinberg::uint32 release() override {return 1;};
+
+private:
+    StateParamValue _transfer_value{0, 0.0f};
+};
 
 } // end namespace vst3
 } // end namespace sushi
