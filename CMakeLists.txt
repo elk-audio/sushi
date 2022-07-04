@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.14)
 
 #####################
 #  Project Version  #
@@ -599,7 +599,7 @@ set(DOC_FILES_INSTALL
 if (APPLE)
     install(CODE [[
     include(BundleUtilities)
-    fixup_bundle("${CMAKE_INSTALL_PREFIX}/sushi/sushi.app" "" "") # TODO: fix to work when not submodule
+    fixup_bundle($<TARGET_FILE:sushi> "" "") # TODO: fix to work when not submodule
     ]] COMPONENT Runtime)
 endif()
 

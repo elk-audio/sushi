@@ -148,6 +148,11 @@ endif()
 
 if (${WITH_VST2})
     target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_VST2)
+    if (APPLE)
+        target_compile_definitions(unit_tests PRIVATE -DVST2_TEST_PLUGIN_PATH="$<TARGET_BUNDLE_DIR:vst2_test_plugin>")
+    else()
+        target_compile_definitions(unit_tests PRIVATE -DVST2_TEST_PLUGIN_PATH="$<TARGET_FILE:vst2_test_plugin>")
+    endif()
 endif()
 
 if (${WITH_VST3})
@@ -216,5 +221,5 @@ add_test(unit_tests unit_tests)
 add_custom_target(run_tests ALL
                   ${CMAKE_COMMAND}
                   -E env "SUSHI_TEST_DATA_DIR=${PROJECT_SOURCE_DIR}/test/data"
-                  "./unit_tests")
+                  "$<TARGET_FILE:unit_tests>")
 add_dependencies(run_tests unit_tests)
