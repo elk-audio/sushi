@@ -146,6 +146,10 @@ void Vst3xWrapper::_cleanup()
     {
         set_enabled(false);
     }
+    if (_state_parameter_changes)
+    {
+        delete _state_parameter_changes;
+    }
 }
 
 Vst3xWrapper::~Vst3xWrapper()
@@ -287,12 +291,13 @@ void Vst3xWrapper::process_event(const RtEvent& event)
         }
         case RtEventType::SET_STATE:
         {
-            auto state = event.processor_state_event()->state();
-            for (const auto& parameter : state->parameters())
+            auto state = static_cast<Vst3xRtState*>(event.processor_state_event()->state());
+            if (_state_parameter_changes)
             {
-                _add_parameter_change(parameter.first, parameter.second, 0);
+                // If a parameter batch is already queued, just throw it away and use the new one.
+                async_delete(_state_parameter_changes);
             }
-            async_delete(state);
+            _state_parameter_changes = state;
             break;
         }
         default:
@@ -309,6 +314,10 @@ void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
     else
     {
         _fill_processing_context();
+        if (_state_parameter_changes)
+        {
+            _process_data.inputParameterChanges = _state_parameter_changes;
+        }
         _process_data.assign_buffers(in_buffer, out_buffer, _current_input_channels, _current_output_channels);
         _instance.processor()->process(_process_data);
         if (_bypass_parameter.supported == false && _bypass_manager.should_ramp())
@@ -323,6 +332,13 @@ void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
     {
         request_non_rt_task(parameter_update_callback);
         _notify_parameter_change = false;
+    }
+
+    if (_state_parameter_changes)
+    {
+        _process_data.inputParameterChanges = &_in_parameter_changes;
+        async_delete(_state_parameter_changes);
+        _state_parameter_changes = nullptr;
     }
     _process_data.clear();
 }
@@ -563,10 +579,10 @@ ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool realtime
         return ProcessorReturnCode::OK;
     }
 
-    std::unique_ptr<RtState> rt_state;
+    std::unique_ptr<Vst3xRtState> rt_state;
     if (realtime_running)
     {
-        rt_state = std::make_unique<RtState>(*state);
+        rt_state = std::make_unique<Vst3xRtState>(*state);
     }
 
     if (state->program().has_value())
@@ -1133,5 +1149,6 @@ Steinberg::Vst::SpeakerArrangement speaker_arr_from_channels(int channels)
             return Steinberg::Vst::SpeakerArr::k80Music;
     }
 }
+
 } // end namespace vst3
 } // end namespace sushi

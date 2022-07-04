@@ -215,6 +215,7 @@ private:
     Steinberg::Vst::EventList _out_event_list{VST_WRAPPER_NOTE_EVENT_QUEUE_SIZE};
     Steinberg::Vst::ParameterChanges _in_parameter_changes;
     Steinberg::Vst::ParameterChanges _out_parameter_changes;
+    Vst3xRtState* _state_parameter_changes{nullptr};
 
     SushiProcessData _process_data{&_in_event_list,
                                    &_out_event_list,
