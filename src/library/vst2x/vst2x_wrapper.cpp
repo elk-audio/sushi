@@ -394,10 +394,11 @@ void Vst2xWrapper::notify_parameter_change_rt(VstInt32 parameter_index, float va
 
 void Vst2xWrapper::notify_parameter_change(VstInt32 parameter_index, float value)
 {
-    auto e = new ParameterChangeNotificationEvent(ParameterChangeNotificationEvent::Subtype::FLOAT_PARAMETER_CHANGE_NOT,
-                                                  this->id(),
+    auto e = new ParameterChangeNotificationEvent(this->id(),
                                                   static_cast<ObjectId>(parameter_index),
                                                   value,
+                                                  value,
+                                                  this->parameter_value_formatted(parameter_index).second,
                                                   IMMEDIATE_PROCESS);
     _host_control.post_event(e);
 }

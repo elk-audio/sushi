@@ -2200,8 +2200,10 @@ void NotificationControlService::_forward_processor_notification_to_subscribers(
 void NotificationControlService::_forward_parameter_notification_to_subscribers(const sushi::ext::ControlNotification* notification)
 {
     auto typed_notification = static_cast<const sushi::ext::ParameterChangeNotification*>(notification);
-    auto notification_content = std::make_shared<ParameterValue>();
-    notification_content->set_value(typed_notification->value());
+    auto notification_content = std::make_shared<ParameterUpdate>();
+    notification_content->set_normalized_value(typed_notification->value());
+    notification_content->set_domain_value(typed_notification->domain_value());
+    notification_content->set_formatted_value(typed_notification->formatted_value());
     notification_content->mutable_parameter()->set_parameter_id(typed_notification->parameter_id());
     notification_content->mutable_parameter()->set_processor_id(typed_notification->processor_id());
 

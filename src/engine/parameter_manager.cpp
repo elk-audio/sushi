@@ -26,13 +26,16 @@ namespace sushi {
 
 inline void output_parameter_value(ObjectId processor_id,
                                    ObjectId parameter_id,
-                                   float value,
+                                   float normalized_value,
+                                   float domain_value,
+                                   const std::string& formatted_value,
                                    dispatcher::BaseEventDispatcher* dispatcher)
 {
-    ParameterChangeNotificationEvent event(ParameterChangeNotificationEvent::Subtype::FLOAT_PARAMETER_CHANGE_NOT,
-                                           processor_id,
+    ParameterChangeNotificationEvent event(processor_id,
                                            parameter_id,
-                                           value,
+                                           normalized_value,
+                                           domain_value,
+                                           formatted_value,
                                            IMMEDIATE_PROCESS);
     dispatcher->process(&event);
 }
@@ -111,7 +114,10 @@ void ParameterManager::_output_parameter_notifications(dispatcher::BaseEventDisp
                     float value = processor->parameter_value(i->parameter_id).second;
                     if (value != entry.value)
                     {
-                        output_parameter_value(i->processor_id, i->parameter_id, value, dispatcher);
+                        output_parameter_value(i->processor_id, i->parameter_id, value,
+                                               processor->parameter_value_in_domain(i->parameter_id).second,
+                                               processor->parameter_value_formatted(i->parameter_id).second, dispatcher);
+
                         entry.last_update = timestamp;
                         entry.value = value;
                     }
@@ -137,7 +143,7 @@ void ParameterManager::_output_processor_notifications(dispatcher::BaseEventDisp
     while (i != _processor_change_queue.end())
     {
         /* When notifying all parameters of a processor, we ignore the last_update time
-         * and send a notification anyway, regardless if one was sent very recently */
+         * and send a notification anyway, regardless if one was sent recently */
         if (i->update_time <= timestamp)
         {
             if (auto processor = _processors->processor(i->processor_id))
@@ -149,7 +155,9 @@ void ParameterManager::_output_processor_notifications(dispatcher::BaseEventDisp
                     float value = processor->parameter_value(p.first).second;
                     if (value != entry.value)
                     {
-                        output_parameter_value(i->processor_id, p.first, value, dispatcher);
+                        output_parameter_value(i->processor_id, p.first, value,
+                                               processor->parameter_value_in_domain(p.first).second,
+                                               processor->parameter_value_formatted(p.first).second, dispatcher);
                         entry.value = value;
                         entry.last_update = timestamp;
                     }

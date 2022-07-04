@@ -106,33 +106,6 @@ Event* Event::from_rt_event(const RtEvent& rt_event, Time timestamp)
                                      typed_ev->midi_data(),
                                      timestamp);
         }
-        case RtEventType::FLOAT_PARAMETER_CHANGE:
-        {
-            auto typed_ev = rt_event.parameter_change_event();
-            return new ParameterChangeNotificationEvent(ParameterChangeNotificationEvent::Subtype::FLOAT_PARAMETER_CHANGE_NOT,
-                                                        typed_ev->processor_id(),
-                                                        typed_ev->param_id(),
-                                                        typed_ev->value(),
-                                                        timestamp);
-        }
-        case RtEventType::INT_PARAMETER_CHANGE:
-        {
-            auto typed_ev = rt_event.parameter_change_event();
-            return new ParameterChangeNotificationEvent(ParameterChangeNotificationEvent::Subtype::INT_PARAMETER_CHANGE_NOT,
-                                                        typed_ev->processor_id(),
-                                                        typed_ev->param_id(),
-                                                        typed_ev->value(),
-                                                        timestamp);
-        }
-        case RtEventType::BOOL_PARAMETER_CHANGE:
-        {
-            auto typed_ev = rt_event.parameter_change_event();
-            return new ParameterChangeNotificationEvent(ParameterChangeNotificationEvent::Subtype::BOOL_PARAMETER_CHANGE_NOT,
-                                                        typed_ev->processor_id(),
-                                                        typed_ev->param_id(),
-                                                        typed_ev->value(),
-                                                        timestamp);
-        }
         case RtEventType::TEMPO:
         {
             auto typed_event = rt_event.tempo_event();

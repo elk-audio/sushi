@@ -28,13 +28,24 @@ constexpr float TEST_SAMPLE_RATE = 44100;
 constexpr Time TEST_MAX_INTERVAL = std::chrono::milliseconds(10);
 
 // Custom Matcher to check the returned events
-MATCHER_P3(ParameterChangeNotificationMatcher, processor_id, parameter_id, value, "")
+MATCHER_P5(ParameterChangeNotificationMatcherFull, proc_id, param_id, norm_val, dom_val, txt_val, "")
 {
     auto typed_ev = static_cast<ParameterChangeNotificationEvent*>(arg);
     return arg->is_parameter_change_notification() &&
-           typed_ev->processor_id() == processor_id &&
-           typed_ev->parameter_id() == parameter_id &&
-           typed_ev->float_value() == value;
+           typed_ev->processor_id() == proc_id &&
+           typed_ev->parameter_id() == param_id &&
+           typed_ev->normalized_value() == norm_val &&
+           typed_ev->domain_value() == dom_val &&
+           typed_ev->formatted_value() == txt_val;
+}
+
+MATCHER_P3(ParameterChangeNotificationMatcher, proc_id, param_id, norm_val, "")
+{
+    auto typed_ev = static_cast<ParameterChangeNotificationEvent*>(arg);
+    return arg->is_parameter_change_notification() &&
+           typed_ev->processor_id() == proc_id &&
+           typed_ev->parameter_id() == param_id &&
+           typed_ev->normalized_value() == norm_val;
 }
 
 
@@ -75,8 +86,8 @@ protected:
 
 TEST_F(TestParameterManager, TestEventCreation)
 {
-    EXPECT_CALL(_mock_dispatcher, process(ParameterChangeNotificationMatcher(3u, 4u, 0.5f))).Times(1);
-    output_parameter_value(3u, 4u, 0.5f, &_mock_dispatcher);
+    EXPECT_CALL(_mock_dispatcher, process(ParameterChangeNotificationMatcherFull(3u, 4u, 0.5f, 5.0f, "5.0"))).Times(1);
+    output_parameter_value(3u, 4u, 0.5f, 5.0f, "5.0", &_mock_dispatcher);
 }
 
 TEST_F(TestParameterManager, TestParameterUpdates)

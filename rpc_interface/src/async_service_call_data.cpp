@@ -107,7 +107,7 @@ template class SubscribeToUpdatesCallData<TransportUpdate, GenericVoidValue>;
 template class SubscribeToUpdatesCallData<CpuTimings, GenericVoidValue>;
 template class SubscribeToUpdatesCallData<TrackUpdate, GenericVoidValue>;
 template class SubscribeToUpdatesCallData<ProcessorUpdate, GenericVoidValue>;
-template class SubscribeToUpdatesCallData<ParameterValue, ParameterNotificationBlocklist>;
+template class SubscribeToUpdatesCallData<ParameterUpdate, ParameterNotificationBlocklist>;
 template class SubscribeToUpdatesCallData<PropertyValue, PropertyNotificationBlocklist>;
 
 void SubscribeToTransportChangesCallData::_respawn()
@@ -235,7 +235,7 @@ void SubscribeToParameterUpdatesCallData::_unsubscribe()
     _service->unsubscribe(this);
 }
 
-bool SubscribeToParameterUpdatesCallData::_check_if_blocklisted(const ParameterValue& reply)
+bool SubscribeToParameterUpdatesCallData::_check_if_blocklisted(const ParameterUpdate& reply)
 {
     auto key = create_key(reply.parameter().parameter_id(), reply.parameter().processor_id());
     return !(_blocklist.find(key) == _blocklist.end());
