@@ -130,7 +130,9 @@ enum OptionIndex
     OPT_IDX_OSC_RECEIVE_PORT,
     OPT_IDX_OSC_SEND_PORT,
     OPT_IDX_OSC_SEND_IP,
-    OPT_IDX_GRPC_LISTEN_ADDRESS
+    OPT_IDX_GRPC_LISTEN_ADDRESS,
+    OPT_IDX_NO_OSC,
+    OPT_IDX_NO_GRPC
 };
 
 // Option types (UNUSED is generally used for options that take a value as argument)
@@ -378,6 +380,22 @@ const optionparser::Descriptor usage[] =
         "grpc-address",
         SushiArg::NonEmpty,
         "\t\t--grpc-address=<port> \tgRPC listening address in the format: address:port. By default accepts incoming connections from all ip:s [default port=" SUSHI_GRPC_LISTENING_PORT_DEFAULT "]."
+    },
+    {
+        OPT_IDX_NO_OSC,
+        OPT_TYPE_DISABLED,
+        "",
+        "disable-osc",
+        SushiArg::Optional,
+        "\t\t--no-osc \tDisable Open Sound Control completely"
+    },
+    {
+        OPT_IDX_NO_GRPC,
+        OPT_TYPE_DISABLED,
+        "",
+        "disable-grpc",
+        SushiArg::Optional,
+        "\t\t--no-grpc \tDisable gRPC Control completely"
     },
     // Don't touch this one (set default values for optionparse library)
     { 0, 0, 0, 0, 0, 0}

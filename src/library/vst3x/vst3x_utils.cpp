@@ -91,5 +91,43 @@ Steinberg::Vst::Event convert_aftertouch_event(const KeyboardRtEvent* event)
     return vst_event;
 }
 
+void StateParamValue::set_values(const ObjectId& id, const float& value)
+{
+    _id = id;
+    _value = value;
+}
+
+Steinberg::tresult StateParamValue::getPoint(Steinberg::int32 /*id*/,
+                                             Steinberg::int32& sampleOffset,
+                                             Steinberg::Vst::ParamValue& value)
+{
+    sampleOffset = 0;
+    value = _value;
+    return Steinberg::kResultOk;
+}
+
+Steinberg::int32 Vst3xRtState::getParameterCount()
+{
+    return _parameter_changes.size();
+}
+
+
+Steinberg::Vst::IParamValueQueue* Vst3xRtState::getParameterData(Steinberg::int32 index)
+{
+    if (static_cast<size_t>(index) >= _parameter_changes.size())
+    {
+        return nullptr;
+    }
+    const auto& value = _parameter_changes[index];
+    _transfer_value.set_values(value.first, value.second);
+    return &_transfer_value;
+}
+
+Steinberg::Vst::IParamValueQueue* Vst3xRtState::addParameterData(const Steinberg::Vst::ParamID& /*id*/,
+                                                                 Steinberg::int32& /*index*/)
+{
+    return nullptr;
+}
+
 } // end namespace vst3
 } // end namespace sushi
