@@ -138,7 +138,8 @@ AudioFrontendStatus JackFrontend::setup_sample_rate()
     _sample_rate = jack_get_sample_rate(_client);
     if (std::lround(_sample_rate) != _engine->sample_rate())
     {
-        SUSHI_LOG_WARNING("Sample rate mismatch between engine ({}) and jack ({})", _engine->sample_rate(), _sample_rate);
+        SUSHI_LOG_WARNING("Sample rate mismatch between engine ({}) and jack ({}), setting to {}",
+                          _engine->sample_rate(), _sample_rate, _sample_rate);
         _engine->set_sample_rate(_sample_rate);
     }
     auto status = jack_set_sample_rate_callback(_client, samplerate_callback, this);
