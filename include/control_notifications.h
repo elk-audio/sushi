@@ -79,13 +79,6 @@ private:
 class ParameterChangeNotification : public ControlNotification
 {
 public:
-    ParameterChangeNotification(int processor_id, int parameter_id, float value, Time timestamp) 
-    : ControlNotification(NotificationType::PARAMETER_CHANGE, timestamp),
-      _processor_id(processor_id),
-      _parameter_id(parameter_id),
-      _normalized_value(value),
-      _domain_value(0.0f) {}
-
     ParameterChangeNotification(int processor_id, int parameter_id, float normalized_value,
                                 float domain_value, const std::string& formatted_value, Time timestamp)
     : ControlNotification(NotificationType::PARAMETER_CHANGE, timestamp),
