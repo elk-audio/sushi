@@ -448,6 +448,12 @@ JsonConfigReturnStatus JsonConfigurator::load_osc()
         return status;
     }
 
+    if (!_osc_frontend)
+    {
+        SUSHI_LOG_WARNING("OSC not enabled");
+        return JsonConfigReturnStatus::INVALID_CONFIGURATION;
+    }
+
     if (osc_config.HasMember("enable_all_processor_outputs"))
     {
         bool enabled = osc_config["enable_all_processor_outputs"].GetBool();

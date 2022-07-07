@@ -37,9 +37,11 @@ add_subdirectory(rtmidi)
 # portaudio compile options #
 #############################
 
-set(PA_ENABLE_DEBUG_OUTPUT OFF CACHE BOOL "" FORCE)
-add_subdirectory(portaudio)
-set_target_properties(PortAudio PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
+if (${WITH_PORTAUDIO})
+    set(PA_ENABLE_DEBUG_OUTPUT OFF CACHE BOOL "" FORCE)
+    add_subdirectory(portaudio)
+    set_target_properties(PortAudio PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
+endif()
 
 ##########################
 #  VST3SDK and examples  #
