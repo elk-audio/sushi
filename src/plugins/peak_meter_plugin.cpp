@@ -73,7 +73,7 @@ PeakMeterPlugin::PeakMeterPlugin(HostControl host_control) : InternalPlugin(host
         _level_parameters[i] = register_float_parameter(fmt::format(param_name, i), fmt::format(param_label, i), "dB",
                                                         OUTPUT_MIN_DB, OUTPUT_MIN_DB, OUTPUT_MAX_DB,
                                                         Direction::OUTPUT,
-                                                        new dBToLinPreProcessor(OUTPUT_MIN, 24.0f));
+                                                        new dBToLinPreProcessor(OUTPUT_MIN_DB, OUTPUT_MAX_DB));
         assert (_level_parameters[i]);
     }
 
