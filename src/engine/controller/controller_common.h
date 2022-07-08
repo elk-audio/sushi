@@ -171,10 +171,10 @@ inline ext::TrackType to_external(TrackType type)
 {
     switch (type)
     {
-        case TrackType::REGULAR:       return ext::TrackType::REGULAR;
-        case TrackType::MASTER_PRE:    return ext::TrackType::MASTER_PRE;
-        case TrackType::MASTER_POST:   return ext::TrackType::MASTER_POST;
-        default:                       return ext::TrackType::REGULAR;
+        case TrackType::REGULAR:    return ext::TrackType::REGULAR;
+        case TrackType::PRE:        return ext::TrackType::PRE;
+        case TrackType::POST:       return ext::TrackType::POST;
+        default:                    return ext::TrackType::REGULAR;
     }
 }
 

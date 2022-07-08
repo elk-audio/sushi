@@ -102,7 +102,7 @@ TEST_F(ControllerTest, TestMainEngineControls)
     EXPECT_EQ("", tracks[4].label);
     EXPECT_EQ(ENGINE_CHANNELS, tracks[4].channels);
     EXPECT_EQ(1, tracks[4].buses);
-    EXPECT_EQ(ext::TrackType::MASTER_POST, tracks[4].type);
+    EXPECT_EQ(ext::TrackType::POST, tracks[4].type);
     EXPECT_EQ(0u, tracks[4].processors.size());
 }
 

@@ -46,7 +46,8 @@ const char* section_name(JsonSection section)
     {
         case JsonSection::HOST_CONFIG:   return "host_config";
         case JsonSection::TRACKS:        return "tracks";
-        case JsonSection::MASTER_TRACKS: return "master_tracks";
+        case JsonSection::PRE_TRACK:     return "pre_track";
+        case JsonSection::POST_TRACK:    return "post_track";
         case JsonSection::MIDI:          return "midi";
         case JsonSection::OSC:           return "osc";
         case JsonSection::CV_GATE:       return "cv_control";
@@ -64,7 +65,8 @@ const char* section_schema(JsonSection section)
             #include "json_schemas/host_config_schema.json"
             ;
         case JsonSection::TRACKS:
-        case JsonSection::MASTER_TRACKS:  return
+        case JsonSection::PRE_TRACK:
+        case JsonSection::POST_TRACK:  return
             #include "json_schemas/tracks_schema.json"
             ;
         case JsonSection::MIDI: return
@@ -256,32 +258,27 @@ JsonConfigReturnStatus JsonConfigurator::load_tracks()
         }
     }
 
-    auto [master_status, master_tracks] = _parse_section(JsonSection::MASTER_TRACKS);
-    if (master_status == JsonConfigReturnStatus::NOT_DEFINED)
+    auto [pre_track_status, pre_track] = _parse_section(JsonSection::PRE_TRACK);
+    if (pre_track_status == JsonConfigReturnStatus::OK)
     {
-        return JsonConfigReturnStatus::OK;
-    }
-    else if (master_status == JsonConfigReturnStatus::OK)
-    {
-        if (master_tracks.HasMember("pre"))
+        status = _make_track(pre_track, TrackType::PRE);
+        if (status != JsonConfigReturnStatus::OK)
         {
-            status = _make_track(master_tracks["pre"], TrackType::MASTER_PRE);
-            if (status != JsonConfigReturnStatus::OK)
-            {
-                return status;
-            }
-        }
-        if (master_tracks.HasMember("post"))
-        {
-            status = _make_track(master_tracks["post"], TrackType::MASTER_POST);
-            if (status != JsonConfigReturnStatus::OK)
-            {
-                return status;
-            }
+            return status;
         }
     }
 
-    return master_status;
+    auto [post_track_status, post_track] = _parse_section(JsonSection::POST_TRACK);
+    if (post_track_status == JsonConfigReturnStatus::OK)
+    {
+        status = _make_track(post_track, TrackType::POST);
+        if (status != JsonConfigReturnStatus::OK)
+        {
+            return status;
+        }
+    }
+
+    return post_track_status;
 }
 
 JsonConfigReturnStatus JsonConfigurator::load_midi()
@@ -751,13 +748,13 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value& tra
             std::tie(status, track_id) = _engine->create_track(name, track_def["channels"].GetInt());
         }
     }
-    else if (type == TrackType::MASTER_PRE)
+    else if (type == TrackType::PRE)
     {
-        std::tie(status, track_id) = _engine->create_master_pre_track(name);
+        std::tie(status, track_id) = _engine->create_pre_track(name);
     }
-    else if (type == TrackType::MASTER_POST)
+    else if (type == TrackType::POST)
     {
-        std::tie(status, track_id) = _engine->create_master_post_track(name);
+        std::tie(status, track_id) = _engine->create_post_track(name);
     }
 
     if (status == EngineReturnStatus::INVALID_PLUGIN || status == EngineReturnStatus::INVALID_PROCESSOR)

@@ -270,12 +270,12 @@ public:
         return {EngineReturnStatus::OK, 0};
     }
 
-    virtual std::pair<EngineReturnStatus, ObjectId> create_master_post_track(const std::string& /*name*/)
+    virtual std::pair<EngineReturnStatus, ObjectId> create_post_track(const std::string& /*name*/)
     {
         return {EngineReturnStatus::OK, 0};
     }
 
-    virtual std::pair<EngineReturnStatus, ObjectId> create_master_pre_track(const std::string& /*name*/)
+    virtual std::pair<EngineReturnStatus, ObjectId> create_pre_track(const std::string& /*name*/)
     {
         return {EngineReturnStatus::OK, 0};
     }

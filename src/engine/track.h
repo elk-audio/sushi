@@ -44,8 +44,8 @@ constexpr int KEYBOARD_EVENT_QUEUE_SIZE = 256;
 enum class TrackType
 {
     REGULAR,
-    MASTER_PRE,
-    MASTER_POST
+    PRE,
+    POST
 };
 
 class Track : public InternalPlugin, public RtEventPipe

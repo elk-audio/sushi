@@ -256,12 +256,12 @@ ext::ControlStatus AudioGraphController::create_multibus_track(const std::string
     return ext::ControlStatus::OK;
 }
 
-ext::ControlStatus AudioGraphController::create_master_pre_track(const std::string& name)
+ext::ControlStatus AudioGraphController::create_pre_track(const std::string& name)
 {
-    SUSHI_LOG_DEBUG("create_master_pre_track called with name {}", name);
+    SUSHI_LOG_DEBUG("create_pre_track called with name {}", name);
     auto lambda = [=] () -> int
     {
-        auto [status, track_id] = _engine->create_master_pre_track(name);
+        auto [status, track_id] = _engine->create_pre_track(name);
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
     };
 
@@ -270,12 +270,12 @@ ext::ControlStatus AudioGraphController::create_master_pre_track(const std::stri
     return ext::ControlStatus::OK;
 }
 
-ext::ControlStatus AudioGraphController::create_master_post_track(const std::string& name)
+ext::ControlStatus AudioGraphController::create_post_track(const std::string& name)
 {
-    SUSHI_LOG_DEBUG("create_master_post_track called with name {}", name);
+    SUSHI_LOG_DEBUG("create_post_track called with name {}", name);
     auto lambda = [=] () -> int
     {
-        auto [status, track_id] = _engine->create_master_post_track(name);
+        auto [status, track_id] = _engine->create_post_track(name);
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
     };
 

@@ -56,7 +56,8 @@ enum class JsonSection
 {
     HOST_CONFIG,
     TRACKS,
-    MASTER_TRACKS,
+    PRE_TRACK,
+    POST_TRACK,
     MIDI,
     OSC,
     CV_GATE,

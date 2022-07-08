@@ -364,9 +364,9 @@ public:
      */
     std::pair<EngineReturnStatus, ObjectId> create_multibus_track(const std::string& name, int bus_count) override;
 
-    std::pair<EngineReturnStatus, ObjectId> create_master_post_track(const std::string& name) override;
+    std::pair<EngineReturnStatus, ObjectId> create_post_track(const std::string& name) override;
 
-    std::pair<EngineReturnStatus, ObjectId> create_master_pre_track(const std::string& name) override;
+    std::pair<EngineReturnStatus, ObjectId> create_pre_track(const std::string& name) override;
 
     /**
      * @brief Delete a track, currently assumes that the track is empty before calling
@@ -598,8 +598,8 @@ private:
     std::vector<Processor*>    _realtime_processors{MAX_RT_PROCESSOR_ID, nullptr};
     AudioGraph                 _audio_graph;
 
-    Track* _master_pre_track{nullptr};
-    Track* _master_post_track{nullptr};
+    Track* _pre_track{nullptr};
+    Track* _post_track{nullptr};
     ChunkSampleBuffer _input_swap_buffer;
     ChunkSampleBuffer _output_swap_buffer;
 

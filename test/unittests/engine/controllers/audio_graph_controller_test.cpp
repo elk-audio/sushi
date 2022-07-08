@@ -105,13 +105,13 @@ TEST_F(AudioGraphControllerTest, TestCreatingAndRemovingTracks)
     auto execution_status2 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
     ASSERT_EQ(execution_status2, EventStatus::HANDLED_OK);
 
-    status = _module_under_test->create_master_pre_track("Track 4");
+    status = _module_under_test->create_pre_track("Track 4");
     ASSERT_EQ(ext::ControlStatus::OK, status);
 
     auto execution_status_3 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
     ASSERT_EQ(execution_status_3, EventStatus::HANDLED_OK);
 
-    status = _module_under_test->create_master_post_track("Track 5");
+    status = _module_under_test->create_post_track("Track 5");
     ASSERT_EQ(ext::ControlStatus::OK, status);
 
     auto execution_status_4 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());

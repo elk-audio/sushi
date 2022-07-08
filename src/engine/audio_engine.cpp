@@ -460,9 +460,9 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
         _clip_detector.detect_clipped_samples(*in_buffer, _main_out_queue, true);
     }
 
-    if (_master_pre_track)
+    if (_pre_track)
     {
-        _master_pre_track->process_audio(*in_buffer, _input_swap_buffer);
+        _pre_track->process_audio(*in_buffer, _input_swap_buffer);
         _copy_audio_to_tracks(&_input_swap_buffer);
     }
     else
@@ -477,10 +477,10 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
     _main_out_queue.push(RtEvent::make_synchronisation_event(_transport.current_process_time()));
     _state.store(update_state(state));
 
-    if (_master_post_track)
+    if (_post_track)
     {
         _copy_audio_from_tracks(&_output_swap_buffer);
-        _master_post_track->process_audio(_output_swap_buffer, *out_buffer);
+        _post_track->process_audio(_output_swap_buffer, *out_buffer);
     }
     else
     {
@@ -601,14 +601,14 @@ std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_track(const std::str
     return {EngineReturnStatus::OK, track->id()};
 }
 
-std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_master_post_track(const std::string& name)
+std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_post_track(const std::string& name)
 {
-    return _create_master_track(name, TrackType::MASTER_POST, _audio_outputs);
+    return _create_master_track(name, TrackType::POST, _audio_outputs);
 }
 
-std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_master_pre_track(const std::string& name)
+std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_pre_track(const std::string& name)
 {
-    return _create_master_track(name, TrackType::MASTER_PRE, _audio_inputs);
+    return _create_master_track(name, TrackType::PRE, _audio_inputs);
 }
 
 EngineReturnStatus AudioEngine::delete_track(ObjectId track_id)
@@ -866,8 +866,8 @@ EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, std
         {
 
             SUSHI_LOG_ERROR_IF(track->type() == TrackType::REGULAR, "Error adding track {}, max number of tracks reached", track->name());
-            SUSHI_LOG_ERROR_IF(track->type() == TrackType::MASTER_POST, "Error adding track {}, Only one master post track allowed", track->name());
-            SUSHI_LOG_ERROR_IF(track->type() == TrackType::MASTER_PRE, "Error adding track {}, Only one master pre track allowed", track->name());
+            SUSHI_LOG_ERROR_IF(track->type() == TrackType::PRE, "Error adding track {}, Only one pre track allowed", track->name());
+            SUSHI_LOG_ERROR_IF(track->type() == TrackType::POST, "Error adding track {}, Only one post track allowed", track->name());
             return EngineReturnStatus::ERROR;
         }
         if (_insert_processor_in_realtime_part(track.get()) == false)
@@ -1213,18 +1213,18 @@ bool AudioEngine::_add_track(Track* track)
             added = _audio_graph.add(track);
             break;
 
-        case TrackType::MASTER_POST:
-            if (_master_post_track == nullptr)
+        case TrackType::POST:
+            if (_post_track == nullptr)
             {
-                _master_post_track = track;
+                _post_track = track;
                 added = true;
             }
             break;
 
-        case TrackType::MASTER_PRE:
-            if (_master_pre_track == nullptr)
+        case TrackType::PRE:
+            if (_pre_track == nullptr)
             {
-                _master_pre_track = track;
+                _pre_track = track;
                 added = true;
             }
     }
@@ -1240,18 +1240,18 @@ bool AudioEngine::_remove_track(Track* track)
             removed = _audio_graph.remove(track);
             break;
 
-        case TrackType::MASTER_POST:
-            if (_master_post_track)
+        case TrackType::POST:
+            if (_post_track)
             {
-                _master_post_track = nullptr;
+                _post_track = nullptr;
                 removed = true;
             }
             break;
 
-        case TrackType::MASTER_PRE:
-            if (_master_pre_track)
+        case TrackType::PRE:
+            if (_pre_track)
             {
-                _master_pre_track = nullptr;
+                _pre_track = nullptr;
                 removed = true;
             }
     }

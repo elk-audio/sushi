@@ -186,7 +186,7 @@ R"(
         "required": ["name", "multibus", "buses", "inputs", "outputs", "plugins"]
       }]
     },
-    "master_track" :{
+    "pre_post_track" :{
       "type": "object",
       "properties":
       {
@@ -220,16 +220,19 @@ R"(
     "tracks":
     {
       "type": "array",
-      "items": {"$ref": "#/definitions/track"},
+      "items":
+      {
+        "$ref": "#/definitions/track"
+      },
       "minItems": 1
     },
-    "master_tracks":
+    "pre_track":
     {
-      "type": "object",
-      "properties":{
-        "pre" :{"$ref": "#/definitions/master_track"},
-        "post" :{"$ref": "#/definitions/master_track"}
-      }
+      "$ref": "#/definitions/pre_post_track"
+    },
+    "post_track":
+    {
+      "$ref": "#/definitions/pre_post_track"
     }
   },
   "required": ["tracks"]

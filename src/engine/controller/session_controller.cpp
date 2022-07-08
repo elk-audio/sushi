@@ -365,12 +365,12 @@ void SessionController::_restore_tracks(std::vector<ext::TrackState> tracks)
 
         switch (track.type)
         {
-            case ext::TrackType::MASTER_PRE:
-                std::tie(status, track_id) = _engine->create_master_pre_track(track.name);
+            case ext::TrackType::PRE:
+                std::tie(status, track_id) = _engine->create_pre_track(track.name);
                 break;
 
-            case ext::TrackType::MASTER_POST:
-                std::tie(status, track_id) = _engine->create_master_post_track(track.name);
+            case ext::TrackType::POST:
+                std::tie(status, track_id) = _engine->create_post_track(track.name);
                 break;
 
             case ext::TrackType::REGULAR:

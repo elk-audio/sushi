@@ -191,26 +191,26 @@ TEST_F(TestEngine, TestCreateEmptyTrack)
     ASSERT_EQ(status, EngineReturnStatus::INVALID_N_CHANNELS);
 }
 
-TEST_F(TestEngine, TestCreateMasterTracks)
+TEST_F(TestEngine, TestCreatePreAndPostTracks)
 {
-    auto [status, track_id] = _module_under_test->create_master_pre_track("pre");
+    auto [status, track_id] = _module_under_test->create_pre_track("pre");
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
     auto track = _processors->track("pre");
     ASSERT_TRUE(track);
-    ASSERT_EQ(TrackType::MASTER_PRE, track->type());
+    ASSERT_EQ(TrackType::PRE, track->type());
     ASSERT_EQ(track_id, track->id());
 
-    std::tie(status, track_id) = _module_under_test->create_master_post_track("post");
+    std::tie(status, track_id) = _module_under_test->create_post_track("post");
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
     track = _processors->track("post");
     ASSERT_TRUE(track);
-    ASSERT_EQ(TrackType::MASTER_POST, track->type());
+    ASSERT_EQ(TrackType::POST, track->type());
     ASSERT_EQ(track_id, track->id());
 
-    /* Test creating a second post master track, this should fail */
-    std::tie(status, track_id) = _module_under_test->create_master_post_track("post");
+    /* Test creating a second post track, this should fail */
+    std::tie(status, track_id) = _module_under_test->create_post_track("post");
     ASSERT_NE(EngineReturnStatus::OK, status);
 }
 
@@ -584,10 +584,10 @@ TEST_F(TestEngine, TestMasterTrackProcessing)
     auto [empty_status, empty_track_id] = _module_under_test->create_track("empty", TEST_CHANNEL_COUNT);
     ASSERT_EQ(EngineReturnStatus::OK, empty_status);
 
-    auto [pre_status, pre_track_id] = _module_under_test->create_master_pre_track("pre");
+    auto [pre_status, pre_track_id] = _module_under_test->create_pre_track("pre");
     ASSERT_EQ(EngineReturnStatus::OK, pre_status);
 
-    auto [post_status, post_track_id] = _module_under_test->create_master_post_track("post");
+    auto [post_status, post_track_id] = _module_under_test->create_post_track("post");
     ASSERT_EQ(EngineReturnStatus::OK, post_status);
 
     for (int i = 0; i < TEST_CHANNEL_COUNT; ++i)

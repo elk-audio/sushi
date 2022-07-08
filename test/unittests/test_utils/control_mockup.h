@@ -342,7 +342,7 @@ public:
         return _return_status;
     }
 
-    ControlStatus create_master_pre_track(const std::string& name) override
+    ControlStatus create_pre_track(const std::string& name) override
     {
         _args_from_last_call.clear();
         _args_from_last_call["name"] = name;
@@ -350,7 +350,7 @@ public:
         return _return_status;
     }
 
-    ControlStatus create_master_post_track(const std::string& name) override
+    ControlStatus create_post_track(const std::string& name) override
     {
         _args_from_last_call.clear();
         _args_from_last_call["name"] = name;

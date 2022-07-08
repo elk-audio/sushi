@@ -17,11 +17,10 @@
             "outputs" : true
         }
     },
-    "master_tracks" : {
-        "post" : {
-            "name" : "master",
-            "plugins": []
-        }
+    "post_track" :
+    {
+        "name" : "master",
+        "plugins": []
     },
     "tracks" : [
         {

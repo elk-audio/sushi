@@ -123,8 +123,8 @@ struct ProgramInfo
 enum class TrackType
 {
     REGULAR,
-    MASTER_PRE,
-    MASTER_POST
+    PRE,
+    POST
 };
 
 struct TrackInfo
@@ -448,8 +448,8 @@ public:
 
     virtual ControlStatus create_track(const std::string& name, int channels) = 0;
     virtual ControlStatus create_multibus_track(const std::string& name, int buses) = 0;
-    virtual ControlStatus create_master_pre_track(const std::string& name) = 0;
-    virtual ControlStatus create_master_post_track(const std::string& name) = 0;
+    virtual ControlStatus create_pre_track(const std::string& name) = 0;
+    virtual ControlStatus create_post_track(const std::string& name) = 0;
     virtual ControlStatus move_processor_on_track(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor_id) = 0;
     virtual ControlStatus create_processor_on_track(const std::string& name, const std::string& uid, const std::string& file,
                                                       PluginType type, int track_id, std::optional<int> before_processor_id) = 0;

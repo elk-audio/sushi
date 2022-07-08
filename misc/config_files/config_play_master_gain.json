@@ -27,17 +27,15 @@
             ]
         }
     ],
-    "master_tracks" : {
-        "post" : {
-            "name" : "master_gain",
-            "plugins" : [
-                {
-                    "uid" : "sushi.testing.gain",
-                    "name" : "gain",
-                    "type"   : "internal"
-                }
-            ]
-        }
+    "post_track" : {
+        "name" : "master_gain",
+        "plugins" : [
+            {
+                "uid" : "sushi.testing.gain",
+                "name" : "gain",
+                "type"   : "internal"
+            }
+        ]
     },
     "midi" : {
         "track_connections": [

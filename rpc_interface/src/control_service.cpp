@@ -135,10 +135,10 @@ inline sushi_rpc::TrackType::Type to_grpc(const sushi::ext::TrackType type)
 {
     switch (type)
     {
-        case sushi::ext::TrackType::REGULAR:      return sushi_rpc::TrackType::REGULAR;
-        case sushi::ext::TrackType::MASTER_PRE:   return sushi_rpc::TrackType::MASTER_PRE;
-        case sushi::ext::TrackType::MASTER_POST:  return sushi_rpc::TrackType::MASTER_POST;
-        default:                                  return sushi_rpc::TrackType::REGULAR;
+        case sushi::ext::TrackType::REGULAR:  return sushi_rpc::TrackType::REGULAR;
+        case sushi::ext::TrackType::PRE:      return sushi_rpc::TrackType::PRE;
+        case sushi::ext::TrackType::POST:     return sushi_rpc::TrackType::POST;
+        default:                              return sushi_rpc::TrackType::REGULAR;
     }
 }
 
@@ -146,10 +146,10 @@ inline sushi::ext::TrackType to_sushi_ext(const sushi_rpc::TrackType::Type type)
 {
     switch (type)
     {
-        case sushi_rpc::TrackType::REGULAR:      return sushi::ext::TrackType::REGULAR;
-        case sushi_rpc::TrackType::MASTER_PRE:   return sushi::ext::TrackType::MASTER_PRE;
-        case sushi_rpc::TrackType::MASTER_POST:  return sushi::ext::TrackType::MASTER_POST;
-        default:                                 return sushi::ext::TrackType::REGULAR;
+        case sushi_rpc::TrackType::REGULAR: return sushi::ext::TrackType::REGULAR;
+        case sushi_rpc::TrackType::PRE:     return sushi::ext::TrackType::PRE;
+        case sushi_rpc::TrackType::POST:    return sushi::ext::TrackType::POST;
+        default:                            return sushi::ext::TrackType::REGULAR;
     }
 }
 
@@ -1116,19 +1116,19 @@ grpc::Status AudioGraphControlService::CreateMultibusTrack(grpc::ServerContext* 
     return to_grpc_status(status);
 }
 
-grpc::Status AudioGraphControlService::CreateMasterPreTrack(grpc::ServerContext* /*context*/,
-                                                            const sushi_rpc::CreateMasterTrackRequest* request,
-                                                            sushi_rpc::GenericVoidValue* /*response*/)
+grpc::Status AudioGraphControlService::CreatePreTrack(grpc::ServerContext* /*context*/,
+                                                      const sushi_rpc::CreatePreTrackRequest* request,
+                                                      sushi_rpc::GenericVoidValue* /*response*/)
 {
-    auto status = _controller->create_master_pre_track(request->name());
+    auto status = _controller->create_pre_track(request->name());
     return to_grpc_status(status);
 }
 
-grpc::Status AudioGraphControlService::CreateMasterPostTrack(grpc::ServerContext* /*context*/,
-                                                             const sushi_rpc::CreateMasterTrackRequest* request,
-                                                             sushi_rpc::GenericVoidValue* /*response*/)
+grpc::Status AudioGraphControlService::CreatePostTrack(grpc::ServerContext* /*context*/,
+                                                       const sushi_rpc::CreatePostTrackRequest* request,
+                                                       sushi_rpc::GenericVoidValue* /*response*/)
 {
-    auto status = _controller->create_master_post_track(request->name());
+    auto status = _controller->create_post_track(request->name());
     return to_grpc_status(status);
 }
 

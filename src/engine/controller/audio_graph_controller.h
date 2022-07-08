@@ -63,9 +63,9 @@ public:
 
     ext::ControlStatus create_multibus_track(const std::string& name, int buses) override;
 
-    ext::ControlStatus create_master_pre_track(const std::string& name) override;
+    ext::ControlStatus create_pre_track(const std::string& name) override;
 
-    ext::ControlStatus create_master_post_track(const std::string& name) override;
+    ext::ControlStatus create_post_track(const std::string& name) override;
 
     ext::ControlStatus move_processor_on_track(int processor_id,
                                                int source_track_id,
