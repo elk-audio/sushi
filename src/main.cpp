@@ -662,6 +662,5 @@ int main(int argc, char* argv[])
     }
 #endif
     SUSHI_LOG_INFO("Sushi exiting normally!");
-    memset((char *)0x0, 1, 100);
     return 0;
 }
