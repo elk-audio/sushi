@@ -82,7 +82,7 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
     if (_engine->sample_rate() != raspa_sample_rate)
     {
         SUSHI_LOG_WARNING("Sample rate mismatch between engine ({}) and Raspa ({}), setting to {}",
-                          _engine->sample_rate(), _sample_rate, _sample_rate);
+                          _engine->sample_rate(), raspa_sample_rate, raspa_sample_rate);
         _engine->set_sample_rate(raspa_sample_rate);
     }
     _engine->set_output_latency(std::chrono::microseconds(raspa_get_output_latency()));
