@@ -200,7 +200,7 @@ protected:
     void _populate_blocklist() override {}
 };
 
-class SubscribeToParameterUpdatesCallData : public SubscribeToUpdatesCallData<ParameterValue, ParameterNotificationBlocklist>
+class SubscribeToParameterUpdatesCallData : public SubscribeToUpdatesCallData<ParameterUpdate, ParameterNotificationBlocklist>
 {
 public:
     SubscribeToParameterUpdatesCallData(NotificationControlService* service,
@@ -216,7 +216,7 @@ protected:
     void _respawn() override;
     void _subscribe() override;
     void _unsubscribe() override;
-    bool _check_if_blocklisted(const ParameterValue& reply) override;
+    bool _check_if_blocklisted(const ParameterUpdate& reply) override;
     void _populate_blocklist() override;
 
 private:

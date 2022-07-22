@@ -193,17 +193,6 @@ TEST(EventTest, TestFromRtEvent)
     EXPECT_EQ(MidiDataByte({1,2,3,4}), kb_event->midi_data());
     delete event;
 
-    auto param_ch_event = RtEvent::make_parameter_change_event(9, 0, 50, 0.1f);
-    event = Event::from_rt_event(param_ch_event, IMMEDIATE_PROCESS);
-    ASSERT_TRUE(event != nullptr);
-    EXPECT_TRUE(event->is_parameter_change_notification());
-    auto pc_event = static_cast<ParameterChangeNotificationEvent*>(event);
-    EXPECT_EQ(ParameterChangeNotificationEvent::Subtype::FLOAT_PARAMETER_CHANGE_NOT, pc_event->subtype());
-    EXPECT_EQ(9u, pc_event->processor_id());
-    EXPECT_EQ(50u, pc_event->parameter_id());
-    EXPECT_FLOAT_EQ(0.1f, pc_event->float_value());
-    delete event;
-
     auto tempo_event = RtEvent::make_tempo_event(10, 125);
     event = Event::from_rt_event(tempo_event, IMMEDIATE_PROCESS);
     ASSERT_TRUE(event != nullptr);

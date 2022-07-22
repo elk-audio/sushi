@@ -267,10 +267,11 @@ TEST_F(TestOSCFrontend, TestParamChangeNotification)
     ObjectId processor_id = _test_processor->id();
     ObjectId parameter_id = _test_processor->parameter_from_name("param 1")->id();
 
-    auto event = ParameterChangeNotificationEvent(ParameterChangeNotificationEvent::Subtype::FLOAT_PARAMETER_CHANGE_NOT,
-                                                  processor_id,
+    auto event = ParameterChangeNotificationEvent(processor_id,
                                                   parameter_id,
                                                   0.5f,
+                                                  0.0f,
+                                                  "",
                                                   IMMEDIATE_PROCESS);
 
     _module_under_test->process(&event); // Since nothing is connected this should not cause a call.

@@ -204,7 +204,9 @@ void Controller::_notify_parameter_listeners(Event* event) const
     auto typed_event = static_cast<ParameterChangeNotificationEvent*>(event);
     ext::ParameterChangeNotification notification(static_cast<int>(typed_event->processor_id()),
                                                   static_cast<int>(typed_event->parameter_id()),
-                                                  typed_event->float_value(),
+                                                  typed_event->normalized_value(),
+                                                  typed_event->domain_value(),
+                                                  typed_event->formatted_value(),
                                                   typed_event->time());
     for (auto& listener : _parameter_change_listeners)
     {

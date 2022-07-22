@@ -539,9 +539,9 @@ void OSCFrontend::_handle_param_change_notification(const ParameterChangeNotific
         const auto& param_node = node->second.find(event->parameter_id());
         if (param_node != node->second.end())
         {
-            _osc->send(param_node->second.c_str(), event->float_value());
+            _osc->send(param_node->second.c_str(), event->normalized_value());
             SUSHI_LOG_DEBUG("Sending parameter change from processor: {}, parameter: {}, value: {}",
-                            event->processor_id(), event->parameter_id(), event->float_value());
+                            event->processor_id(), event->parameter_id(), event->normalized_value());
         }
     }
 }
