@@ -167,6 +167,17 @@ inline ext::PluginType to_external(PluginType type)
     }
 }
 
+inline ext::TrackType to_external(TrackType type)
+{
+    switch (type)
+    {
+        case TrackType::REGULAR:    return ext::TrackType::REGULAR;
+        case TrackType::PRE:        return ext::TrackType::PRE;
+        case TrackType::POST:       return ext::TrackType::POST;
+        default:                    return ext::TrackType::REGULAR;
+    }
+}
+
 inline void to_internal(sushi::ProcessorState* dest, const ext::ProcessorState* src)
 {
     if (src->program.has_value()) dest->set_program(src->program.value());

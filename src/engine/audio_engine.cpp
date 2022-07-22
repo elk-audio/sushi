@@ -146,6 +146,7 @@ void AudioEngine::set_audio_input_channels(int channels)
 {
     _clip_detector.set_input_channels(channels);
     BaseEngine::set_audio_input_channels(channels);
+    _input_swap_buffer = ChunkSampleBuffer(channels);
 }
 
 void AudioEngine::set_audio_output_channels(int channels)
@@ -157,6 +158,7 @@ void AudioEngine::set_audio_output_channels(int channels)
     {
         _master_limiters.emplace_back();
     }
+    _output_swap_buffer = ChunkSampleBuffer(channels);
 }
 
 EngineReturnStatus AudioEngine::set_cv_input_channels(int channels)
@@ -457,16 +459,33 @@ void AudioEngine::process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
     {
         _clip_detector.detect_clipped_samples(*in_buffer, _main_out_queue, true);
     }
-    _copy_audio_to_tracks(in_buffer);
 
-    // Render all tracks
+    if (_pre_track)
+    {
+        _pre_track->process_audio(*in_buffer, _input_swap_buffer);
+        _copy_audio_to_tracks(&_input_swap_buffer);
+    }
+    else
+    {
+        _copy_audio_to_tracks(in_buffer);
+    }
+
+    // Render all tracks. If running in multicore mode, this part is processed in parallel.
     _audio_graph.render();
 
     _retrieve_events_from_tracks(*out_controls);
-
     _main_out_queue.push(RtEvent::make_synchronisation_event(_transport.current_process_time()));
-    _copy_audio_from_tracks(out_buffer);
     _state.store(update_state(state));
+
+    if (_post_track)
+    {
+        _copy_audio_from_tracks(&_output_swap_buffer);
+        _post_track->process_audio(_output_swap_buffer, *out_buffer);
+    }
+    else
+    {
+        _copy_audio_from_tracks(out_buffer);
+    }
 
     if (_master_limiter_enabled)
     {
@@ -547,16 +566,14 @@ EngineReturnStatus AudioEngine::_send_control_event(RtEvent& event)
     return EngineReturnStatus::QUEUE_FULL;
 }
 
-std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_multibus_track(const std::string& name,
-                                                                           int input_busses,
-                                                                           int output_busses)
+std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_multibus_track(const std::string& name, int bus_count)
 {
-    if (input_busses > MAX_TRACK_BUSSES && output_busses > MAX_TRACK_BUSSES)
+    if (bus_count > MAX_TRACK_BUSES)
     {
-        SUSHI_LOG_ERROR("Invalid number of busses for new track");
+        SUSHI_LOG_ERROR("Invalid number of buses for new track");
         return {EngineReturnStatus::INVALID_N_CHANNELS, ObjectId(0)};
     }
-    auto track = std::make_shared<Track>(_host_control, input_busses, output_busses, &_process_timer);
+    auto track = std::make_shared<Track>(_host_control, bus_count, &_process_timer);
     auto status = _register_new_track(name, track);
     if (status != EngineReturnStatus::OK)
     {
@@ -567,18 +584,31 @@ std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_multibus_track(const
 
 std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_track(const std::string &name, int channel_count)
 {
-    if ((channel_count < 0 || channel_count > 2))
+    if ((channel_count < 0 || channel_count > MAX_TRACK_CHANNELS))
     {
         SUSHI_LOG_ERROR("Invalid number of channels for new track");
         return {EngineReturnStatus::INVALID_N_CHANNELS, ObjectId(0)};
     }
-    auto track = std::make_shared<Track>(_host_control, channel_count, &_process_timer);
+    // Only mono and stereo track have a pan parameter
+    bool pan_control = channel_count <= 2;
+
+    auto track = std::make_shared<Track>(_host_control, channel_count, &_process_timer, pan_control);
     auto status = _register_new_track(name, track);
     if (status != EngineReturnStatus::OK)
     {
         return {status, ObjectId(0)};
     }
     return {EngineReturnStatus::OK, track->id()};
+}
+
+std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_post_track(const std::string& name)
+{
+    return _create_master_track(name, TrackType::POST, _audio_outputs);
+}
+
+std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_pre_track(const std::string& name)
+{
+    return _create_master_track(name, TrackType::PRE, _audio_inputs);
 }
 
 EngineReturnStatus AudioEngine::delete_track(ObjectId track_id)
@@ -613,7 +643,7 @@ EngineReturnStatus AudioEngine::delete_track(ObjectId track_id)
     }
     else
     {
-        _audio_graph.remove(track.get());
+        _remove_track(track.get());
         [[maybe_unused]] bool removed = _remove_processor_from_realtime_part(track->id());
         SUSHI_LOG_WARNING_IF(removed == false, "Plugin track {} was not in the audio graph", track_id)
     }
@@ -832,9 +862,12 @@ EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, std
     }
     else
     {
-        if (_audio_graph.add(track.get()) == false)
+        if (_add_track(track.get()) == false)
         {
-            SUSHI_LOG_ERROR("Error adding track {}, max number of tracks reached", track->name());
+
+            SUSHI_LOG_ERROR_IF(track->type() == TrackType::REGULAR, "Error adding track {}, max number of tracks reached", track->name());
+            SUSHI_LOG_ERROR_IF(track->type() == TrackType::PRE, "Error adding track {}, Only one pre track allowed", track->name());
+            SUSHI_LOG_ERROR_IF(track->type() == TrackType::POST, "Error adding track {}, Only one post track allowed", track->name());
             return EngineReturnStatus::ERROR;
         }
         if (_insert_processor_in_realtime_part(track.get()) == false)
@@ -853,6 +886,17 @@ EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, std
         return EngineReturnStatus::OK;
     }
     return EngineReturnStatus::ERROR;
+}
+
+std::pair<EngineReturnStatus, ObjectId> AudioEngine::_create_master_track(const std::string& name, TrackType type, int channels)
+{
+    auto track = std::make_shared<Track>(_host_control, channels, &_process_timer, false, type);
+    auto status = _register_new_track(name, track);
+    if (status != EngineReturnStatus::OK)
+    {
+        return {status, ObjectId(0)};
+    }
+    return {EngineReturnStatus::OK, track->id()};
 }
 
 EngineReturnStatus AudioEngine::_connect_audio_channel(int engine_channel,
@@ -1016,24 +1060,14 @@ void AudioEngine::_process_internal_rt_events()
             {
                 auto typed_event = event.processor_reorder_event();
                 auto track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
-                bool added = false;
-                if (track)
-                {
-                    added = _audio_graph.add(track);
-                }
-                typed_event->set_handled(added);
+                typed_event->set_handled(track ? _add_track(track) : false);
                 break;
             }
             case RtEventType::REMOVE_TRACK:
             {
                 auto typed_event = event.processor_reorder_event();
                 auto track = static_cast<Track*>(_realtime_processors[typed_event->track()]);
-                bool removed = false;
-                if (track)
-                {
-                    removed = _audio_graph.remove(track);
-                }
-                typed_event->set_handled(removed);
+                typed_event->set_handled(track ? _remove_track(track) : false);
                 break;
             }
             case RtEventType::ADD_AUDIO_CONNECTION:
@@ -1168,6 +1202,60 @@ void print_single_timings_for_node(std::fstream& f, performance::PerformanceTime
           << std::setw(16) << timings.value().min_case * 100.0
           << std::setw(16) << timings.value().max_case * 100.0 <<"\n";
     }
+}
+
+bool AudioEngine::_add_track(Track* track)
+{
+    bool added = false;
+    switch (track->type())
+    {
+        case TrackType::REGULAR:
+            added = _audio_graph.add(track);
+            break;
+
+        case TrackType::POST:
+            if (_post_track == nullptr)
+            {
+                _post_track = track;
+                added = true;
+            }
+            break;
+
+        case TrackType::PRE:
+            if (_pre_track == nullptr)
+            {
+                _pre_track = track;
+                added = true;
+            }
+    }
+    return added;
+}
+
+bool AudioEngine::_remove_track(Track* track)
+{
+    bool removed = false;
+    switch (track->type())
+    {
+        case TrackType::REGULAR:
+            removed = _audio_graph.remove(track);
+            break;
+
+        case TrackType::POST:
+            if (_post_track)
+            {
+                _post_track = nullptr;
+                removed = true;
+            }
+            break;
+
+        case TrackType::PRE:
+            if (_pre_track)
+            {
+                _pre_track = nullptr;
+                removed = true;
+            }
+    }
+    return removed;
 }
 
 void AudioEngine::print_timings_to_file(const std::string& filename)

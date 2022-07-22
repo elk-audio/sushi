@@ -5,7 +5,7 @@
     "tracks" : [
         {
             "name" : "guitar",
-            "mode" : "stereo",
+            "channels" : 2,
             "inputs" : [
                 {
                     "engine_bus" : 0,
@@ -33,7 +33,7 @@
         },
         {
             "name" : "synth",
-            "mode" : "stereo",
+            "channels" : 2,
             "inputs" : [
             ],
             "outputs" : [

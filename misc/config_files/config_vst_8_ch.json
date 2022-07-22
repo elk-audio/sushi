@@ -5,7 +5,7 @@
     "tracks" : [
         {
             "name" : "main(Piano)",
-            "mode" : "stereo",
+            "channels" : 2,
             "inputs" : [],
             "outputs" : [
                 {
@@ -23,7 +23,7 @@
         },
         {
             "name" : "second(Synth)",
-            "mode" : "stereo",
+            "channels" : 2,
             "inputs" : [],
             "outputs" : [
                 {
@@ -41,7 +41,7 @@
         },
         {
             "name" : "third(Guitar)",
-            "mode" : "stereo",
+            "channels" : 2,
             "inputs" : [
                 {
                     "engine_bus" : 0,
@@ -69,7 +69,7 @@
         },
         {
             "name" : "fourth(Passthrough)",
-            "mode" : "stereo",
+            "channels" : 2,
             "inputs" : [
                 {
                     "engine_bus" : 1,

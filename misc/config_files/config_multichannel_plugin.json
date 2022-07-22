@@ -5,9 +5,8 @@
     "tracks" : [
         {
             "name" : "main",
-            "mode" : "multibus",
-            "input_busses" : 2,
-            "output_busses" : 3,
+            "multibus" : true,
+            "buses" : 3,
             "inputs" : [
                 {
                     "engine_bus" : 0,
