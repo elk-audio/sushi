@@ -60,8 +60,8 @@ protected:
         ON_CALL(_mock_processor_container, processor(_test_track->id())).WillByDefault(Return(_test_track));
         ON_CALL(_mock_processor_container, processor(_test_processor->id())).WillByDefault(Return(_test_processor));
 
-        _module_under_test.add_processor(_test_processor->id());
-        _module_under_test.add_processor(_test_track->id());
+        _module_under_test.track_parameters(_test_processor->id());
+        _module_under_test.track_parameters(_test_track->id());
     }
 
     ::testing::NiceMock<MockEventDispatcher> _mock_dispatcher;

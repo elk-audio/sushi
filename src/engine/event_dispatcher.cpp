@@ -377,11 +377,11 @@ void EventDispatcher::_handle_engine_notifications_internally(EngineNotification
         switch (typed_event->action())
         {
             case AudioGraphNotificationEvent::Action::PROCESSOR_CREATED:
-                _parameter_manager.add_processor(typed_event->processor());
+                _parameter_manager.track_parameters(typed_event->processor());
                 break;
 
             case AudioGraphNotificationEvent::Action::TRACK_CREATED:
-                _parameter_manager.add_processor(typed_event->track());
+                _parameter_manager.track_parameters(typed_event->track());
                 break;
 
             case AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED:
@@ -389,11 +389,11 @@ void EventDispatcher::_handle_engine_notifications_internally(EngineNotification
                 break;
 
             case AudioGraphNotificationEvent::Action::PROCESSOR_DELETED:
-                _parameter_manager.remove_processor(typed_event->processor());
+                _parameter_manager.untrack_parameters(typed_event->processor());
                 break;
 
             case AudioGraphNotificationEvent::Action::TRACK_DELETED:
-                _parameter_manager.remove_processor(typed_event->track());
+                _parameter_manager.untrack_parameters(typed_event->track());
                 break;
 
             default:

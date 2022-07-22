@@ -40,11 +40,9 @@ inline void output_parameter_value(ObjectId processor_id,
 ParameterManager::ParameterManager(Time update_rate,
                                    const sushi::engine::BaseProcessorContainer* processor_container) : _processors(processor_container),
                                                                                                        _update_rate(update_rate)
-{
+{}
 
-}
-
-void ParameterManager::add_processor(ObjectId processor_id)
+void ParameterManager::track_parameters(ObjectId processor_id)
 {
     if (auto processor = _processors->processor(processor_id))
     {
@@ -61,7 +59,7 @@ void ParameterManager::add_processor(ObjectId processor_id)
     }
 }
 
-void ParameterManager::remove_processor(ObjectId processor_id)
+void ParameterManager::untrack_parameters(ObjectId processor_id)
 {
     _parameters.erase(processor_id);
 }

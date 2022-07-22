@@ -46,21 +46,21 @@ public:
     ParameterManager(Time update_rate, const engine::BaseProcessorContainer* processor_container);
 
     /**
-     * @brief Add a processor whose parameters should be managed
+     * @brief Add a processor whose parameter values should be tracked
      * @param processor_id The id of the processor
      */
-    void add_processor(ObjectId processor_id);
+    void track_parameters(ObjectId processor_id);
 
     /**
-     * @brief Remove a managed processor
-     * @param processor_id The id of the Processor to remove
+     * @brief Remove all tracked parameters of a processor
+     * @param processor_id The id of the Processor
      */
-    void remove_processor(ObjectId processor_id);
+    void untrack_parameters(ObjectId processor_id);
 
     /**
      * @brief Mark a parameter as changed and queue a value update
      * @param processor_id The id of the Processor
-     * @param parameter_id The id of the Processor parameter
+     * @param parameter_id The id of the parameter
      * @param timestamp The time at which the value changed, can be in the future
      */
     void mark_parameter_changed(ObjectId processor_id, ObjectId parameter_id, Time timestamp);
