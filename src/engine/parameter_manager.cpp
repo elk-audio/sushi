@@ -24,12 +24,12 @@
 
 namespace sushi {
 
-inline void output_parameter_value(ObjectId processor_id,
-                                   ObjectId parameter_id,
-                                   float normalized_value,
-                                   float domain_value,
-                                   const std::string& formatted_value,
-                                   dispatcher::BaseEventDispatcher* dispatcher)
+inline void send_parameter_notification(ObjectId processor_id,
+                                        ObjectId parameter_id,
+                                        float normalized_value,
+                                        float domain_value,
+                                        const std::string& formatted_value,
+                                        dispatcher::BaseEventDispatcher* dispatcher)
 {
     ParameterChangeNotificationEvent event(processor_id,
                                            parameter_id,
@@ -114,10 +114,10 @@ void ParameterManager::_output_parameter_notifications(dispatcher::BaseEventDisp
                     float value = processor->parameter_value(i->parameter_id).second;
                     if (value != entry.value)
                     {
-                        output_parameter_value(i->processor_id, i->parameter_id, value,
-                                               processor->parameter_value_in_domain(i->parameter_id).second,
-                                               processor->parameter_value_formatted(i->parameter_id).second, dispatcher);
-
+                        send_parameter_notification(i->processor_id, i->parameter_id, value,
+                                                    processor->parameter_value_in_domain(i->parameter_id).second,
+                                                    processor->parameter_value_formatted(i->parameter_id).second,
+                                                    dispatcher);
                         entry.last_update = timestamp;
                         entry.value = value;
                     }
@@ -155,9 +155,9 @@ void ParameterManager::_output_processor_notifications(dispatcher::BaseEventDisp
                     float value = processor->parameter_value(p.first).second;
                     if (value != entry.value)
                     {
-                        output_parameter_value(i->processor_id, p.first, value,
-                                               processor->parameter_value_in_domain(p.first).second,
-                                               processor->parameter_value_formatted(p.first).second, dispatcher);
+                        send_parameter_notification(i->processor_id, p.first, value,
+                                                    processor->parameter_value_in_domain(p.first).second,
+                                                    processor->parameter_value_formatted(p.first).second, dispatcher);
                         entry.value = value;
                         entry.last_update = timestamp;
                     }

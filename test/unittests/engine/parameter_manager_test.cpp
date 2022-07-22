@@ -1,8 +1,6 @@
 #include "gtest/gtest.h"
-#include <gmock/gmock.h>
-#include <gmock/gmock-actions.h>
-
-//  #define private public
+#include "gmock/gmock.h"
+#include "gmock/gmock-actions.h"
 
 #include "engine/parameter_manager.cpp"
 #include "plugins/gain_plugin.h"
@@ -10,8 +8,6 @@
 #include "test_utils/mock_event_dispatcher.h"
 #include "test_utils/mock_processor_container.h"
 #include "test_utils/host_control_mockup.h"
-
-
 
 using namespace sushi;
 
@@ -87,7 +83,7 @@ protected:
 TEST_F(TestParameterManager, TestEventCreation)
 {
     EXPECT_CALL(_mock_dispatcher, process(ParameterChangeNotificationMatcherFull(3u, 4u, 0.5f, 5.0f, "5.0"))).Times(1);
-    output_parameter_value(3u, 4u, 0.5f, 5.0f, "5.0", &_mock_dispatcher);
+    send_parameter_notification(3u, 4u, 0.5f, 5.0f, "5.0", &_mock_dispatcher);
 }
 
 TEST_F(TestParameterManager, TestParameterUpdates)
@@ -103,12 +99,10 @@ TEST_F(TestParameterManager, TestParameterUpdates)
 
     // Expect 1 notification from test_processor
     EXPECT_CALL(_mock_dispatcher, process(ParameterChangeNotificationMatcher(_test_processor->id(), 0u, 0.6f))).Times(1);
-    //EXPECT_CALL(_mock_dispatcher, process(_)).Times(1);
     _module_under_test.output_parameter_notifications(&_mock_dispatcher, TEST_MAX_INTERVAL );
 
     // Expect the other notification from test_track
     EXPECT_CALL(_mock_dispatcher, process(ParameterChangeNotificationMatcher(_test_track->id(), 0u, 0.7f))).Times(1);
-    //EXPECT_CALL(_mock_dispatcher, process(_)).Times(1);
     _module_under_test.output_parameter_notifications(&_mock_dispatcher, TEST_MAX_INTERVAL + Time(3));
 
     // Expect no notifications as nothing has changed
