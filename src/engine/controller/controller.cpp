@@ -83,6 +83,9 @@ ext::ControlStatus Controller::subscribe_to_notifications(ext::NotificationType 
         case ext::NotificationType::PARAMETER_CHANGE:
             _parameter_change_listeners.push_back(listener);
             break;
+        case ext::NotificationType::PROPERTY_CHANGE:
+            _property_change_listeners.push_back(listener);
+            break;
         case ext::NotificationType::PROCESSOR_UPDATE:
             _processor_update_listeners.push_back(listener);
             break;
@@ -111,6 +114,10 @@ int Controller::process(Event* event)
     if (event->is_parameter_change_notification())
     {
         _notify_parameter_listeners(event);
+    }
+    else if (event->is_property_change_notification())
+    {
+        _notify_property_listeners(event);
     }
     else if (event->is_engine_notification())
     {
@@ -200,6 +207,19 @@ void Controller::_notify_parameter_listeners(Event* event) const
                                                   typed_event->float_value(),
                                                   typed_event->time());
     for (auto& listener : _parameter_change_listeners)
+    {
+        listener->notification(&notification);
+    }
+}
+
+void Controller::_notify_property_listeners(Event* event) const
+{
+    auto typed_event = static_cast<PropertyChangeNotificationEvent*>(event);
+    ext::PropertyChangeNotification notification(static_cast<int>(typed_event->processor_id()),
+                                                 static_cast<int>(typed_event->property_id()),
+                                                 typed_event->value(),
+                                                 typed_event->time());
+    for (auto& listener : _property_change_listeners)
     {
         listener->notification(&notification);
     }

@@ -230,7 +230,6 @@ ext::ControlStatus ParameterController::set_property_value(int processor_id, int
                                          static_cast<ObjectId>(property_id),
                                          value,
                                          IMMEDIATE_PROCESS);
-
     _event_dispatcher->post_event(event);
     return ext::ControlStatus::OK;
 }

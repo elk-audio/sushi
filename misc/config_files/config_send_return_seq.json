@@ -122,6 +122,9 @@
             }
         }
     ],
+    "osc" : {
+        "enable_all_processor_outputs" : true
+    }   ,
     "initial_state": [
         {
             "processor": "send_analog",

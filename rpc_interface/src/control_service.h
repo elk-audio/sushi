@@ -38,6 +38,7 @@ class SubscribeToCpuTimingUpdatesCallData;
 class SubscribeToTrackChangesCallData;
 class SubscribeToProcessorChangesCallData;
 class SubscribeToParameterUpdatesCallData;
+class SubscribeToPropertyUpdatesCallData;
 
 class SystemControlService : public SystemController::Service
 {
@@ -291,8 +292,9 @@ using AsyncService = sushi_rpc::NotificationController::WithAsyncMethod_Subscrib
                      sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToTrackChanges<
                      sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToEngineCpuTimingUpdates<
                      sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToTransportChanges<
+                     sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToPropertyUpdates<
                      sushi_rpc::NotificationController::Service
-                     >>>>>;
+                     >>>>>>;
 
 class NotificationControlService : public AsyncService,
                                    private sushi::ext::ControlListener
@@ -318,6 +320,9 @@ public:
     void subscribe(SubscribeToParameterUpdatesCallData* subscriber);
     void unsubscribe(SubscribeToParameterUpdatesCallData* subscriber);
 
+    void subscribe(SubscribeToPropertyUpdatesCallData* subscriber);
+    void unsubscribe(SubscribeToPropertyUpdatesCallData* subscriber);
+
     void delete_all_subscribers();
 
 private:
@@ -326,6 +331,7 @@ private:
     void _forward_track_notification_to_subscribers(const sushi::ext::ControlNotification* notification);
     void _forward_processor_notification_to_subscribers(const sushi::ext::ControlNotification* notification);
     void _forward_parameter_notification_to_subscribers(const sushi::ext::ControlNotification* notification);
+    void _forward_property_notification_to_subscribers(const sushi::ext::ControlNotification* notification);
 
     std::vector<SubscribeToTransportChangesCallData*> _transport_subscribers;
     std::mutex _transport_subscriber_lock;
@@ -341,6 +347,9 @@ private:
 
     std::vector<SubscribeToParameterUpdatesCallData*> _parameter_subscribers;
     std::mutex _parameter_subscriber_lock;
+
+    std::vector<SubscribeToPropertyUpdatesCallData*> _property_subscribers;
+    std::mutex _property_subscriber_lock;
 
     sushi::ext::SushiControl* _controller;
 

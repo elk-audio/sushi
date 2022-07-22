@@ -173,6 +173,13 @@ void OscpackOscMessenger::send(const char* address_pattern, int payload)
     _transmit_socket->Send(p.Data(), p.Size());
 }
 
+void OscpackOscMessenger::send(const char* address_pattern, const std::string& payload)
+{
+    oscpack::OutboundPacketStream p(_output_buffer, OSC_OUTPUT_BUFFER_SIZE);
+    p << oscpack::BeginMessage(address_pattern) << payload.c_str()  << oscpack::EndMessage;
+    _transmit_socket->Send(p.Data(), p.Size());
+}
+
 void OscpackOscMessenger::ProcessMessage(const oscpack::ReceivedMessage& m, const IpEndpointName& /*remoteEndpoint*/)
 {
     try

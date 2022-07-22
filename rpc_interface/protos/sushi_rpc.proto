@@ -206,6 +206,7 @@ service NotificationController
     rpc SubscribeToTrackChanges (GenericVoidValue) returns (stream TrackUpdate) {}
     rpc SubscribeToProcessorChanges (GenericVoidValue) returns (stream ProcessorUpdate) {}
     rpc SubscribeToParameterUpdates (ParameterNotificationBlocklist) returns (stream ParameterValue) {}
+    rpc SubscribeToPropertyUpdates (PropertyNotificationBlocklist) returns (stream PropertyValue) {}
 }
 
 /**
@@ -562,6 +563,11 @@ message DeleteProcessorRequest
 message ParameterNotificationBlocklist
 {
     repeated ParameterIdentifier parameters = 1;
+}
+
+message PropertyNotificationBlocklist
+{
+    repeated PropertyIdentifier properties = 1;
 }
 
 message MidiChannel

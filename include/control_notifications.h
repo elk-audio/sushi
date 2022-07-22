@@ -95,6 +95,31 @@ private:
     float _value;
 };
 
+class PropertyChangeNotification : public ControlNotification
+{
+public:
+    PropertyChangeNotification(int processor_id, int property_id, const std::string& value, Time timestamp)
+    : ControlNotification(NotificationType::PROPERTY_CHANGE, timestamp),
+      _processor_id(processor_id),
+      _property_id(property_id),
+      _value(value) {}
+
+    PropertyChangeNotification(int processor_id, int property_id, std::string&& value, Time timestamp)
+    : ControlNotification(NotificationType::PROPERTY_CHANGE, timestamp),
+      _processor_id(processor_id),
+      _property_id(property_id),
+      _value(value) {}
+
+    int processor_id() const {return _processor_id;}
+    int parameter_id() const {return _property_id;}
+    const std::string& value() const {return _value;}
+
+private:
+    int _processor_id;
+    int _property_id;
+    std::string _value;
+};
+
 } // ext
 } // sushi
 

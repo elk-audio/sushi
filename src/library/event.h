@@ -95,6 +95,9 @@ public:
     /* Convertible to ParameterChangeNotification */
     virtual bool is_parameter_change_notification() const {return false;}
 
+    /* Convertible to PropertyChangeNotification */
+    virtual bool is_property_change_notification() const {return false;}
+
     /* Convertible to EngineEvent */
     virtual bool is_engine_event() const {return false;}
 
@@ -344,6 +347,33 @@ public:
 
 private:
     Subtype _subtype;
+};
+
+class PropertyChangeNotificationEvent : public Event
+{
+public:
+    PropertyChangeNotificationEvent(ObjectId processor_id,
+                                    ObjectId property_id,
+                                    const std::string& value,
+                                    Time timestamp) : Event(timestamp),
+                                                      _processor_id(processor_id),
+                                                      _property_id(property_id),
+                                                      _value(value) {}
+
+    bool is_property_change_notification() const override {return true;}
+
+    bool maps_to_rt_event() const override {return false;}
+
+    ObjectId processor_id() const {return _processor_id;}
+
+    ObjectId property_id() const {return _property_id;}
+
+    const std::string& value() const {return _value;}
+
+private:
+    ObjectId    _processor_id;
+    ObjectId    _property_id;
+    std::string _value;
 };
 
 class SetProcessorBypassEvent : public Event

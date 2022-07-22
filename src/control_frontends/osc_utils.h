@@ -104,6 +104,7 @@ public:
      */
     virtual void send(const char* address_pattern, int payload) = 0;
     virtual void send(const char* address_pattern, float payload) = 0;
+    virtual void send(const char* address_pattern, const std::string& payload) = 0;
 
     std::string send_ip() const
     {

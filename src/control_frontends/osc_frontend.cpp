@@ -191,6 +191,10 @@ int OSCFrontend::process(Event* event)
     {
         _handle_param_change_notification(static_cast<ParameterChangeNotificationEvent*>(event));
     }
+    else if (event->is_property_change_notification())
+    {
+        _handle_property_change_notification(static_cast<PropertyChangeNotificationEvent*>(event));
+    }
     else if (event->is_engine_notification())
     {
         _handle_engine_notification(static_cast<EngineNotificationEvent*>(event));
@@ -423,6 +427,17 @@ OscConnection* OSCFrontend::_connect_to_property(const std::string& processor_na
     return connection;
 }
 
+void OSCFrontend::_connect_from_property(const std::string& processor_name,
+                                         const std::string& property_name,
+                                         ObjectId processor_id,
+                                         ObjectId property_id)
+{
+    std::string id_string = "/property/" + osc::make_safe_path(processor_name) + "/" + osc::make_safe_path(property_name);
+
+    _outgoing_connections[processor_id][property_id] = id_string;
+
+    SUSHI_LOG_DEBUG("Added osc output from property {}/{}", processor_name, property_name);
+}
 
 void OSCFrontend::_connect_to_parameters_and_properties(const Processor* processor)
 {
@@ -437,6 +452,8 @@ void OSCFrontend::_connect_to_parameters_and_properties(const Processor* process
         else if (type == ParameterType::STRING)
         {
             _connect_to_property(processor->name(), param->name(), processor->id(), param->id());
+            // TODO - for now property outputs are always on.
+            _connect_from_property(processor->name(), param->name(), processor->id(), param->id());
         }
     }
 }
@@ -529,6 +546,21 @@ void OSCFrontend::_handle_param_change_notification(const ParameterChangeNotific
     }
 }
 
+void OSCFrontend::_handle_property_change_notification(const PropertyChangeNotificationEvent* event)
+{
+    const auto& node = _outgoing_connections.find(event->processor_id());
+    if (node != _outgoing_connections.end())
+    {
+        const auto& param_node = node->second.find(event->property_id());
+        if (param_node != node->second.end())
+        {
+            _osc->send(param_node->second.c_str(), event->value());
+            SUSHI_LOG_DEBUG("Sending property change from processor: {}, property: {}, value: {}",
+                            event->processor_id(), event->property_id(), event->value());
+        }
+    }
+}
+
 void OSCFrontend::_handle_clipping_notification(const ClippingNotificationEvent* event)
 {
     if (event->channel_type() == ClippingNotificationEvent::ClipChannelType::INPUT)
@@ -599,7 +631,6 @@ void OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
             break;
     }
 }
-
 
 } // namespace control_frontend
 

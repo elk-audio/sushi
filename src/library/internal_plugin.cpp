@@ -308,6 +308,7 @@ ProcessorReturnCode InternalPlugin::set_property_value(ObjectId property_id, con
         return ProcessorReturnCode::PARAMETER_NOT_FOUND;
     }
     node->second = value;
+    _host_control.post_event(new PropertyChangeNotificationEvent(this->id(), property_id, value, IMMEDIATE_PROCESS));
     return ProcessorReturnCode::OK;
 }
 
