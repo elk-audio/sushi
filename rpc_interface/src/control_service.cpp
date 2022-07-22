@@ -2057,6 +2057,7 @@ NotificationControlService::NotificationControlService(sushi::ext::SushiControl*
     _controller->subscribe_to_notifications(sushi::ext::NotificationType::TRACK_UPDATE, this);
     _controller->subscribe_to_notifications(sushi::ext::NotificationType::PROCESSOR_UPDATE, this);
     _controller->subscribe_to_notifications(sushi::ext::NotificationType::PARAMETER_CHANGE, this);
+    _controller->subscribe_to_notifications(sushi::ext::NotificationType::PROPERTY_CHANGE, this);
 }
 
 void NotificationControlService::notification(const sushi::ext::ControlNotification* notification)
@@ -2086,6 +2087,11 @@ void NotificationControlService::notification(const sushi::ext::ControlNotificat
         case sushi::ext::NotificationType::PARAMETER_CHANGE:
         {
             _forward_parameter_notification_to_subscribers(notification);
+            break;
+        }
+        case sushi::ext::NotificationType::PROPERTY_CHANGE:
+        {
+            _forward_property_notification_to_subscribers(notification);
             break;
         }
         default:
@@ -2229,13 +2235,30 @@ void NotificationControlService::_forward_processor_notification_to_subscribers(
 void NotificationControlService::_forward_parameter_notification_to_subscribers(const sushi::ext::ControlNotification* notification)
 {
     auto typed_notification = static_cast<const sushi::ext::ParameterChangeNotification*>(notification);
-    auto notification_content = std::make_shared<ParameterValue>();
-    notification_content->set_value(typed_notification->value());
+    auto notification_content = std::make_shared<ParameterUpdate>();
+    notification_content->set_normalized_value(typed_notification->value());
+    notification_content->set_domain_value(typed_notification->domain_value());
+    notification_content->set_formatted_value(typed_notification->formatted_value());
     notification_content->mutable_parameter()->set_parameter_id(typed_notification->parameter_id());
     notification_content->mutable_parameter()->set_processor_id(typed_notification->processor_id());
 
     std::scoped_lock lock(_parameter_subscriber_lock);
     for (auto& subscriber : _parameter_subscribers)
+    {
+        subscriber->push(notification_content);
+    }
+}
+
+void NotificationControlService::_forward_property_notification_to_subscribers(const sushi::ext::ControlNotification* notification)
+{
+    auto typed_notification = static_cast<const sushi::ext::PropertyChangeNotification*>(notification);
+    auto notification_content = std::make_shared<PropertyValue>();
+    notification_content->set_value(typed_notification->value());
+    notification_content->mutable_property()->set_property_id(typed_notification->parameter_id());
+    notification_content->mutable_property()->set_processor_id(typed_notification->processor_id());
+
+    std::scoped_lock lock(_property_subscriber_lock);
+    for (auto& subscriber : _property_subscribers)
     {
         subscriber->push(notification_content);
     }
@@ -2311,6 +2334,20 @@ void NotificationControlService::unsubscribe(SubscribeToParameterUpdatesCallData
                                              subscriber));
 }
 
+void NotificationControlService::subscribe(SubscribeToPropertyUpdatesCallData* subscriber)
+{
+    std::scoped_lock lock(_property_subscriber_lock);
+    _property_subscribers.push_back(subscriber);
+}
+
+void NotificationControlService::unsubscribe(SubscribeToPropertyUpdatesCallData* subscriber)
+{
+    std::scoped_lock lock(_property_subscriber_lock);
+    _property_subscribers.erase(std::remove(_property_subscribers.begin(),
+                                            _property_subscribers.end(),
+                                             subscriber));
+}
+
 void NotificationControlService::delete_all_subscribers()
 {
     /* Unsubscribe and delete CallData subscribers directly, without
@@ -2353,6 +2390,15 @@ void NotificationControlService::delete_all_subscribers()
     }
 
     {
+        std::scoped_lock lock(_property_subscriber_lock);
+        for (auto& subscriber : _property_subscribers)
+        {
+            delete subscriber;
+        }
+        _processor_subscribers.clear();
+    }
+
+    {
         std::scoped_lock lock(_processor_subscriber_lock);
         for (auto& subscriber : _processor_subscribers)
         {
@@ -2361,5 +2407,6 @@ void NotificationControlService::delete_all_subscribers()
         _processor_subscribers.clear();
     }
 }
+
 
 } // sushi_rpc

@@ -487,6 +487,12 @@ protected:
     void async_delete(RtDeletable* object);
 
     /**
+     * @brief Called from a realtime thread to notify that all parameter values have changed and
+     *        should be reloaded.
+     */
+    void notify_state_change_rt();
+
+    /**
      * @brief Takes a parameter name and makes sure that it is unique and is not empty. An
      *        index will be added in case of duplicates
      * @param name The name of the parameter

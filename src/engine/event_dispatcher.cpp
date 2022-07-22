@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @Brief Implementation of Event Dispatcher
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include "event_dispatcher.h"
@@ -24,8 +24,14 @@
 namespace sushi {
 namespace dispatcher {
 
-constexpr auto TIMING_UPDATE_INTERVAL = std::chrono::seconds(1);
 
+constexpr int AUDIO_ENGINE_ID = 0;
+constexpr std::chrono::milliseconds THREAD_PERIODICITY = std::chrono::milliseconds(1);
+constexpr auto WORKER_THREAD_PERIODICITY = std::chrono::milliseconds(1);
+constexpr auto TIMING_UPDATE_INTERVAL = std::chrono::seconds(1);
+constexpr auto PARAMETER_UPDATE_RATE = 10;
+// Rate limits broadcasted parameter updates to 25 Hz
+constexpr auto MAX_PARAMETER_UPDATE_INTERVAL = std::chrono::milliseconds(40);
 
 EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
                                  RtSafeRtEventFifo* in_rt_queue,
@@ -33,7 +39,10 @@ EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
                                                                     _in_rt_queue{in_rt_queue},
                                                                     _out_rt_queue{out_rt_queue},
                                                                     _worker{engine, this},
-                                                                    _event_timer{engine->sample_rate()}
+                                                                    _event_timer{engine->sample_rate()},
+                                                                    _parameter_manager{MAX_PARAMETER_UPDATE_INTERVAL,
+                                                                                       engine->processor_container()},
+                                                                    _parameter_update_count{0}
 {
     std::fill(_posters.begin(), _posters.end(), nullptr);
     register_poster(this);
@@ -132,6 +141,11 @@ int EventDispatcher::process(Event* event)
         event->set_receiver(EventPosterId::WORKER);
         return _posters[event->receiver()]->process(event);
     }
+    if (event->is_parameter_change_event())
+    {
+        auto typed_event = static_cast<const ParameterChangeEvent*>(event);
+        _parameter_manager.mark_parameter_changed(typed_event->processor_id(), typed_event->parameter_id(), typed_event->time());
+    }
     if (event->maps_to_rt_event())
     {
         auto [send_now, sample_offset] = _event_timer.sample_offset_from_realtime(event->time());
@@ -145,13 +159,14 @@ int EventDispatcher::process(Event* event)
         _waiting_list.push_front(event);
         return EventStatus::QUEUED_HANDLING;
     }
-    if (event->is_parameter_change_notification())
+    if (event->is_parameter_change_notification() || event->is_property_change_notification())
     {
         _publish_parameter_events(event);
         return EventStatus::HANDLED_OK;
     }
     if (event->is_engine_notification())
     {
+        _handle_engine_notifications_internally(static_cast<EngineNotificationEvent*>(event));
         _publish_engine_notification_events(event);
         return EventStatus::HANDLED_OK;
     }
@@ -164,7 +179,7 @@ void EventDispatcher::_event_loop()
     {
         auto start_time = std::chrono::system_clock::now();
 
-        /* Handle incoming Events */
+        // Handle incoming Events
         while (Event* event = _next_event())
         {
             assert(event->receiver() < static_cast<int>(_posters.size()));
@@ -185,12 +200,18 @@ void EventDispatcher::_event_loop()
             }
             delete(event);
         }
-        /* Handle incoming RtEvents */
+        // Handle incoming RtEvents
         while (!_in_rt_queue->empty())
         {
             RtEvent rt_event;
             _in_rt_queue->pop(rt_event);
             _process_rt_event(rt_event);
+        }
+        // Send updates for any parameters that have changed
+        if (_parameter_update_count++ >= PARAMETER_UPDATE_RATE)
+        {
+            _parameter_manager.output_parameter_notifications(this, _last_rt_event_time);
+            _parameter_update_count = 0;
         }
         std::this_thread::sleep_until(start_time + THREAD_PERIODICITY);
     }
@@ -199,6 +220,15 @@ void EventDispatcher::_event_loop()
 
 int EventDispatcher::_process_rt_event(RtEvent &rt_event)
 {
+    if (rt_event.type() == RtEventType::FLOAT_PARAMETER_CHANGE ||
+        rt_event.type() == RtEventType::INT_PARAMETER_CHANGE ||
+        rt_event.type() == RtEventType::BOOL_PARAMETER_CHANGE)
+    {
+        auto typed_event = rt_event.parameter_change_event();
+        _parameter_manager.mark_parameter_changed(typed_event->processor_id(), typed_event->param_id(), IMMEDIATE_PROCESS);
+        return EventStatus::HANDLED_OK;
+    }
+
     Time timestamp = _event_timer.real_time_from_sample_offset(rt_event.sample_offset());
     Event* event = Event::from_rt_event(rt_event, timestamp);
     if (event == nullptr)
@@ -209,8 +239,10 @@ int EventDispatcher::_process_rt_event(RtEvent &rt_event)
             {
                 auto typed_event = rt_event.syncronisation_event();
                 _event_timer.set_outgoing_time(typed_event->timestamp());
+                _last_rt_event_time = typed_event->timestamp();
                 return EventStatus::HANDLED_OK;
             }
+
             default:
                 return EventStatus::UNRECOGNIZED_EVENT;
         }
@@ -218,10 +250,6 @@ int EventDispatcher::_process_rt_event(RtEvent &rt_event)
     if (event->is_keyboard_event())
     {
         _publish_keyboard_events(event);
-    }
-    if (event->is_parameter_change_notification())
-    {
-        _publish_parameter_events(event);
     }
     if (event->is_engine_notification())
     {
@@ -334,6 +362,44 @@ EventDispatcherStatus EventDispatcher::unsubscribe_from_engine_notifications(Eve
         }
     }
     return EventDispatcherStatus::UNKNOWN_POSTER;
+}
+
+int EventDispatcher::poster_id()
+{
+    return AUDIO_ENGINE_ID;
+}
+
+void EventDispatcher::_handle_engine_notifications_internally(EngineNotificationEvent* event)
+{
+    if (event->is_audio_graph_notification())
+    {
+        auto typed_event = static_cast<AudioGraphNotificationEvent*>(event);
+        switch (typed_event->action())
+        {
+            case AudioGraphNotificationEvent::Action::PROCESSOR_CREATED:
+                _parameter_manager.track_parameters(typed_event->processor());
+                break;
+
+            case AudioGraphNotificationEvent::Action::TRACK_CREATED:
+                _parameter_manager.track_parameters(typed_event->track());
+                break;
+
+            case AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED:
+                _parameter_manager.mark_processor_changed(typed_event->processor(), typed_event->time());
+                break;
+
+            case AudioGraphNotificationEvent::Action::PROCESSOR_DELETED:
+                _parameter_manager.untrack_parameters(typed_event->processor());
+                break;
+
+            case AudioGraphNotificationEvent::Action::TRACK_DELETED:
+                _parameter_manager.untrack_parameters(typed_event->track());
+                break;
+
+            default:
+                break;
+        }
+    }
 }
 
 void Worker::run()

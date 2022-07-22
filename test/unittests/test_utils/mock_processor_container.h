@@ -11,14 +11,15 @@
 #include "engine/base_processor_container.h"
 
 using namespace sushi;
+using namespace sushi::engine;
 
 class MockProcessorContainer : public engine::BaseProcessorContainer
 {
 public:
-        MOCK_METHOD(bool,
-                    add_processor,
-                    (std::shared_ptr<Processor>),
-                    (override));
+    MOCK_METHOD(bool,
+                add_processor,
+                (std::shared_ptr<Processor>),
+                (override));
 
     MOCK_METHOD(bool,
                 add_track,

@@ -91,6 +91,8 @@ public:
 
     void send(const char* address_pattern, int payload) override;
 
+    void send(const char* address_pattern, const std::string& payload) override;
+
 protected:
     /**
      * Defined in osc::OscPacketListener.

@@ -291,13 +291,8 @@ void Vst3xWrapper::process_event(const RtEvent& event)
         }
         case RtEventType::SET_STATE:
         {
-            auto state = static_cast<Vst3xRtState*>(event.processor_state_event()->state());
-            if (_state_parameter_changes)
-            {
-                // If a parameter batch is already queued, just throw it away and use the new one.
-                async_delete(_state_parameter_changes);
-            }
-            _state_parameter_changes = state;
+            auto state = event.processor_state_event()->state();
+            _set_state_rt(static_cast<Vst3xRtState*>(state));
             break;
         }
         default:
@@ -610,6 +605,11 @@ ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool realtime
     {
         auto event = new RtStateEvent(this->id(), std::move(rt_state), IMMEDIATE_PROCESS);
         _host_control.post_event(event);
+    }
+    else
+    {
+        _host_control.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
+                                                                 this->id(), 0, IMMEDIATE_PROCESS));
     }
 
     return ProcessorReturnCode::OK;
@@ -1122,7 +1122,20 @@ void Vst3xWrapper::_set_binary_state(std::vector<std::byte>& state)
 
     stream.seek(0, Steinberg::MemoryStream::kIBSeekSet, nullptr);
     res = _instance.component()->setState(&stream);
-    SUSHI_LOG_ERROR_IF(res != Steinberg::kResultOk, "Failed to set component state ({})", res);
+    SUSHI_LOG_ERROR_IF(res , "Failed to set component state ({})", res);
+    _host_control.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
+                                                             this->id(), 0, IMMEDIATE_PROCESS));
+}
+
+void Vst3xWrapper::_set_state_rt(Vst3xRtState* state)
+{
+    if (_state_parameter_changes)
+    {
+        // If a parameter batch is already queued, just throw it away and use the new one.
+        async_delete(_state_parameter_changes);
+    }
+    _state_parameter_changes = state;
+    notify_state_change_rt();
 }
 
 Steinberg::Vst::SpeakerArrangement speaker_arr_from_channels(int channels)

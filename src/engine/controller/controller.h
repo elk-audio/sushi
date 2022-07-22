@@ -98,9 +98,12 @@ private:
 
     void _notify_parameter_listeners(Event* event) const;
 
+    void _notify_property_listeners(Event* event) const;
+
     void _notify_timing_listeners(const EngineTimingNotificationEvent* event) const;
 
     std::vector<ext::ControlListener*>      _parameter_change_listeners;
+    std::vector<ext::ControlListener*>      _property_change_listeners;
     std::vector<ext::ControlListener*>      _processor_update_listeners;
     std::vector<ext::ControlListener*>      _track_update_listeners;
     std::vector<ext::ControlListener*>      _transport_update_listeners;

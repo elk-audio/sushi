@@ -168,6 +168,8 @@ private:
 
     void _set_bypass_rt(bool bypassed);
 
+    void _set_state_rt(RtState* state);
+
     float _sample_rate;
     /** Wrappers for preparing data to pass to processReplacing */
     float* _process_inputs[VST_WRAPPER_MAX_N_CHANNELS];
