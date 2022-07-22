@@ -191,6 +191,29 @@ TEST_F(TestEngine, TestCreateEmptyTrack)
     ASSERT_EQ(status, EngineReturnStatus::INVALID_N_CHANNELS);
 }
 
+TEST_F(TestEngine, TestCreatePreAndPostTracks)
+{
+    auto [status, track_id] = _module_under_test->create_pre_track("pre");
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+
+    auto track = _processors->track("pre");
+    ASSERT_TRUE(track);
+    ASSERT_EQ(TrackType::PRE, track->type());
+    ASSERT_EQ(track_id, track->id());
+
+    std::tie(status, track_id) = _module_under_test->create_post_track("post");
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+
+    track = _processors->track("post");
+    ASSERT_TRUE(track);
+    ASSERT_EQ(TrackType::POST, track->type());
+    ASSERT_EQ(track_id, track->id());
+
+    /* Test creating a second post track, this should fail */
+    std::tie(status, track_id) = _module_under_test->create_post_track("post");
+    ASSERT_NE(EngineReturnStatus::OK, status);
+}
+
 TEST_F(TestEngine, TestAddAndRemovePlugin)
 {
     /* Test adding Internal plugins */
@@ -547,4 +570,42 @@ TEST_F(TestEngine, TestGateRouting)
     // A gate high event on gate input 1 should result in a gate high on gate output 0
     ASSERT_TRUE(out_controls.gate_values[0]);
     ASSERT_EQ(1u, out_controls.gate_values.count());
+}
+
+TEST_F(TestEngine, TestMasterTrackProcessing)
+{
+    constexpr float GAIN_6DB = 126.0 / 144;
+
+    ChunkSampleBuffer in_buffer(TEST_CHANNEL_COUNT);
+    ChunkSampleBuffer out_buffer(TEST_CHANNEL_COUNT);
+    ControlBuffer ctrl_buffer;
+    test_utils::fill_sample_buffer(in_buffer, 1.0f);
+
+    auto [empty_status, empty_track_id] = _module_under_test->create_track("empty", TEST_CHANNEL_COUNT);
+    ASSERT_EQ(EngineReturnStatus::OK, empty_status);
+
+    auto [pre_status, pre_track_id] = _module_under_test->create_pre_track("pre");
+    ASSERT_EQ(EngineReturnStatus::OK, pre_status);
+
+    auto [post_status, post_track_id] = _module_under_test->create_post_track("post");
+    ASSERT_EQ(EngineReturnStatus::OK, post_status);
+
+    for (int i = 0; i < TEST_CHANNEL_COUNT; ++i)
+    {
+        _module_under_test->connect_audio_input_channel(i, i, empty_track_id);
+        _module_under_test->connect_audio_output_channel(i, i, empty_track_id);
+    }
+
+    // Process and verify passthrough
+    _module_under_test->process_chunk(&in_buffer, &out_buffer, &ctrl_buffer, &ctrl_buffer, Time(0), 0);
+    test_utils::assert_buffer_value(1.0f, out_buffer);
+
+    // Change the gain on the pre track and verify
+    auto track = _processors->mutable_track("pre");
+    auto gain_param = track->parameter_from_name("gain");
+    auto gain_event = RtEvent::make_parameter_change_event(track->id(), 0, gain_param->id(), GAIN_6DB);
+
+    track->process_event(gain_event);
+    _module_under_test->process_chunk(&in_buffer, &out_buffer, &ctrl_buffer, &ctrl_buffer, Time(0), 0);
+    EXPECT_GT(out_buffer.channel(0)[0], 1.0f);
 }

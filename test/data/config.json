@@ -17,6 +17,11 @@
             "outputs" : true
         }
     },
+    "post_track" :
+    {
+        "name" : "master",
+        "plugins": []
+    },
     "tracks" : [
         {
             "name" : "main",

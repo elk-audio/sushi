@@ -309,6 +309,7 @@ std::vector<ext::TrackState> SessionController::_save_tracks() const
         state.label = track->label();
         state.channels = track->input_channels();
         state.buses = track->buses();
+        state.type = to_external(track->type());
 
         for (const auto& plugin : _processors->processors_on_track(track->id()))
         {
@@ -362,13 +363,25 @@ void SessionController::_restore_tracks(std::vector<ext::TrackState> tracks)
         EngineReturnStatus status;
         ObjectId track_id;
 
-        if (track.buses > 1)
+        switch (track.type)
         {
-            std::tie(status, track_id) = _engine->create_multibus_track(track.name, track.buses);
-        }
-        else
-        {
-            std::tie(status, track_id) = _engine->create_track(track.name, track.channels);
+            case ext::TrackType::PRE:
+                std::tie(status, track_id) = _engine->create_pre_track(track.name);
+                break;
+
+            case ext::TrackType::POST:
+                std::tie(status, track_id) = _engine->create_post_track(track.name);
+                break;
+
+            case ext::TrackType::REGULAR:
+                if (track.buses > 1)
+                {
+                    std::tie(status, track_id) = _engine->create_multibus_track(track.name, track.buses);
+                }
+                else
+                {
+                    std::tie(status, track_id) = _engine->create_track(track.name, track.channels);
+                }
         }
 
         auto track_instance = _processors->mutable_track(track_id);

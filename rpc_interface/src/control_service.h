@@ -124,6 +124,8 @@ public:
     grpc::Status SetProcessorState(grpc::ServerContext* context, const sushi_rpc::ProcessorStateSetRequest* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status CreateTrack(grpc::ServerContext* context, const sushi_rpc::CreateTrackRequest* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status CreateMultibusTrack(grpc::ServerContext* context, const sushi_rpc::CreateMultibusTrackRequest* request, sushi_rpc::GenericVoidValue* response) override;
+    grpc::Status CreatePreTrack(grpc::ServerContext* context, const sushi_rpc::CreatePreTrackRequest* request, sushi_rpc::GenericVoidValue* response) override;
+    grpc::Status CreatePostTrack(grpc::ServerContext* context, const sushi_rpc::CreatePostTrackRequest* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status CreateProcessorOnTrack(grpc::ServerContext* context, const sushi_rpc::CreateProcessorRequest* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status MoveProcessorOnTrack(grpc::ServerContext* context, const sushi_rpc::MoveProcessorRequest* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status DeleteProcessorFromTrack(grpc::ServerContext* context, const sushi_rpc::DeleteProcessorRequest* request, sushi_rpc::GenericVoidValue* response) override;

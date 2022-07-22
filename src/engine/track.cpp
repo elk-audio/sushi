@@ -50,10 +50,12 @@ inline std::pair<float, float> calc_l_r_gain(float gain, float pan)
 Track::Track(HostControl host_control,
              int channels,
              performance::PerformanceTimer* timer,
-             bool pan_controls) : InternalPlugin(host_control),
+             bool pan_controls,
+             TrackType type) : InternalPlugin(host_control),
                                   _input_buffer{std::max(channels, 2)},
                                   _output_buffer{std::max(channels, 2)},
                                   _buses{1},
+                                  _type{type},
                                   _timer{timer}
 {
     _max_input_channels = channels;
@@ -67,6 +69,7 @@ Track::Track(HostControl host_control, int buses, performance::PerformanceTimer*
                                                                                           _input_buffer{buses * 2},
                                                                                           _output_buffer{buses * 2},
                                                                                           _buses{buses},
+                                                                                          _type{TrackType::REGULAR},
                                                                                           _timer{timer}
 {
     int channels = buses * 2;
@@ -146,86 +149,52 @@ bool Track::remove(ObjectId processor)
 
 void Track::render()
 {
+    process_audio(_input_buffer, _output_buffer);
+    _input_buffer.clear();
+}
+
+void Track::process_audio(const ChunkSampleBuffer& in, ChunkSampleBuffer& out)
+{
+    /* For Tracks, process function is called from render() and the input audio data
+     * should be copied to _input_buffer prior to this call. */
+
     auto track_timestamp = _timer->start_timer();
 
-    process_audio(_input_buffer, _output_buffer);
+    /* Process all the plugins in the chain, to guarantee that memory declared const is never
+     * written to, the const cast below is only done if in already points to _input_buffer
+     * (which is the case if process_audio() is called from render()), or if there is max 1
+     * plugin in the chain, in which case there will be no ping-pong copying between buffers. */
+    if (in.channel(0) == _input_buffer.channel(0) || _processors.size() <= 1)
+    {
+        _process_plugins(const_cast<ChunkSampleBuffer&>(in), out);
+    }
+    else
+    {
+        _input_buffer.replace(in);
+        _process_plugins(_input_buffer, out);
+    }
+
+    /* If there are keyboard events not consumed, pass them on upwards so the engine can process them */
+    _process_output_events();
 
     bool muted = _mute_parameter->processed_value();
 
     switch (_pan_mode)
     {
         case PanMode::GAIN_ONLY:
-            _apply_gain(_output_buffer, muted);
+            _apply_gain(out, muted);
             break;
 
         case PanMode::PAN_AND_GAIN:
-            _apply_pan_and_gain(_output_buffer, muted);
+            _apply_pan_and_gain(out, muted);
             break;
 
         case PanMode::PAN_AND_GAIN_PER_BUS:
-            _apply_pan_and_gain_per_bus(_output_buffer, muted);
+            _apply_pan_and_gain_per_bus(out, muted);
             break;
     }
 
-    _input_buffer.clear();
     _timer->stop_timer_rt_safe(track_timestamp, this->id());
-}
-
-void Track::process_audio(const ChunkSampleBuffer& /*in*/, ChunkSampleBuffer& out)
-{
-    /* For Tracks, process function is called from render() and the input audio data
-     * should be copied to _input_buffer prior to this call.
-     * We alias the buffers, so we can swap them cheaply, without copying the underlying
-     * data, though we can't alias in since it is const, even though it points to
-     * _input_buffer  */
-    ChunkSampleBuffer aliased_in = ChunkSampleBuffer::create_non_owning_buffer(_input_buffer);
-    ChunkSampleBuffer aliased_out = ChunkSampleBuffer::create_non_owning_buffer(out);
-
-    for (auto &processor : _processors)
-    {
-        auto processor_timestamp = _timer->start_timer();
-        /* Note that processors can put events back into this queue, hence we're not draining the queue
-         * but checking the size first to avoid an infinite loop */
-        for (int kb_events = _kb_event_buffer.size(); kb_events > 0; --kb_events)
-        {
-            processor->process_event(_kb_event_buffer.pop());
-        }
-
-        ChunkSampleBuffer proc_in = ChunkSampleBuffer::create_non_owning_buffer(aliased_in, 0, processor->input_channels());
-        ChunkSampleBuffer proc_out = ChunkSampleBuffer::create_non_owning_buffer(aliased_out, 0, processor->output_channels());
-        processor->process_audio(proc_in, proc_out);
-
-        int unused_channels = aliased_out.channel_count() - processor->output_channels();
-        if (unused_channels > 0)
-        {
-            // If processor has fewer channels than the track, zero the rest to avoid passing garbage to the next processor
-            auto unused = ChunkSampleBuffer::create_non_owning_buffer(aliased_out, aliased_out.channel_count() - unused_channels, unused_channels);
-            unused.clear();
-        }
-
-        swap(aliased_in, aliased_out);
-        _timer->stop_timer_rt_safe(processor_timestamp, processor->id());
-    }
-
-    int output_channels = _processors.empty() ? _current_output_channels : _processors.back()->output_channels();
-
-    if (output_channels > 0)
-    {
-        /* aliased_out contains the output of the last processor
-         * If the number of processors is even, then aliased_out
-         * already points to out, otherwise we need to copy to it */
-        if (aliased_in.channel(0) == _input_buffer.channel(0))
-        {
-            out.replace(aliased_in);
-        }
-    }
-    else
-    {
-        out.clear();
-    }
-
-    /* If there are keyboard events not consumed, pass them on upwards so the engine can process them */
-    _process_output_events();
 }
 
 void Track::process_event(const RtEvent& event)
@@ -305,6 +274,56 @@ void Track::_common_init(PanMode mode)
     {
         i[LEFT_CHANNEL_INDEX].set_direct(DEFAULT_TRACK_GAIN);
         i[RIGHT_CHANNEL_INDEX].set_direct(DEFAULT_TRACK_GAIN);
+    }
+}
+
+void Track::_process_plugins(ChunkSampleBuffer& in, ChunkSampleBuffer& out)
+{
+    /* Alias the buffers, so we can swap them cheaply, without copying the underlying data */
+
+    ChunkSampleBuffer aliased_in = ChunkSampleBuffer::create_non_owning_buffer(in);
+    ChunkSampleBuffer aliased_out = ChunkSampleBuffer::create_non_owning_buffer(out);
+
+    for (auto &processor : _processors)
+    {
+        auto processor_timestamp = _timer->start_timer();
+        /* Note that processors can put events back into this queue, hence we're not draining the queue
+         * but checking the size first to avoid an infinite loop */
+        for (int kb_events = _kb_event_buffer.size(); kb_events > 0; --kb_events)
+        {
+            processor->process_event(_kb_event_buffer.pop());
+        }
+
+        ChunkSampleBuffer proc_in = ChunkSampleBuffer::create_non_owning_buffer(aliased_in, 0, processor->input_channels());
+        ChunkSampleBuffer proc_out = ChunkSampleBuffer::create_non_owning_buffer(aliased_out, 0, processor->output_channels());
+        processor->process_audio(proc_in, proc_out);
+
+        int unused_channels = aliased_out.channel_count() - processor->output_channels();
+        if (unused_channels > 0)
+        {
+            // If processor has fewer channels than the track, zero the rest to avoid passing garbage to the next processor
+            auto unused = ChunkSampleBuffer::create_non_owning_buffer(aliased_out, aliased_out.channel_count() - unused_channels, unused_channels);
+            unused.clear();
+        }
+
+        swap(aliased_in, aliased_out);
+        _timer->stop_timer_rt_safe(processor_timestamp, static_cast<int>(processor->id()));
+    }
+
+    int output_channels = _processors.empty() ? _current_output_channels : _processors.back()->output_channels();
+
+    if (output_channels > 0)
+    {
+        /* aliased_out contains the output of the last processor. If the number of processors
+         * is even, then aliased_out already points to out, otherwise we need to copy to it */
+        if (aliased_in.channel(0) == in.channel(0))
+        {
+            out.replace(aliased_in);
+        }
+    }
+    else
+    {
+        out.clear();
     }
 }
 

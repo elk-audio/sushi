@@ -131,6 +131,28 @@ inline sushi::ext::SyncMode to_sushi_ext(const sushi_rpc::SyncMode::Mode mode)
     }
 }
 
+inline sushi_rpc::TrackType::Type to_grpc(const sushi::ext::TrackType type)
+{
+    switch (type)
+    {
+        case sushi::ext::TrackType::REGULAR:  return sushi_rpc::TrackType::REGULAR;
+        case sushi::ext::TrackType::PRE:      return sushi_rpc::TrackType::PRE;
+        case sushi::ext::TrackType::POST:     return sushi_rpc::TrackType::POST;
+        default:                              return sushi_rpc::TrackType::REGULAR;
+    }
+}
+
+inline sushi::ext::TrackType to_sushi_ext(const sushi_rpc::TrackType::Type type)
+{
+    switch (type)
+    {
+        case sushi_rpc::TrackType::REGULAR: return sushi::ext::TrackType::REGULAR;
+        case sushi_rpc::TrackType::PRE:     return sushi::ext::TrackType::PRE;
+        case sushi_rpc::TrackType::POST:    return sushi::ext::TrackType::POST;
+        default:                            return sushi::ext::TrackType::REGULAR;
+    }
+}
+
 inline const char* to_string(const sushi::ext::ControlStatus status)
 {
    switch (status)
@@ -240,6 +262,7 @@ inline void to_grpc(sushi_rpc::TrackInfo& dest, const sushi::ext::TrackInfo& src
     dest.set_name(src.name);
     dest.set_channels(src.channels);
     dest.set_buses(src.buses);
+    dest.mutable_type()->set_type(to_grpc(src.type));
     for (auto i : src.processors)
     {
         dest.mutable_processors()->Add()->set_id(i);
@@ -642,6 +665,7 @@ inline void to_grpc(sushi_rpc::TrackState& dest, sushi::ext::TrackState& src)
     dest.set_label(std::move(src.label));
     dest.set_channels(src.channels);
     dest.set_buses(src.buses);
+    dest.mutable_type()->set_type(to_grpc(src.type));
     to_grpc(*dest.mutable_track_state(), src.track_state);
 
     dest.mutable_processors()->Reserve(src.processors.size());
@@ -659,6 +683,7 @@ inline sushi::ext::TrackState to_sushi_ext(const sushi_rpc::TrackState& src)
     dest.label = src.label();
     dest.channels = src.channels();
     dest.buses = src.buses();
+    dest.type = to_sushi_ext(src.type().type());
     to_sushi_ext(dest.track_state, src.track_state());
 
     dest.processors.reserve(src.processors_size());
@@ -1088,6 +1113,22 @@ grpc::Status AudioGraphControlService::CreateMultibusTrack(grpc::ServerContext* 
                                                            sushi_rpc::GenericVoidValue* /*response*/)
 {
     auto status = _controller->create_multibus_track(request->name(), request->buses());
+    return to_grpc_status(status);
+}
+
+grpc::Status AudioGraphControlService::CreatePreTrack(grpc::ServerContext* /*context*/,
+                                                      const sushi_rpc::CreatePreTrackRequest* request,
+                                                      sushi_rpc::GenericVoidValue* /*response*/)
+{
+    auto status = _controller->create_pre_track(request->name());
+    return to_grpc_status(status);
+}
+
+grpc::Status AudioGraphControlService::CreatePostTrack(grpc::ServerContext* /*context*/,
+                                                       const sushi_rpc::CreatePostTrackRequest* request,
+                                                       sushi_rpc::GenericVoidValue* /*response*/)
+{
+    auto status = _controller->create_post_track(request->name());
     return to_grpc_status(status);
 }
 

@@ -105,29 +105,41 @@ TEST_F(AudioGraphControllerTest, TestCreatingAndRemovingTracks)
     auto execution_status2 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
     ASSERT_EQ(execution_status2, EventStatus::HANDLED_OK);
 
+    status = _module_under_test->create_pre_track("Track 4");
+    ASSERT_EQ(ext::ControlStatus::OK, status);
+
+    auto execution_status_3 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
+    ASSERT_EQ(execution_status_3, EventStatus::HANDLED_OK);
+
+    status = _module_under_test->create_post_track("Track 5");
+    ASSERT_EQ(ext::ControlStatus::OK, status);
+
+    auto execution_status_4 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
+    ASSERT_EQ(execution_status_4, EventStatus::HANDLED_OK);
+
     tracks = _audio_engine->processor_container()->all_tracks();
-    ASSERT_EQ(3u, tracks.size());
+    ASSERT_EQ(5u, tracks.size());
     EXPECT_EQ("Track 3", tracks[2]->name());
     EXPECT_EQ(2, tracks[2]->buses());
 
     status = _module_under_test->delete_track(tracks[2]->id());
     ASSERT_EQ(ext::ControlStatus::OK, status);
 
-    auto execution_status3 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
-    ASSERT_EQ(execution_status3, EventStatus::HANDLED_OK);
+    auto execution_status_5 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
+    ASSERT_EQ(execution_status_5, EventStatus::HANDLED_OK);
 
     tracks = _audio_engine->processor_container()->all_tracks();
-    ASSERT_EQ(2u, tracks.size());
+    ASSERT_EQ(4u, tracks.size());
 }
 
 TEST_F(AudioGraphControllerTest, TestCreatingAndRemovingProcessors)
 {
     auto status = _module_under_test->create_processor_on_track("Proc 1",
-                                                               "sushi.testing.gain",
-                                                               "",
-                                                               ext::PluginType::INTERNAL,
-                                                               _track_id,
-                                                               std::nullopt);
+                                                                "sushi.testing.gain",
+                                                                "",
+                                                                ext::PluginType::INTERNAL,
+                                                                _track_id,
+                                                                std::nullopt);
     ASSERT_EQ(ext::ControlStatus::OK, status);
 
     auto execution_status1 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());

@@ -71,6 +71,8 @@ service AudioGraphController
 
     rpc CreateTrack (CreateTrackRequest) returns (GenericVoidValue) {}
     rpc CreateMultibusTrack (CreateMultibusTrackRequest) returns (GenericVoidValue) {}
+    rpc CreatePreTrack (CreatePreTrackRequest) returns (GenericVoidValue) {}
+    rpc CreatePostTrack (CreatePostTrackRequest) returns (GenericVoidValue) {}
     rpc CreateProcessorOnTrack (CreateProcessorRequest) returns (GenericVoidValue) {}
     rpc MoveProcessorOnTrack (MoveProcessorRequest) returns (GenericVoidValue) {}
 
@@ -370,6 +372,18 @@ message NoteModulationRequest
     float value = 3;
 }
 
+message TrackType
+{
+    enum Type
+    {
+        DUMMY = 0;
+        REGULAR = 1;
+        PRE = 2;
+        POST = 3;
+    }
+    Type type = 1;
+}
+
 message TrackInfo
 {
     int32  id = 1;
@@ -377,7 +391,8 @@ message TrackInfo
     string name = 3;
     int32  channels = 4;
     int32  buses = 5;
-    repeated ProcessorIdentifier processors = 6;
+    TrackType type = 6;
+    repeated ProcessorIdentifier processors = 7;
 }
 
 message TrackInfoList
@@ -530,6 +545,16 @@ message CreateMultibusTrackRequest
 {
     string name = 1;
     int32  buses = 2;
+}
+
+message CreatePreTrackRequest
+{
+    string name = 1;
+}
+
+message CreatePostTrackRequest
+{
+    string name = 1;
 }
 
 message CreateProcessorRequest
@@ -800,8 +825,9 @@ message TrackState
     string                  label = 2;
     int32                   channels = 3;
     int32                   buses = 4;
-    ProcessorState          track_state = 5;
-    repeated PluginClass    processors = 6;
+    TrackType               type = 5;
+    ProcessorState          track_state = 6;
+    repeated PluginClass    processors = 7;
 }
 
 message SessionState

@@ -44,6 +44,7 @@ inline ext::TrackInfo to_external(const Track* track, std::vector<int> proc_ids)
                           .name = track->name(),
                           .channels = track->input_channels(),
                           .buses = track->buses(),
+                          .type = to_external(track->type()),
                           .processors = std::move(proc_ids)};
 }
 
@@ -247,6 +248,34 @@ ext::ControlStatus AudioGraphController::create_multibus_track(const std::string
     auto lambda = [=] () -> int
     {
         auto [status, track_id] = _engine->create_multibus_track(name, buses);
+        return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
+    };
+
+    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
+    _event_dispatcher->post_event(event);
+    return ext::ControlStatus::OK;
+}
+
+ext::ControlStatus AudioGraphController::create_pre_track(const std::string& name)
+{
+    SUSHI_LOG_DEBUG("create_pre_track called with name {}", name);
+    auto lambda = [=] () -> int
+    {
+        auto [status, track_id] = _engine->create_pre_track(name);
+        return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
+    };
+
+    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
+    _event_dispatcher->post_event(event);
+    return ext::ControlStatus::OK;
+}
+
+ext::ControlStatus AudioGraphController::create_post_track(const std::string& name)
+{
+    SUSHI_LOG_DEBUG("create_post_track called with name {}", name);
+    auto lambda = [=] () -> int
+    {
+        auto [status, track_id] = _engine->create_post_track(name);
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
     };
 
