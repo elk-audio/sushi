@@ -17,10 +17,15 @@
             "outputs" : true
         }
     },
+    "post_track" :
+    {
+        "name" : "master",
+        "plugins": []
+    },
     "tracks" : [
         {
             "name" : "main",
-            "mode" : "stereo",
+            "channels" : 2,
             "inputs" : [
                 {
                     "engine_bus" : 0,
@@ -53,7 +58,7 @@
         },
         {
             "name" : "monotrack",
-            "mode" : "mono",
+            "channels" : 1,
             "inputs" : [
                 {
                     "engine_channel" : 2,
@@ -86,7 +91,7 @@
         },
         {
             "name" : "monobustrack",
-            "mode" : "mono",
+            "channels" : 1,
             "inputs" : [
                 {
                     "engine_channel" : 2,
@@ -104,9 +109,8 @@
         },
         {
             "name" : "multi",
-            "mode" : "multibus",
-            "input_busses" : 2,
-            "output_busses" : 2,
+            "multibus" : true,
+            "buses" : 2,
             "inputs" : [],
             "outputs" : [
                 {

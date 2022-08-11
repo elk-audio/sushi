@@ -202,6 +202,11 @@ private:
                                  ObjectId processor_id,
                                  ObjectId parameter_id);
 
+    void _connect_from_property(const std::string& processor_name,
+                                const std::string& property_name,
+                                ObjectId processor_id,
+                                ObjectId property_id);
+
     void _completion_callback(Event* event, int return_status) override;
 
     void _start_server();
@@ -217,6 +222,8 @@ private:
                                                                         const std::string& osc_path_prefix);
 
     void _handle_param_change_notification(const ParameterChangeNotificationEvent* event);
+
+    void _handle_property_change_notification(const PropertyChangeNotificationEvent* event);
 
     void _handle_engine_notification(const EngineNotificationEvent* event);
 

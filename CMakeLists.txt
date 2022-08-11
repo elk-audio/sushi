@@ -381,6 +381,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/engine/receiver.cpp
                       src/engine/event_timer.cpp
                       src/engine/transport.cpp
+                      src/engine/parameter_manager.cpp
                       src/engine/processor_container.cpp
                       src/engine/controller/controller.cpp
                       src/engine/controller/system_controller.cpp
@@ -482,6 +483,7 @@ set(EXTRA_CLION_SOURCES src/logging.h
                         src/engine/midi_receiver.h
                         src/engine/host_control.h
                         src/engine/transport.h
+                        src/engine/parameter_manager.h
                         src/engine/processor_container.h
                         src/engine/controller/controller.h
                         src/engine/controller/system_controller.h

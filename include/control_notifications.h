@@ -79,20 +79,52 @@ private:
 class ParameterChangeNotification : public ControlNotification
 {
 public:
-    ParameterChangeNotification(int processor_id, int parameter_id, float value, Time timestamp) 
+    ParameterChangeNotification(int processor_id, int parameter_id, float normalized_value,
+                                float domain_value, const std::string& formatted_value, Time timestamp)
     : ControlNotification(NotificationType::PARAMETER_CHANGE, timestamp),
       _processor_id(processor_id),
       _parameter_id(parameter_id),
-      _value(value) {}
+      _normalized_value(normalized_value),
+      _domain_value(domain_value),
+      _formatted_value(formatted_value) {}
 
     int processor_id() const {return _processor_id;}
     int parameter_id() const {return _parameter_id;}
-    float value() const {return _value;}
+    float value() const {return _normalized_value;}
+    float domain_value() const {return _domain_value;}
+    const std::string& formatted_value() const {return _formatted_value;};
 
 private:
     int _processor_id;
     int _parameter_id;
-    float _value;
+    float _normalized_value;
+    float _domain_value;
+    std::string _formatted_value;
+};
+
+class PropertyChangeNotification : public ControlNotification
+{
+public:
+    PropertyChangeNotification(int processor_id, int property_id, const std::string& value, Time timestamp)
+    : ControlNotification(NotificationType::PROPERTY_CHANGE, timestamp),
+      _processor_id(processor_id),
+      _property_id(property_id),
+      _value(value) {}
+
+    PropertyChangeNotification(int processor_id, int property_id, std::string&& value, Time timestamp)
+    : ControlNotification(NotificationType::PROPERTY_CHANGE, timestamp),
+      _processor_id(processor_id),
+      _property_id(property_id),
+      _value(value) {}
+
+    int processor_id() const {return _processor_id;}
+    int parameter_id() const {return _property_id;}
+    const std::string& value() const {return _value;}
+
+private:
+    int _processor_id;
+    int _property_id;
+    std::string _value;
 };
 
 } // ext

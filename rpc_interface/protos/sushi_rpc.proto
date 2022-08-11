@@ -71,6 +71,8 @@ service AudioGraphController
 
     rpc CreateTrack (CreateTrackRequest) returns (GenericVoidValue) {}
     rpc CreateMultibusTrack (CreateMultibusTrackRequest) returns (GenericVoidValue) {}
+    rpc CreatePreTrack (CreatePreTrackRequest) returns (GenericVoidValue) {}
+    rpc CreatePostTrack (CreatePostTrackRequest) returns (GenericVoidValue) {}
     rpc CreateProcessorOnTrack (CreateProcessorRequest) returns (GenericVoidValue) {}
     rpc MoveProcessorOnTrack (MoveProcessorRequest) returns (GenericVoidValue) {}
 
@@ -205,7 +207,8 @@ service NotificationController
     rpc SubscribeToEngineCpuTimingUpdates (GenericVoidValue) returns (stream CpuTimings) {}
     rpc SubscribeToTrackChanges (GenericVoidValue) returns (stream TrackUpdate) {}
     rpc SubscribeToProcessorChanges (GenericVoidValue) returns (stream ProcessorUpdate) {}
-    rpc SubscribeToParameterUpdates (ParameterNotificationBlocklist) returns (stream ParameterValue) {}
+    rpc SubscribeToParameterUpdates (ParameterNotificationBlocklist) returns (stream ParameterUpdate) {}
+    rpc SubscribeToPropertyUpdates (PropertyNotificationBlocklist) returns (stream PropertyValue) {}
 }
 
 /**
@@ -370,16 +373,27 @@ message NoteModulationRequest
     float value = 3;
 }
 
+message TrackType
+{
+    enum Type
+    {
+        DUMMY = 0;
+        REGULAR = 1;
+        PRE = 2;
+        POST = 3;
+    }
+    Type type = 1;
+}
+
 message TrackInfo
 {
     int32  id = 1;
     string label = 2;
     string name = 3;
-    int32  input_channels = 4;
-    int32  input_busses = 5;
-    int32  output_channels = 6;
-    int32  output_busses = 7;
-    repeated ProcessorIdentifier processors = 8;
+    int32  channels = 4;
+    int32  buses = 5;
+    TrackType type = 6;
+    repeated ProcessorIdentifier processors = 7;
 }
 
 message TrackInfoList
@@ -479,6 +493,14 @@ message ParameterValue
     float value = 2;
 }
 
+message ParameterUpdate
+{
+    ParameterIdentifier parameter = 1;
+    float normalized_value = 2;
+    float domain_value = 3;
+    string formatted_value = 4;
+}
+
 message PropertyInfo
 {
     int32 id = 1;
@@ -531,8 +553,17 @@ message CreateTrackRequest
 message CreateMultibusTrackRequest
 {
     string name = 1;
-    int32  output_busses = 2;
-    int32  input_busses  = 3;
+    int32  buses = 2;
+}
+
+message CreatePreTrackRequest
+{
+    string name = 1;
+}
+
+message CreatePostTrackRequest
+{
+    string name = 1;
 }
 
 message CreateProcessorRequest
@@ -562,6 +593,11 @@ message DeleteProcessorRequest
 message ParameterNotificationBlocklist
 {
     repeated ParameterIdentifier parameters = 1;
+}
+
+message PropertyNotificationBlocklist
+{
+    repeated PropertyIdentifier properties = 1;
 }
 
 message MidiChannel
@@ -801,12 +837,11 @@ message TrackState
 {
     string                  name = 1;
     string                  label = 2;
-    int32                   input_channels = 3;
-    int32                   input_busses = 4;
-    int32                   output_channels = 5;
-    int32                   output_busses = 6;
-    ProcessorState          track_state = 7;
-    repeated PluginClass    processors = 8;
+    int32                   channels = 3;
+    int32                   buses = 4;
+    TrackType               type = 5;
+    ProcessorState          track_state = 6;
+    repeated PluginClass    processors = 7;
 }
 
 message SessionState

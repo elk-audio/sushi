@@ -348,9 +348,11 @@ TEST_F(TestVst3xWrapper, TestStateHandling)
     auto status = _module_under_test->set_state(&state, false);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
 
-    // Check that new values are set
+    // Check that new values are set and update notification is queued
     EXPECT_FLOAT_EQ(0.88f, _module_under_test->parameter_value(desc->id()).second);
     EXPECT_TRUE(_module_under_test->bypassed());
+    auto event = _host_control._dummy_dispatcher.retrieve_event();
+    ASSERT_TRUE(event->is_engine_notification());
 
     // Test setting state with realtime running
     state.set_bypass(false);
@@ -359,8 +361,7 @@ TEST_F(TestVst3xWrapper, TestStateHandling)
 
     status = _module_under_test->set_state(&state, true);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
-    auto event = _host_control._dummy_dispatcher.retrieve_event();
-    ASSERT_TRUE(event.get());
+    event = _host_control._dummy_dispatcher.retrieve_event();
     _module_under_test->process_event(event->to_rt_event(0));
     _module_under_test->process_audio(buffer, buffer);
 

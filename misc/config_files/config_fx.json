@@ -5,7 +5,7 @@
     "tracks" : [
         {
             "name" : "main",
-            "mode" : "stereo",
+            "channels" : 2,
             "inputs" : [
                 {
                     "engine_bus" : 0,

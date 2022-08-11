@@ -308,6 +308,7 @@ ProcessorReturnCode InternalPlugin::set_property_value(ObjectId property_id, con
         return ProcessorReturnCode::PARAMETER_NOT_FOUND;
     }
     node->second = value;
+    _host_control.post_event(new PropertyChangeNotificationEvent(this->id(), property_id, value, IMMEDIATE_PROCESS));
     return ProcessorReturnCode::OK;
 }
 
@@ -335,6 +336,8 @@ ProcessorReturnCode InternalPlugin::set_state(ProcessorState* state, bool realti
             auto event = RtEvent::make_parameter_change_event(this->id(), 0, parameter.first, parameter.second);
             this->process_event(event);
         }
+        _host_control.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
+                                                                 this->id(), 0, IMMEDIATE_PROCESS));
     }
     return ProcessorReturnCode::OK;
 }
@@ -404,6 +407,7 @@ void InternalPlugin::_set_rt_state(const RtState* state)
         auto event = RtEvent::make_parameter_change_event(this->id(), 0, parameter.first, parameter.second);
         this->process_event(event);
     }
+    notify_state_change_rt();
 }
 
 void InternalPlugin::_handle_parameter_event(const ParameterChangeRtEvent* event)

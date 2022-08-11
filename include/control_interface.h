@@ -120,15 +120,21 @@ struct ProgramInfo
     std::string name;
 };
 
+enum class TrackType
+{
+    REGULAR,
+    PRE,
+    POST
+};
+
 struct TrackInfo
 {
     int         id;
     std::string label;
     std::string name;
-    int         input_channels;
-    int         input_busses;
-    int         output_channels;
-    int         output_busses;
+    int         channels;
+    int         buses;
+    TrackType   type;
     std::vector<int> processors;
 };
 
@@ -226,7 +232,8 @@ enum class NotificationType
     CPU_TIMING_UPDATE,
     TRACK_UPDATE,
     PROCESSOR_UPDATE,
-    PARAMETER_CHANGE
+    PARAMETER_CHANGE,
+    PROPERTY_CHANGE
 };
 
 enum class ProcessorAction
@@ -336,10 +343,9 @@ struct TrackState
 {
     std::string     name;
     std::string     label;
-    int             input_channels;
-    int             output_channels;
-    int             input_busses;
-    int             output_busses;
+    int             channels;
+    int             buses;
+    TrackType       type;
     ProcessorState  track_state;
     std::vector<PluginClass>    processors;
 };
@@ -442,7 +448,9 @@ public:
     virtual ControlStatus set_processor_state(int processor_id, const ProcessorState& state) = 0;
 
     virtual ControlStatus create_track(const std::string& name, int channels) = 0;
-    virtual ControlStatus create_multibus_track(const std::string& name, int input_busses, int output_busses) = 0;
+    virtual ControlStatus create_multibus_track(const std::string& name, int buses) = 0;
+    virtual ControlStatus create_pre_track(const std::string& name) = 0;
+    virtual ControlStatus create_post_track(const std::string& name) = 0;
     virtual ControlStatus move_processor_on_track(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor_id) = 0;
     virtual ControlStatus create_processor_on_track(const std::string& name, const std::string& uid, const std::string& file,
                                                       PluginType type, int track_id, std::optional<int> before_processor_id) = 0;

@@ -170,7 +170,7 @@ ProcessorReturnCode Vst3xWrapper::init(float sample_rate)
     set_name(_instance.name());
     set_label(_instance.name());
 
-    if (!_setup_audio_busses() || !_setup_event_busses())
+    if (!_setup_audio_buses() || !_setup_event_buses())
     {
         return ProcessorReturnCode::PLUGIN_INIT_ERROR;
     }
@@ -291,13 +291,8 @@ void Vst3xWrapper::process_event(const RtEvent& event)
         }
         case RtEventType::SET_STATE:
         {
-            auto state = static_cast<Vst3xRtState*>(event.processor_state_event()->state());
-            if (_state_parameter_changes)
-            {
-                // If a parameter batch is already queued, just throw it away and use the new one.
-                async_delete(_state_parameter_changes);
-            }
-            _state_parameter_changes = state;
+            auto state = event.processor_state_event()->state();
+            _set_state_rt(static_cast<Vst3xRtState*>(state));
             break;
         }
         default:
@@ -611,6 +606,11 @@ ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool realtime
         auto event = new RtStateEvent(this->id(), std::move(rt_state), IMMEDIATE_PROCESS);
         _host_control.post_event(event);
     }
+    else
+    {
+        _host_control.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
+                                                                 this->id(), 0, IMMEDIATE_PROCESS));
+    }
 
     return ProcessorReturnCode::OK;
 }
@@ -753,12 +753,12 @@ bool Vst3xWrapper::_register_parameters()
     return true;
 }
 
-bool Vst3xWrapper::_setup_audio_busses()
+bool Vst3xWrapper::_setup_audio_buses()
 {
-    int input_audio_busses = _instance.component()->getBusCount(Steinberg::Vst::MediaTypes::kAudio, Steinberg::Vst::BusDirections::kInput);
-    int output_audio_busses = _instance.component()->getBusCount(Steinberg::Vst::MediaTypes::kAudio, Steinberg::Vst::BusDirections::kOutput);
-    SUSHI_LOG_INFO("Plugin has {} audio input buffers and {} audio output buffers", input_audio_busses, output_audio_busses);
-    if (output_audio_busses == 0)
+    int input_audio_buses = _instance.component()->getBusCount(Steinberg::Vst::MediaTypes::kAudio, Steinberg::Vst::BusDirections::kInput);
+    int output_audio_buses = _instance.component()->getBusCount(Steinberg::Vst::MediaTypes::kAudio, Steinberg::Vst::BusDirections::kOutput);
+    SUSHI_LOG_INFO("Plugin has {} audio input buffers and {} audio output buffers", input_audio_buses, output_audio_buses);
+    if (output_audio_buses == 0)
     {
         return false;
     }
@@ -766,7 +766,7 @@ bool Vst3xWrapper::_setup_audio_busses()
     _max_output_channels = 0;
     /* Setup 1 main output bus and 1 main input bus (if available) */
     Steinberg::Vst::BusInfo info;
-    for (int i = 0; i < input_audio_busses; ++i)
+    for (int i = 0; i < input_audio_buses; ++i)
     {
         auto res = _instance.component()->getBusInfo(Steinberg::Vst::MediaTypes::kAudio,
                                                      Steinberg::Vst::BusDirections::kInput, i, info);
@@ -783,7 +783,7 @@ bool Vst3xWrapper::_setup_audio_busses()
             break;
         }
     }
-    for (int i = 0; i < output_audio_busses; ++i)
+    for (int i = 0; i < output_audio_buses; ++i)
     {
         auto res = _instance.component()->getBusInfo(Steinberg::Vst::MediaTypes::kAudio,
                                                      Steinberg::Vst::BusDirections::kOutput, i, info);
@@ -804,13 +804,13 @@ bool Vst3xWrapper::_setup_audio_busses()
     return true;
 }
 
-bool Vst3xWrapper::_setup_event_busses()
+bool Vst3xWrapper::_setup_event_buses()
 {
-    int input_busses = _instance.component()->getBusCount(Steinberg::Vst::MediaTypes::kEvent, Steinberg::Vst::BusDirections::kInput);
-    int output_busses = _instance.component()->getBusCount(Steinberg::Vst::MediaTypes::kEvent, Steinberg::Vst::BusDirections::kOutput);
-    SUSHI_LOG_INFO("Plugin has {} event input buffers and {} event output buffers", input_busses, output_busses);
-    /* Try to activate all busses here */
-    for (int i = 0; i < input_busses; ++i)
+    int input_buses = _instance.component()->getBusCount(Steinberg::Vst::MediaTypes::kEvent, Steinberg::Vst::BusDirections::kInput);
+    int output_buses = _instance.component()->getBusCount(Steinberg::Vst::MediaTypes::kEvent, Steinberg::Vst::BusDirections::kOutput);
+    SUSHI_LOG_INFO("Plugin has {} event input buffers and {} event output buffers", input_buses, output_buses);
+    /* Try to activate all buses here */
+    for (int i = 0; i < input_buses; ++i)
     {
         auto res = _instance.component()->activateBus(Steinberg::Vst::MediaTypes::kEvent,
                                                      Steinberg::Vst::BusDirections::kInput, i, Steinberg::TBool(true));
@@ -820,7 +820,7 @@ bool Vst3xWrapper::_setup_event_busses()
             return false;
         }
     }
-    for (int i = 0; i < output_busses; ++i)
+    for (int i = 0; i < output_buses; ++i)
     {
         auto res = _instance.component()->activateBus(Steinberg::Vst::MediaTypes::kEvent,
                                                       Steinberg::Vst::BusDirections::kInput, i, Steinberg::TBool(true));
@@ -839,7 +839,7 @@ bool Vst3xWrapper::_setup_channels()
     Steinberg::Vst::SpeakerArrangement input_arr = speaker_arr_from_channels(_current_input_channels);
     Steinberg::Vst::SpeakerArrangement output_arr = speaker_arr_from_channels(_current_output_channels);
 
-    /* numIns and numOuts refer to the number of busses, not channels, the docs are very vague on this point */
+    /* numIns and numOuts refer to the number of buses, not channels, the docs are very vague on this point */
     auto res = _instance.processor()->setBusArrangements(&input_arr, (_max_input_channels == 0)? 0:1, &output_arr, 1);
     if (res != Steinberg::kResultOk)
     {
@@ -1122,7 +1122,20 @@ void Vst3xWrapper::_set_binary_state(std::vector<std::byte>& state)
 
     stream.seek(0, Steinberg::MemoryStream::kIBSeekSet, nullptr);
     res = _instance.component()->setState(&stream);
-    SUSHI_LOG_ERROR_IF(res != Steinberg::kResultOk, "Failed to set component state ({})", res);
+    SUSHI_LOG_ERROR_IF(res , "Failed to set component state ({})", res);
+    _host_control.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
+                                                             this->id(), 0, IMMEDIATE_PROCESS));
+}
+
+void Vst3xWrapper::_set_state_rt(Vst3xRtState* state)
+{
+    if (_state_parameter_changes)
+    {
+        // If a parameter batch is already queued, just throw it away and use the new one.
+        async_delete(_state_parameter_changes);
+    }
+    _state_parameter_changes = state;
+    notify_state_change_rt();
 }
 
 Steinberg::Vst::SpeakerArrangement speaker_arr_from_channels(int channels)

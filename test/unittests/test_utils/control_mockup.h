@@ -22,8 +22,8 @@ const ProcessorInfo processor_1{0, "proc 1", "proc 1", 0 , 0};
 const ProcessorInfo processor_2{1, "proc 2", "proc 2", 1 , 1};
 const std::vector<ProcessorInfo> processors{processor_1, processor_2};
 
-const TrackInfo track1{0, "track 1", "track 1", 0, 0, 0, 0, {}};
-const TrackInfo track2{1, "track 2", "track 2", 1, 1, 1, 1, {}};
+const TrackInfo track1{0, "track 1", "track 1", 0, 0, TrackType::REGULAR, {}};
+const TrackInfo track2{1, "track 2", "track 2", 1, 1, TrackType::REGULAR, {}};
 const std::vector<TrackInfo> tracks{track1, track2};
 
 constexpr float                 DEFAULT_SAMPLERATE = 48000.0f;
@@ -333,15 +333,31 @@ public:
         return _return_status;
     }
 
-    ControlStatus create_multibus_track(const std::string& name, int input_busses, int output_busses) override
+    ControlStatus create_multibus_track(const std::string& name, int buses) override
     {
         _args_from_last_call.clear();
         _args_from_last_call["name"] = name;
-        _args_from_last_call["input_busses"] = std::to_string(input_busses);
-        _args_from_last_call["output_busses"] = std::to_string(output_busses);
+        _args_from_last_call["buses"] = std::to_string(buses);
         _recently_called = true;
         return _return_status;
     }
+
+    ControlStatus create_pre_track(const std::string& name) override
+    {
+        _args_from_last_call.clear();
+        _args_from_last_call["name"] = name;
+        _recently_called = true;
+        return _return_status;
+    }
+
+    ControlStatus create_post_track(const std::string& name) override
+    {
+        _args_from_last_call.clear();
+        _args_from_last_call["name"] = name;
+        _recently_called = true;
+        return _return_status;
+    }
+
 
     ControlStatus move_processor_on_track(int processor_id,
                                           int source_track_id,

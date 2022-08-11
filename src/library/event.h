@@ -90,7 +90,13 @@ public:
     virtual bool is_keyboard_event() const {return false;}
 
     /* Convertible to ParameterChangeNotification */
+    virtual bool is_parameter_change_event() const {return false;}
+
+    /* Convertible to ParameterChangeNotification */
     virtual bool is_parameter_change_notification() const {return false;}
+
+    /* Convertible to PropertyChangeNotification */
+    virtual bool is_property_change_notification() const {return false;}
 
     /* Convertible to EngineEvent */
     virtual bool is_engine_event() const {return false;}
@@ -231,6 +237,8 @@ public:
 
     RtEvent to_rt_event(int sample_offset) const override;
 
+    bool is_parameter_change_event() const override {return true;}
+
     Subtype             subtype() const {return _subtype;}
     ObjectId            processor_id() const {return _processor_id;}
     ObjectId            parameter_id() const {return _parameter_id;}
@@ -307,36 +315,70 @@ private:
     mutable std::unique_ptr<RtState> _state;
 };
 
-// Inheriting from ParameterChangeEvent because they share the same data members but have
-// different behaviour
-class ParameterChangeNotificationEvent : public ParameterChangeEvent
+class ParameterChangeNotificationEvent : public Event
 {
 public:
-    enum class Subtype
-    {
-        BOOL_PARAMETER_CHANGE_NOT,
-        INT_PARAMETER_CHANGE_NOT,
-        FLOAT_PARAMETER_CHANGE_NOT
-    };
-    ParameterChangeNotificationEvent(Subtype subtype,
-                                     ObjectId processor_id,
+    ParameterChangeNotificationEvent(ObjectId processor_id,
                                      ObjectId parameter_id,
-                                     float value,
-                                     Time timestamp) : ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
-                                                                            processor_id,
-                                                                            parameter_id,
-                                                                            value,
-                                                                            timestamp),
-                                                       _subtype(subtype) {}
+                                     float normalized_value,
+                                     float domain_value,
+                                     std::string formatted_value,
+                                     Time timestamp) : Event(timestamp),
+                                                       _processor_id(processor_id),
+                                                       _parameter_id(parameter_id),
+                                                       _normalized_value(normalized_value),
+                                                       _domain_value(domain_value),
+                                                       _formatted_value(formatted_value) {}
 
     bool is_parameter_change_notification() const override {return true;}
 
+    bool is_parameter_change_event() const override {return false;}
+
     bool maps_to_rt_event() const override {return false;}
 
-    Subtype subtype() const {return _subtype;}
+    ObjectId  processor_id() const {return _processor_id;}
+
+    ObjectId  parameter_id() const {return _parameter_id;}
+
+    float normalized_value() const {return _normalized_value;}
+
+    float domain_value() const {return _domain_value;}
+
+    const std::string& formatted_value() const {return _formatted_value;}
 
 private:
-    Subtype _subtype;
+    ObjectId    _processor_id;
+    ObjectId    _parameter_id;
+    float       _normalized_value;
+    float       _domain_value;
+    std::string _formatted_value;
+};
+
+class PropertyChangeNotificationEvent : public Event
+{
+public:
+    PropertyChangeNotificationEvent(ObjectId processor_id,
+                                    ObjectId property_id,
+                                    const std::string& value,
+                                    Time timestamp) : Event(timestamp),
+                                                      _processor_id(processor_id),
+                                                      _property_id(property_id),
+                                                      _value(value) {}
+
+    bool is_property_change_notification() const override {return true;}
+
+    bool maps_to_rt_event() const override {return false;}
+
+    ObjectId processor_id() const {return _processor_id;}
+
+    ObjectId property_id() const {return _property_id;}
+
+    const std::string& value() const {return _value;}
+
+private:
+    ObjectId    _processor_id;
+    ObjectId    _property_id;
+    std::string _value;
 };
 
 class SetProcessorBypassEvent : public Event
@@ -497,6 +539,7 @@ public:
         PROCESSOR_DELETED,
         PROCESSOR_ADDED_TO_TRACK,
         PROCESSOR_REMOVED_FROM_TRACK,
+        PROCESSOR_UPDATED,
         TRACK_CREATED,
         TRACK_DELETED
     };

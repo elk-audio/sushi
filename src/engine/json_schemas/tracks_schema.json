@@ -4,6 +4,216 @@ R"(
   "title": "Sushi Plugin Chain JSON Schema",
   "description": "JSON Schema to validate track definitions",
 
+  "definitions" : {
+    "internal_plugin" :
+    {
+      "type" : "object",
+      "properties": {
+        "uid":{
+          "type": "string",
+          "minLength": 1
+        },
+        "name":{
+          "type": "string",
+          "minLength": 1
+        },
+        "type":{
+          "enum": ["internal"]
+        }
+      },
+      "required": ["uid", "name", "type"]
+    },
+    "vst2x_plugin" :
+    {
+      "type" : "object",
+      "properties": {
+        "path":{
+          "type": "string",
+          "minLength": 1
+        },
+        "name":{
+          "type": "string",
+          "minLength": 1
+        },
+        "type":{
+          "enum": ["vst2x"]
+        }
+      },
+      "required": ["path", "name", "type"]
+    },
+    "vst3x_plugin" :
+    {
+      "type" : "object",
+      "properties": {
+        "uid":{
+          "type": "string",
+          "minLength": 1
+        },
+        "path":{
+          "type": "string",
+          "minLength": 1
+        },
+        "name":{
+          "type": "string",
+          "minLength": 1
+        },
+        "type":{
+          "enum": ["vst3x"]
+        }
+      },
+      "required": ["uid", "path", "name", "type"]
+    },
+    "lv2_plugin" :
+    {
+      "type" : "object",
+      "properties": {
+        "uri":{
+          "type": "string",
+          "minLength": 1
+        },
+        "name":{
+          "type": "string",
+          "minLength": 1
+        },
+        "type":{
+          "enum": ["lv2"]
+        }
+      },
+      "required": ["uri", "name", "type"]
+    },
+    "bus_connection":{
+      "type": "object",
+      "properties":
+      {
+        "engine_bus":
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        "track_bus":
+        {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": ["engine_bus","track_bus"]
+    },
+    "channel_connection":{
+      "type": "object",
+      "properties":
+      {
+        "engine_channel":
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        "track_channel":
+        {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": ["engine_channel","track_channel"]
+    },
+    "track" :{
+      "type": "object",
+      "properties":
+      {
+        "name":
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        "multibus" :
+        {
+          "type" : "boolean"
+        },
+        "channels" :
+        {
+          "type": "integer",
+          "minimum" : 0
+        },
+        "buses" :
+        {
+          "type": "integer",
+          "minimum":  0
+        },
+        "inputs":
+        {
+          "type": "array",
+          "items":
+          {
+            "type": "object",
+            "oneOf":
+            [
+              {"$ref": "#/definitions/bus_connection"},
+              {"$ref": "#/definitions/channel_connection"}
+            ]
+          }
+        },
+        "outputs":
+        {
+          "type": "array",
+          "items":
+          {
+            "type": "object",
+            "oneOf":
+            [
+              {"$ref": "#/definitions/bus_connection"},
+              {"$ref": "#/definitions/channel_connection"}
+            ]
+          }
+        },
+        "plugins":
+        {
+          "type": "array",
+          "items":
+          {
+            "type": "object",
+            "oneOf":
+            [
+              {"$ref": "#/definitions/internal_plugin"},
+              {"$ref": "#/definitions/vst2x_plugin"},
+              {"$ref": "#/definitions/vst3x_plugin"},
+              {"$ref": "#/definitions/lv2_plugin"}
+            ]
+          }
+        }
+      },
+      "anyOf": [{
+        "required": ["name", "channels", "inputs", "outputs", "plugins"]
+      }, {
+        "required": ["name", "multibus", "buses", "inputs", "outputs", "plugins"]
+      }]
+    },
+    "pre_post_track" :{
+      "type": "object",
+      "properties":
+      {
+        "name":
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        "plugins":
+        {
+          "type": "array",
+          "items":
+          {
+            "type": "object",
+            "oneOf":
+            [
+              {"$ref": "#/definitions/internal_plugin"},
+              {"$ref": "#/definitions/vst2x_plugin"},
+              {"$ref": "#/definitions/vst3x_plugin"},
+              {"$ref": "#/definitions/lv2_plugin"}
+            ]
+          }
+        }
+      },
+      "required": ["name", "plugins"]
+    }
+  },
   "type": "object",
   "properties":
   {
@@ -12,218 +222,17 @@ R"(
       "type": "array",
       "items":
       {
-        "type": "object",
-        "properties":
-        {
-          "name":
-          {
-            "type": "string",
-            "minLength": 1
-          },
-          "mode":
-          {
-            "enum": ["mono", "stereo", "multibus"]
-          },
-          "input_busses" :
-          {
-            "type": "integer",
-            "minimum":  0
-          },
-          "output_busses" :
-          {
-            "type": "integer",
-            "minimum":  0
-          },
-          "inputs":
-          {
-            "type": "array",
-            "items":
-            {
-              "type": "object",
-              "oneOf":
-              [
-                {
-                  "type": "object",
-                  "properties":
-                  {
-                    "engine_bus":
-                    {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "track_bus":
-                    {
-                      "type": "integer",
-                      "minimum": 0
-                    }
-                  },
-                  "required": ["engine_bus","track_bus"]
-                },
-                {
-                  "type": "object",
-                  "properties":
-                  {
-                    "engine_channel":
-                    {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "track_channel":
-                    {
-                      "type": "integer",
-                      "minimum": 0
-                    }
-                  },
-                  "required": ["engine_channel","track_channel"]
-                }
-              ]
-            }
-          },
-          "outputs":
-          {
-            "type": "array",
-            "items":
-            {
-              "type": "object",
-              "oneOf":
-              [
-                {
-                  "type": "object",
-                  "properties":
-                  {
-                    "engine_bus":
-                    {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "track_bus":
-                    {
-                      "type": "integer",
-                      "minimum": 0
-                    }
-                  },
-                  "required": ["engine_bus","track_bus"]
-                },
-                {
-                  "type": "object",
-                  "properties":
-                  {
-                    "engine_channel":
-                    {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "track_channel":
-                    {
-                      "type": "integer",
-                      "minimum": 0
-                    }
-                  },
-                  "required": ["engine_channel","track_channel"]
-                }
-              ]
-            }
-          },
-          "plugins":
-          {
-            "type": "array",
-            "items":
-            {
-              "type": "object",
-              "oneOf":
-              [
-                {
-                  "properties":
-                  {
-                    "uid":
-                    {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "name":
-                    {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "type":
-                    {
-                      "enum": ["internal"]
-                    }
-                  },
-                  "required": ["uid", "name", "type"]
-                },
-                {
-                  "properties":
-                  {
-                    "path":
-                    {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "name":
-                    {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "type":
-                    {
-                      "enum": ["vst2x"]
-                    }
-                  },
-                  "required": ["path", "name", "type"]
-                },
-                {
-                  "properties":
-                  {
-                    "uid":
-                    {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "path":
-                    {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "name":
-                    {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "type":
-                    {
-                      "enum": ["vst3x"]
-                    }
-                  },
-                  "required": ["uid","path", "name", "type"]
-                },
-                {
-                  "properties":
-                  {
-                    "uri":
-                    {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "name":
-                    {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "type":
-                    {
-                      "enum": ["lv2"]
-                    }
-                  },
-                  "required": ["uri", "name", "type"]
-                }
-              ]
-            }
-          }
-        },
-        "required": ["name", "mode", "inputs", "outputs", "plugins"]
+        "$ref": "#/definitions/track"
       },
       "minItems": 1
+    },
+    "pre_track":
+    {
+      "$ref": "#/definitions/pre_post_track"
+    },
+    "post_track":
+    {
+      "$ref": "#/definitions/pre_post_track"
     }
   },
   "required": ["tracks"]

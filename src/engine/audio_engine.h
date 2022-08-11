@@ -359,13 +359,15 @@ public:
     /**
      * @brief Create an empty track
      * @param name The unique name of the track to be created.
-     * @param input_busses The number of input stereo pairs in the track.
-     * @param output_busses The number of output stereo pairs in the track.
+     * @param bus_count The number of stereo pairs in the track.
      * @return EngineInitStatus::OK in case of success, different error code otherwise.
      */
-    std::pair<EngineReturnStatus, ObjectId> create_multibus_track(const std::string& name,
-                                                                  int input_busses,
-                                                                  int output_busses) override;
+    std::pair<EngineReturnStatus, ObjectId> create_multibus_track(const std::string& name, int bus_count) override;
+
+    std::pair<EngineReturnStatus, ObjectId> create_post_track(const std::string& name) override;
+
+    std::pair<EngineReturnStatus, ObjectId> create_pre_track(const std::string& name) override;
+
     /**
      * @brief Delete a track, currently assumes that the track is empty before calling
      * @param track_id The unique name of the track to delete
@@ -466,7 +468,6 @@ public:
         return _master_limiter_enabled;
     }
 
-
     sushi::dispatcher::BaseEventDispatcher* event_dispatcher() override
     {
         return _event_dispatcher.get();
@@ -546,6 +547,9 @@ private:
     * @param event The event to process
     * @return EngineReturnStatus::OK if the event was properly processed, error code otherwise
     */
+
+    std::pair<EngineReturnStatus, ObjectId> _create_master_track(const std::string& name, TrackType type, int channels);
+
     EngineReturnStatus _send_control_event(RtEvent& event);
 
     EngineReturnStatus _connect_audio_channel(int engine_channel, int track_channel, ObjectId track_id, Direction direction);
@@ -564,6 +568,24 @@ private:
 
     inline void _copy_audio_from_tracks(ChunkSampleBuffer* output);
 
+    /**
+     * @brief Add a track to the audio engine, if engine is running, this must be called from the
+     *        rt thread before/after processing. If not running, then this function can safely be
+     *        called from a non-rt thread
+     * @param track The track to add
+     * @return True if successful, false otherwise
+     */
+    bool _add_track(Track* track);
+
+    /**
+     * @brief Remove a track from the audio engine, if engine is running, this must be called from
+     *        the rt thread before/after processing. If not running, then this function can safely be
+     *        called from a non-rt thread
+     * @param track The track to remove.
+     * @return True if successful, false otherwise
+ */
+    bool _remove_track(Track* track);
+
     void print_timings_to_file(const std::string& filename);
 
     void _route_cv_gate_ins(ControlBuffer& buffer);
@@ -575,6 +597,11 @@ private:
     // Only to be accessed from the process callback in rt mode.
     std::vector<Processor*>    _realtime_processors{MAX_RT_PROCESSOR_ID, nullptr};
     AudioGraph                 _audio_graph;
+
+    Track* _pre_track{nullptr};
+    Track* _post_track{nullptr};
+    ChunkSampleBuffer _input_swap_buffer;
+    ChunkSampleBuffer _output_swap_buffer;
 
     ConnectionStorage<AudioConnection> _audio_in_connections;
     ConnectionStorage<AudioConnection> _audio_out_connections;

@@ -54,7 +54,7 @@ protected:
     }
 
     /* Helper functions */
-    JsonConfigReturnStatus _make_track(const rapidjson::Value &track);
+    JsonConfigReturnStatus _make_track(const rapidjson::Value &track, TrackType type);
 
     AudioEngine _engine{SAMPLE_RATE};
     MidiDispatcher _midi_dispatcher{_engine.event_dispatcher()};
@@ -66,9 +66,9 @@ protected:
     std::string _path;
 };
 
-JsonConfigReturnStatus TestJsonConfigurator::_make_track(const rapidjson::Value &track)
+JsonConfigReturnStatus TestJsonConfigurator::_make_track(const rapidjson::Value &track, TrackType type)
 {
-    return _module_under_test->_make_track(track);
+    return _module_under_test->_make_track(track, type);
 }
 
 TEST_F(TestJsonConfigurator, TestLoadAudioConfig)
@@ -94,7 +94,7 @@ TEST_F(TestJsonConfigurator, TestLoadTracks)
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
     auto tracks = _engine.processor_container()->all_tracks();
 
-    ASSERT_EQ(4u, tracks.size());
+    ASSERT_EQ(5u, tracks.size());
     auto track_1_processors = _engine.processor_container()->processors_on_track(tracks[0]->id());
     auto track_2_processors = _engine.processor_container()->processors_on_track(tracks[1]->id());
 
@@ -189,21 +189,21 @@ TEST_F(TestJsonConfigurator, TestMakeChain)
     /* Create plugin track without processors */
     rapidjson::Document test_cfg;
     rapidjson::Value track(rapidjson::kObjectType);
-    rapidjson::Value mode("mono");
+    rapidjson::Value channels(1);
     rapidjson::Value name("track_without_plugins");
     rapidjson::Value inputs(rapidjson::kArrayType);
     rapidjson::Value outputs(rapidjson::kArrayType);
     rapidjson::Value plugins(rapidjson::kArrayType);
-    track.AddMember("mode", mode, test_cfg.GetAllocator());
+    track.AddMember("channels", channels, test_cfg.GetAllocator());
     track.AddMember("name", name, test_cfg.GetAllocator());
     track.AddMember("inputs", inputs, test_cfg.GetAllocator());
     track.AddMember("outputs", outputs, test_cfg.GetAllocator());
     track.AddMember("plugins", plugins, test_cfg.GetAllocator());
-    ASSERT_EQ(_make_track(track), JsonConfigReturnStatus::OK);
+    ASSERT_EQ(_make_track(track, TrackType::REGULAR), JsonConfigReturnStatus::OK);
 
     /* Similar Plugin track but with same track id */
-    track["mode"] = "stereo";
-    ASSERT_EQ(_make_track(track), JsonConfigReturnStatus::INVALID_TRACK_NAME);
+    track["channels"] = 2;
+    ASSERT_EQ(_make_track(track, TrackType::REGULAR), JsonConfigReturnStatus::INVALID_TRACK_NAME);
 
     /* Create valid plugin track with valid plugin */
     track["name"] = "tracks_with_internal_plugin";
@@ -217,20 +217,20 @@ TEST_F(TestJsonConfigurator, TestMakeChain)
     test_plugin.AddMember("type", type, test_cfg.GetAllocator());
     test_plugin.AddMember("name", plugin_name, test_cfg.GetAllocator());
     track["plugins"].PushBack(test_plugin, test_cfg.GetAllocator());
-    ASSERT_EQ(_make_track(track), JsonConfigReturnStatus::OK);
+    ASSERT_EQ(_make_track(track, TrackType::REGULAR), JsonConfigReturnStatus::OK);
 
     rapidjson::Value& plugin = track["plugins"][0];
     track["name"] = "track_invalid_internal";
     plugin["name"] = "invalid_internal_plugin";
     plugin["uid"] = "wrong_uid";
     plugin["type"] = "internal";
-    ASSERT_EQ(_make_track(track), JsonConfigReturnStatus::INVALID_CONFIGURATION);
+    ASSERT_EQ(_make_track(track, TrackType::REGULAR), JsonConfigReturnStatus::INVALID_CONFIGURATION);
 
     track["name"] = "track_invalid_name";
     plugin["name"] = "internal_plugin";
     plugin["uid"] = "sushi.testing.gain";
     plugin["type"] = "internal";
-    ASSERT_EQ(_make_track(track), JsonConfigReturnStatus::INVALID_CONFIGURATION);
+    ASSERT_EQ(_make_track(track, TrackType::REGULAR), JsonConfigReturnStatus::INVALID_CONFIGURATION);
 }
 
 TEST_F(TestJsonConfigurator, TestValidJsonSchema)
@@ -276,12 +276,12 @@ TEST_F(TestJsonConfigurator, TestPluginChainSchema)
 
     /* Plugin track without plugin list defined is not ok, empty list defined is ok */
     rapidjson::Value example_track(rapidjson::kObjectType);
-    rapidjson::Value mode("mono");
+    rapidjson::Value channels(1);
     rapidjson::Value name("track_name");
     rapidjson::Value inputs(rapidjson::kArrayType);
     rapidjson::Value outputs(rapidjson::kArrayType);
     rapidjson::Value plugins(rapidjson::kArrayType);
-    example_track.AddMember("mode", mode, test_cfg.GetAllocator());
+    example_track.AddMember("channels", channels, test_cfg.GetAllocator());
     example_track.AddMember("name", name, test_cfg.GetAllocator());
     example_track.AddMember("inputs", inputs, test_cfg.GetAllocator());
     example_track.AddMember("outputs", outputs, test_cfg.GetAllocator());
@@ -291,9 +291,9 @@ TEST_F(TestJsonConfigurator, TestPluginChainSchema)
     ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
 
     /* incorrect mode */
-    test_cfg["tracks"][0]["mode"] = "invalid_mode";
+    test_cfg["tracks"][0]["channels"] = -1;
     ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
-    test_cfg["tracks"][0]["mode"] = "stereo";
+    test_cfg["tracks"][0]["channels"] = 2;
     ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
 }
 
@@ -306,12 +306,12 @@ TEST_F(TestJsonConfigurator, TestPluginSchema)
 
     rapidjson::Value example_track(rapidjson::kObjectType);
     rapidjson::Value track_name("track_name");
-    rapidjson::Value mode("mono");
+    rapidjson::Value channels(1);
     rapidjson::Value inputs(rapidjson::kArrayType);
     rapidjson::Value outputs(rapidjson::kArrayType);
     rapidjson::Value plugins(rapidjson::kArrayType);
     example_track.AddMember("name", track_name, test_cfg.GetAllocator());
-    example_track.AddMember("mode", mode, test_cfg.GetAllocator());
+    example_track.AddMember("channels", channels, test_cfg.GetAllocator());
     example_track.AddMember("inputs", inputs, test_cfg.GetAllocator());
     example_track.AddMember("outputs", outputs, test_cfg.GetAllocator());
     example_track.AddMember("plugins", plugins, test_cfg.GetAllocator());

@@ -1,8 +1,6 @@
 {
     "host_config" : {
-        "samplerate" : 48000,
-        "cv_inputs" : 2,
-        "cv_outputs" :4
+        "samplerate" : 48000
     },
     "tracks" : [
         {
@@ -19,16 +17,26 @@
                 {
                     "uid" : "sushi.testing.arpeggiator",
                     "name" : "arp",
-                    "type" : "internal"
+                    "type"   : "internal"
                 },
                 {
-                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaJX10.so",
-                    "name" : "synth",
-                    "type" : "vst2x"
+                    "uid" : "sushi.testing.sampleplayer",
+                    "name" : "sampler",
+                    "type"   : "internal"
                 }
             ]
         }
     ],
+    "post_track" : {
+        "name" : "master_gain",
+        "plugins" : [
+            {
+                "uid" : "sushi.testing.gain",
+                "name" : "gain",
+                "type"   : "internal"
+            }
+        ]
+    },
     "midi" : {
         "track_connections": [
             {
@@ -39,16 +47,12 @@
             }
         ]
     },
-    "cv_control" : {
-        "cv_inputs" : [
-            {
-                "cv" : 0,
-                "processor" : "synth",
-                "parameter" : "VCF Freq"
+    "initial_state": [
+        {
+            "processor": "sampler",
+            "properties": {
+                "sample_file": "/home/mind/sushi/test/data/Kawai-K11-GrPiano-C4_mono.wav"
             }
-        ],
-        "cv_outputs" : [],
-        "gate_inputs" : [],
-        "gate_outputs" : []
-    }
+        }
+    ]
 }

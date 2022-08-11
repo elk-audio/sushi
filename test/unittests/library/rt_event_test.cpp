@@ -219,6 +219,10 @@ TEST (TestRealtimeEvents, TestFactoryFunction)
     EXPECT_EQ(RtEventType::TIMING_TICK, event.type());
     EXPECT_EQ(29, event.timing_tick_event()->sample_offset());
     EXPECT_EQ(12, event.timing_tick_event()->tick_count());
+
+    event = RtEvent::make_processor_notify_event(30, ProcessorNotifyRtEvent::Action::PARAMETER_UPDATE);
+    EXPECT_EQ(RtEventType::NOTIFY, event.type());
+    EXPECT_EQ(ProcessorNotifyRtEvent::Action::PARAMETER_UPDATE, event.processor_notify_event()->action());
 }
 
 TEST(TestRealtimeEvents, TestReturnableEvents)
