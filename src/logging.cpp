@@ -42,7 +42,9 @@ SUSHI_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
                                          const std::string& logger_name,
                                          const std::string& min_log_level,
                                          const bool enable_flush_interval,
-                                         const std::chrono::seconds log_flush_interval)
+                                         const std::chrono::seconds log_flush_interval,
+                                         const std::string& sentry_crash_handler_path,
+                                         const std::string& sentry_dsn)
 {
     SUSHI_LOG_ERROR_CODE ret = SUSHI_LOG_ERROR_CODE_OK;
 
@@ -60,7 +62,7 @@ SUSHI_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
     Logger::_logger_file_name.assign(file_name);
     Logger::_logger_name.assign(logger_name);
 
-    logger_instance = setup_logging();
+    logger_instance = setup_logging(sentry_crash_handler_path, sentry_dsn);
 
     if (enable_flush_interval)
     {
@@ -102,7 +104,8 @@ std::string Logger::get_error_message(SUSHI_LOG_ERROR_CODE status)
     return error_messages.at(status);
 }
 
-std::shared_ptr<spdlog::logger> Logger::setup_logging()
+std::shared_ptr<spdlog::logger> Logger::setup_logging(const std::string& sentry_crash_handler_path,
+                                                      const std::string& sentry_dsn)
 {
     const int  MAX_LOG_FILE_SIZE    = 10'000'000;           // In bytes
     const auto MIN_FLUSH_LEVEL      = spdlog::level::err;   // Min level for automatic flush
@@ -114,7 +117,7 @@ std::shared_ptr<spdlog::logger> Logger::setup_logging()
                                                                                1);
 
 #ifdef SUSHI_BUILD_WITH_SENTRY
-    async_file_logger->sinks().push_back(std::make_shared<sentry_sink_mt>());
+    async_file_logger->sinks().push_back(std::make_shared<sentry_sink_mt>(sentry_crash_handler_path, sentry_dsn));
 #endif
 
     async_file_logger->flush_on(MIN_FLUSH_LEVEL);

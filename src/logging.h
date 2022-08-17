@@ -101,8 +101,8 @@ enum SUSHI_LOG_ERROR_CODE
  *
  * See help of Logger::set_logger_params for more details
  */
-#define SUSHI_INITIALIZE_LOGGER(FILE_NAME, LOGGER_NAME, MIN_LOG_LEVEL, ENABLE_FLUSH_INTERVAL, LOG_FLUSH_INTERVAL) \
-    elk::Logger::init_logger(FILE_NAME, LOGGER_NAME, MIN_LOG_LEVEL, ENABLE_FLUSH_INTERVAL, LOG_FLUSH_INTERVAL)
+#define SUSHI_INITIALIZE_LOGGER(FILE_NAME, LOGGER_NAME, MIN_LOG_LEVEL, ENABLE_FLUSH_INTERVAL, LOG_FLUSH_INTERVAL, SENTRY_CRASH_HANDLER_PATH, SENTRY_DSN) \
+    elk::Logger::init_logger(FILE_NAME, LOGGER_NAME, MIN_LOG_LEVEL, ENABLE_FLUSH_INTERVAL, LOG_FLUSH_INTERVAL, SENTRY_CRASH_HANDLER_PATH, SENTRY_DSN)
 
 
 #define SUSHI_LOG_GET_ERROR_MESSAGE(retcode) \
@@ -130,7 +130,9 @@ public:
                                             const std::string& logger_name,
                                             const std::string& min_log_level,
                                             const bool enable_flush_interval,
-                                            const std::chrono::seconds log_flush_interval);
+                                            const std::chrono::seconds log_flush_interval,
+                                            const std::string& sentry_crash_handler_path,
+                                            const std::string& sentry_dsn);
 
 
     /**
@@ -142,7 +144,8 @@ public:
 
 private:
     Logger() = default;
-    static std::shared_ptr<spdlog::logger> setup_logging();
+    static std::shared_ptr<spdlog::logger> setup_logging(const std::string& sentry_crash_handler_path,
+                                                         const std::string& sentry_dsn);
 
     static std::string _logger_file_name;
     static std::string _logger_name;

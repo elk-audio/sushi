@@ -32,16 +32,22 @@ template<typename Mutex>
 class SentrySink : public spdlog::sinks::base_sink<Mutex>
 {
 public:
-    SentrySink() : spdlog::sinks::base_sink<Mutex>() { init(); }
-    explicit SentrySink(std::unique_ptr<spdlog::formatter> formatter) : spdlog::sinks::base_sink<Mutex>(formatter) { init(); }
-
-    void init()
+    SentrySink(const std::string& sentry_crash_handler_path,
+               const std::string& sentry_dsn) : spdlog::sinks::base_sink<Mutex>()
     {
-        std::cout << "using crash handler: " << SUSHI_CRASH_HANDLER_PATH << std::endl;
-        std::cout << "started sink with dsn: " << SUSHI_SENTRY_DSN << std::endl;
+        init(sentry_crash_handler_path, sentry_dsn);
+    }
+
+    // explicit SentrySink(std::unique_ptr<spdlog::formatter> formatter) : spdlog::sinks::base_sink<Mutex>(formatter) { init(); }
+
+    void init(const std::string& sentry_crash_handler_path,
+              const std::string& sentry_dsn)
+    {
+        std::cout << "using crash handler: " << sentry_crash_handler_path << std::endl;
+        std::cout << "started sink with dsn: " << sentry_dsn << std::endl;
         sentry_options_t *options = sentry_options_new();
-        sentry_options_set_handler_path(options, SUSHI_CRASH_HANDLER_PATH);
-        sentry_options_set_dsn(options, SUSHI_SENTRY_DSN);
+        sentry_options_set_handler_path(options, sentry_crash_handler_path.c_str());
+        sentry_options_set_dsn(options, sentry_dsn.c_str());
         sentry_init(options);
     }
 
