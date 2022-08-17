@@ -35,16 +35,6 @@ public:
     SentrySink(const std::string& sentry_crash_handler_path,
                const std::string& sentry_dsn) : spdlog::sinks::base_sink<Mutex>()
     {
-        init(sentry_crash_handler_path, sentry_dsn);
-    }
-
-    // explicit SentrySink(std::unique_ptr<spdlog::formatter> formatter) : spdlog::sinks::base_sink<Mutex>(formatter) { init(); }
-
-    void init(const std::string& sentry_crash_handler_path,
-              const std::string& sentry_dsn)
-    {
-        std::cout << "using crash handler: " << sentry_crash_handler_path << std::endl;
-        std::cout << "started sink with dsn: " << sentry_dsn << std::endl;
         sentry_options_t *options = sentry_options_new();
         sentry_options_set_handler_path(options, sentry_crash_handler_path.c_str());
         sentry_options_set_dsn(options, sentry_dsn.c_str());
@@ -59,8 +49,6 @@ public:
 protected:
     void sink_it_(const spdlog::details::log_msg& msg) override
     {
-        // spdlog::memory_buf_t formatted;
-        // spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
         const std::string payload(msg.payload.begin(), msg.payload.end());
         const std::string logger_name(msg.logger_name.begin(), msg.logger_name.end());
         switch (msg.level)
