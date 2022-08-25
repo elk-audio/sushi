@@ -278,7 +278,7 @@ JsonConfigReturnStatus JsonConfigurator::load_tracks()
         }
     }
 
-    return post_track_status;
+    return status;
 }
 
 JsonConfigReturnStatus JsonConfigurator::load_midi()
