@@ -39,7 +39,7 @@
 # Build and scratch directories
 scratch/
 */scratch
-build/
+build*/
 generated/
 cmake-build-debug/
 cmake-build-release/
