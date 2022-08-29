@@ -564,6 +564,8 @@ private:
 
     inline void _retrieve_events_from_tracks(ControlBuffer& buffer);
 
+    inline void _retrieve_events_from_output_pipe(RtEventFifo<>& pipe, ControlBuffer& buffer);
+
     inline void _copy_audio_to_tracks(ChunkSampleBuffer* input);
 
     inline void _copy_audio_from_tracks(ChunkSampleBuffer* output);
@@ -618,8 +620,10 @@ private:
     RtSafeRtEventFifo _main_out_queue;
     RtSafeRtEventFifo _control_queue_out;
     std::mutex _in_queue_lock;
+    RtEventFifo<> _prepost_event_outputs;
     receiver::AsynchronousEventReceiver _event_receiver{&_control_queue_out};
     Transport _transport;
+
 
     std::unique_ptr<dispatcher::BaseEventDispatcher> _event_dispatcher;
     HostControl _host_control{nullptr, &_transport};

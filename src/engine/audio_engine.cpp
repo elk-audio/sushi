@@ -1115,31 +1115,37 @@ void AudioEngine::_retrieve_events_from_tracks(ControlBuffer& buffer)
 {
     for (auto& output : _audio_graph.event_outputs())
     {
-        while (output.empty() == false)
-        {
-            const RtEvent& event = output.pop();
-            switch (event.type())
-            {
-                case RtEventType::CV_EVENT:
-                {
-                    auto typed_event = event.cv_event();
-                    buffer.cv_values[typed_event->cv_id()] = typed_event->value();
-                    break;
-                }
-
-                case RtEventType::GATE_EVENT:
-                {
-                    auto typed_event = event.gate_event();
-                    _outgoing_gate_values[typed_event->gate_no()] = typed_event->value();
-                    break;
-                }
-
-                default:
-                    _main_out_queue.push(event);
-            }
-        }
-        buffer.gate_values = _outgoing_gate_values;
+        _retrieve_events_from_output_pipe(output, buffer);
     }
+    _retrieve_events_from_output_pipe(_prepost_event_outputs, buffer);
+}
+
+void AudioEngine::_retrieve_events_from_output_pipe(RtEventFifo<>& pipe, ControlBuffer& buffer)
+{
+    while (pipe.empty() == false)
+    {
+        const RtEvent& event = pipe.pop();
+        switch (event.type())
+        {
+            case RtEventType::CV_EVENT:
+            {
+                auto typed_event = event.cv_event();
+                buffer.cv_values[typed_event->cv_id()] = typed_event->value();
+                break;
+            }
+
+            case RtEventType::GATE_EVENT:
+            {
+                auto typed_event = event.gate_event();
+                _outgoing_gate_values[typed_event->gate_no()] = typed_event->value();
+                break;
+            }
+
+            default:
+                _main_out_queue.push(event);
+        }
+    }
+    buffer.gate_values = _outgoing_gate_values;
 }
 
 void AudioEngine::_copy_audio_to_tracks(ChunkSampleBuffer* input)
@@ -1217,6 +1223,7 @@ bool AudioEngine::_add_track(Track* track)
             if (_post_track == nullptr)
             {
                 _post_track = track;
+                _post_track->set_event_output(&_prepost_event_outputs);
                 added = true;
             }
             break;
@@ -1225,6 +1232,7 @@ bool AudioEngine::_add_track(Track* track)
             if (_pre_track == nullptr)
             {
                 _pre_track = track;
+                _pre_track->set_event_output(&_prepost_event_outputs);
                 added = true;
             }
     }
