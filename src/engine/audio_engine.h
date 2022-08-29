@@ -624,7 +624,6 @@ private:
     receiver::AsynchronousEventReceiver _event_receiver{&_control_queue_out};
     Transport _transport;
 
-
     std::unique_ptr<dispatcher::BaseEventDispatcher> _event_dispatcher;
     HostControl _host_control{nullptr, &_transport};
 
