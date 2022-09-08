@@ -115,7 +115,6 @@ int main(int argc, char* argv[])
 
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
-    signal(SIGPIPE, SIG_IGN);
 
     ////////////////////////////////////////////////////////////////////////////////
     // Command Line arguments parsing
