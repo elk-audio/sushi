@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -43,9 +43,9 @@ public:
 
     ~SentrySink()
     {
-        std::cout << "Destroying sentry sink" << std::endl;
         sentry_close();
     }
+
 protected:
     void sink_it_(const spdlog::details::log_msg& msg) override
     {
@@ -58,9 +58,9 @@ protected:
         case spdlog::level::warn: _add_breadcrumb(payload, logger_name, "warning"); break;
         case spdlog::level::err:
             sentry_capture_event(sentry_value_new_message_event(
-            /*   level */ SENTRY_LEVEL_ERROR,
-            /*  logger */ logger_name.c_str(),
-            /* message */ payload.c_str()
+            SENTRY_LEVEL_ERROR, // level
+            logger_name.c_str(), // logger name
+            payload.c_str() // message
             ));
             break;
 
@@ -73,6 +73,7 @@ protected:
     {
        sentry_flush(1000);
     }
+
 private:
     void _add_breadcrumb(const std::string& message, const std::string& category, const std::string& level)
     {

@@ -412,13 +412,15 @@ message("Configured audio buffer size: " ${SUSHI_AUDIO_BUFFER_SIZE} " samples")
 # sentry.io setup #
 ###################
 
-if (${WITH_SENTRY})
+if (${SUSHI_WITH_SENTRY})
+    find_package(sentry CONFIG REQUIRED)
+
     message("Building with sentry.io support.")
 
-    set(SENTRY_DSN "" CACHE STRING "The DSN to upload the sentry logs and crash reports to")
+    set(SUSHI_SENTRY_DSN "https://06ed0cb50866424fb8a2947f1466e0c6@o1366334.ingest.sentry.io/6501480" CACHE STRING "The DSN to upload the sentry logs and crash reports to" FORCE)
 
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} sentry)
-    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_SENTRY -DSUSHI_SENTRY_DSN="${SENTRY_DSN}")
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} sentry::sentry)
+    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_SENTRY -DSUSHI_SENTRY_DSN="${SUSHI_SENTRY_DSN}")
 endif()
 
 ####################
