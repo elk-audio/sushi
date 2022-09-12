@@ -26,3 +26,6 @@
 [submodule "third-party/portaudio"]
 	path = third-party/portaudio
 	url = https://github.com/PortAudio/portaudio.git
+[submodule "third-party/vcpkg"]
+	path = third-party/vcpkg
+	url = https://github.com/Microsoft/vcpkg.git

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.20)
 
 #####################
 #  Project Version  #
@@ -9,7 +9,12 @@ set(SUSHI_VERSION_MAJOR 0)
 set(SUSHI_VERSION_MINOR 12)
 set(SUSHI_VERSION_REVISION 0)
 
-project(sushi VERSION ${SUSHI_VERSION_MAJOR}.${SUSHI_VERSION_MINOR}.${SUSHI_VERSION_REVISION})
+project(sushi
+    VERSION ${SUSHI_VERSION_MAJOR}.${SUSHI_VERSION_MINOR}.${SUSHI_VERSION_REVISION}
+    DESCRIPTION "Headless plugin host for Elk Audio OS"
+    HOMEPAGE_URL "https://github.com/elk-audio/sushi"
+    LANGUAGES CXX
+)
 
 ##################################
 #  Perform Cross Compile setup   #
@@ -17,14 +22,14 @@ project(sushi VERSION ${SUSHI_VERSION_MAJOR}.${SUSHI_VERSION_MINOR}.${SUSHI_VERS
 
 # Procedure is performed only if cross compile is detected, i.e CMAKE_SYSROOT
 # has been explicitly defined
-if(NOT "$ENV{CMAKE_SYSROOT}" STREQUAL "")
-    set(CMAKE_SYSROOT "$ENV{CMAKE_SYSROOT}")
-    set(CMAKE_FIND_ROOT_PATH ${CMAKE_SYSROOT})
-    set(CMAKE_PROGRAM_PATH "$ENV{CMAKE_PROGRAM_PATH}")
-    set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
-    set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
-    set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
-endif()
+# if(NOT "$ENV{CMAKE_SYSROOT}" STREQUAL "")
+#     set(CMAKE_SYSROOT "$ENV{CMAKE_SYSROOT}")
+#     set(CMAKE_FIND_ROOT_PATH ${CMAKE_SYSROOT})
+#     set(CMAKE_PROGRAM_PATH "$ENV{CMAKE_PROGRAM_PATH}")
+#     set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
+#     set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+#     set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+# endif()
 
 ##################################
 #  Generate build information    #
@@ -547,18 +552,14 @@ set(INCLUDE_DIRS ${INCLUDE_DIRS}
 #  Linked libraries             #
 #################################
 
-# Common libraries between all builds, and safe to be included in test targets
-find_path(SNDFILE_INCLUDE_DIR NAMES "sndfile.h")
-find_library(SNDFILE_LIBRARIES NAMES sndfile)
-message("Found path: ${SNDFILE_INCLUDE_DIR} and lib: ${SNDFILE_LIBRARIES}")
+find_package(SndFile CONFIG REQUIRED)
 
 set(INCLUDE_DIRS
     ${INCLUDE_DIRS}
-    ${SNDFILE_INCLUDE_DIR}
 )
 
 set(COMMON_LIBRARIES
-    ${SNDFILE_LIBRARIES}
+    SndFile::sndfile
     pthread
     dl
     fifo
