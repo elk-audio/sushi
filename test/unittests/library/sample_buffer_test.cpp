@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include "gtest/gtest.h"
 
 #include "library/sample_buffer.h"
