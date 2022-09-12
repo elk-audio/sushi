@@ -16,6 +16,8 @@ project(sushi
     LANGUAGES CXX
 )
 
+set(CMAKE_CXX_STANDARD 17)
+
 ##################################
 #  Perform Cross Compile setup   #
 ##################################

@@ -45,4 +45,3 @@ target_link_libraries(sushi_rpc PUBLIC gRPC::grpc++ protos-lib)
 target_compile_features(sushi_rpc PRIVATE cxx_std_17)
 target_compile_options(sushi_rpc PRIVATE -Wall -Wextra )
 
-
