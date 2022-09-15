@@ -14,6 +14,7 @@ project(sushi
     DESCRIPTION "Headless plugin host for Elk Audio OS"
     HOMEPAGE_URL "https://github.com/elk-audio/sushi"
     LANGUAGES CXX
+    VERSION ${SUSHI_VERSION_MAJOR}.${SUSHI_VERSION_MINOR}.${SUSHI_VERSION_REVISION}
 )
 
 set(CMAKE_CXX_STANDARD 17)
