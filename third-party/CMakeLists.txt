@@ -26,24 +26,6 @@ set(SPDLOG_NO_ATOMIC_LEVELS ON CACHE BOOL "" FORCE)
 add_subdirectory(spdlog)
 
 ##########################
-# RtMidi compile options #
-##########################
-
-set(BUILD_SHARED_LIBS OFF)
-
-add_subdirectory(rtmidi)
-
-#############################
-# portaudio compile options #
-#############################
-
-if (${SUSHI_WITH_PORTAUDIO})
-    set(PA_ENABLE_DEBUG_OUTPUT OFF CACHE BOOL "" FORCE)
-    add_subdirectory(portaudio)
-    set_target_properties(PortAudio PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
-endif()
-
-##########################
 #  VST3SDK and examples  #
 ##########################
 if (${SUSHI_WITH_VST3})

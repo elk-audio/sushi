@@ -25,7 +25,7 @@
 
 #include <map>
 
-#include "RtMidi.h"
+#include <rtmidi/RtMidi.h>
 
 #include "base_midi_frontend.h"
 

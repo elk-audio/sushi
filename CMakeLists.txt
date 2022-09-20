@@ -239,9 +239,9 @@ endif()
 if (${SUSHI_WITH_PORTAUDIO})
     message("Building with PortAudio support.")
 
-    # Linked libraries
-    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${PROJECT_SOURCE_DIR}/third-party/portaudio/include) # For working tests since we need the headers but don't want to link with the actual library.
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} PortAudio)
+    find_package(portaudio CONFIG REQUIRED)
+
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} portaudio_static)
 
     # Compile definitions
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_PORTAUDIO)
@@ -277,10 +277,11 @@ if (${SUSHI_WITH_RT_MIDI})
     # Additional sources
     set(MIDI_SOURCES ${MIDI_SOURCES} src/control_frontends/rt_midi_frontend.cpp src/control_frontends/rt_midi_frontend.h)
 
-    # Linked Libraries
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} rtmidi)
+    #RtMidi library
+    find_package(RtMidi CONFIG REQUIRED)
 
-    # Compile definitions
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} RtMidi::rtmidi)
+
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_RT_MIDI)
 endif()
 
@@ -637,10 +638,6 @@ set(INCLUDE_DIRS ${INCLUDE_DIRS}
 #################################
 
 find_package(SndFile CONFIG REQUIRED)
-
-set(INCLUDE_DIRS
-    ${INCLUDE_DIRS}
-)
 
 set(COMMON_LIBRARIES
     SndFile::sndfile
