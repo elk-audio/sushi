@@ -5,7 +5,7 @@
 # Build Test plugin, needed for dynamic library loading unit tests
 # Adapted from https://github.com/gmoe/vst-cmake
 
-if (${WITH_VST2})
+if (${SUSHI_WITH_VST2})
     set(VST2_SDK_PLUGIN_SOURCES
             "${VST2_SDK_PATH}/public.sdk/source/vst2.x/audioeffectx.cpp"
             "${VST2_SDK_PATH}/public.sdk/source/vst2.x/audioeffect.cpp"
@@ -101,22 +101,22 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/library/id_generator_test.cpp
                unittests/library/simple_fifo_test.cpp)
 
-if (${WITH_JACK})
+if (${SUSHI_WITH_JACK})
     set(TEST_FILES ${TEST_FILES} unittests/audio_frontends/jack_frontend_test.cpp)
 endif()
 
-if (${WITH_PORTAUDIO})
+if (${SUSHI_WITH_PORTAUDIO})
     set(TEST_FILES ${TEST_FILES} unittests/audio_frontends/portaudio_frontend_test.cpp)
 endif()
 
-if (${WITH_VST2})
+if (${SUSHI_WITH_VST2})
     set(TEST_FILES ${TEST_FILES} unittests/library/vst2x_wrapper_test.cpp
                                  unittests/library/vst2x_plugin_loading_test.cpp
                                  unittests/library/vst2x_midi_event_fifo_test.cpp
                                  ${PROJECT_SOURCE_DIR}/src/library/vst2x/vst2x_host_callback.cpp)
 endif()
 
-if (${WITH_VST3})
+if (${SUSHI_WITH_VST3})
     set(TEST_FILES ${TEST_FILES} unittests/library/vst3x_wrapper_test.cpp)
 endif()
 
@@ -127,7 +127,7 @@ set(TEST_HELPER_FILES ${TEST_HELPER_FILES} ${PROJECT_SOURCE_DIR}/src/library/pro
                                            ${PROJECT_SOURCE_DIR}/src/library/vst2x/vst2x_processor_factory.cpp
                                            ${PROJECT_SOURCE_DIR}/src/library/vst3x/vst3x_processor_factory.cpp)
 
-if (${WITH_LV2})
+if (${SUSHI_WITH_LV2})
     set(TEST_FILES ${TEST_FILES} unittests/library/lv2_wrapper_test.cpp)
 endif()
 
@@ -139,15 +139,15 @@ target_compile_definitions(unit_tests PRIVATE -DSUSHI_DISABLE_LOGGING
 
 target_compile_options(unit_tests PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
 
-if (${WITH_JACK})
+if (${SUSHI_WITH_JACK})
     target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_JACK)
 endif()
 
-if (${WITH_PORTAUDIO})
+if (${SUSHI_WITH_PORTAUDIO})
     target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_PORTAUDIO)
 endif()
 
-if (${WITH_VST2})
+if (${SUSHI_WITH_VST2})
     target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_VST2)
     if (APPLE)
         target_compile_definitions(unit_tests PRIVATE -DVST2_TEST_PLUGIN_PATH="$<TARGET_BUNDLE_DIR:vst2_test_plugin>")
@@ -156,15 +156,15 @@ if (${WITH_VST2})
     endif()
 endif()
 
-if (${WITH_VST3})
+if (${SUSHI_WITH_VST3})
     target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_VST3)
 endif()
 
-if (${WITH_LV2})
+if (${SUSHI_WITH_LV2})
     target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_LV2)
 endif()
 
-if (${WITH_LV2_MDA_TESTS})
+if (${SUSHI_WITH_LV2_MDA_TESTS})
     target_compile_definitions(unit_tests PRIVATE -DSUSHI_BUILD_WITH_LV2_MDA_TESTS)
 endif()
 
@@ -190,21 +190,21 @@ set(TEST_LINK_LIBRARIES
     gmock_main
 )
 
-if (${WITH_VST2})
+if (${SUSHI_WITH_VST2})
     add_dependencies(unit_tests vst2_test_plugin)
 endif()
 
-if (${WITH_VST3})
+if (${SUSHI_WITH_VST3})
     set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} vst3_host sdk base)
     add_dependencies(unit_tests adelay vst3_host)
 endif()
 
-if (${WITH_ALSA_MIDI})
+if (${SUSHI_WITH_ALSA_MIDI})
     find_library(ALSA_LIB NAMES asound)
     set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} ${ALSA_LIB})
 endif()
 
-if (${WITH_LV2})
+if (${SUSHI_WITH_LV2})
     set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} asound lilv-0 lv2_host)
     add_dependencies(unit_tests lv2_host)
 endif()

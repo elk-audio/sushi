@@ -10,7 +10,6 @@ set(SUSHI_VERSION_MINOR 12)
 set(SUSHI_VERSION_REVISION 0)
 
 project(sushi
-    VERSION ${SUSHI_VERSION_MAJOR}.${SUSHI_VERSION_MINOR}.${SUSHI_VERSION_REVISION}
     DESCRIPTION "Headless plugin host for Elk Audio OS"
     HOMEPAGE_URL "https://github.com/elk-audio/sushi"
     LANGUAGES CXX
@@ -42,32 +41,129 @@ configure_file(
 #  Build and link options #
 ###########################
 
-# Default behaviour is to build and link with everything
-option(WITH_XENOMAI "Enable Xenomai support" ON)
-option(WITH_JACK "Enable Jack support" ON)
-option(WITH_PORTAUDIO "Enable PortAudio support" ON)
-option(WITH_ALSA_MIDI "Enable alsa midi support" ON)
-option(WITH_RT_MIDI "Enable RtMidi support" OFF)
-option(WITH_VST2 "Enable Vst 2 support" ON)
-option(WITH_VST3 "Enable Vst 3 support" ON)
-option(WITH_LV2 "Enable LV 2 support" ON)
-option(WITH_LV2_MDA_TESTS "Include unit tests depending on LV2 drobilla MDA plugin port." ON)
-option(WITH_UNIT_TESTS "Build and run unit tests after compilation" ON)
-option(WITH_LINK "Enable Ableton Link support" ON)
-option(WITH_RPC_INTERFACE "Enable RPC control support" ON)
-option(BUILD_TWINE "Build included Twine library" ON)
+function(CheckSushiOptions old_opt_name new_opt_name default_val)
+    if ( (NOT (${old_opt_name} MATCHES "${${default_val}}"))
+        AND (NOT ${old_opt_name} MATCHES "${${new_opt_name}}")
+    )
+        message(WARNING "Option ${old_opt_name} is deprecated, use ${new_opt_name} instead.")
+        set(${new_opt_name} "${${old_opt_name}}" PARENT_SCOPE)
+    endif()
+endfunction()
 
-if (WITH_ALSA_MIDI AND WITH_RT_MIDI)
+
+# The defaults enable all options and select APIs available for either Xenomai or macOS
+if (APPLE)
+    set(SUSHI_WITH_XENOMAI_DEFAULT OFF)
+else()
+    set(SUSHI_WITH_XENOMAI_DEFAULT ON)
+endif()
+set(SUSHI_WITH_JACK_DEFAULT OFF)
+if (APPLE)
+    set(SUSHI_WITH_PORTAUDIO_DEFAULT ON)
+else()
+    set(SUSHI_WITH_PORTAUDIO_DEFAULT OFF)
+endif()
+if (APPLE)
+    set(SUSHI_WITH_ALSA_MIDI_DEFAULT OFF)
+else()
+    set(SUSHI_WITH_ALSA_MIDI_DEFAULT OFF)
+endif()
+if (APPLE)
+    set(SUSHI_WITH_RT_MIDI_DEFAULT ON)
+else()
+    set(SUSHI_WITH_RT_MIDI_DEFAULT OFF)
+endif()
+set(SUSHI_WITH_VST2_DEFAULT ON)
+set(SUSHI_WITH_VST3_DEFAULT ON)
+if (APPLE)
+    set(SUSHI_WITH_LV2_DEFAULT OFF)
+else()
+    set(SUSHI_WITH_LV2_DEFAULT ON)
+    set(SUSHI_WITH_LV2_MDA_TESTS_DEFAULT ON)
+endif()
+set(SUSHI_WITH_LV2_MDA_TESTS_DEFAULT OFF)
+if (APPLE)
+    set(SUSHI_WITH_UNIT_TESTS_DEFAULT ON)
+else()
+    set(SUSHI_WITH_UNIT_TESTS_DEFAULT OFF)
+endif()
+
+set(SUSHI_WITH_LINK_DEFAULT ON)
+set(SUSHI_WITH_RPC_INTERFACE_DEFAULT ON)
+if (APPLE)
+    set(SUSHI_BUILD_TWINE_DEFAULT ON)
+else()
+    set(SUSHI_BUILD_TWINE_DEFAULT OFF)
+endif()
+
+set(SUSHI_AUDIO_BUFFER_SIZE_DEFAULT 64)
+
+option(WITH_XENOMAI "Deprecated: use SUSHI_WITH_XENOMAI instead" ${SUSHI_WITH_XENOMAI_DEFAULT})
+option(SUSHI_WITH_XENOMAI "Enable Xenomai support" ${SUSHI_WITH_XENOMAI_DEFAULT})
+CheckSushiOptions(WITH_XENOMAI SUSHI_WITH_XENOMAI SUSHI_WITH_XENOMAI_DEFAULT)
+
+option(WITH_JACK "Deprecated: use SUSHI_WITH_JACK instead" ${SUSHI_WITH_JACK_DEFAULT})
+option(SUSHI_WITH_JACK "Enable Jack support" ${SUSHI_WITH_JACK_DEFAULT})
+CheckSushiOptions(WITH_JACK SUSHI_WITH_JACK SUSHI_WITH_JACK_DEFAULT)
+
+option(WITH_PORTAUDIO "Deprecated: use SUSHI_WITH_PORTAUDIO instead" ${SUSHI_WITH_PORTAUDIO_DEFAULT})
+option(SUSHI_WITH_PORTAUDIO "Enable PortAudio support" ${SUSHI_WITH_PORTAUDIO_DEFAULT})
+CheckSushiOptions(WITH_PORTAUDIO SUSHI_WITH_PORTAUDIO SUSHI_WITH_PORTAUDIO_DEFAULT)
+
+option(WITH_ALSA_MIDI "Deprecated: use SUSHI_WITH_ALSA_MIDI instead" ${SUSHI_WITH_ALSA_MIDI_DEFAULT})
+option(SUSHI_WITH_ALSA_MIDI "Enable alsa midi support" ${SUSHI_WITH_ALSA_MIDI_DEFAULT})
+CheckSushiOptions(WITH_ALSA_MIDI SUSHI_WITH_ALSA_MIDI SUSHI_WITH_ALSA_MIDI_DEFAULT)
+
+option(WITH_RT_MIDI "Deprecated: use SUSHI_WITH_RT_MIDI instead" ${SUSHI_WITH_RT_MIDI_DEFAULT})
+option(SUSHI_WITH_RT_MIDI "Enable RtMidi support" ${SUSHI_WITH_RT_MIDI_DEFAULT})
+CheckSushiOptions(WITH_RT_MIDI SUSHI_WITH_RT_MIDI SUSHI_WITH_RT_MIDI_DEFAULT)
+
+option(WITH_VST2 "Deprecated: use SUSHI_WITH_VST2 instead" ${SUSHI_WITH_VST2_DEFAULT})
+option(SUSHI_WITH_VST2 "Enable Vst 2 support" ${SUSHI_WITH_VST2_DEFAULT})
+CheckSushiOptions(WITH_VST2 SUSHI_WITH_VST2 SUSHI_WITH_VST2_DEFAULT)
+
+option(WITH_VST3 "Deprecated: use SUSHI_WITH_VST3 instead" ${SUSHI_WITH_VST3_DEFAULT})
+option(SUSHI_WITH_VST3 "Enable Vst 3 support" ${SUSHI_WITH_VST3_DEFAULT})
+CheckSushiOptions(WITH_VST3 SUSHI_WITH_VST3 SUSHI_WITH_VST3_DEFAULT)
+
+option(WITH_LV2 "Deprecated: use SUSHI_WITH_LV2 instead" ${SUSHI_WITH_LV2_DEFAULT})
+option(SUSHI_WITH_LV2 "Enable LV 2 support" ${SUSHI_WITH_LV2_DEFAULT})
+CheckSushiOptions(WITH_LV2 SUSHI_WITH_LV2 SUSHI_WITH_LV2_DEFAULT)
+
+option(WITH_LV2_MDA_TESTS "Deprecated: use SUSHI_WITH_LV2_MDA_TESTS instead" ${SUSHI_WITH_LV2_MDA_TESTS_DEFAULT})
+option(SUSHI_WITH_LV2_MDA_TESTS "Include unit tests depending on LV2 drobilla MDA plugin port." ${SUSHI_WITH_LV2_MDA_TESTS_DEFAULT})
+CheckSushiOptions(WITH_LV2_MDA_TESTS SUSHI_WITH_LV2_MDA_TESTS SUSHI_WITH_LV2_MDA_TESTS_DEFAULT)
+
+option(WITH_UNIT_TESTS "Deprecated: use SUSHI_WITH_UNIT_TESTS instead " ${SUSHI_WITH_UNIT_TESTS_DEFAULT})
+option(SUSHI_WITH_UNIT_TESTS "Build and run unit tests after compilation" ${SUSHI_WITH_UNIT_TESTS_DEFAULT})
+CheckSushiOptions(WITH_UNIT_TESTS SUSHI_WITH_UNIT_TESTS SUSHI_WITH_UNIT_TESTS_DEFAULT)
+
+option(WITH_LINK "Deprecated: use SUSHI_WITH_LINK instead" ${SUSHI_WITH_LINK_DEFAULT})
+option(SUSHI_WITH_LINK "Enable Ableton Link support" ${SUSHI_WITH_LINK_DEFAULT})
+CheckSushiOptions(WITH_LINK SUSHI_WITH_LINK SUSHI_WITH_LINK_DEFAULT)
+
+option(WITH_RPC_INTERFACE "Deprecated: use SUSHI_WITH_RPC_INTERFACE instead" ${SUSHI_WITH_RPC_INTERFACE_DEFAULT})
+option(SUSHI_WITH_RPC_INTERFACE "Enable RPC control support" ${SUSHI_WITH_RPC_INTERFACE_DEFAULT})
+CheckSushiOptions(WITH_RPC_INTERFACE SUSHI_WITH_RPC_INTERFACE SUSHI_WITH_RPC_INTERFACE_DEFAULT)
+
+option(BUILD_TWINE "Deprecated: use SUSHI_BUILD_TWINE instead" ${SUSHI_BUILD_TWINE_DEFAULT})
+option(SUSHI_BUILD_TWINE "Build included Twine library" ${SUSHI_BUILD_TWINE_DEFAULT})
+CheckSushiOptions(BUILD_TWINE SUSHI_BUILD_TWINE SUSHI_BUILD_TWINE_DEFAULT)
+
+set(AUDIO_BUFFER_SIZE ${SUSHI_AUDIO_BUFFER_SIZE_DEFAULT} CACHE STRING "Deprecated: use SUSHI_AUDIO_BUFFER_SIZE instead")
+set(SUSHI_AUDIO_BUFFER_SIZE ${SUSHI_AUDIO_BUFFER_SIZE_DEFAULT} CACHE STRING "Set internal audio buffer size in frames")
+CheckSushiOptions(AUDIO_BUFFER_SIZE SUSHI_AUDIO_BUFFER_SIZE SUSHI_AUDIO_BUFFER_SIZE_DEFAULT)
+
+if (SUSHI_WITH_ALSA_MIDI AND SUSHI_WITH_RT_MIDI)
     message(FATAL_ERROR "Both alsa midi and RtMidi set to on. Use only one midi frontend at a time")
 endif()
 
-set(AUDIO_BUFFER_SIZE 64 CACHE STRING "Set internal audio buffer size in frames")
 
 ###############################
 # Sub-directory configuration #
 ###############################
 
-if (${BUILD_TWINE})
+if (${SUSHI_BUILD_TWINE})
     set(TWINE_WITH_TESTS OFF CACHE BOOL "")
     add_subdirectory(twine)
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} twine)
@@ -88,7 +184,7 @@ add_subdirectory(third-party EXCLUDE_FROM_ALL)
 # Xenomai setup #
 #################
 
-if (${WITH_XENOMAI})
+if (${SUSHI_WITH_XENOMAI})
     message("Building with Xenomai support")
 
     # External libraries:
@@ -123,7 +219,7 @@ endif()
 # Jack setup #
 ##############
 
-if (${WITH_JACK})
+if (${SUSHI_WITH_JACK})
     message("Building with Jack support.")
 
     # Linked libraries
@@ -140,7 +236,7 @@ endif()
 # PortAudio setup #
 ###################
 
-if (${WITH_PORTAUDIO})
+if (${SUSHI_WITH_PORTAUDIO})
     message("Building with PortAudio support.")
 
     # Linked libraries
@@ -155,7 +251,7 @@ endif()
 # Alsa midi setup #
 ###################
 
-if (${WITH_ALSA_MIDI})
+if (${SUSHI_WITH_ALSA_MIDI})
     message("Building with alsa midi support.")
 
     # Additional sources
@@ -175,7 +271,7 @@ endif()
 # RtMidi ssetup #
 #################
 
-if (${WITH_RT_MIDI})
+if (${SUSHI_WITH_RT_MIDI})
     message("Building with RtMidi support.")
 
     # Additional sources
@@ -192,7 +288,7 @@ endif()
 # VST 2 setup #
 ###############
 
-if (${WITH_VST2})
+if (${SUSHI_WITH_VST2})
     message("Building with Vst2 support.")
 
     set(ADDITIONAL_VST2_SOURCES src/library/vst2x/vst2x_wrapper.h
@@ -226,7 +322,7 @@ endif()
 # VST 3 setup #
 ###############
 
-if (${WITH_VST3})
+if (${SUSHI_WITH_VST3})
     message("Building with Vst3 support.")
 
     # Vst 3 host:
@@ -290,7 +386,7 @@ endif()
 # LV2 setup #
 #############
 
-if (${WITH_LV2})
+if (${SUSHI_WITH_LV2})
     message("Building with LV2 support.")
 
     set(ADDITIONAL_LV2_SOURCES src/library/lv2/lv2_wrapper.h
@@ -320,7 +416,7 @@ endif()
 # gRPC setup #
 ##############
 
-if (${WITH_RPC_INTERFACE})
+if (${SUSHI_WITH_RPC_INTERFACE})
     message("Building with RPC support.")
 
     add_subdirectory(rpc_interface)
@@ -336,7 +432,7 @@ endif()
 # Ableton link setup #
 ######################
 
-if (${WITH_LINK})
+if (${SUSHI_WITH_LINK})
     message("Building with Ableton Link support.")
 
     include(third-party/link/AbletonLinkConfig.cmake)
@@ -348,7 +444,7 @@ if (${WITH_LINK})
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_ABLETON_LINK)
 endif()
 
-message("Configured audio buffer size: " ${AUDIO_BUFFER_SIZE} " samples")
+message("Configured audio buffer size: " ${SUSHI_AUDIO_BUFFER_SIZE} " samples")
 
 ####################
 #  Main Target     #
@@ -568,13 +664,13 @@ target_link_libraries(sushi PRIVATE ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES}
 
 target_compile_features(sushi PRIVATE cxx_std_17)
 target_compile_options(sushi PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
-target_compile_definitions(sushi PRIVATE -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${AUDIO_BUFFER_SIZE} ${EXTRA_COMPILE_DEFINITIONS})
+target_compile_definitions(sushi PRIVATE -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${SUSHI_AUDIO_BUFFER_SIZE} ${EXTRA_COMPILE_DEFINITIONS})
 
 ######################
 #  Tests subproject  #
 ######################
 
-if (${WITH_UNIT_TESTS})
+if (${SUSHI_WITH_UNIT_TESTS})
     add_subdirectory(test)
 endif()
 

@@ -37,7 +37,7 @@ add_subdirectory(rtmidi)
 # portaudio compile options #
 #############################
 
-if (${WITH_PORTAUDIO})
+if (${SUSHI_WITH_PORTAUDIO})
     set(PA_ENABLE_DEBUG_OUTPUT OFF CACHE BOOL "" FORCE)
     add_subdirectory(portaudio)
     set_target_properties(PortAudio PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
@@ -46,7 +46,7 @@ endif()
 ##########################
 #  VST3SDK and examples  #
 ##########################
-if (${WITH_VST3})
+if (${SUSHI_WITH_VST3})
 # Exclude VstGui, hosting samples and skip validation
 set(SMTG_ADD_VSTGUI OFF CACHE BOOL "" FORCE)
 set(SMTG_ADD_VST3_PLUGINS_SAMPLES ON CACHE BOOL "" FORCE)
