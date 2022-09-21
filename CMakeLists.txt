@@ -166,8 +166,9 @@ endif()
 if (${SUSHI_BUILD_TWINE})
     set(TWINE_WITH_TESTS OFF CACHE BOOL "")
     add_subdirectory(twine)
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} twine)
-    set(TWINE_LIB twine)
+    # Link statically in this case
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} twine_objlib)
+    set(TWINE_LIB twine_objlib)
 else()
     find_path(TWINE_PATH NAMES "twine/twine.h")
     find_library(TWINE_LIB
