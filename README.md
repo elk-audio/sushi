@@ -78,12 +78,12 @@ Sushi carries most dependencies as submodules and will build and link with them 
           * lv2-examples - at least version 1.18.2.
           * mda-lv2 - at least version 1.2.4 of [drobilla's port](http://drobilla.net/software/mda-lv2/) - not that from Mod Devices or others.
 
-As an alternative to install most of dependencies through your Linux's system package manager, you can use vcpkg for Linux as well (check the following macOS section for instructions).
+As an alternative to installing most dependencies through your Linux system’s package manager, you can use vcpkg for Linux as well (check the following macOS section for instructions).
 
 ### Building for macOS
 SUSHI includes vcpkg to manage third-party dependencies under macOS.
 
-Building should be as simple as:
+Instructions:
 
 ```
 $ ./third-party/vcpkg/bootstrap-vcpkg.sh
@@ -96,23 +96,26 @@ This might take some time for the first build since all the vcpkg dependencies w
 ### Useful CMake build options
 Various options can be passed to CMake directly, or through the generate script using the `--cmake-args` flag. Both general CMake options and Sushi-specific options that control which features Sushi is built with can be passed. Note that all options need to be prefixed with `-D` when passing them. All options are on be default as that is the most common use case.
 
-Option                          | Value    | Default | Notes
---------------------------------|----------|---------|------------------------------------------------------------------------------------------------------
-SUSHI_AUDIO_BUFFER_SIZE               | 8 - 512  | 64      | The buffer size used in the audio processing. Needs to be a power of 2 (8, 16, 32, 64, 128...).
-SUSHI_WITH_XENOMAI                    | on / off | on      | Build Sushi with Xenomai RT-kernel support, only for ElkPowered hardware.
-SUSHI_WITH_JACK                       | on / off | on      | Build Sushi with Jack Audio support, only for standard Linux distributions and macOS
-SUSHI_WITH_PORTAUDIO                  | on / off | on      | Build Sushi with Portaudio support
-SUSHI_WITH_ALSA_MIDI                  | on / off | on      | Build Sushi with Alsa sequencer support for MIDI (Linux only)
-SUSHI_WITH_RT_MIDI                    | on / off | on      | Build Sushi with RtMidi support for MIDI. Cannot be selected if SUSHI_WITH_ALSA_MIDI is set.
-SUSHI_WITH_LINK                       | on / off | on      | Build Sushi with Ableton Link support.
-SUSHI_WITH_VST2                       | on / off | on      | Include support for loading Vst 2.x plugins in Sushi.
-SUSHI_WITH_VST3                       | on / off | on      | Include support for loading Vst 3.x plugins in Sushi.
-SUSHI_WITH_LV2                        | on / off | on      | Include support for loading LV2 plugins in Sushi. 
-SUSHI_WITH_RPC_INTERFACE              | on / off | on      | Build gRPC external control interface, requires gRPC development files.
-SUSHI_BUILD_TWINE                     | on / off | on      | Build and link with the included version of [TWINE](https://github.com/elk-audio/twine), otherwise tries to link with system wide if the option is disabled.
-SUSHI_WITH_UNIT_TESTS                 | on / off | on      | Build and run unit tests together with building Sushi.
-SUSHI_WITH_LV2_MDA_TESTS              | on / off | on      | Include LV2 unit tests which depends on the LV2 drobilla port of the mda plugins being installed. 
-VST2_SDK_PATH                   | path     | empty   | Path to external Vst 2.4 SDK. Not included and required if WITH_VST2 is enabled.
+Option                                | Value    | Default* | Notes
+--------------------------------------|----------|----------|------------------------------------------------------------------------------------------------------
+SUSHI_AUDIO_BUFFER_SIZE               | 8 - 512  | 64       | The buffer size used in the audio processing. Needs to be a power of 2 (8, 16, 32, 64, 128...).
+SUSHI_WITH_XENOMAI                    | on / off | on (off) | Build Sushi with Xenomai RT-kernel support, only for ElkPowered hardware.
+SUSHI_WITH_JACK                       | on / off | off      | Build Sushi with Jack Audio support, only for standard Linux distributions and macOS
+SUSHI_WITH_PORTAUDIO                  | on / off | on       | Build Sushi with Portaudio support
+SUSHI_WITH_ALSA_MIDI                  | on / off | off (on) | Build Sushi with Alsa sequencer support for MIDI (Linux only)
+SUSHI_WITH_RT_MIDI                    | on / off | on (off) | Build Sushi with RtMidi support for MIDI. Cannot be selected if SUSHI_WITH_ALSA_MIDI is set.
+SUSHI_WITH_LINK                       | on / off | on       | Build Sushi with Ableton Link support.
+SUSHI_WITH_VST2                       | on / off | on (off) | Include support for loading Vst 2.x plugins in Sushi.
+SUSHI_WITH_VST3                       | on / off | on       | Include support for loading Vst 3.x plugins in Sushi.
+SUSHI_WITH_LV2                        | on / off | on (off) | Include support for loading LV2 plugins in Sushi. 
+SUSHI_WITH_RPC_INTERFACE              | on / off | on       | Build gRPC external control interface, requires gRPC development files.
+SUSHI_BUILD_TWINE                     | on / off | off (on) | Build and link with the included version of [TWINE](https://github.com/elk-audio/twine), otherwise tries to link with system wide if the option is disabled.
+SUSHI_WITH_UNIT_TESTS                 | on / off | on       | Build and run unit tests together with building Sushi.
+SUSHI_WITH_LV2_MDA_TESTS              | on / off | on (off) | Include LV2 unit tests which depends on the LV2 drobilla port of the mda plugins being installed. 
+VST2_SDK_PATH                         | path     | empty    | Path to external Vst 2.4 SDK. Not included and required if WITH_VST2 is enabled.
+
+_*_:
+the defaults vary depending on the target platform, in the table they are for Linux (macOS).
 
 _Note_:
 
