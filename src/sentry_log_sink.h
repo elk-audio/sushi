@@ -26,6 +26,8 @@
 #include "spdlog/sinks/base_sink.h"
 #include "sentry.h"
 
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("sentry");
+
 namespace elk {
 
 template<typename Mutex>
@@ -35,10 +37,17 @@ public:
     SentrySink(const std::string& sentry_crash_handler_path,
                const std::string& sentry_dsn) : spdlog::sinks::base_sink<Mutex>()
     {
-        sentry_options_t *options = sentry_options_new();
+        sentry_options_t* options = sentry_options_new();
         sentry_options_set_handler_path(options, sentry_crash_handler_path.c_str());
         sentry_options_set_dsn(options, sentry_dsn.c_str());
-        sentry_init(options);
+        sentry_options_set_database_path (options, "/tmp/.sentry-native-elk-sushi");
+        int status = sentry_init(options);
+
+        if (status != 0)
+        {
+            SUSHI_LOG_INFO("sentry_init call failed.");
+            assert(false);
+        }
     }
 
     ~SentrySink()
