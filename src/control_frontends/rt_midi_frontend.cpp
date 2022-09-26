@@ -105,14 +105,14 @@ bool RtMidiFrontend::init()
     {
         for (int i = 0; i < _inputs; i++)
         {
-            _input_mappings.emplace_back(std::make_tuple(0, 0, false));
+            _input_mappings.emplace_back(std::make_tuple(i, i, false));
         }
     }
     if (_output_mappings.size() == 0)
     {
         for (int i = 0; i < _outputs; i++)
         {
-            _output_mappings.emplace_back(std::make_tuple(0, 0, false));
+            _output_mappings.emplace_back(std::make_tuple(i, i, false));
         }
     }
 
