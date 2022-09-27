@@ -45,7 +45,7 @@ std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> Vst3xProcessorFactory
                                                                                                float sample_rate)
 {
     auto processor = std::make_shared<Vst3xWrapper>(host_control,
-                                                    plugin_info.path,
+                                                    host_control.convert_plugin_path(plugin_info.path),
                                                     plugin_info.uid,
                                                     _host_app.get());
     auto processor_status = processor->init(sample_rate);

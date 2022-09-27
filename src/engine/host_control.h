@@ -22,6 +22,9 @@
 #ifndef SUSHI_HOST_CONTROL_H
 #define SUSHI_HOST_CONTROL_H
 
+#include <string>
+#include <filesystem>
+
 #include "base_event_dispatcher.h"
 #include "engine/transport.h"
 
@@ -34,13 +37,60 @@ public:
                                                                                                    _transport(transport)
     {}
 
-    void post_event(Event* event) {_event_dispatcher->post_event(event);}
+    /**
+     * @brief Post an event into the dispatcher's queue
+     *
+     * @param event Non-owning pointer to the event
+     */
+    void post_event(Event* event)
+    {
+        _event_dispatcher->post_event(event);
+    }
 
-    const engine::Transport* transport() {return _transport;}
+    /**
+     * @brief Get the engine's transport interface
+     */
+    const engine::Transport* transport()
+    {
+        return _transport;
+    }
+
+    /**
+     * @brief Set an absolute path to be the base for plugin paths
+     *
+     * @param path Absolute path of the base plugin folder
+     */
+    void set_base_plugin_path(const std::string& path)
+    {
+        _base_plugin_path = path;
+    }
+
+    /**
+     * @brief Convert a relative plugin path to an absolute path,
+     *        if a base plugin path has been set.
+     *
+     * @param path Relative path to plugin inside the base plugin folder.
+     *             It is the caller's responsibility
+     *             to ensure that this is a proper relative path (not starting with "/").
+     *
+     * @return Absolute path of the plugin
+     */
+    std::string convert_plugin_path(const std::string& path)
+    {
+        if (_base_plugin_path.length() == 0)
+        {
+            return path;
+        }
+
+        auto full_path = std::filesystem::path(_base_plugin_path) / std::filesystem::path(path);
+        return std::string(std::filesystem::absolute(full_path));
+    }
+
 
 protected:
     dispatcher::BaseEventDispatcher* _event_dispatcher;
     engine::Transport*               _transport;
+    std::string                      _base_plugin_path;
 };
 
 } // end namespace sushi

@@ -194,6 +194,8 @@ public:
 
     void set_tempo_sync_mode(SyncMode /*mode*/) override {}
 
+    void set_base_plugin_path(const std::string& /*path*/) override {}
+
     EngineReturnStatus send_rt_event(const RtEvent& /*event*/) override
     {
         got_rt_event = true;
