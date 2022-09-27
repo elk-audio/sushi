@@ -456,6 +456,7 @@ set(COMPILATION_UNITS src/main.cpp
                       src/engine/transport.cpp
                       src/engine/parameter_manager.cpp
                       src/engine/processor_container.cpp
+                      src/engine/host_control.cpp
                       src/engine/controller/controller.cpp
                       src/engine/controller/system_controller.cpp
                       src/engine/controller/transport_controller.cpp

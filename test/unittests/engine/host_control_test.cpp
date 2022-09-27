@@ -3,7 +3,7 @@
 #define private public
 #define protected public
 
-#include "engine/host_control.h"
+#include "engine/host_control.cpp"
 
 using namespace sushi;
 

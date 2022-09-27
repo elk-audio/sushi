@@ -23,7 +23,6 @@
 #define SUSHI_HOST_CONTROL_H
 
 #include <string>
-#include <filesystem>
 
 #include "base_event_dispatcher.h"
 #include "engine/transport.h"
@@ -60,10 +59,7 @@ public:
      *
      * @param path Absolute path of the base plugin folder
      */
-    void set_base_plugin_path(const std::string& path)
-    {
-        _base_plugin_path = path;
-    }
+    void set_base_plugin_path(const std::string& path);
 
     /**
      * @brief Convert a relative plugin path to an absolute path,
@@ -75,17 +71,7 @@ public:
      *
      * @return Absolute path of the plugin
      */
-    std::string convert_plugin_path(const std::string& path)
-    {
-        if (_base_plugin_path.length() == 0)
-        {
-            return path;
-        }
-
-        auto full_path = std::filesystem::path(_base_plugin_path) / std::filesystem::path(path);
-        return std::string(std::filesystem::absolute(full_path));
-    }
-
+    std::string convert_plugin_path(const std::string& path);
 
 protected:
     dispatcher::BaseEventDispatcher* _event_dispatcher;
