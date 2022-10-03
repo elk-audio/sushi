@@ -100,15 +100,15 @@ bool RtMidiFrontend::init()
         }
     }
 
-    // If no I/O mappings were given, create a sensible default
-    if (_input_mappings.size() == 0)
+    // If no I/O mappings were given, create a sensible default if MIDI ports are available
+    if ( (_inputs > 0) && (_input_midi_ports[0].midi_input.getPortCount() > 0) && (_input_mappings.size() == 0) )
     {
         for (int i = 0; i < _inputs; i++)
         {
             _input_mappings.emplace_back(std::make_tuple(i, i, false));
         }
     }
-    if (_output_mappings.size() == 0)
+    if ( (_outputs > 0) && (_output_midi_ports[0].getPortCount() > 0) &&  (_output_mappings.size() == 0) )
     {
         for (int i = 0; i < _outputs; i++)
         {
