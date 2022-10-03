@@ -109,7 +109,7 @@ AudioEngine::AudioEngine(float sample_rate,
     {
         _event_dispatcher.reset(event_dispatcher);
     }
-    _host_control = HostControl(_event_dispatcher.get(), &_transport);
+    _host_control = HostControl(_event_dispatcher.get(), &_transport, &_plugin_library);
 
     this->set_sample_rate(sample_rate);
     _cv_in_connections.reserve(MAX_CV_CONNECTIONS);

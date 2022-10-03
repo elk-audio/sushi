@@ -22,18 +22,22 @@
 #ifndef SUSHI_HOST_CONTROL_H
 #define SUSHI_HOST_CONTROL_H
 
-#include <string>
 
 #include "base_event_dispatcher.h"
 #include "engine/transport.h"
+#include "engine/plugin_library.h"
 
 namespace sushi {
 
 class HostControl
 {
 public:
-    HostControl(dispatcher::BaseEventDispatcher* event_dispatcher, engine::Transport* transport) : _event_dispatcher(event_dispatcher),
-                                                                                                   _transport(transport)
+    HostControl(dispatcher::BaseEventDispatcher* event_dispatcher,
+                engine::Transport* transport,
+                engine::PluginLibrary* library) :
+                    _event_dispatcher(event_dispatcher),
+                    _transport(transport),
+                    _plugin_library(library)
     {}
 
     /**
@@ -59,7 +63,10 @@ public:
      *
      * @param path Absolute path of the base plugin folder
      */
-    void set_base_plugin_path(const std::string& path);
+    void set_base_plugin_path(const std::string& path)
+    {
+        _plugin_library->set_base_plugin_path(path);
+    }
 
     /**
      * @brief Convert a relative plugin path to an absolute path,
@@ -71,12 +78,15 @@ public:
      *
      * @return Absolute path of the plugin
      */
-    std::string convert_plugin_path(const std::string& path);
+    std::string convert_plugin_path(const std::string& path)
+    {
+        return _plugin_library->convert_plugin_path(path);
+    }
 
 protected:
     dispatcher::BaseEventDispatcher* _event_dispatcher;
     engine::Transport*               _transport;
-    std::string                      _base_plugin_path;
+    engine::PluginLibrary*           _plugin_library;
 };
 
 } // end namespace sushi

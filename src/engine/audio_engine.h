@@ -35,6 +35,7 @@
 #include "engine/receiver.h"
 #include "engine/transport.h"
 #include "engine/host_control.h"
+#include "engine/plugin_library.h"
 #include "engine/controller/controller.h"
 #include "engine/audio_graph.h"
 #include "engine/connection_storage.h"
@@ -633,9 +634,10 @@ private:
     RtEventFifo<> _prepost_event_outputs;
     receiver::AsynchronousEventReceiver _event_receiver{&_control_queue_out};
     Transport _transport;
+    PluginLibrary _plugin_library;
 
     std::unique_ptr<dispatcher::BaseEventDispatcher> _event_dispatcher;
-    HostControl _host_control{nullptr, &_transport};
+    HostControl _host_control{nullptr, &_transport, &_plugin_library};
 
     performance::PerformanceTimer _process_timer;
     int  _log_timing_print_counter{0};

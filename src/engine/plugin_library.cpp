@@ -13,23 +13,17 @@
  * SUSHI.  If not, see http://www.gnu.org/licenses/
  */
 
-/**
- * @brief Object passed to processors to allow them access to the engine
- *        to query things like time, tempo and to post non rt events.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
- */
-
-
-#include "host_control.h"
+#include "plugin_library.h"
 #include "logging.h"
 
 #include <filesystem>
 
 namespace sushi {
+namespace engine {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("host_control");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("plugin_library");
 
-void HostControl::set_base_plugin_path(const std::string& path)
+void PluginLibrary::set_base_plugin_path(const std::string& path)
 {
     _base_plugin_path = path;
     SUSHI_LOG_WARNING_IF(_base_plugin_path != path,
@@ -38,7 +32,7 @@ void HostControl::set_base_plugin_path(const std::string& path)
     SUSHI_LOG_INFO("Setting base plugin path to: {}", _base_plugin_path);
 }
 
-std::string HostControl::convert_plugin_path(const std::string& path)
+std::string PluginLibrary::convert_plugin_path(const std::string& path)
 {
     if (_base_plugin_path.length() == 0)
     {
@@ -49,5 +43,5 @@ std::string HostControl::convert_plugin_path(const std::string& path)
     return std::string(std::filesystem::absolute(full_path));
 }
 
+} // end namespace engine
 } // end namespace sushi
-

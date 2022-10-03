@@ -3,15 +3,15 @@
 #define private public
 #define protected public
 
-#include "engine/host_control.cpp"
+#include "engine/plugin_library.cpp"
 
 using namespace sushi;
 
 
-class TestHostControl : public ::testing::Test
+class TestPluginLibrary : public ::testing::Test
 {
 protected:
-    TestHostControl()
+    TestPluginLibrary()
     {
     }
 
@@ -21,11 +21,11 @@ protected:
     void TearDown()
     { }
 
-    HostControl _module_under_test{nullptr, nullptr};
+    engine::PluginLibrary _module_under_test;
 };
 
 
-TEST_F(TestHostControl, TestPathWithoutBase)
+TEST_F(TestPluginLibrary, TestPathWithoutBase)
 {
     // Check that convert_plugin_path() is an identity
     // if no base path has been set
@@ -34,8 +34,9 @@ TEST_F(TestHostControl, TestPathWithoutBase)
     ASSERT_EQ(plugin_path, _module_under_test.convert_plugin_path(plugin_path));
 }
 
-TEST_F(TestHostControl, TestPathConcatenation)
+TEST_F(TestPluginLibrary, TestPathConcatenation)
 {
     _module_under_test.set_base_plugin_path("/home/foo/bar");
     ASSERT_EQ("/home/foo/bar/my_absolute_plugin.so", _module_under_test.convert_plugin_path("my_absolute_plugin.so"));
 }
+

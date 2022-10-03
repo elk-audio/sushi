@@ -119,8 +119,8 @@ private:
 class ProcessorContainerMockup : public BaseProcessorContainer
 {
 public:
-    ProcessorContainerMockup() : _processor(std::make_shared<DummyProcessor>(HostControl(nullptr, nullptr))),
-                                 _track(std::make_shared<Track>(HostControl(nullptr, nullptr), 2, nullptr)) {}
+    ProcessorContainerMockup() : _processor(std::make_shared<DummyProcessor>(HostControl(nullptr, nullptr, nullptr))),
+                                 _track(std::make_shared<Track>(HostControl(nullptr, nullptr, nullptr), 2, nullptr)) {}
 
     bool add_processor(std::shared_ptr<Processor> /*processor*/) override {return true;}
 
