@@ -46,20 +46,20 @@ rapidjson::Document generate_processor_parameter_document(sushi::ext::SushiContr
         for(auto& processor : graph_controller->get_track_processors(track.id).second)
         {
             rapidjson::Value processor_obj(rapidjson::kObjectType);
-            processor_obj.AddMember(rapidjson::Value("name", allocator).Move(), 
+            processor_obj.AddMember(rapidjson::Value("name", allocator).Move(),
                                     rapidjson::Value(processor.name.c_str(), allocator).Move(), allocator);
 
-            processor_obj.AddMember(rapidjson::Value("label", allocator).Move(), 
+            processor_obj.AddMember(rapidjson::Value("label", allocator).Move(),
                                     rapidjson::Value(processor.label.c_str(), allocator).Move(), allocator);
 
-            processor_obj.AddMember(rapidjson::Value("processor_id", allocator).Move(), 
+            processor_obj.AddMember(rapidjson::Value("processor_id", allocator).Move(),
                                     rapidjson::Value(processor.id).Move(), allocator);
 
             processor_obj.AddMember(rapidjson::Value("parent_track_id", allocator).Move(),
                                     rapidjson::Value(track.id).Move(), allocator);
 
             rapidjson::Value parameters(rapidjson::kArrayType);
-            
+
             for(auto& parameter : param_controller->get_processor_parameters(processor.id).second)
             {
                 rapidjson::Value parameter_obj(rapidjson::kObjectType);
