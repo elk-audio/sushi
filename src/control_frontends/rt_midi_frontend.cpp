@@ -106,6 +106,7 @@ bool RtMidiFrontend::init()
         for (int i = 0; i < _inputs; i++)
         {
             _input_mappings.emplace_back(std::make_tuple(i, i, false));
+            SUSHI_LOG_INFO("Adding default mapping for MIDI input device {}", i);
         }
     }
     if ( (_outputs > 0) && (_output_midi_ports[0].getPortCount() > 0) &&  (_output_mappings.size() == 0) )
@@ -113,6 +114,7 @@ bool RtMidiFrontend::init()
         for (int i = 0; i < _outputs; i++)
         {
             _output_mappings.emplace_back(std::make_tuple(i, i, false));
+            SUSHI_LOG_INFO("Adding default mapping for MIDI output device {}", i);
         }
     }
 
