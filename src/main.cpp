@@ -23,6 +23,7 @@
 #include <csignal>
 #include <optional>
 #include <condition_variable>
+#include <filesystem>
 
 #include "twine/src/twine_internal.h"
 
@@ -170,7 +171,7 @@ int main(int argc, char* argv[])
     bool use_osc = true;
     bool use_grpc = true;
     std::chrono::seconds log_flush_interval = std::chrono::seconds(0);
-    std::string base_plugin_path;
+    std::string base_plugin_path = std::filesystem::current_path();
 
     for (int i = 0; i<cl_parser.optionsCount(); i++)
     {
@@ -351,7 +352,7 @@ int main(int argc, char* argv[])
                                                                rt_cpu_cores,
                                                                debug_mode_switches,
                                                                nullptr);
-    if (base_plugin_path.length() > 0)
+    if (! base_plugin_path.empty())
     {
         engine->set_base_plugin_path(base_plugin_path);
     }
