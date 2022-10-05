@@ -348,7 +348,7 @@ public:
      */
     virtual void set_base_plugin_path(const std::string& path) override
     {
-        _host_control.set_base_plugin_path(path);
+        _plugin_library.set_base_plugin_path(path);
     }
 
     /**

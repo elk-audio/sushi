@@ -59,16 +59,6 @@ public:
     }
 
     /**
-     * @brief Set an absolute path to be the base for plugin paths
-     *
-     * @param path Absolute path of the base plugin folder
-     */
-    void set_base_plugin_path(const std::string& path)
-    {
-        _plugin_library->set_base_plugin_path(path);
-    }
-
-    /**
      * @brief Convert a relative plugin path to an absolute path,
      *        if a base plugin path has been set.
      *
