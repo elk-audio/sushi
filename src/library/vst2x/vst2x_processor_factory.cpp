@@ -39,7 +39,7 @@ std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> Vst2xProcessorFactory
                                                                                                HostControl& host_control,
                                                                                                float sample_rate)
 {
-    auto processor = std::make_shared<Vst2xWrapper>(host_control, host_control.convert_plugin_path(plugin_info.path));
+    auto processor = std::make_shared<Vst2xWrapper>(host_control, plugin_info.path);
     auto processor_status = processor->init(sample_rate);
     return {processor_status, processor};
 }
