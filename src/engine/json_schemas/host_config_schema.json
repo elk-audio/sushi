@@ -135,11 +135,6 @@ R"(
             }
           },
           "required": ["rt_midi_device", "sushi_midi_port"]
-        },
-        "base_plugin_path" :
-        {
-            "type": "string",
-            "minLength": 1
         }
       },
       "required": ["samplerate"],

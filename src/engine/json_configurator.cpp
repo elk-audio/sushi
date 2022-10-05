@@ -239,19 +239,6 @@ JsonConfigReturnStatus JsonConfigurator::load_host_config()
         SUSHI_LOG_INFO("Enable master limiter set to {}", host_config["master_limiter"].GetBool());
     }
 
-    if (host_config.HasMember("base_plugin_path"))
-    {
-        auto base_path = std::filesystem::path(host_config["base_plugin_path"].GetString());
-
-        if (! std::filesystem::is_directory(base_path) )
-        {
-            SUSHI_LOG_ERROR("host_config.base_plugin_path in JSON file is not a valid directory.");
-            return JsonConfigReturnStatus::INVALID_PLUGIN_PATH;
-        }
-
-        _engine->set_base_plugin_path(base_path);
-    }
-
     return JsonConfigReturnStatus::OK;
 }
 
