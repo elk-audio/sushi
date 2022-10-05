@@ -34,12 +34,13 @@ void PluginLibrary::set_base_plugin_path(const std::string& path)
 
 std::string PluginLibrary::convert_plugin_path(const std::string& path)
 {
-    if (_base_plugin_path.length() == 0)
+    auto fspath = std::filesystem::path(path);
+    if (fspath.is_absolute() || path.empty())
     {
         return path;
     }
 
-    auto full_path = std::filesystem::path(_base_plugin_path) / std::filesystem::path(path);
+    auto full_path = std::filesystem::path(_base_plugin_path) / fspath;
     return std::string(std::filesystem::absolute(full_path));
 }
 

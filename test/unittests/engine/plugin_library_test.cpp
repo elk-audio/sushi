@@ -25,13 +25,20 @@ protected:
 };
 
 
-TEST_F(TestPluginLibrary, TestPathWithoutBase)
+TEST_F(TestPluginLibrary, TestAbsolutePath)
 {
     // Check that convert_plugin_path() is an identity
-    // if no base path has been set
+    // if the path is already absolute
 
     std::string plugin_path{"/home/foo/bar/my_absolute_plugin.so"};
     ASSERT_EQ(plugin_path, _module_under_test.convert_plugin_path(plugin_path));
+}
+
+TEST_F(TestPluginLibrary, TestEmptyPath)
+{
+    // Make sure we don't concatenate empty path with the base path
+
+    ASSERT_EQ("", _module_under_test.convert_plugin_path(""));
 }
 
 TEST_F(TestPluginLibrary, TestPathConcatenation)
