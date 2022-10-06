@@ -112,7 +112,6 @@ public:
      */
     AudioFrontendStatus init(BaseAudioFrontendConfiguration* config) override;
 
-    /*https://open.spotify.com/playlist/3EMmeF6F28zxhrVQGBMRUZ?si=4f6ef3b70963483b*
      * @brief Call to clean up resources and release ports
      */
     void cleanup() override;
