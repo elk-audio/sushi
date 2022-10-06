@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -32,7 +32,7 @@ void PluginLibrary::set_base_plugin_path(const std::string& path)
     SUSHI_LOG_INFO("Setting base plugin path to: {}", _base_plugin_path);
 }
 
-std::string PluginLibrary::convert_plugin_path(const std::string& path)
+std::string PluginLibrary::to_absolute_path(const std::string& path)
 {
     auto fspath = std::filesystem::path(path);
     if (fspath.is_absolute() || path.empty())

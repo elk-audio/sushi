@@ -68,9 +68,9 @@ public:
      *
      * @return Absolute path of the plugin
      */
-    std::string convert_plugin_path(const std::string& path)
+    std::string to_absolute_path(const std::string& path)
     {
-        return _plugin_library->convert_plugin_path(path);
+        return _plugin_library->to_absolute_path(path);
     }
 
 protected:

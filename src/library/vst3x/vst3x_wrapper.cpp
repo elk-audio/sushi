@@ -161,7 +161,7 @@ Vst3xWrapper::~Vst3xWrapper()
 ProcessorReturnCode Vst3xWrapper::init(float sample_rate)
 {
     _sample_rate = sample_rate;
-    bool loaded = _instance.load_plugin(_host_control.convert_plugin_path(_plugin_load_path), _plugin_load_name);
+    bool loaded = _instance.load_plugin(_host_control.to_absolute_path(_plugin_load_path), _plugin_load_name);
     if (!loaded)
     {
         _cleanup();
