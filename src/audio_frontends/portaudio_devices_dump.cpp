@@ -55,7 +55,7 @@ rapidjson::Document generate_portaudio_devices_info_document()
 
     rapidjson::Value pa_devices(rapidjson::kObjectType);
     rapidjson::Value devices(rapidjson::kArrayType);
-    for (int i=0; i<n_devs.value(); i++)
+    for (int i = 0; i < n_devs.value(); i++)
     {
         auto devinfo = frontend.device_info(i);
         if (!devinfo.has_value())

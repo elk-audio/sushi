@@ -112,6 +112,7 @@ public:
      */
     AudioFrontendStatus init(BaseAudioFrontendConfiguration* config) override;
 
+    /**
      * @brief Call to clean up resources and release ports
      */
     void cleanup() override;
