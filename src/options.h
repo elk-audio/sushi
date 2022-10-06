@@ -249,7 +249,7 @@ const optionparser::Descriptor usage[] =
         "a",
         "portaudio",
         SushiArg::Optional,
-        "\t\t-p --portaudio \tUse PortAudio realtime audio frontend."
+        "\t\t-a --portaudio \tUse PortAudio realtime audio frontend."
     },
     {
         OPT_IDX_AUDIO_INPUT_DEVICE,
