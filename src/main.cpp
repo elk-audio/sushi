@@ -105,7 +105,7 @@ void print_version_and_build_info()
 
 int main(int argc, char* argv[])
 {
-#ifdef SUSHI_BUILD_WITH_XENOMAI
+#ifdef SUSHI_BUILD_WITH_RASPA
     auto ret = sushi::audio_frontend::XenomaiRaspaFrontend::global_init();
     if (ret < 0)
     {

@@ -49,8 +49,8 @@ struct CompileTimeSettings
 #ifdef SUSHI_BUILD_WITH_JACK
             "jack",
 #endif
-#ifdef SUSHI_BUILD_WITH_XENOMAI
-            "xenomai",
+#ifdef SUSHI_BUILD_WITH_RASPA
+            "raspa",
 #endif
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
             "rpc control",

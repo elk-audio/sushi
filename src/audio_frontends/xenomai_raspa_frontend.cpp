@@ -17,7 +17,7 @@
  * @brief Frontend using Xenomai with RASPA library for XMOS board.
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
-#ifdef SUSHI_BUILD_WITH_XENOMAI
+#ifdef SUSHI_BUILD_WITH_RASPA
 
 #include <cerrno>
 
@@ -201,7 +201,7 @@ AudioFrontendStatus XenomaiRaspaFrontend::config_audio_channels(const XenomaiRas
 }; // end namespace audio_frontend
 }; // end namespace sushi
 
-#else // SUSHI_BUILD_WITH_XENOMAI
+#else // SUSHI_BUILD_WITH_RASPA
 
 #include "audio_frontends/xenomai_raspa_frontend.h"
 #include "logging.h"
@@ -219,4 +219,4 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration*)
 }
 }}
 
-#endif // SUSHI_BUILD_WITH_XENOMAI
+#endif // SUSHI_BUILD_WITH_RASPA

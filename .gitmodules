@@ -7,7 +7,7 @@
 	url = https://github.com/gabime/spdlog.git
 [submodule "twine"]
 	path = twine
-	url = https://github.com/elk-audio/twine.git
+	url = ../twine.git
 [submodule "third-party/link"]
 	path = third-party/link
 	url = https://github.com/Ableton/link.git

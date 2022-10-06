@@ -22,7 +22,7 @@
 #ifndef SUSHI_XENOMAI_RASPA_FRONTEND_H
 #define SUSHI_XENOMAI_RASPA_FRONTEND_H
 
-#ifdef SUSHI_BUILD_WITH_XENOMAI
+#ifdef SUSHI_BUILD_WITH_RASPA
 
 #include "base_audio_frontend.h"
 
@@ -106,7 +106,7 @@ private:
 }; // end namespace sushi
 
 
-#else // SUSHI_BUILD_WITH_XENOMAI
+#else // SUSHI_BUILD_WITH_RASPA
 // Dummy frontend for non-Cobalt builds
 
 #include "base_audio_frontend.h"
@@ -130,5 +130,5 @@ public:
 } // end namespace audio_frontend
 } // end namespace sushi
 
-#endif // SUSHI_BUILD_WITH_XENOMAI
+#endif // SUSHI_BUILD_WITH_RASPA
 #endif // SUSHI_XENOMAI_RASPA_FRONTEND_H

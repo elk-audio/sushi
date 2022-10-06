@@ -51,6 +51,8 @@ configure_file(
 
 # Default behaviour is to build and link with everything
 option(WITH_XENOMAI "Enable Xenomai support" ON)
+option(WITH_EVL "Enable EVL support" OFF)
+option(WITH_RASPA "Enable Xenomai support" ON)
 option(WITH_JACK "Enable Jack support" ON)
 option(WITH_PORTAUDIO "Enable PortAudio support" ON)
 option(WITH_ALSA_MIDI "Enable alsa midi support" ON)
@@ -91,39 +93,53 @@ endif()
 
 add_subdirectory(third-party EXCLUDE_FROM_ALL)
 
-#################
-# Xenomai setup #
-#################
+###############
+# Raspa setup #
+###############
 
-if (${WITH_XENOMAI})
-    message("Building with Xenomai support")
+if (${WITH_RASPA})
+    message("Building with Raspa support.")
 
-    # External libraries:
-    # explicitly link with cobalt lib
-    set(XENOMAI_BASE_DIR "/usr/xenomai" CACHE STRING "xenomai base dir path")
+    find_library(RASPA_LIB
+            NAMES raspa
+            PATHS /usr/lib /usr/local/lib
+            )
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${RASPA_LIB})
 
-    if(NOT "$ENV{CMAKE_SYSROOT}" STREQUAL "")
+    if (${WITH_XENOMAI})
+        message("Building with Xenomai support")
+
+        # External libraries:
+        # explicitly link with cobalt lib
+        set(XENOMAI_BASE_DIR "/usr/xenomai" CACHE STRING "xenomai base dir path")
+
+        if(NOT "$ENV{CMAKE_SYSROOT}" STREQUAL "")
         set(CMAKE_SYSROOT "$ENV{CMAKE_SYSROOT}")
         message("ENV_CMAKE_SYSROOT = " $ENV{CMAKE_SYSROOT})
-    endif()
-    if(NOT "${CMAKE_SYSROOT}" STREQUAL "")
+        endif()
+        if(NOT "${CMAKE_SYSROOT}" STREQUAL "")
         set(XENOMAI_BASE_DIR "${CMAKE_SYSROOT}/usr/xenomai")
         message("XENOMAI_BASE_DIR is " ${XENOMAI_BASE_DIR})
+        endif()
+
+        find_library(COBALT_LIB cobalt HINTS ${XENOMAI_BASE_DIR}/lib)
+
+        set(TWINE_WITH_XENOMAI ON CACHE BOOL "" FORCE)
+        set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound ${COBALT_LIB})
+        set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_RASPA)
+    elseif(${WITH_EVL})
+        message("Building with EVL support")
+            set(TWINE_WITH_EVL ON CACHE BOOL "" FORCE)
+            find_library(EVL_LIB
+            NAMES evl
+            PATHS /usr/lib /usr/local/lib
+            )
+            set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound ${EVL_LIB})
+            set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_RASPA)
+    else()
+        set(TWINE_WITH_XENOMAI OFF CACHE BOOL "" FORCE)
+        set(TWINE_WITH_EVL OFF CACHE BOOL "" FORCE)
     endif()
-
-    find_library(COBALT_LIB cobalt HINTS ${XENOMAI_BASE_DIR}/lib)
-
-    set(TWINE_WITH_XENOMAI ON CACHE BOOL "" FORCE)
-    find_library(RASPA_LIB
-                 NAMES raspa
-                 PATHS /usr/lib /usr/local/lib
-                 )
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound ${RASPA_LIB} ${COBALT_LIB})
-
-    # Compile definitions
-    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_XENOMAI)
-else()
-    set(TWINE_WITH_XENOMAI OFF CACHE BOOL "" FORCE)
 endif()
 
 ##############
