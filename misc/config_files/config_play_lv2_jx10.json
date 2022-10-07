@@ -17,25 +17,25 @@
                 {
                     "uri" : "http://drobilla.net/plugins/mda/JX10",
                     "name" : "jx10",
-                    "type"   : "lv2"
+                    "type" : "lv2"
                 }
             ]
         }
     ],
     "midi" : {
-        "track_connections": [
+        "track_connections" : [
             {
-                "port": 0,
-                "channel": "all",
-                "track": "main",
-                "raw_midi": false
+                "port" : 0,
+                "channel" : "all",
+                "track" : "main",
+                "raw_midi" : false
             }
         ],
-        "program_change_connections": [
+        "program_change_connections" : [
             {
-                "port": 0,
-                "channel": "all",
-                "plugin": "jx10"
+                "port" : 0,
+                "channel" : "all",
+                "plugin" : "jx10"
             }
         ]
     }

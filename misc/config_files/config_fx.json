@@ -20,24 +20,28 @@
             ],
             "plugins" : [
                 {
-                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaOverdrive.so",
-                    "name" : "overdrive",
-                    "type"   : "vst2x"
+                    "path" : "mda-vst3.vst3",
+                    "uid" : "mda Overdrive",
+                    "name" : "mda Overdrive",
+                    "type" : "vst3x"
                 },
                 {
-                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaDubDelay.so",
-                    "name" : "dubdelay",
-                    "type"   : "vst2x"
+                    "path" : "mda-vst3.vst3",
+                    "uid" : "mda DubDelay",
+                    "name" : "mda DubDelay",
+                    "type" : "vst3x"
                 },
                 {
-                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaDelay.so",
-                    "name" : "delay",
-                    "type"   : "vst2x"
+                    "path" : "mda-vst3.vst3",
+                    "uid" : "mda Delay",
+                    "name" : "mda Delay",
+                    "type" : "vst3x"
                 },
                 {
-                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaAmbience.so",
-                    "name" : "ambience",
-                    "type"   : "vst2x"
+                    "path" : "mda-vst3.vst3",
+                    "uid" : "mda Ambience",
+                    "name" : "mda Ambience",
+                    "type" : "vst3x"
                 }
             ]
         }

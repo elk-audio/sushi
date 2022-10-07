@@ -1,8 +1,24 @@
 {
     "host_config" : {
         "samplerate" : 48000,
-        "cv_inputs" : 2,
-        "cv_outputs" :4
+        "audio_clip_detection" : {
+            "inputs" : true,
+            "outputs" : true
+        },
+        "rt_midi_input_mappings" : [
+            {
+                "rt_midi_device" : 0,
+                "sushi_midi_port" : 0,
+                "virtual_port" : false
+            }
+        ],
+        "rt_midi_output_mappings" : [
+            {
+                "rt_midi_device" : 0,
+                "sushi_midi_port" : 0,
+                "virtual_port": false
+            }
+        ]
     },
     "tracks" : [
         {
@@ -16,11 +32,6 @@
                 }
             ],
             "plugins" : [
-                {
-                    "uid" : "sushi.testing.arpeggiator",
-                    "name" : "arp",
-                    "type" : "internal"
-                },
                 {
                     "path" : "mda-vst3.vst3",
                     "name" : "mda JX10",
@@ -39,17 +50,5 @@
                 "raw_midi" : false
             }
         ]
-    },
-    "cv_control" : {
-        "cv_inputs" : [
-            {
-                "cv" : 0,
-                "processor" : "mda JX10",
-                "parameter" : "VCF Freq"
-            }
-        ],
-        "cv_outputs" : [],
-        "gate_inputs" : [],
-        "gate_outputs" : []
     }
 }

@@ -20,14 +20,16 @@
             ],
             "plugins" : [
                 {
-                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaCombo.so",
-                    "name" : "g1_combo",
-                    "type"   : "vst2x"
+                    "path" : "mda-vst3.vst3",
+                    "uid" : "mda Combo",
+                    "name" : "mda Combo",
+                    "type" : "vst3x"
                 },
                 {
-                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaBandisto.so",
-                    "name" : "g1_band_distortion",
-                    "type"   : "vst2x"
+                    "path" : "mda-vst3.vst3",
+                    "uid" : "mda Bandisto",
+                    "name" : "mda Bandisto",
+                    "type" : "vst3x"
                 }
             ]
         },
@@ -44,42 +46,46 @@
             ],
             "plugins" : [
                 {
-                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaEPiano.so",
-                    "name" : "epiano",
-                    "type"   : "vst2x"
+                    "path" : "mda-vst3.vst3",
+                    "uid" : "mda EPiano",
+                    "name" : "mda EPiano",
+                    "type" : "vst3x"
                 },
                 {
-                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaRezFilter.so",
-                    "name" : "g2_compressor",
-                    "type"   : "vst2x"
+                    "path" : "mda-vst3.vst3",
+                    "uid" : "mda RezFilter",
+                    "name" : "mda RezFilter",
+                    "type" : "vst3x"
                 },
                 {
-                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaAmbience.so",
-                    "name" : "g2_band_distortion",
-                    "type"   : "vst2x"
+                    "path" : "mda-vst3.vst3",
+                    "uid" : "mda Ambience",
+                    "name" : "mda Ambience",
+                    "type" : "vst3x"
                 },
                 {
-                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaDelay.so",
-                    "name" : "g2_leslie",
-                    "type"   : "vst2x"
+                    "path" : "mda-vst3.vst3",
+                    "uid" : "mda Delay",
+                    "name" : "mda Delay",
+                    "type" : "vst3x"
                 }
             ]
         }
     ],
     "midi" : {
-        "track_connections": [
+        "track_connections" : [
             {
-                "port": 0,
-                "channel": "all",
-                "track": "synth",
+                "port" : 0,
+                "channel" : "all",
+                "track" : "synth",
 		        "raw_midi" : true
             }
         ],
-        "program_change_connections": [
+        "program_change_connections" : [
             {
-                "port": 0,
-                "channel": "all",
-                "plugin": "synth"
+                "port" : 0,
+                "channel" : "all",
+                "plugin" : "synth"
             }
         ]
     }

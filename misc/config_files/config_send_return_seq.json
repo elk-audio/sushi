@@ -1,166 +1,167 @@
 {
-    "host_config": {
-        "samplerate": 48000,
-        "cv_inputs": 0,
-        "cv_outputs": 4
+    "host_config" : {
+        "samplerate" : 48000,
+        "playing_mode" : "playing"
     },
-    "tracks": [
+    "tracks" : [
         {
-            "name": "analog",
+            "name" : "analog",
             "channels" : 2,
-            "inputs": [],
-            "outputs": [
+            "inputs" : [],
+            "outputs" : [
                 {
-                    "engine_bus": 0,
-                    "track_bus": 0
+                    "engine_bus" : 0,
+                    "track_bus" : 0
                 }
             ],
-            "plugins": [
+            "plugins" : [
                 {
-                    "uid": "sushi.testing.arpeggiator",
-                    "name": "arp",
-                    "type": "internal"
+                    "uid" : "sushi.testing.arpeggiator",
+                    "name" : "arp",
+                    "type" : "internal"
                 },
                 {
-                    "path": "/usr/lib/lxvst/mda-vst.linux/mdaJX10.so",
-                    "name": "analog_synth",
-                    "type": "vst2x"
+                    "path" : "mda-vst3.vst3",
+                    "name" : "mda JX10",
+                    "type" : "vst3x",
+                    "uid" : "mda JX10"
                 },
                 {
-                    "uid": "sushi.testing.send",
-                    "name": "send_analog",
-                    "type": "internal"
+                    "uid" : "sushi.testing.send",
+                    "name" : "send_analog",
+                    "type" : "internal"
                 }
             ]
         },
         {
-            "name": "fm",
+            "name" : "fm",
             "channels" : 2,
-            "inputs": [],
-            "outputs": [
+            "inputs" : [],
+            "outputs" : [
                 {
-                    "engine_bus": 0,
-                    "track_bus": 0
+                    "engine_bus" : 0,
+                    "track_bus" : 0
                 }
             ],
-            "plugins": [
+            "plugins" : [
                 {
-                    "uid": "sushi.testing.step_sequencer",
-                    "name": "fm_arp",
-                    "type": "internal"
+                    "uid" : "sushi.testing.step_sequencer",
+                    "name" : "fm_arp",
+                    "type" : "internal"
                 },
                 {
-                    "path": "/usr/lib/lxvst/mda-vst.linux/mdaDX10.so",
-                    "name": "fm_synth",
-                    "type": "vst2x"
+                    "path" : "mda-vst3.vst3",
+                    "name" : "mda DX10",
+                    "type" : "vst3x",
+                    "uid" : "mda DX10"
                 },
                 {
-                    "uid": "sushi.testing.send",
-                    "name": "send_fm",
-                    "type": "internal"
+                    "uid" : "sushi.testing.send",
+                    "name" : "send_fm",
+                    "type" : "internal"
                 }
             ]
         },
         {
-            "name": "return_track",
+            "name" : "return_track",
             "channels" : 2,
-            "inputs": [],
-            "outputs": [
+            "inputs" : [],
+            "outputs" : [
                 {
-                    "engine_bus": 0,
-                    "track_bus": 0
+                    "engine_bus" : 0,
+                    "track_bus" : 0
                 }
             ],
-            "plugins": [
+            "plugins" : [
                 {
-                    "uid": "sushi.testing.return",
-                    "name": "return",
-                    "type": "internal"
+                    "uid" : "sushi.testing.return",
+                    "name" : "return",
+                    "type" : "internal"
                 },
                 {
-                    "path": "/usr/lib/lxvst/mda-vst.linux/mdaDelay.so",
-                    "name": "delay",
-                    "type": "vst2x"
+                    "path" : "mda-vst3.vst3",
+                    "uid" : "mda Delay",
+                    "name" : "mda Delay",
+                    "type" : "vst3x"
                 }
             ]
         }
     ],
-    "midi": {
-        "track_connections": [
+    "midi" : {
+        "track_connections" : [
             {
-                "port": 0,
-                "channel": "all",
-                "track": "fm",
-                "raw_midi": false
+                "port" : 0,
+                "channel" : "all",
+                "track" : "fm",
+                "raw_midi" : false
             }
         ],
-        "program_change_connections": [
+        "program_change_connections" : [
             {
-                "port": 0,
-                "channel": "all",
-                "plugin": "fm"
+                "port" : 0,
+                "channel" : "all",
+                "plugin" : "mda DX10"
             }
         ],
-        "cc_mappings": [
+        "cc_mappings" : [
             {
-                "port": 0,
-                "channel": 0,
-                "cc_number": 22,
-                "plugin_name": "analog_synth",
-                "parameter_name": "VCF Freq",
-                "min_range": 0,
-                "max_range": 1
+                "port" : 0,
+                "channel" : 0,
+                "cc_number" : 22,
+                "plugin_name" : "mda JX10",
+                "parameter_name" : "VCF Freq",
+                "min_range" : 0,
+                "max_range" : 1
             },
             {
-                "port": 0,
-                "channel": 0,
-                "cc_number": 23,
-                "plugin_name": "analog_synth",
-                "parameter_name": "VCF Reso",
-                "min_range": 0,
-                "max_range": 1
+                "port" : 0,
+                "channel" : 0,
+                "cc_number" : 23,
+                "plugin_name" : "mda JX10",
+                "parameter_name" : "VCF Reso",
+                "min_range" : 0,
+                "max_range" : 1
             }
         ]
     },
     "osc" : {
         "enable_all_processor_outputs" : true
-    }   ,
-    "initial_state": [
+    },
+    "initial_state" : [
         {
-            "processor": "send_analog",
-            "properties": {
-                "destination_name": "return"
+            "processor" : "send_analog",
+            "properties" : {
+                "destination_name" : "return"
             }
         },
         {
-            "processor": "send_fm",
-            "properties": {
-                "destination_name": "return"
+            "processor" : "send_fm",
+            "properties" : {
+                "destination_name" : "return"
             }
         },
         {
-            "processor": "delay",
-            "parameters": {
-                "L Delay ": 0.7,
-                "FX Mix  ": 1.0
+            "processor" : "mda Delay",
+            "parameters" : {
+                "L Delay" : 0.7,
+                "Fb Mix" : 0.33
             }
         },
         {
-            "processor": "fm_synth",
-            "program": 8,
-            "parameters": {
-                "Mod Init": 1.0,
-                "Mod Dec ": 0.0
+            "processor" : "mda DX10",
+            "program" : 8,
+            "parameters" : {
+                "Mod Init" : 1.0,
+                "Mod Dec" : 0.0
             }
         },
         {
-            "processor": "analog_synth",
-            "program": 8,
-            "parameters": {
-                "VCF Freq": 1.0,
-                "VCF Reso": 0.0
+            "processor" : "mda JX10",
+            "program" : 8,
+            "parameters" : {
+                "VCF Freq" : 1.0,
+                "VCF Reso" : 0.0
             }
         }
     ]
 }
-
