@@ -1,3 +1,5 @@
+#include <filesystem>
+
 #include "gtest/gtest.h"
 
 #include "test_utils/test_utils.h"
@@ -12,7 +14,12 @@
 using namespace sushi;
 using namespace sushi::vst3;
 
-const char PLUGIN_FILE[] = "../third-party/vst3sdk/VST3/adelay.vst3";
+#ifdef NDEBUG
+const char PLUGIN_FILE[] = "../VST3/Release/adelay.vst3";
+#else
+const char PLUGIN_FILE[] = "../VST3/Debug/adelay.vst3";
+#endif
+
 const char PLUGIN_NAME[] = "ADelay";
 
 constexpr unsigned int DELAY_PARAM_ID = 100;
@@ -23,7 +30,9 @@ constexpr int   TEST_CHANNEL_COUNT = 2;
 /* Quick test to test plugin loading */
 TEST(TestVst3xPluginInstance, TestLoadPlugin)
 {
-    char* full_test_plugin_path = realpath(PLUGIN_FILE, NULL);
+    auto full_path = std::filesystem::path(PLUGIN_FILE);
+    auto full_test_plugin_path = std::string(std::filesystem::absolute(full_path));
+
     SushiHostApplication host_app;
     PluginInstance module_under_test(&host_app);
     bool success = module_under_test.load_plugin(full_test_plugin_path, PLUGIN_NAME);
@@ -31,8 +40,6 @@ TEST(TestVst3xPluginInstance, TestLoadPlugin)
     ASSERT_TRUE(module_under_test.processor());
     ASSERT_TRUE(module_under_test.component());
     ASSERT_TRUE(module_under_test.controller());
-
-    free(full_test_plugin_path);
 }
 
 /* Test that nothing breaks if the plugin is not found */
@@ -45,10 +52,11 @@ TEST(TestVst3xPluginInstance, TestLoadPluginFromErroneousFilename)
     ASSERT_FALSE(success);
 
     /* Existing library but non-existing plugin */
-    char* full_test_plugin_path = realpath(PLUGIN_FILE, NULL);
+    auto full_path = std::filesystem::path(PLUGIN_FILE);
+    auto full_test_plugin_path = std::string(std::filesystem::absolute(full_path));
+
     success = module_under_test.load_plugin(full_test_plugin_path, "NoPluginWithThisName");
     ASSERT_FALSE(success);
-    free(full_test_plugin_path);
 }
 
 TEST(TestVst3xRtState, TestOperation)
@@ -90,12 +98,13 @@ protected:
 
     void SetUp(const char* plugin_file, const char* plugin_name)
     {
-        char* full_plugin_path = realpath(plugin_file, NULL);
+        auto full_path = std::filesystem::path(plugin_file);
+        auto full_plugin_path = std::string(std::filesystem::absolute(full_path));
+
         _module_under_test = std::make_unique<Vst3xWrapper>(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE),
                                                             full_plugin_path,
                                                             plugin_name,
                                                             &_host_app);
-        free(full_plugin_path);
 
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
         ASSERT_EQ(ProcessorReturnCode::OK, ret);

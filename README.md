@@ -110,6 +110,12 @@ _Note_:
 
 before version 1.0, the Cmake options didn't have the `SUSHI_` prefix. The old names (e.g. `WITH_JACK`) are not supported anymore and should be changed to the new format.
 
+## Running Unit tests separately
+Some Sushi's unit tests depend on test data, which is found through the environment variable `SUSHI_TEST_DATA_DIR`.
+You will need to define this if you want to run the unit test explicitly, e.g. while debugging:
+
+`$ export SUSHI_TEST_DATA_DIR=/path/to/sushi/repo/test/data`
+
 ## License
 Sushi is licensed under Affero General Public License (“AGPLv3”). See [LICENSE](LICENSE.md) document for the full details of the license. For contributing code to Sushi, see [CONTRIBUTING.md](CONTRIBUTING.md).
 

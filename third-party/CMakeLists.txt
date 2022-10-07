@@ -29,45 +29,46 @@ add_subdirectory(spdlog)
 #  VST3SDK and examples  #
 ##########################
 if (${SUSHI_WITH_VST3})
-# Exclude VstGui, hosting samples and skip validation
-set(SMTG_ADD_VSTGUI OFF CACHE BOOL "" FORCE)
-set(SMTG_ADD_VST3_PLUGINS_SAMPLES ON CACHE BOOL "" FORCE)
-set(SMTG_ADD_VST3_HOSTING_SAMPLES OFF CACHE BOOL "" FORCE)
-set(SMTG_RUN_VST_VALIDATOR OFF CACHE BOOL "" FORCE)
+    set(vstsdk_VERSION 3.7.6)
 
-# Don't install example plugins in ~/.vst3, keep them in the build directory
-set(SMTG_PLUGIN_TARGET_PATH ${CMAKE_CURRENT_BINARY_DIR}/vst3sdk/VST3 CACHE STRING "" FORCE)
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-    message("Vst3 Linux detected")
-    set(SMTG_LINUX ON)
-endif()
+    # Exclude VstGui, hosting samples and skip validation
+    set(SMTG_ADD_VSTGUI OFF CACHE BOOL "" FORCE)
+    set(SMTG_ADD_VST3_PLUGINS_SAMPLES ON CACHE BOOL "" FORCE)
+    set(SMTG_ADD_VST3_HOSTING_SAMPLES OFF CACHE BOOL "" FORCE)
+    set(SMTG_RUN_VST_VALIDATOR OFF CACHE BOOL "" FORCE)
 
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    message("Vst3 macOS detected")
-    set(SMTG_MAC ON)
-endif()
+    # Don't install example plugins in ~/.vst3, keep them in the build directory
+    set(SMTG_PLUGIN_TARGET_PATH ${CMAKE_CURRENT_BINARY_DIR}/vst3sdk/VST3 CACHE STRING "" FORCE)
+    if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+        message("Vst3 Linux detected")
+        set(SMTG_LINUX ON)
+    endif()
 
+    if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+        message("Vst3 macOS detected")
+        set(SMTG_MAC ON)
+    endif()
 
-add_subdirectory(vst3sdk)
+    add_subdirectory(vst3sdk)
 
-# Since vstsdk overrides SMTG_ADD_VST3_PLUGINS_SAMPLES if the sdk included as a
-# submodule. We need to manually add adelay as it is used by sushi unit tests
-# We also need to redo some Steinberg initialisation.
+    # vst3sdk overrides SMTG_ADD_VST3_PLUGINS_SAMPLES if the sdk is included as a submodule.
+    # So, we need to manually add adelay, as it is used by sushi unit tests.
+    # We also need to redo some Steinberg initialisation.
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/vst3sdk/cmake/modules")
-include(SMTG_VST3_SDK)
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/vst3sdk/cmake/modules")
+    include(SMTG_VST3_SDK)
 
-smtg_setup_platform_toolset()
-set(SDK_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/vst3sdk)
-set(public_sdk_SOURCE_DIR ${SDK_ROOT}/public.sdk)
-set(pluginterfaces_SOURCE_DIR ${SDK_ROOT}/pluginterfaces)
-set(VST_SDK TRUE)
-set(SDK_IDE_PLUGIN_EXAMPLES_FOLDER FOLDER "PlugInExamples")
+    smtg_setup_platform_toolset()
+    set(SDK_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/vst3sdk)
+    set(public_sdk_SOURCE_DIR ${SDK_ROOT}/public.sdk)
+    set(pluginterfaces_SOURCE_DIR ${SDK_ROOT}/pluginterfaces)
+    set(VST_SDK TRUE)
+    set(SDK_IDE_PLUGIN_EXAMPLES_FOLDER FOLDER "PlugInExamples")
 
-add_subdirectory(vst3sdk/public.sdk/samples/vst)
+    add_subdirectory(vst3sdk/public.sdk/samples/vst)
 
-# Suppress warnings to keep our build output clean
-set_target_properties(base PROPERTIES COMPILE_FLAGS "-Wno-deprecated -Wno-cpp")
+    # Suppress warnings to keep our build output clean
+    set_target_properties(base PROPERTIES COMPILE_FLAGS "-Wno-deprecated -Wno-cpp")
 endif()
 
 #####################################################
