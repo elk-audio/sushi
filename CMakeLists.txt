@@ -534,6 +534,14 @@ target_compile_features(sushi PRIVATE cxx_std_17)
 target_compile_options(sushi PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
 target_compile_definitions(sushi PRIVATE -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${SUSHI_AUDIO_BUFFER_SIZE} ${EXTRA_COMPILE_DEFINITIONS})
 
+###################################################################################################
+#  Triggering mda-vst3 build - used by sample sushi json configurations under misc/config_files.  #
+###################################################################################################
+
+if (${SUSHI_WITH_VST3})
+    set_target_properties(mda-vst3 PROPERTIES EXCLUDE_FROM_ALL False)
+endif()
+
 ######################
 #  Tests subproject  #
 ######################
