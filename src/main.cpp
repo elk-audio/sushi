@@ -389,7 +389,7 @@ int main(int argc, char* argv[])
     {
         if (audio_config_status == sushi::jsonconfig::JsonConfigReturnStatus::INVALID_FILE)
         {
-            error_exit("Error reading config file, invalid file: " + config_filename);
+            error_exit("Error reading config file, invalid file path: " + config_filename);
         }
         error_exit("Error reading host config, check logs for details.");
     }

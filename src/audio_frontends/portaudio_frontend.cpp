@@ -308,12 +308,12 @@ AudioFrontendStatus PortAudioFrontend::_configure_audio_channels(const PortAudio
     _cv_output_channels = config->cv_outputs;
     if (_cv_input_channels > _num_total_input_channels)
     {
-        SUSHI_LOG_ERROR("Requested more CV channels then available input channels");
+        SUSHI_LOG_ERROR("Requested more CV channels than available input channels");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     if (_cv_output_channels > _num_total_output_channels)
     {
-        SUSHI_LOG_ERROR("Requested more CV channels then available output channels");
+        SUSHI_LOG_ERROR("Requested more CV channels than available output channels");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
