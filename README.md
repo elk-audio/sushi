@@ -45,11 +45,11 @@ Sushi requires a compiler with support for C++17 features. The recommended compi
 ### Building for native Linux
 As all options are on by default, to build Sushi for a regular, non Elk Powered Linux distribution, the Xenomai options need to be turned off. In addition the Vst 2.x SDK needs to be provided (unless VST2 support is turned off).
 
-    $ ./generate --cmake-args="-DWITH_XENOMAI=off -DVST2_SDK_PATH=/home/elk/sdks/vstsdk2.4" -b
+    $ ./generate --cmake-args="-DSUSHI_WITH_XENOMAI=off -DVST2_SDK_PATH=/home/elk/sdks/vstsdk2.4" -b
 
 If the Vst 2.4 SDK is not available, Sushi can still be built without Vst 2.x support using the command below:
 
-    $ ./generate --cmake-args="-DWITH_XENOMAI=off -DWITH_VST2=off" -b
+    $ ./generate --cmake-args="-DSUSHI_WITH_XENOMAI=off -DSUSHI_WITH_VST2=off" -b
 
 It is also possible to skip the `-b` flag and build by calling `make` directly in build/debug or build/release.
 
@@ -117,14 +117,14 @@ SUSHI_WITH_RPC_INTERFACE              | on / off | on       | Build gRPC externa
 SUSHI_BUILD_TWINE                     | on / off | off (on) | Build and link with the included version of [TWINE](https://github.com/elk-audio/twine), otherwise tries to link with system wide if the option is disabled.
 SUSHI_WITH_UNIT_TESTS                 | on / off | on       | Build and run unit tests together with building Sushi.
 SUSHI_WITH_LV2_MDA_TESTS              | on / off | on (off) | Include LV2 unit tests which depends on the LV2 drobilla port of the mda plugins being installed. 
-VST2_SDK_PATH                         | path     | empty    | Path to external Vst 2.4 SDK. Not included and required if WITH_VST2 is enabled.
+SUSHI_VST2_SDK_PATH                   | path     | empty    | Path to external Vst 2.4 SDK. Not included and required if WITH_VST2 is enabled.
 
 _*_:
 the defaults vary depending on the target platform, in the table they are for Linux (macOS).
 
 _Note_:
 
-before version 1.0, the Cmake options didn't have the `SUSHI_` prefix. The old names (e.g. `WITH_JACK`) will still be supported for some time but they shouldn't be used together with the new options format.
+before version 1.0, the Cmake options didn't have the `SUSHI_` prefix. The old names (e.g. `WITH_JACK`) are not supported anymore and should be changed to the new format.
 
 ## License
 

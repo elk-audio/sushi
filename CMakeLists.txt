@@ -41,16 +41,6 @@ configure_file(
 #  Build and link options #
 ###########################
 
-function(CheckSushiOptions old_opt_name new_opt_name default_val)
-    if ( (NOT (${old_opt_name} MATCHES "${${default_val}}"))
-        AND (NOT ${old_opt_name} MATCHES "${${new_opt_name}}")
-    )
-        message(WARNING "Option ${old_opt_name} is deprecated, use ${new_opt_name} instead.")
-        set(${new_opt_name} "${${old_opt_name}}" PARENT_SCOPE)
-    endif()
-endfunction()
-
-
 # The defaults enable all options and select APIs available for either Xenomai or macOS
 set(SUSHI_WITH_JACK_DEFAULT OFF)
 set(SUSHI_WITH_VST3_DEFAULT ON)
@@ -80,61 +70,32 @@ else()
     set(SUSHI_BUILD_TWINE_DEFAULT OFF)
 endif()
 
-option(WITH_XENOMAI "Deprecated: use SUSHI_WITH_XENOMAI instead" ${SUSHI_WITH_XENOMAI_DEFAULT})
 option(SUSHI_WITH_XENOMAI "Enable Xenomai support" ${SUSHI_WITH_XENOMAI_DEFAULT})
-CheckSushiOptions(WITH_XENOMAI SUSHI_WITH_XENOMAI SUSHI_WITH_XENOMAI_DEFAULT)
-
-option(WITH_JACK "Deprecated: use SUSHI_WITH_JACK instead" ${SUSHI_WITH_JACK_DEFAULT})
 option(SUSHI_WITH_JACK "Enable Jack support" ${SUSHI_WITH_JACK_DEFAULT})
-CheckSushiOptions(WITH_JACK SUSHI_WITH_JACK SUSHI_WITH_JACK_DEFAULT)
 
-option(WITH_PORTAUDIO "Deprecated: use SUSHI_WITH_PORTAUDIO instead" ${SUSHI_WITH_PORTAUDIO_DEFAULT})
 option(SUSHI_WITH_PORTAUDIO "Enable PortAudio support" ${SUSHI_WITH_PORTAUDIO_DEFAULT})
-CheckSushiOptions(WITH_PORTAUDIO SUSHI_WITH_PORTAUDIO SUSHI_WITH_PORTAUDIO_DEFAULT)
 
-option(WITH_ALSA_MIDI "Deprecated: use SUSHI_WITH_ALSA_MIDI instead" ${SUSHI_WITH_ALSA_MIDI_DEFAULT})
 option(SUSHI_WITH_ALSA_MIDI "Enable alsa midi support" ${SUSHI_WITH_ALSA_MIDI_DEFAULT})
-CheckSushiOptions(WITH_ALSA_MIDI SUSHI_WITH_ALSA_MIDI SUSHI_WITH_ALSA_MIDI_DEFAULT)
 
-option(WITH_RT_MIDI "Deprecated: use SUSHI_WITH_RT_MIDI instead" ${SUSHI_WITH_RT_MIDI_DEFAULT})
 option(SUSHI_WITH_RT_MIDI "Enable RtMidi support" ${SUSHI_WITH_RT_MIDI_DEFAULT})
-CheckSushiOptions(WITH_RT_MIDI SUSHI_WITH_RT_MIDI SUSHI_WITH_RT_MIDI_DEFAULT)
 
-option(WITH_VST2 "Deprecated: use SUSHI_WITH_VST2 instead" ${SUSHI_WITH_VST2_DEFAULT})
 option(SUSHI_WITH_VST2 "Enable Vst 2 support" ${SUSHI_WITH_VST2_DEFAULT})
-CheckSushiOptions(WITH_VST2 SUSHI_WITH_VST2 SUSHI_WITH_VST2_DEFAULT)
 
-option(WITH_VST3 "Deprecated: use SUSHI_WITH_VST3 instead" ${SUSHI_WITH_VST3_DEFAULT})
 option(SUSHI_WITH_VST3 "Enable Vst 3 support" ${SUSHI_WITH_VST3_DEFAULT})
-CheckSushiOptions(WITH_VST3 SUSHI_WITH_VST3 SUSHI_WITH_VST3_DEFAULT)
 
-option(WITH_LV2 "Deprecated: use SUSHI_WITH_LV2 instead" ${SUSHI_WITH_LV2_DEFAULT})
 option(SUSHI_WITH_LV2 "Enable LV 2 support" ${SUSHI_WITH_LV2_DEFAULT})
-CheckSushiOptions(WITH_LV2 SUSHI_WITH_LV2 SUSHI_WITH_LV2_DEFAULT)
 
-option(WITH_LV2_MDA_TESTS "Deprecated: use SUSHI_WITH_LV2_MDA_TESTS instead" ${SUSHI_WITH_LV2_MDA_TESTS_DEFAULT})
 option(SUSHI_WITH_LV2_MDA_TESTS "Include unit tests depending on LV2 drobilla MDA plugin port." ${SUSHI_WITH_LV2_MDA_TESTS_DEFAULT})
-CheckSushiOptions(WITH_LV2_MDA_TESTS SUSHI_WITH_LV2_MDA_TESTS SUSHI_WITH_LV2_MDA_TESTS_DEFAULT)
 
-option(WITH_UNIT_TESTS "Deprecated: use SUSHI_WITH_UNIT_TESTS instead " ${SUSHI_WITH_UNIT_TESTS_DEFAULT})
 option(SUSHI_WITH_UNIT_TESTS "Build and run unit tests after compilation" ${SUSHI_WITH_UNIT_TESTS_DEFAULT})
-CheckSushiOptions(WITH_UNIT_TESTS SUSHI_WITH_UNIT_TESTS SUSHI_WITH_UNIT_TESTS_DEFAULT)
 
-option(WITH_LINK "Deprecated: use SUSHI_WITH_LINK instead" ${SUSHI_WITH_LINK_DEFAULT})
 option(SUSHI_WITH_LINK "Enable Ableton Link support" ${SUSHI_WITH_LINK_DEFAULT})
-CheckSushiOptions(WITH_LINK SUSHI_WITH_LINK SUSHI_WITH_LINK_DEFAULT)
 
-option(WITH_RPC_INTERFACE "Deprecated: use SUSHI_WITH_RPC_INTERFACE instead" ${SUSHI_WITH_RPC_INTERFACE_DEFAULT})
 option(SUSHI_WITH_RPC_INTERFACE "Enable RPC control support" ${SUSHI_WITH_RPC_INTERFACE_DEFAULT})
-CheckSushiOptions(WITH_RPC_INTERFACE SUSHI_WITH_RPC_INTERFACE SUSHI_WITH_RPC_INTERFACE_DEFAULT)
 
-option(BUILD_TWINE "Deprecated: use SUSHI_BUILD_TWINE instead" ${SUSHI_BUILD_TWINE_DEFAULT})
 option(SUSHI_BUILD_TWINE "Build included Twine library" ${SUSHI_BUILD_TWINE_DEFAULT})
-CheckSushiOptions(BUILD_TWINE SUSHI_BUILD_TWINE SUSHI_BUILD_TWINE_DEFAULT)
 
-set(AUDIO_BUFFER_SIZE ${SUSHI_AUDIO_BUFFER_SIZE_DEFAULT} CACHE STRING "Deprecated: use SUSHI_AUDIO_BUFFER_SIZE instead")
 set(SUSHI_AUDIO_BUFFER_SIZE ${SUSHI_AUDIO_BUFFER_SIZE_DEFAULT} CACHE STRING "Set internal audio buffer size in frames")
-CheckSushiOptions(AUDIO_BUFFER_SIZE SUSHI_AUDIO_BUFFER_SIZE SUSHI_AUDIO_BUFFER_SIZE_DEFAULT)
 
 if (SUSHI_WITH_ALSA_MIDI AND SUSHI_WITH_RT_MIDI)
     message(FATAL_ERROR "Both alsa midi and RtMidi set to on. Use only one midi frontend at a time")
@@ -286,17 +247,17 @@ if (${SUSHI_WITH_VST2})
 
     # Include dirs
     if (VST_2_SDK_BASE_DIR)
-        set(VST2_SDK_PATH ${VST_2_SDK_BASE_DIR})
+        set(SUSHI_VST2_SDK_PATH ${VST_2_SDK_BASE_DIR})
     else()
-        find_file(VST2_SDK_PATH NAMES VST2_SDK vstsdk2.4 HINTS $ENV{HOME}/workspace
+        find_file(SUSHI_VST2_SDK_PATH NAMES VST2_SDK vstsdk2.4 HINTS $ENV{HOME}/workspace
                                                                 $ENV{HOME}/workspace/VST_SDK
                                                                 $ENV{HOME}/workspace/vstsdk3610_11_06_2018_build_37)
     endif()
-    if (${VST2_SDK_PATH} STREQUAL "VST2_SDK_PATH-NOTFOUND")
+    if (${SUSHI_VST2_SDK_PATH} STREQUAL "VST2_SDK_PATH-NOTFOUND")
         message("Warning! Could not find Steinberg SDK for VST 2.4")
     endif()
 
-    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${VST2_SDK_PATH}/pluginterfaces/vst2.x)
+    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${SUSHI_VST2_SDK_PATH}/pluginterfaces/vst2.x)
 
     # Compile definitions
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_VST2 -D__cdecl=)

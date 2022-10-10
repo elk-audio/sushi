@@ -7,10 +7,10 @@
 
 if (${SUSHI_WITH_VST2})
     set(VST2_SDK_PLUGIN_SOURCES
-            "${VST2_SDK_PATH}/public.sdk/source/vst2.x/audioeffectx.cpp"
-            "${VST2_SDK_PATH}/public.sdk/source/vst2.x/audioeffect.cpp"
-            "${VST2_SDK_PATH}/public.sdk/source/vst2.x/vstplugmain.cpp"
-            "${VST2_SDK_PATH}/pluginterfaces/vst2.x/aeffectx.h"
+            "${SUSHI_VST2_SDK_PATH}/public.sdk/source/vst2.x/audioeffectx.cpp"
+            "${SUSHI_VST2_SDK_PATH}/public.sdk/source/vst2.x/audioeffect.cpp"
+            "${SUSHI_VST2_SDK_PATH}/public.sdk/source/vst2.x/vstplugmain.cpp"
+            "${SUSHI_VST2_SDK_PATH}/pluginterfaces/vst2.x/aeffectx.h"
         )
 
     set(VST2_TEST_PLUGIN_SOURCES
@@ -28,7 +28,7 @@ if (${SUSHI_WITH_VST2})
     set_target_properties(vst2_test_plugin PROPERTIES
             COMPILE_FLAGS "${VST2_COMPILE_FLAGS}"
         )
-    target_include_directories(vst2_test_plugin PRIVATE ${VST2_SDK_PATH})
+    target_include_directories(vst2_test_plugin PRIVATE ${SUSHI_VST2_SDK_PATH})
     target_compile_definitions(vst2_test_plugin PRIVATE -D__cdecl= )
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
         set_target_properties(vst2_test_plugin PROPERTIES
@@ -136,7 +136,7 @@ add_executable(unit_tests ${TEST_FILES} ${TEST_HELPER_FILES})
 
 target_compile_definitions(unit_tests PRIVATE -DSUSHI_DISABLE_LOGGING
                                               -D__cdecl=
-                                              -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${AUDIO_BUFFER_SIZE})
+                                              -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${SUSHI_AUDIO_BUFFER_SIZE})
 
 target_compile_options(unit_tests PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
 
