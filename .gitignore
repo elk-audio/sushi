@@ -57,3 +57,4 @@ compile_commands.json
 
 # Log files created by running sushi from somewhere in the repository
 log.txt
+/vcpkg_installed/
