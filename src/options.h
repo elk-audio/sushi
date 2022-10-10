@@ -132,7 +132,8 @@ enum OptionIndex
     OPT_IDX_OSC_SEND_IP,
     OPT_IDX_GRPC_LISTEN_ADDRESS,
     OPT_IDX_NO_OSC,
-    OPT_IDX_NO_GRPC
+    OPT_IDX_NO_GRPC,
+    OPT_IDX_BASE_PLUGIN_PATH
 };
 
 // Option types (UNUSED is generally used for options that take a value as argument)
@@ -396,6 +397,14 @@ const optionparser::Descriptor usage[] =
         "disable-grpc",
         SushiArg::Optional,
         "\t\t--no-grpc \tDisable gRPC Control completely"
+    },
+    {
+        OPT_IDX_BASE_PLUGIN_PATH,
+        OPT_TYPE_UNUSED,
+        "",
+        "base-plugin-path",
+        SushiArg::NonEmpty,
+        "\t\t--base-plugin-path=<path> \tSpecify a directory to be the base of plugin paths used in JSON / gRPC."
     },
     // Don't touch this one (set default values for optionparse library)
     { 0, 0, 0, 0, 0, 0}

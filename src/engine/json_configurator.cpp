@@ -19,6 +19,7 @@
  */
 
 #include <fstream>
+#include <filesystem>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wtype-limits"

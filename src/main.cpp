@@ -23,6 +23,7 @@
 #include <csignal>
 #include <optional>
 #include <condition_variable>
+#include <filesystem>
 
 #include "twine/src/twine_internal.h"
 
@@ -170,6 +171,7 @@ int main(int argc, char* argv[])
     bool use_osc = true;
     bool use_grpc = true;
     std::chrono::seconds log_flush_interval = std::chrono::seconds(0);
+    std::string base_plugin_path = std::filesystem::current_path();
 
     for (int i = 0; i<cl_parser.optionsCount(); i++)
     {
@@ -298,8 +300,12 @@ int main(int argc, char* argv[])
             use_osc = false;
             break;
 
-            case OPT_IDX_NO_GRPC:
+        case OPT_IDX_NO_GRPC:
             use_grpc = false;
+            break;
+
+        case OPT_IDX_BASE_PLUGIN_PATH:
+            base_plugin_path = std::string(opt.arg);
             break;
 
         default:
@@ -346,6 +352,10 @@ int main(int argc, char* argv[])
                                                                rt_cpu_cores,
                                                                debug_mode_switches,
                                                                nullptr);
+    if (! base_plugin_path.empty())
+    {
+        engine->set_base_plugin_path(base_plugin_path);
+    }
     auto event_dispatcher = engine->event_dispatcher();
     auto midi_dispatcher = std::make_unique<sushi::midi_dispatcher::MidiDispatcher>(engine->event_dispatcher());
     auto configurator = std::make_unique<sushi::jsonconfig::JsonConfigurator>(engine.get(),

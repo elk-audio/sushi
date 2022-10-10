@@ -76,6 +76,7 @@ SET(TEST_FILES unittests/sample_test.cpp
                unittests/engine/event_timer_test.cpp
                unittests/engine/transport_test.cpp
                unittests/engine/controller_test.cpp
+               unittests/engine/plugin_library_test.cpp
                unittests/engine/controllers/audio_graph_controller_test.cpp
                unittests/engine/controllers/audio_routing_controller_test.cpp
                unittests/engine/controllers/osc_controller_test.cpp

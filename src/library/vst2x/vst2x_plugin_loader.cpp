@@ -45,6 +45,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <filesystem>
 
 #ifdef __APPLE__
 #include <Corefoundation/Corefoundation.h>
@@ -60,18 +61,14 @@ namespace vst2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("vst2");
 
-// TODO: this is POSIX specific and the Linux-way to do it.
-// Works with Mac OS X as well, but can only load VSTs compiled in a POSIX way.
-
 #if defined(__linux__)
 
-LibraryHandle PluginLoader::get_library_handle_for_plugin(const std::string &plugin_absolute_path)
+LibraryHandle PluginLoader::get_library_handle_for_plugin(const std::string& plugin_absolute_path)
 {
-    if (plugin_absolute_path.empty())
+    if (! std::filesystem::exists(plugin_absolute_path))
     {
-        SUSHI_LOG_ERROR("Empty library path");
-        return nullptr; // Calling dlopen with an empty string returns a handle to the calling
-                        // program, which can cause an infinite loop.
+        SUSHI_LOG_ERROR("Plugin path not found: {}", plugin_absolute_path);
+        return nullptr;
     }
     void *libraryHandle = dlopen(plugin_absolute_path.c_str(), RTLD_NOW | RTLD_LOCAL);
 
@@ -124,15 +121,14 @@ void PluginLoader::close_library_handle(LibraryHandle library_handle)
 }
 
 #elif defined(__APPLE__)
-LibraryHandle PluginLoader::get_library_handle_for_plugin(const std::string &plugin_absolute_path)
+LibraryHandle PluginLoader::get_library_handle_for_plugin(const std::string& plugin_absolute_path)
 {
     CFURLRef bundle_url;
     CFBundleRef bundle_handle;
-    if (plugin_absolute_path.empty())
+    if (! std::filesystem::exists(plugin_absolute_path))
     {
-        SUSHI_LOG_ERROR("Empty library path");
-        return nullptr; // Calling dlopen with an empty string returns a handle to the calling
-                        // program, which can cause an infinite loop.
+        SUSHI_LOG_ERROR("Plugin path not found: {}", plugin_absolute_path);
+        return nullptr;
     }
     bundle_url = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault,
                                                         (const UInt8*) plugin_absolute_path.c_str(),
