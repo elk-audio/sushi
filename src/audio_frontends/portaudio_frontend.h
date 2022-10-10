@@ -227,9 +227,17 @@ private:
 #include "engine/midi_dispatcher.h"
 namespace sushi {
 namespace audio_frontend {
+
 struct PortAudioFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
     PortAudioFrontendConfiguration(std::optional<int>, std::optional<int>, float, float, int, int) : BaseAudioFrontendConfiguration(0, 0) {}
+};
+
+struct PortaudioDeviceInfo
+{
+    std::string name;
+    int inputs;
+    int outputs;
 };
 
 class PortAudioFrontend : public BaseAudioFrontend
@@ -239,7 +247,11 @@ public:
     AudioFrontendStatus init(BaseAudioFrontendConfiguration*) override;
     void cleanup() override {}
     void run() override {}
-    void pause([[maybe_unused]] bool enabled) {}
+    void pause([[maybe_unused]] bool enabled) override {}
+    std::optional<int> devices_count() { return 0; }
+    std::optional<PortaudioDeviceInfo> device_info(int /*device_idx*/) { return PortaudioDeviceInfo(); }
+    std::optional<int> default_input_device() { return 0; }
+    std::optional<int> default_output_device() { return 0; }
 };
 }; // end namespace audio_frontend
 }; // end namespace sushi
