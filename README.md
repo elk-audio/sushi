@@ -36,22 +36,18 @@ See directory `example_configs` for the JSON-schema definition and some example 
 Configuration files are used for global host configs, track and plugins configuration, MIDI routing and mapping, events sequencing.
 
 ## Building Sushi
-Sushi uses CMake as its build system. A generate script is also provided for convenient setup. Simply running `./generate` with no arguments in the root of Sushi will setup a build folder containing a Release configuration and a Debug configuration. CMake arguments can be passed through the generate script using the `--cmake-args` flag. Those arguments will then be added to both configurations.
+Sushi uses CMake as its build system. Just run the canonical:
+```
+  $ mkdir build && cd build
+  $ cmake .. -DCMAKE_BUILD_TYPE=[Release|Debug]
+```
+
+to prepare the build environment.
 
 Make sure that Sushi is cloned with the `--recursive` flag to fetch all required submodules for building. Alternatively run `git submodule update --init --recursive` after cloning.
 
 Sushi requires a compiler with support for C++17 features. The recommended compiler is GCC version 10 or higher.
 
-### Building for native Linux
-As all options are on by default, to build Sushi for a regular, non Elk Powered Linux distribution, the Xenomai options need to be turned off. In addition the Vst 2.x SDK needs to be provided (unless VST2 support is turned off).
-
-    $ ./generate --cmake-args="-DSUSHI_WITH_XENOMAI=off -DVST2_SDK_PATH=/home/elk/sdks/vstsdk2.4" -b
-
-If the Vst 2.4 SDK is not available, Sushi can still be built without Vst 2.x support using the command below:
-
-    $ ./generate --cmake-args="-DSUSHI_WITH_XENOMAI=off -DSUSHI_WITH_VST2=off" -b
-
-It is also possible to skip the `-b` flag and build by calling `make` directly in build/debug or build/release.
 
 #### Dependecies
 Sushi carries most dependencies as submodules and will build and link with them automatically. A few dependencies are not included however and must be provided or installed system-wide. See the list below:
@@ -99,7 +95,7 @@ $ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../third-party/vcpkg/s
 This might take some time for the first build since all the vcpkg dependencies will have to be built first.
 
 ### Useful CMake build options
-Various options can be passed to CMake directly, or through the generate script using the `--cmake-args` flag. Both general CMake options and Sushi-specific options that control which features Sushi is built with can be passed. Note that all options need to be prefixed with `-D` when passing them. All options are on be default as that is the most common use case.
+Various options can be passed to CMak. Both general CMake options and Sushi-specific options that control which features Sushi is built with can be passed. Note that all options need to be prefixed with `-D` when passing them. All options are on be default as that is the most common use case.
 
 Option                                | Value    | Default* | Notes
 --------------------------------------|----------|----------|------------------------------------------------------------------------------------------------------
