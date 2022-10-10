@@ -38,6 +38,7 @@ protected:
         // Clean up
         EXPECT_CALL(*mockPortAudio, Pa_IsStreamActive).WillOnce(Return(1));
         EXPECT_CALL(*mockPortAudio, Pa_StopStream);
+        EXPECT_CALL(*mockPortAudio, Pa_Terminate);
         _module_under_test.reset();
         delete mockPortAudio;
     }

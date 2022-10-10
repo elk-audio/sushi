@@ -436,10 +436,12 @@ message("Configured audio buffer size: " ${SUSHI_AUDIO_BUFFER_SIZE} " samples")
 
 set(COMPILATION_UNITS src/main.cpp
                       src/logging.cpp
+                      src/json_utils.cpp
                       src/audio_frontends/base_audio_frontend.cpp
                       src/audio_frontends/offline_frontend.cpp
                       src/audio_frontends/jack_frontend.cpp
                       src/audio_frontends/portaudio_frontend.cpp
+                      src/audio_frontends/portaudio_devices_dump.cpp
                       src/audio_frontends/xenomai_raspa_frontend.cpp
                       src/control_frontends/base_control_frontend.cpp
                       src/control_frontends/oscpack_osc_messenger.cpp

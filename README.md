@@ -14,16 +14,21 @@ Use JACK for realtime audio:
 
     $ sushi -j -c config_file.json
 
+Use Portaudio for realtime audio, with the default devices:
+    $ sushi -a -c config_file.json
+
 With JACK, sushi creates 8 virtual input and output ports that you can connect to other programs or system outputs.
 
 ## SUSHI macOS (experimental)
 Since version 1.0, SUSHI can be built natively for macOS as a native binary with all the dependencies statically linked to it.
 
-There is a new Portaudio frontend (selectable with the `-p | --portaudio` command-line option) to interface directly with Portaudio. As an alternative, Jack can be used if it is available on the system.
+There is a new Portaudio frontend (selectable with the `-a | --portaudio` command-line option) to interface directly with Portaudio. As an alternative, Jack can be used if it is available on the system.
+
+With Portaudio, you can select other devices than the default with the `--audio-input-device` and `--audio-output-device` options. To find out the right number there, you can launch SUSHI with the `--dump-portaudio-devs` to get a list in JSON format printed to stdout.
 
 MIDI support is provided through RtMidi and can access directly CoreMidi devices.
 
-LV2 support is currently not available for macOS, and VST2 support is partial (it can only load at the moment plugins compiled in a Posix way and not the traditional macOS bundles which are used by commercial plugins).
+LV2 support is currently not available for macOS.
 
 ## Configuration file examples
 

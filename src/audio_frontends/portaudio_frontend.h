@@ -20,10 +20,12 @@
 
 #ifndef SUSHI_PORTAUDIO_FRONTEND_H
 #define SUSHI_PORTAUDIO_FRONTEND_H
+
 #ifdef SUSHI_BUILD_WITH_PORTAUDIO
 
 #include <string>
 #include <memory>
+#include <optional>
 
 // TODO: Keep an eye on these deprecated declarations and update when they are fixed.
 // There is an open issue on github at the time of writing about C11 which would fix this.
@@ -36,6 +38,13 @@
 
 namespace sushi {
 namespace audio_frontend {
+
+struct PortaudioDeviceInfo
+{
+    std::string name;
+    int inputs;
+    int outputs;
+};
 
 struct PortAudioFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
@@ -113,7 +122,46 @@ public:
      */
     void run() override;
 
+    /**
+     * @brief Get the n. of available devices.
+     *        Can be called before init()
+     *
+     * @return Total number of devices as reported by Portaudio, or std::nullopt if there was an error
+     */
+    std::optional<int> devices_count();
+
+    /**
+     * @brief Query a device basic properties
+     *
+     * @param device_idx Device index in [0..devices_count()-1]
+     *
+     * @return Struct with device name, n. of input channels, n. of output channels.
+     *         std::nullopt is returned if there was an error
+     */
+    std::optional<PortaudioDeviceInfo> device_info(int device_idx);
+
+    /**
+     * @brief Query the default input device
+     *
+     * @return Index in [0..devices_count()-1], or std::nullopt if there was an error
+     */
+    std::optional<int> default_input_device();
+
+    /**
+     * @brief Query the default output device
+     *
+     * @return Index in [0..devices_count()-1], or std::nullopt if there was an error
+     */
+    std::optional<int> default_output_device();
+
 private:
+    /**
+     * @brief Initialize PortAudio engine, and cache the result to avoid multiple initializations
+     *
+     * @return OK or AUDIO_HW_ERROR
+     */
+    AudioFrontendStatus _initialize_portaudio();
+
     AudioFrontendStatus _configure_audio_channels(const PortAudioFrontendConfiguration* config);
 
     /**
@@ -150,6 +198,7 @@ private:
     int _cv_input_channels{0};
     int _cv_output_channels{0};
 
+    bool _pa_initialized{false};
     PaStream* _stream;
     const PaDeviceInfo* _input_device_info;
     const PaDeviceInfo* _output_device_info;
@@ -169,6 +218,7 @@ private:
 } // end namespace sushi
 
 #endif //SUSHI_BUILD_WITH_PORTAUDIO
+
 #ifndef SUSHI_BUILD_WITH_PORTAUDIO
 /* If PortAudio is disabled in the build config, the PortAudio frontend is replaced with
    this dummy frontend whose only purpose is to assert if you try to use it */
@@ -196,3 +246,4 @@ public:
 #endif
 
 #endif //SUSHI_PORTAUDIO_FRONTEND_H
+

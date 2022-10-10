@@ -119,6 +119,7 @@ enum OptionIndex
     OPT_IDX_AUDIO_OUTPUT_DEVICE,
     OPT_IDX_PA_SUGGESTED_INPUT_LATENCY,
     OPT_IDX_PA_SUGGESTED_OUTPUT_LATENCY,
+    OPT_IDX_DUMP_PORTAUDIO,
     OPT_IDX_USE_JACK,
     OPT_IDX_CONNECT_PORTS,
     OPT_IDX_JACK_CLIENT,
@@ -249,7 +250,7 @@ const optionparser::Descriptor usage[] =
         "a",
         "portaudio",
         SushiArg::Optional,
-        "\t\t-p --portaudio \tUse PortAudio realtime audio frontend."
+        "\t\t-a --portaudio \tUse PortAudio realtime audio frontend."
     },
     {
         OPT_IDX_AUDIO_INPUT_DEVICE,
@@ -282,6 +283,14 @@ const optionparser::Descriptor usage[] =
         "pa-suggested-output-latency",
         SushiArg::Optional,
         "\t\t--pa-suggested-output-latency=<latency> \tOutput latency in seconds to suggest to portaudio. Will be rounded up to closest available latency depending on audio API [default=0.0]"
+    },
+    {
+        OPT_IDX_DUMP_PORTAUDIO,
+        OPT_TYPE_DISABLED,
+        "",
+        "dump-portaudio-devs",
+        SushiArg::Optional,
+        "\t\t--dump-portaudio-devs \tDump available Portaudio devices to stdout in JSON format."
     },
     {
         OPT_IDX_USE_JACK,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -14,21 +14,23 @@
  */
 
 /**
- * @brief Utility functions for writing parameter names to a file.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @brief Utility functions for dumping Portaudio devices info
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#ifndef SUSHI_PARAMETER_DUMP_H
-#define SUSHI_PARAMETER_DUMP_H
-
-#include "engine/controller/controller.h"
 #include "json_utils.h"
 
 namespace sushi {
+namespace audio_frontend {
 
-rapidjson::Document generate_processor_parameter_document(sushi::ext::SushiControl* engine_controller);
+/**
+ * @brief Retrieve Portaudio's registered devices information.
+ *        Can be queried before instantiating an actual PortaudioFrontend
+ *
+ * @return Device information list in JSON format
+ */
+rapidjson::Document generate_portaudio_devices_info_document();
 
+} // end namespace audio_frontend
 } // end namespace sushi
 
-
-#endif //SUSHI_PARAMETER_DUMP_H
