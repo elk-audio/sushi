@@ -5,8 +5,8 @@ cmake_minimum_required(VERSION 3.20)
 #####################
 
 # Don't change version anywhere else. Everything is generated from this.
-set(SUSHI_VERSION_MAJOR 0)
-set(SUSHI_VERSION_MINOR 12)
+set(SUSHI_VERSION_MAJOR 1)
+set(SUSHI_VERSION_MINOR 0)
 set(SUSHI_VERSION_REVISION 0)
 
 project(sushi
