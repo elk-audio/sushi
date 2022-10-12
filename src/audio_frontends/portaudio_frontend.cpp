@@ -130,6 +130,10 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
         SUSHI_LOG_ERROR("Failed to open stream: {}", Pa_GetErrorText(err));
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
+    else
+    {
+        _stream_initialized = true;
+    }
     auto stream_info = Pa_GetStreamInfo(_stream);
     Time latency = std::chrono::microseconds(static_cast<int>(stream_info->outputLatency * 1'000'000));
     _engine->set_output_latency(latency);
@@ -163,20 +167,24 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
 
 void PortAudioFrontend::cleanup()
 {
+    PaError result;
     if (_engine != nullptr)
     {
         _engine->enable_realtime(false);
     }
 
-    PaError result = Pa_IsStreamActive(_stream);
-    if (result == 1)
+    if (_stream_initialized)
     {
-        SUSHI_LOG_INFO("Closing PortAudio stream");
-        Pa_StopStream(_stream);
-    }
-    else if ((result != paNoError) && (_engine != nullptr))
-    {
-        SUSHI_LOG_WARNING("Error while checking for active stream: {}", Pa_GetErrorText(result));
+        result = Pa_IsStreamActive(_stream);
+        if (result == 1)
+        {
+            SUSHI_LOG_INFO("Closing PortAudio stream");
+            Pa_StopStream(_stream);
+        }
+        else if ((result != paNoError) && (_engine != nullptr))
+        {
+            SUSHI_LOG_WARNING("Error while checking for active stream: {}", Pa_GetErrorText(result));
+        }
     }
 
     result = Pa_Terminate();

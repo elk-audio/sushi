@@ -199,7 +199,10 @@ private:
     int _cv_output_channels{0};
 
     bool _pa_initialized{false};
-    PaStream* _stream;
+    PaStream* _stream{nullptr};
+
+    // This is convenient mostly for mock testing, where checking for nullptr will not work
+    bool _stream_initialized {false};
     const PaDeviceInfo* _input_device_info;
     const PaDeviceInfo* _output_device_info;
 
