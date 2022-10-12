@@ -115,7 +115,7 @@ if (${SUSHI_BUILD_TWINE})
     add_subdirectory(twine)
 
     if (${SUSHI_TWINE_STATIC})
-        set(TWINE_LIB twine_objlib)
+        set(TWINE_LIB twine_static)
     else()
         set(TWINE_LIB twine)
     endif()
