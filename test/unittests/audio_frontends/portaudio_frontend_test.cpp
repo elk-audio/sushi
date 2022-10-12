@@ -12,6 +12,7 @@
 using ::testing::internal::posix::GetEnv;
 using ::testing::Return;
 using ::testing::NiceMock;
+using ::testing::SetArgPointee;
 
 using namespace sushi;
 using namespace sushi::audio_frontend;
@@ -35,9 +36,11 @@ protected:
 
     void TearDown()
     {
-        // Clean up
-        EXPECT_CALL(*mockPortAudio, Pa_IsStreamActive).WillOnce(Return(1));
-        EXPECT_CALL(*mockPortAudio, Pa_StopStream);
+        if (_module_under_test->_stream_initialized)
+        {
+            EXPECT_CALL(*mockPortAudio, Pa_IsStreamActive).WillOnce(Return(1));
+            EXPECT_CALL(*mockPortAudio, Pa_StopStream);
+        }
         EXPECT_CALL(*mockPortAudio, Pa_Terminate);
         _module_under_test.reset();
         delete mockPortAudio;
