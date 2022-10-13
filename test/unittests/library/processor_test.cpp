@@ -232,8 +232,8 @@ TEST_F(TestBypassManager, TestRamping)
     }
 
     // We should now have ramped down to 0
-    EXPECT_FLOAT_EQ(0.0f, buffer.channel(0)[AUDIO_CHUNK_SIZE - 1]);
-    EXPECT_FLOAT_EQ(0.0f, buffer.channel(1)[AUDIO_CHUNK_SIZE - 1]);
+    EXPECT_NEAR(0.0f, buffer.channel(0)[AUDIO_CHUNK_SIZE - 1], 1.0e-7);
+    EXPECT_NEAR(0.0f, buffer.channel(1)[AUDIO_CHUNK_SIZE - 1], 1.0e-7);
     EXPECT_FLOAT_EQ(1.0f / chunks_in_ramp, buffer.channel(0)[0]);
     EXPECT_FLOAT_EQ(1.0f / chunks_in_ramp, buffer.channel(1)[0]);
 

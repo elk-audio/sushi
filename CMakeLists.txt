@@ -5,8 +5,8 @@ cmake_minimum_required(VERSION 3.20)
 #####################
 
 # Don't change version anywhere else. Everything is generated from this.
-set(SUSHI_VERSION_MAJOR 0)
-set(SUSHI_VERSION_MINOR 12)
+set(SUSHI_VERSION_MAJOR 1)
+set(SUSHI_VERSION_MINOR 0)
 set(SUSHI_VERSION_REVISION 0)
 
 project(sushi
@@ -41,24 +41,17 @@ configure_file(
 #  Build and link options #
 ###########################
 
-function(CheckSushiOptions old_opt_name new_opt_name default_val)
-    if ( (NOT (${old_opt_name} MATCHES "${${default_val}}"))
-        AND (NOT ${old_opt_name} MATCHES "${${new_opt_name}}")
-    )
-        message(WARNING "Option ${old_opt_name} is deprecated, use ${new_opt_name} instead.")
-        set(${new_opt_name} "${${old_opt_name}}" PARENT_SCOPE)
-    endif()
-endfunction()
-
-
 # The defaults enable all options and select APIs available for either Xenomai or macOS
 set(SUSHI_WITH_JACK_DEFAULT OFF)
+set(SUSHI_WITH_VST2_DEFAULT OFF)
 set(SUSHI_WITH_VST3_DEFAULT ON)
 set(SUSHI_WITH_LINK_DEFAULT ON)
 set(SUSHI_WITH_RPC_INTERFACE_DEFAULT ON)
+set(SUSHI_TWINE_STATIC_DEFAULT OFF)
 set(SUSHI_AUDIO_BUFFER_SIZE_DEFAULT 64)
 
 if (APPLE)
+    # macOS defaults
     set(SUSHI_WITH_XENOMAI_DEFAULT OFF)
     set(SUSHI_WITH_PORTAUDIO_DEFAULT ON)
     set(SUSHI_WITH_ALSA_MIDI_DEFAULT OFF)
@@ -68,73 +61,46 @@ if (APPLE)
     set(SUSHI_WITH_LV2_MDA_TESTS_DEFAULT OFF)
     set(SUSHI_WITH_UNIT_TESTS_DEFAULT ON)
     set(SUSHI_BUILD_TWINE_DEFAULT ON)
-else()
+elseif(DEFINED ENV{OE_CMAKE_TOOLCHAIN_FILE)
+    # Yocto cross-compilation defaults
     set(SUSHI_WITH_XENOMAI_DEFAULT ON)
     set(SUSHI_WITH_PORTAUDIO_DEFAULT OFF)
-    set(SUSHI_WITH_ALSA_MIDI_DEFAULT OFF)
+    set(SUSHI_WITH_ALSA_MIDI_DEFAULT ON)
     set(SUSHI_WITH_RT_MIDI_DEFAULT OFF)
-    set(SUSHI_WITH_VST2_DEFAULT ON)
     set(SUSHI_WITH_LV2_DEFAULT ON)
     set(SUSHI_WITH_LV2_MDA_TESTS_DEFAULT ON)
     set(SUSHI_WITH_UNIT_TESTS_DEFAULT OFF)
     set(SUSHI_BUILD_TWINE_DEFAULT OFF)
+else()
+    # Native Linux defaults
+    set(SUSHI_WITH_JACK_DEFAULT ON)
+    set(SUSHI_WITH_XENOMAI_DEFAULT OFF)
+    set(SUSHI_WITH_PORTAUDIO_DEFAULT OFF)
+    set(SUSHI_WITH_ALSA_MIDI_DEFAULT ON)
+    set(SUSHI_WITH_RT_MIDI_DEFAULT OFF)
+    set(SUSHI_WITH_LV2_DEFAULT ON)
+    set(SUSHI_WITH_LV2_MDA_TESTS_DEFAULT ON)
+    set(SUSHI_WITH_UNIT_TESTS_DEFAULT ON)
+    set(SUSHI_BUILD_TWINE_DEFAULT ON)
+    set(TWINE_WITH_XENOMAI OFF)
 endif()
 
-option(WITH_XENOMAI "Deprecated: use SUSHI_WITH_XENOMAI instead" ${SUSHI_WITH_XENOMAI_DEFAULT})
 option(SUSHI_WITH_XENOMAI "Enable Xenomai support" ${SUSHI_WITH_XENOMAI_DEFAULT})
-CheckSushiOptions(WITH_XENOMAI SUSHI_WITH_XENOMAI SUSHI_WITH_XENOMAI_DEFAULT)
-
-option(WITH_JACK "Deprecated: use SUSHI_WITH_JACK instead" ${SUSHI_WITH_JACK_DEFAULT})
 option(SUSHI_WITH_JACK "Enable Jack support" ${SUSHI_WITH_JACK_DEFAULT})
-CheckSushiOptions(WITH_JACK SUSHI_WITH_JACK SUSHI_WITH_JACK_DEFAULT)
-
-option(WITH_PORTAUDIO "Deprecated: use SUSHI_WITH_PORTAUDIO instead" ${SUSHI_WITH_PORTAUDIO_DEFAULT})
 option(SUSHI_WITH_PORTAUDIO "Enable PortAudio support" ${SUSHI_WITH_PORTAUDIO_DEFAULT})
-CheckSushiOptions(WITH_PORTAUDIO SUSHI_WITH_PORTAUDIO SUSHI_WITH_PORTAUDIO_DEFAULT)
-
-option(WITH_ALSA_MIDI "Deprecated: use SUSHI_WITH_ALSA_MIDI instead" ${SUSHI_WITH_ALSA_MIDI_DEFAULT})
 option(SUSHI_WITH_ALSA_MIDI "Enable alsa midi support" ${SUSHI_WITH_ALSA_MIDI_DEFAULT})
-CheckSushiOptions(WITH_ALSA_MIDI SUSHI_WITH_ALSA_MIDI SUSHI_WITH_ALSA_MIDI_DEFAULT)
-
-option(WITH_RT_MIDI "Deprecated: use SUSHI_WITH_RT_MIDI instead" ${SUSHI_WITH_RT_MIDI_DEFAULT})
 option(SUSHI_WITH_RT_MIDI "Enable RtMidi support" ${SUSHI_WITH_RT_MIDI_DEFAULT})
-CheckSushiOptions(WITH_RT_MIDI SUSHI_WITH_RT_MIDI SUSHI_WITH_RT_MIDI_DEFAULT)
-
-option(WITH_VST2 "Deprecated: use SUSHI_WITH_VST2 instead" ${SUSHI_WITH_VST2_DEFAULT})
 option(SUSHI_WITH_VST2 "Enable Vst 2 support" ${SUSHI_WITH_VST2_DEFAULT})
-CheckSushiOptions(WITH_VST2 SUSHI_WITH_VST2 SUSHI_WITH_VST2_DEFAULT)
-
-option(WITH_VST3 "Deprecated: use SUSHI_WITH_VST3 instead" ${SUSHI_WITH_VST3_DEFAULT})
 option(SUSHI_WITH_VST3 "Enable Vst 3 support" ${SUSHI_WITH_VST3_DEFAULT})
-CheckSushiOptions(WITH_VST3 SUSHI_WITH_VST3 SUSHI_WITH_VST3_DEFAULT)
-
-option(WITH_LV2 "Deprecated: use SUSHI_WITH_LV2 instead" ${SUSHI_WITH_LV2_DEFAULT})
-option(SUSHI_WITH_LV2 "Enable LV 2 support" ${SUSHI_WITH_LV2_DEFAULT})
-CheckSushiOptions(WITH_LV2 SUSHI_WITH_LV2 SUSHI_WITH_LV2_DEFAULT)
-
-option(WITH_LV2_MDA_TESTS "Deprecated: use SUSHI_WITH_LV2_MDA_TESTS instead" ${SUSHI_WITH_LV2_MDA_TESTS_DEFAULT})
+option(SUSHI_WITH_LV2 "Enable LV2 support" ${SUSHI_WITH_LV2_DEFAULT})
 option(SUSHI_WITH_LV2_MDA_TESTS "Include unit tests depending on LV2 drobilla MDA plugin port." ${SUSHI_WITH_LV2_MDA_TESTS_DEFAULT})
-CheckSushiOptions(WITH_LV2_MDA_TESTS SUSHI_WITH_LV2_MDA_TESTS SUSHI_WITH_LV2_MDA_TESTS_DEFAULT)
-
-option(WITH_UNIT_TESTS "Deprecated: use SUSHI_WITH_UNIT_TESTS instead " ${SUSHI_WITH_UNIT_TESTS_DEFAULT})
 option(SUSHI_WITH_UNIT_TESTS "Build and run unit tests after compilation" ${SUSHI_WITH_UNIT_TESTS_DEFAULT})
-CheckSushiOptions(WITH_UNIT_TESTS SUSHI_WITH_UNIT_TESTS SUSHI_WITH_UNIT_TESTS_DEFAULT)
-
-option(WITH_LINK "Deprecated: use SUSHI_WITH_LINK instead" ${SUSHI_WITH_LINK_DEFAULT})
 option(SUSHI_WITH_LINK "Enable Ableton Link support" ${SUSHI_WITH_LINK_DEFAULT})
-CheckSushiOptions(WITH_LINK SUSHI_WITH_LINK SUSHI_WITH_LINK_DEFAULT)
-
-option(WITH_RPC_INTERFACE "Deprecated: use SUSHI_WITH_RPC_INTERFACE instead" ${SUSHI_WITH_RPC_INTERFACE_DEFAULT})
 option(SUSHI_WITH_RPC_INTERFACE "Enable RPC control support" ${SUSHI_WITH_RPC_INTERFACE_DEFAULT})
-CheckSushiOptions(WITH_RPC_INTERFACE SUSHI_WITH_RPC_INTERFACE SUSHI_WITH_RPC_INTERFACE_DEFAULT)
-
-option(BUILD_TWINE "Deprecated: use SUSHI_BUILD_TWINE instead" ${SUSHI_BUILD_TWINE_DEFAULT})
 option(SUSHI_BUILD_TWINE "Build included Twine library" ${SUSHI_BUILD_TWINE_DEFAULT})
-CheckSushiOptions(BUILD_TWINE SUSHI_BUILD_TWINE SUSHI_BUILD_TWINE_DEFAULT)
+option(SUSHI_TWINE_STATIC "Link against static version of TWINE library" ${SUSHI_TWINE_STATIC_DEFAULT})
 
-set(AUDIO_BUFFER_SIZE ${SUSHI_AUDIO_BUFFER_SIZE_DEFAULT} CACHE STRING "Deprecated: use SUSHI_AUDIO_BUFFER_SIZE instead")
 set(SUSHI_AUDIO_BUFFER_SIZE ${SUSHI_AUDIO_BUFFER_SIZE_DEFAULT} CACHE STRING "Set internal audio buffer size in frames")
-CheckSushiOptions(AUDIO_BUFFER_SIZE SUSHI_AUDIO_BUFFER_SIZE SUSHI_AUDIO_BUFFER_SIZE_DEFAULT)
 
 if (SUSHI_WITH_ALSA_MIDI AND SUSHI_WITH_RT_MIDI)
     message(FATAL_ERROR "Both alsa midi and RtMidi set to on. Use only one midi frontend at a time")
@@ -148,9 +114,13 @@ endif()
 if (${SUSHI_BUILD_TWINE})
     set(TWINE_WITH_TESTS OFF CACHE BOOL "")
     add_subdirectory(twine)
-    # Link statically in this case
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} twine_objlib)
-    set(TWINE_LIB twine_objlib)
+
+    if (${SUSHI_TWINE_STATIC})
+        set(TWINE_LIB twine_static)
+    else()
+        set(TWINE_LIB twine)
+    endif()
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${TWINE_LIB})
 else()
     find_path(TWINE_PATH NAMES "twine/twine.h")
     find_library(TWINE_LIB
@@ -286,17 +256,17 @@ if (${SUSHI_WITH_VST2})
 
     # Include dirs
     if (VST_2_SDK_BASE_DIR)
-        set(VST2_SDK_PATH ${VST_2_SDK_BASE_DIR})
+        set(SUSHI_VST2_SDK_PATH ${VST_2_SDK_BASE_DIR})
     else()
-        find_file(VST2_SDK_PATH NAMES VST2_SDK vstsdk2.4 HINTS $ENV{HOME}/workspace
+        find_file(SUSHI_VST2_SDK_PATH NAMES VST2_SDK vstsdk2.4 HINTS $ENV{HOME}/workspace
                                                                 $ENV{HOME}/workspace/VST_SDK
                                                                 $ENV{HOME}/workspace/vstsdk3610_11_06_2018_build_37)
     endif()
-    if (${VST2_SDK_PATH} STREQUAL "VST2_SDK_PATH-NOTFOUND")
+    if (${SUSHI_VST2_SDK_PATH} STREQUAL "VST2_SDK_PATH-NOTFOUND")
         message("Warning! Could not find Steinberg SDK for VST 2.4")
     endif()
 
-    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${VST2_SDK_PATH}/pluginterfaces/vst2.x)
+    set(INCLUDE_DIRS ${INCLUDE_DIRS} ${SUSHI_VST2_SDK_PATH}/pluginterfaces/vst2.x)
 
     # Compile definitions
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_VST2 -D__cdecl=)
@@ -434,176 +404,87 @@ message("Configured audio buffer size: " ${SUSHI_AUDIO_BUFFER_SIZE} " samples")
 #  Main Target     #
 ####################
 
-set(COMPILATION_UNITS src/main.cpp
-                      src/logging.cpp
-                      src/json_utils.cpp
-                      src/audio_frontends/base_audio_frontend.cpp
-                      src/audio_frontends/offline_frontend.cpp
-                      src/audio_frontends/jack_frontend.cpp
-                      src/audio_frontends/portaudio_frontend.cpp
-                      src/audio_frontends/portaudio_devices_dump.cpp
-                      src/audio_frontends/xenomai_raspa_frontend.cpp
-                      src/control_frontends/base_control_frontend.cpp
-                      src/control_frontends/oscpack_osc_messenger.cpp
-                      src/control_frontends/osc_frontend.cpp
-                      src/dsp_library/biquad_filter.cpp
-                      src/engine/audio_engine.cpp
-                      src/engine/audio_graph.cpp
-                      src/engine/event_dispatcher.cpp
-                      src/engine/track.cpp
-                      src/engine/midi_dispatcher.cpp
-                      src/engine/json_configurator.cpp
-                      src/engine/receiver.cpp
-                      src/engine/event_timer.cpp
-                      src/engine/transport.cpp
-                      src/engine/parameter_manager.cpp
-                      src/engine/processor_container.cpp
-                      src/engine/plugin_library.cpp
-                      src/engine/controller/controller.cpp
-                      src/engine/controller/system_controller.cpp
-                      src/engine/controller/transport_controller.cpp
-                      src/engine/controller/timing_controller.cpp
-                      src/engine/controller/keyboard_controller.cpp
-                      src/engine/controller/audio_graph_controller.cpp
-                      src/engine/controller/parameter_controller.cpp
-                      src/engine/controller/program_controller.cpp
-                      src/engine/controller/midi_controller.cpp
-                      src/engine/controller/audio_routing_controller.cpp
-                      src/engine/controller/cv_gate_controller.cpp
-                      src/engine/controller/osc_controller.cpp
-                      src/engine/controller/session_controller.cpp
-                      src/library/event.cpp
-                      src/library/midi_decoder.cpp
-                      src/library/midi_encoder.cpp
-                      src/library/internal_plugin.cpp
-                      src/library/performance_timer.cpp
-                      src/library/parameter_dump.cpp
-                      src/library/processor.cpp
-                      src/library/processor_state.cpp
-                      src/library/plugin_registry.cpp
-                      src/library/internal_processor_factory.cpp
-                      src/library/lv2/lv2_processor_factory.cpp
-                      src/library/vst2x/vst2x_processor_factory.cpp
-                      src/library/vst3x/vst3x_processor_factory.cpp
-                      src/plugins/arpeggiator_plugin.cpp
-                      src/plugins/control_to_cv_plugin.cpp
-                      src/plugins/cv_to_control_plugin.cpp
-                      src/plugins/gain_plugin.cpp
-                      src/plugins/lfo_plugin.cpp
-                      src/plugins/passthrough_plugin.cpp
-                      src/plugins/equalizer_plugin.cpp
-                      src/plugins/peak_meter_plugin.cpp
-                      src/plugins/return_plugin.cpp
-                      src/plugins/sample_player_plugin.cpp
-                      src/plugins/sample_player_voice.cpp
-                      src/plugins/sample_delay_plugin.cpp
-                      src/plugins/send_plugin.cpp
-                      src/plugins/send_return_factory.cpp
-                      src/plugins/step_sequencer_plugin.cpp
-                      src/plugins/transposer_plugin.cpp
-                      src/plugins/wav_writer_plugin.cpp
-                      src/plugins/mono_summing_plugin.cpp
-                      src/plugins/stereo_mixer_plugin.cpp
-                      src/audio_frontends/offline_frontend.cpp
-        )
+set(SOURCE_FILES
+    src/main.cpp
+    src/logging.cpp
+    src/json_utils.cpp
+    src/audio_frontends/base_audio_frontend.cpp
+    src/audio_frontends/offline_frontend.cpp
+    src/audio_frontends/jack_frontend.cpp
+    src/audio_frontends/portaudio_frontend.cpp
+    src/audio_frontends/portaudio_devices_dump.cpp
+    src/audio_frontends/xenomai_raspa_frontend.cpp
+    src/control_frontends/base_control_frontend.cpp
+    src/control_frontends/oscpack_osc_messenger.cpp
+    src/control_frontends/osc_frontend.cpp
+    src/dsp_library/biquad_filter.cpp
+    src/engine/audio_engine.cpp
+    src/engine/audio_graph.cpp
+    src/engine/event_dispatcher.cpp
+    src/engine/track.cpp
+    src/engine/midi_dispatcher.cpp
+    src/engine/json_configurator.cpp
+    src/engine/receiver.cpp
+    src/engine/event_timer.cpp
+    src/engine/transport.cpp
+    src/engine/parameter_manager.cpp
+    src/engine/processor_container.cpp
+    src/engine/plugin_library.cpp
+    src/engine/controller/controller.cpp
+    src/engine/controller/system_controller.cpp
+    src/engine/controller/transport_controller.cpp
+    src/engine/controller/timing_controller.cpp
+    src/engine/controller/keyboard_controller.cpp
+    src/engine/controller/audio_graph_controller.cpp
+    src/engine/controller/parameter_controller.cpp
+    src/engine/controller/program_controller.cpp
+    src/engine/controller/midi_controller.cpp
+    src/engine/controller/audio_routing_controller.cpp
+    src/engine/controller/cv_gate_controller.cpp
+    src/engine/controller/osc_controller.cpp
+    src/engine/controller/session_controller.cpp
+    src/library/event.cpp
+    src/library/midi_decoder.cpp
+    src/library/midi_encoder.cpp
+    src/library/internal_plugin.cpp
+    src/library/performance_timer.cpp
+    src/library/parameter_dump.cpp
+    src/library/processor.cpp
+    src/library/processor_state.cpp
+    src/library/plugin_registry.cpp
+    src/library/internal_processor_factory.cpp
+    src/library/lv2/lv2_processor_factory.cpp
+    src/library/vst2x/vst2x_processor_factory.cpp
+    src/library/vst3x/vst3x_processor_factory.cpp
+    src/plugins/arpeggiator_plugin.cpp
+    src/plugins/control_to_cv_plugin.cpp
+    src/plugins/cv_to_control_plugin.cpp
+    src/plugins/gain_plugin.cpp
+    src/plugins/lfo_plugin.cpp
+    src/plugins/passthrough_plugin.cpp
+    src/plugins/equalizer_plugin.cpp
+    src/plugins/peak_meter_plugin.cpp
+    src/plugins/return_plugin.cpp
+    src/plugins/sample_player_plugin.cpp
+    src/plugins/sample_player_voice.cpp
+    src/plugins/sample_delay_plugin.cpp
+    src/plugins/send_plugin.cpp
+    src/plugins/send_return_factory.cpp
+    src/plugins/step_sequencer_plugin.cpp
+    src/plugins/transposer_plugin.cpp
+    src/plugins/wav_writer_plugin.cpp
+    src/plugins/mono_summing_plugin.cpp
+    src/plugins/stereo_mixer_plugin.cpp
+    src/audio_frontends/offline_frontend.cpp
+)
 
-# Enumerate all the headers separately so that CLion can index them
-set(EXTRA_CLION_SOURCES src/logging.h
-                        src/options.h
-                        src/compile_time_settings.h
-                        src/audio_frontends/base_audio_frontend.h
-                        src/audio_frontends/audio_frontend_internals.h
-                        src/audio_frontends/offline_frontend.h
-                        src/audio_frontends/jack_frontend.h
-                        src/audio_frontends/portaudio_frontend.h
-                        src/audio_frontends/xenomai_raspa_frontend.h
-                        src/control_frontends/base_control_frontend.h
-                        src/control_frontends/osc_frontend.h
-                        src/control_frontends/osc_utils.h
-                        src/control_frontends/oscpack_osc_messenger.h
-                        src/control_frontends/base_midi_frontend.h
-                        src/dsp_library/envelopes.h
-                        src/dsp_library/sample_wrapper.h
-                        src/dsp_library/biquad_filter.h
-                        src/dsp_library/value_smoother.h
-                        src/library/base_performance_timer.h
-                        src/library/event.h
-                        src/library/event_interface.h
-                        src/library/sample_buffer.h
-                        src/library/midi_decoder.h
-                        src/library/midi_encoder.h
-                        src/library/rt_event.h
-                        src/library/processor.h
-                        src/library/base_processor_factory.h
-                        src/library/plugin_registry.h
-                        src/library/internal_processor_factory.h
-                        src/library/performance_timer.h
-                        src/library/internal_plugin.h
-                        src/library/rt_event_fifo.h
-                        src/library/rt_event_pipe.h
-                        src/library/spinlock.h
-                        src/library/simple_fifo.h
-                        src/library/synchronised_fifo.h
-                        src/library/time.h
-                        src/engine/base_engine.h
-                        src/engine/base_processor_container.h
-                        src/engine/audio_engine.h
-                        src/engine/audio_graph.h
-                        src/engine/track.h
-                        src/engine/receiver.h
-                        src/engine/midi_dispatcher.h
-                        src/engine/event_dispatcher.h
-                        src/engine/base_event_dispatcher.h
-                        src/engine/event_timer.h
-                        src/engine/json_configurator.h
-                        src/engine/midi_receiver.h
-                        src/engine/host_control.h
-                        src/engine/transport.h
-                        src/engine/parameter_manager.h
-                        src/engine/processor_container.h
-                        src/engine/controller/controller.h
-                        src/engine/controller/system_controller.h
-                        src/engine/controller/transport_controller.h
-                        src/engine/controller/timing_controller.h
-                        src/engine/controller/keyboard_controller.h
-                        src/engine/controller/audio_graph_controller.h
-                        src/engine/controller/parameter_controller.h
-                        src/engine/controller/program_controller.h
-                        src/engine/controller/midi_controller.h
-                        src/engine/controller/audio_routing_controller.h
-                        src/engine/controller/cv_gate_controller.h
-                        src/engine/controller/osc_controller.h
-                        src/plugins/arpeggiator_plugin.h
-                        src/plugins/control_to_cv_plugin.h
-                        src/plugins/cv_to_control_plugin.h
-                        src/plugins/gain_plugin.h
-                        src/plugins/lfo_plugin.h
-                        src/plugins/passthrough_plugin.h
-                        src/plugins/equalizer_plugin.h
-                        src/plugins/peak_meter_plugin.h
-                        src/plugins/return_plugin.h
-                        src/plugins/transposer_plugin.h
-                        src/plugins/sample_player_plugin.h
-                        src/plugins/sample_player_voice.h
-                        src/plugins/sample_delay_plugin.h
-                        src/plugins/send_plugin.h
-                        src/plugins/send_return_factory.h
-                        src/plugins/step_sequencer_plugin.h
-                        src/plugins/wav_writer_plugin.h
-                        src/plugins/mono_summing_plugin.h
-                        src/audio_frontends/base_audio_frontend.h
-                        src/audio_frontends/offline_frontend.h
-        )
-
-set(SOURCE_FILES "${COMPILATION_UNITS}" "${EXTRA_CLION_SOURCES}")
-
-
-add_executable(sushi MACOSX_BUNDLE "${COMPILATION_UNITS}"
-                     "${EXTRA_CLION_SOURCES}"
-                     "${ADDITIONAL_VST2_SOURCES}"
-                     "${ADDITIONAL_VST3_SOURCES}"
-                     "${ADDITIONAL_LV2_SOURCES}"
-                     "${MIDI_SOURCES}")
+add_executable(sushi MACOSX_BUNDLE
+    "${SOURCE_FILES}"
+    "${ADDITIONAL_VST2_SOURCES}"
+    "${ADDITIONAL_VST3_SOURCES}"
+    "${ADDITIONAL_LV2_SOURCES}"
+    "${MIDI_SOURCES}"
+)
 
 #########################
 #  Include Directories  #
@@ -677,3 +558,4 @@ install(TARGETS sushi RUNTIME DESTINATION bin, BUNDLE DESTINATION Applications)
 foreach(ITEM ${DOC_FILES_INSTALL})
     install(FILES ${ITEM} DESTINATION share/sushi/doc)
 endforeach()
+
