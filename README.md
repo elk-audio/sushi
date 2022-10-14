@@ -17,27 +17,46 @@ Use Portaudio for realtime audio, with the default devices:
 
     $ sushi -a -c config_file.json
 
-With JACK, sushi creates 8 virtual input and output ports that you can connect to other programs or system outputs.
+With JACK, Sushi creates 8 virtual input and output ports that you can connect to other programs or system outputs.
 
-## SUSHI macOS (experimental)
-Since version 1.0, SUSHI can be built natively for macOS as a native binary with all the dependencies statically linked to it.
+## Sushi macOS (experimental)
+Since version 1.0, Sushi can be built natively for macOS as a native binary with all the dependencies statically linked to it.
 
 There is a new Portaudio frontend (selectable with the `-a | --portaudio` command-line option) to interface directly with Portaudio. As an alternative, Jack can be used if it is available on the system.
 
-With Portaudio, you can select other devices than the default with the `--audio-input-device` and `--audio-output-device` options. To find out the right number there, you can launch SUSHI with the `--dump-portaudio-devs` to get a list in JSON format printed to stdout.
+With Portaudio, you can select other devices than the default with the `--audio-input-device` and `--audio-output-device` options. To find out the right number there, you can launch Sushi with the `--dump-portaudio-devs` to get a list in JSON format printed to stdout.
 
 MIDI support is provided through RtMidi and can access directly CoreMidi devices.
 
 LV2 support is currently not available for macOS.
 
+## Example Sushi configuration files in repository
+
+Under `misc/config_files` in this repository, we have a large variety of example Sushi configuration files.
+
+They all use the mda-vst3 plugins which are built when building Sushi. These can be found under:
+
+`build/debug/VST3/Debug`, or `build/release/VST3/Release` respectively, for debug and release builds.
+
+To run Sushi with an example configuration, you simply invoke it while pointing to one of the above paths.
+
+On Ubuntu that could be:
+```
+$ ./sushi -j -c ../../misc/config_files/play_vst3.json --base-plugin-path VST3/Debug
+```
+
+Or, from a macOS terminal:
+```
+$ ./sushi.app/Contents/MacOS/sushi -a -c ../../misc/config_files/play_vst3.json --base-plugin-path VST3/Release
+```
+
 ## Extra documentation
-See directory `example_configs` for the JSON-schema definition and some example configurations.
 Configuration files are used for global host configs, track and plugins configuration, MIDI routing and mapping, events sequencing.
 
 More in-depth documentation is available at the [Elk Audio OS official docs page](https://elk-audio.github.io/elk-docs/html/documents/sushi_overview.html).
 
 ## Building
-SUSHI builds are supported for native Linux systems, Yocto/OE cross-compiling toolchains targeting Elk Audio OS systems, and macOS.
+Sushi builds are supported for native Linux systems, Yocto/OE cross-compiling toolchains targeting Elk Audio OS systems, and macOS.
 
 Make sure that Sushi is cloned with the `--recursive` flag to fetch all required submodules for building. Alternatively run `git submodule update --init --recursive` after cloning.
 
@@ -78,11 +97,11 @@ $ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../third-party/vcpkg/s
 This might take some time for the first build since all the vcpkg dependencies will have to be built first.
 
 ### Building with Yocto for Elk Audio OS
-SUSHI can be built either with the provided [Elk Audio OS SDK](https://github.com/elk-audio/elkpi-sdk), or as part of a [full Elk Audio OS image build with bitbake](https://github.com/elk-audio/elkpi-yocto-layers).
+Sushi can be built either with the provided [Elk Audio OS SDK](https://github.com/elk-audio/elkpi-sdk), or as part of a [full Elk Audio OS image build with bitbake](https://github.com/elk-audio/elkpi-yocto-layers).
 
-Follow the instructions in those repositories to set up a cross-compiling SDK and build SUSHI for a given target.
+Follow the instructions in those repositories to set up a cross-compiling SDK and build Sushi for a given target.
 
-Note: SUSHI version 1.0 is not currently supported with Elk Audio OS images up to 0.12.0. The most recent supported Yocto version is tagged as `1.0-rc1_yocto_build` in the repository.
+Note: Sushi version 1.0 is not currently supported with Elk Audio OS images up to 0.12.0. The most recent supported Yocto version is tagged as `1.0-rc1_yocto_build` in the repository.
 
 ### Useful CMake build options
 Option                                | Value    | Notes
