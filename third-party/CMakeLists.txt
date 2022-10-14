@@ -68,7 +68,10 @@ if (${SUSHI_WITH_VST3})
     add_subdirectory(vst3sdk/public.sdk/samples/vst)
 
     # Suppress warnings to keep our build output clean
-    set_target_properties(base PROPERTIES COMPILE_FLAGS "-Wno-deprecated -Wno-cpp")
+    set(VST3_COMPILE_FLAGS "-Wno-unused-parameter -Wno-extra -Wno-deprecated -Wno-cpp -Wno-pointer-bool-conversion -Wno-suggest-override -Wno-format")
+    set_target_properties(base PROPERTIES COMPILE_FLAGS ${VST3_COMPILE_FLAGS})
+    set_target_properties(adelay PROPERTIES COMPILE_FLAGS ${VST3_COMPILE_FLAGS})
+    set_target_properties(mda-vst3 PROPERTIES COMPILE_FLAGS ${VST3_COMPILE_FLAGS})
 endif()
 
 #####################################################

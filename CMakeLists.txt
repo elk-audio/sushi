@@ -297,7 +297,7 @@ if (${SUSHI_WITH_VST3})
             "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/pluginterfacesupport.cpp"
             "${VST3_SDK_PATH}/public.sdk/source/common/memorystream.cpp")
 
-    set(VST3_COMPILE_FLAGS "-Wno-unused-parameter -Wno-extra")
+    set(VST3_COMPILE_FLAGS "-Wno-unused-parameter -Wno-extra -Wno-deprecated -Wno-cpp -Wno-pointer-bool-conversion -Wno-suggest-override")
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
             set(VST3_HOST_SOURCES ${VST3_HOST_SOURCES} "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_linux.cpp")
@@ -338,6 +338,9 @@ if (${SUSHI_WITH_VST3})
 
     # Compiler definitions
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_VST3)
+
+    # Triggering mda-vst3 build - used by sample sushi json configurations under misc/config_files.
+    set_target_properties(mda-vst3 PROPERTIES EXCLUDE_FROM_ALL False)
 endif()
 
 #############
@@ -533,14 +536,6 @@ target_link_libraries(sushi PRIVATE ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES}
 target_compile_features(sushi PRIVATE cxx_std_17)
 target_compile_options(sushi PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
 target_compile_definitions(sushi PRIVATE -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${SUSHI_AUDIO_BUFFER_SIZE} ${EXTRA_COMPILE_DEFINITIONS})
-
-###################################################################################################
-#  Triggering mda-vst3 build - used by sample sushi json configurations under misc/config_files.  #
-###################################################################################################
-
-if (${SUSHI_WITH_VST3})
-    set_target_properties(mda-vst3 PROPERTIES EXCLUDE_FROM_ALL False)
-endif()
 
 ######################
 #  Tests subproject  #
