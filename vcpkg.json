@@ -15,6 +15,7 @@
       "default-features": false
     },
     "portaudio",
-    "rtmidi"
+    "rtmidi",
+    "sentry-native"
   ]
 }

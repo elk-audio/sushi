@@ -53,7 +53,7 @@ set(SUSHI_WITH_LINK_DEFAULT ON)
 set(SUSHI_WITH_RPC_INTERFACE_DEFAULT ON)
 set(SUSHI_TWINE_STATIC_DEFAULT OFF)
 set(SUSHI_AUDIO_BUFFER_SIZE_DEFAULT 64)
-option(SUSHI_WITH_SENTRY "Enable sentry.io support" ON)
+set(SUSHI_WITH_SENTRY_DEFAULT ON)
 
 if (APPLE)
     # macOS defaults
@@ -104,6 +104,7 @@ option(SUSHI_WITH_LINK "Enable Ableton Link support" ${SUSHI_WITH_LINK_DEFAULT})
 option(SUSHI_WITH_RPC_INTERFACE "Enable RPC control support" ${SUSHI_WITH_RPC_INTERFACE_DEFAULT})
 option(SUSHI_BUILD_TWINE "Build included Twine library" ${SUSHI_BUILD_TWINE_DEFAULT})
 option(SUSHI_TWINE_STATIC "Link against static version of TWINE library" ${SUSHI_TWINE_STATIC_DEFAULT})
+option(SUSHI_WITH_SENTRY "Enable sentry.io support" ${SUSHI_WITH_SENTRY_DEFAULT})
 
 set(SUSHI_AUDIO_BUFFER_SIZE ${SUSHI_AUDIO_BUFFER_SIZE_DEFAULT} CACHE STRING "Set internal audio buffer size in frames")
 
@@ -413,9 +414,15 @@ message("Configured audio buffer size: " ${SUSHI_AUDIO_BUFFER_SIZE} " samples")
 ###################
 
 if (${SUSHI_WITH_SENTRY})
+    find_package(Threads)
     find_package(sentry CONFIG REQUIRED)
 
     message("Building with sentry.io support.")
+
+    set(SUSHI_SENTRY_DSN "https://06ed0cb50866424fb8a2947f1466e0c6@o1366334.ingest.sentry.io/6501480" CACHE STRING "The DSN to upload the sentry logs and crash reports to, from Sushi" FORCE)
+
+    # TODO: IS there a better way to get the sentry-native path directly?
+    set(SENTRY_CRASHPAD_HANDLER_PATH "${VCPKG_INSTALLED_DIR}/osx-custom/tools/sentry-native/crashpad_handler")
 
     set(SUSHI_SENTRY_DSN "https://06ed0cb50866424fb8a2947f1466e0c6@o1366334.ingest.sentry.io/6501480" CACHE STRING "The DSN to upload the sentry logs and crash reports to" FORCE)
 
