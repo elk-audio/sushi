@@ -31,10 +31,11 @@ MIDI support is provided through RtMidi and can access directly CoreMidi devices
 LV2 support is currently not available for macOS.
 
 ## Example Sushi configuration files in repository
-
 Under `misc/config_files` in this repository, we have a large variety of example Sushi configuration files.
 
-They all use the mda-vst3 plugins which are built when building Sushi. These can be found under:
+They all use the mda-vst3 plugins which are built when building Sushi. If you are running one of the prebuilt packages, you have everything inside the `sushi` folder there.
+
+Otherwise, if you are building from source, the plugins used by the examples can be found under:
 
 `build/debug/VST3/Debug`, or `build/release/VST3/Release` respectively, for debug and release builds.
 
