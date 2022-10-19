@@ -45,8 +45,9 @@ public:
 
         if (status != 0)
         {
-            SUSHI_LOG_INFO("sentry_init call failed.");
-            assert(false);
+            SUSHI_LOG_DEBUG("sentry_init call failed. "
+                            "This is either because it lacks write access in the database path, "
+                            "or because it hasn't received a valid path to the crashpad_handler executable.");
         }
     }
 

@@ -144,8 +144,7 @@ public:
 
 private:
     Logger() = default;
-    static std::shared_ptr<spdlog::logger> setup_logging(const std::string& sentry_crash_handler_path,
-                                                         const std::string& sentry_dsn);
+    static std::shared_ptr<spdlog::logger> setup_logging();
 
     static std::string _logger_file_name;
     static std::string _logger_name;

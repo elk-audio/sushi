@@ -177,10 +177,10 @@ int main(int argc, char* argv[])
     std::string sentry_crash_handler_path = SUSHI_SENTRY_CRASH_HANDLER_PATH_DEFAULT;
     std::string sentry_dsn = SUSHI_SENTRY_DSN_DEFAULT;
 
-    for (int i = 0; i<cl_parser.optionsCount(); i++)
+    for (int i = 0; i < cl_parser.optionsCount(); i++)
     {
         optionparser::Option& opt = cl_buffer[i];
-        switch(opt.index())
+        switch (opt.index())
         {
         case OPT_IDX_HELP:
         case OPT_IDX_UNKNOWN:
