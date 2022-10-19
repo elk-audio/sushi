@@ -53,7 +53,7 @@ set(SUSHI_WITH_LINK_DEFAULT ON)
 set(SUSHI_WITH_RPC_INTERFACE_DEFAULT ON)
 set(SUSHI_TWINE_STATIC_DEFAULT OFF)
 set(SUSHI_AUDIO_BUFFER_SIZE_DEFAULT 64)
-set(SUSHI_WITH_SENTRY_DEFAULT ON)
+set(SUSHI_WITH_SENTRY_DEFAULT OFF)
 
 if (APPLE)
     # macOS defaults
@@ -66,7 +66,7 @@ if (APPLE)
     set(SUSHI_WITH_LV2_MDA_TESTS_DEFAULT OFF)
     set(SUSHI_WITH_UNIT_TESTS_DEFAULT ON)
     set(SUSHI_BUILD_TWINE_DEFAULT ON)
-elseif(DEFINED ENV{OE_CMAKE_TOOLCHAIN_FILE)
+elseif (DEFINED ENV{OE_CMAKE_TOOLCHAIN_FILE)
     # Yocto cross-compilation defaults
     set(SUSHI_WITH_XENOMAI_DEFAULT ON)
     set(SUSHI_WITH_PORTAUDIO_DEFAULT OFF)
@@ -150,11 +150,11 @@ if (${SUSHI_WITH_XENOMAI})
     # explicitly link with cobalt lib
     set(XENOMAI_BASE_DIR "/usr/xenomai" CACHE STRING "xenomai base dir path")
 
-    if(NOT "$ENV{CMAKE_SYSROOT}" STREQUAL "")
+    if (NOT "$ENV{CMAKE_SYSROOT}" STREQUAL "")
         set(CMAKE_SYSROOT "$ENV{CMAKE_SYSROOT}")
         message("ENV_CMAKE_SYSROOT = " $ENV{CMAKE_SYSROOT})
     endif()
-    if(NOT "${CMAKE_SYSROOT}" STREQUAL "")
+    if (NOT "${CMAKE_SYSROOT}" STREQUAL "")
         set(XENOMAI_BASE_DIR "${CMAKE_SYSROOT}/usr/xenomai")
         message("XENOMAI_BASE_DIR is " ${XENOMAI_BASE_DIR})
     endif()
@@ -421,10 +421,7 @@ if (${SUSHI_WITH_SENTRY})
 
     set(SUSHI_SENTRY_DSN "https://06ed0cb50866424fb8a2947f1466e0c6@o1366334.ingest.sentry.io/6501480" CACHE STRING "The DSN to upload the sentry logs and crash reports to, from Sushi" FORCE)
 
-    # TODO: IS there a better way to get the sentry-native path directly?
     set(SENTRY_CRASHPAD_HANDLER_PATH "${VCPKG_INSTALLED_DIR}/osx-custom/tools/sentry-native/crashpad_handler")
-
-    set(SUSHI_SENTRY_DSN "https://06ed0cb50866424fb8a2947f1466e0c6@o1366334.ingest.sentry.io/6501480" CACHE STRING "The DSN to upload the sentry logs and crash reports to" FORCE)
 
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} sentry::sentry)
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_SENTRY -DSUSHI_SENTRY_DSN="${SUSHI_SENTRY_DSN}")
@@ -585,7 +582,7 @@ if (APPLE)
 endif()
 
 install(TARGETS sushi RUNTIME DESTINATION bin, BUNDLE DESTINATION Applications)
-foreach(ITEM ${DOC_FILES_INSTALL})
+foreach (ITEM ${DOC_FILES_INSTALL})
     install(FILES ${ITEM} DESTINATION share/sushi/doc)
 endforeach()
 
