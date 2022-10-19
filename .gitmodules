@@ -23,3 +23,6 @@
 [submodule "third-party/vcpkg"]
 	path = third-party/vcpkg
 	url = https://github.com/Microsoft/vcpkg.git
+[submodule "rpc_interface/protos"]
+	path = rpc_interface/protos
+	url = ../sushi-grpc-api
