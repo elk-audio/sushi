@@ -419,7 +419,9 @@ if (${SUSHI_WITH_SENTRY})
 
     message("Building with sentry.io support.")
 
-    set(SUSHI_SENTRY_DSN "https://06ed0cb50866424fb8a2947f1466e0c6@o1366334.ingest.sentry.io/6501480" CACHE STRING "The DSN to upload the sentry logs and crash reports to, from Sushi" FORCE)
+    if (NOT SUSHI_SENTRY_DSN)
+        set(SUSHI_SENTRY_DSN "--Sentry default DSN is undefined--" CACHE STRING "The DSN to upload the sentry logs and crash reports to, from Sushi" FORCE)
+    endif()
 
     set(SENTRY_CRASHPAD_HANDLER_PATH "${VCPKG_INSTALLED_DIR}/osx-custom/tools/sentry-native/crashpad_handler")
 
