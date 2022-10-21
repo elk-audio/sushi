@@ -33,7 +33,11 @@ LV2 support is currently not available for macOS.
 ## Example Sushi configuration files in repository
 Under `misc/config_files` in this repository, we have a large variety of example Sushi configuration files.
 
-They all use the mda-vst3 plugins which are built when building Sushi. If you are running one of the prebuilt packages, you have everything inside the `sushi` folder there.
+They all use the mda-vst3 plugins which are built when building Sushi. If you are running one of the prebuilt packages (available on the releases sections on Github), you have everything inside the `sushi` folder there. For example, on macOS you should be able to get a simple working synthesizer with:
+```
+$ ./sushi -a -c config_files/play_vst3.json
+```
+(on Linux with JACK, replace `-a` with -`j`).
 
 Otherwise, if you are building from source, the plugins used by the examples can be found under:
 
