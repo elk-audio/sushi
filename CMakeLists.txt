@@ -54,6 +54,7 @@ set(SUSHI_WITH_RPC_INTERFACE_DEFAULT ON)
 set(SUSHI_TWINE_STATIC_DEFAULT OFF)
 set(SUSHI_AUDIO_BUFFER_SIZE_DEFAULT 64)
 set(SUSHI_WITH_SENTRY_DEFAULT OFF)
+set(SUSHI_SENTRY_DSN_DEFAULT "--Sentry default DSN is undefined--")
 
 if (APPLE)
     # macOS defaults
@@ -105,6 +106,7 @@ option(SUSHI_WITH_RPC_INTERFACE "Enable RPC control support" ${SUSHI_WITH_RPC_IN
 option(SUSHI_BUILD_TWINE "Build included Twine library" ${SUSHI_BUILD_TWINE_DEFAULT})
 option(SUSHI_TWINE_STATIC "Link against static version of TWINE library" ${SUSHI_TWINE_STATIC_DEFAULT})
 option(SUSHI_WITH_SENTRY "Enable sentry.io support" ${SUSHI_WITH_SENTRY_DEFAULT})
+option(SUSHI_SENTRY_DSN "Required Sentry DSN Path" ${SUSHI_SENTRY_DSN_DEFAULT})
 
 set(SUSHI_AUDIO_BUFFER_SIZE ${SUSHI_AUDIO_BUFFER_SIZE_DEFAULT} CACHE STRING "Set internal audio buffer size in frames")
 
@@ -420,7 +422,7 @@ if (${SUSHI_WITH_SENTRY})
     message("Building with sentry.io support.")
 
     if (NOT SUSHI_SENTRY_DSN)
-        set(SUSHI_SENTRY_DSN "--Sentry default DSN is undefined--" CACHE STRING "The DSN to upload the sentry logs and crash reports to, from Sushi" FORCE)
+        set(SUSHI_SENTRY_DSN ${SUSHI_SENTRY_DSN_DEFAULT} CACHE STRING "The DSN to upload the sentry logs and crash reports to, from Sushi" FORCE)
     endif()
 
     set(SENTRY_CRASHPAD_HANDLER_PATH "${VCPKG_INSTALLED_DIR}/osx-custom/tools/sentry-native/crashpad_handler")
