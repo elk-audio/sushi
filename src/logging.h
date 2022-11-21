@@ -131,8 +131,8 @@ public:
                                             const std::string& min_log_level,
                                             const bool enable_flush_interval,
                                             const std::chrono::seconds log_flush_interval,
-                                            const std::string& sentry_crash_handler_path,
-                                            const std::string& sentry_dsn);
+                                            [[maybe_unused]] const std::string& sentry_crash_handler_path,
+                                            [[maybe_unused]] const std::string& sentry_dsn);
 
 
     /**

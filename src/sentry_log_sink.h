@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -14,15 +14,17 @@
  */
 
 /**
- * @brief Option parsing
+ * @brief An spdlog sink which wraps the Sentry logging functionality
  * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_SENTRY_LOG_SINK_H
 #define SUSHI_SENTRY_LOG_SINK_H
 
-#include "iostream"
+#include <iostream>
+#include <mutex>
 
+#include "spdlog/details/null_mutex.h"
 #include "spdlog/sinks/base_sink.h"
 #include "sentry.h"
 
@@ -38,15 +40,21 @@ public:
                const std::string& sentry_dsn) : spdlog::sinks::base_sink<Mutex>()
     {
         sentry_options_t* options = sentry_options_new();
-        sentry_options_set_handler_path(options, sentry_crash_handler_path.c_str());
-        sentry_options_set_dsn(options, sentry_dsn.c_str());
-        sentry_options_set_database_path (options, "/tmp/.sentry-native-elk-sushi");
-        int status = sentry_init(options);
+
+        int status = -1;
+
+        if (options != nullptr)
+        {
+            sentry_options_set_handler_path(options, sentry_crash_handler_path.c_str());
+            sentry_options_set_dsn(options, sentry_dsn.c_str());
+            sentry_options_set_database_path(options, "/tmp/.sentry-native-elk-sushi");
+            status = sentry_init(options);
+        }
 
         if (status != 0)
         {
-            SUSHI_LOG_DEBUG("sentry_init call failed. "
-                            "This is either because it lacks write access in the database path, "
+            SUSHI_LOG_DEBUG("sentry initialization failed. "
+                            "This is usually either because it lacks write access in the database path, "
                             "or because it hasn't received a valid path to the crashpad_handler executable.");
         }
     }
@@ -94,8 +102,6 @@ private:
     }
 };
 
-#include "spdlog/details/null_mutex.h"
-#include <mutex>
 using sentry_sink_mt = SentrySink<std::mutex>;
 using sentry_sink_st = SentrySink<spdlog::details::null_mutex>;
 
