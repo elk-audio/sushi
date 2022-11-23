@@ -336,7 +336,9 @@ int main(int argc, char* argv[])
     ////////////////////////////////////////////////////////////////////////////////
     // Main body //
     ////////////////////////////////////////////////////////////////////////////////
-
+#ifdef SUSHI_BUILD_WITH_EVL
+    evl_init();
+#endif
     if (frontend_type == FrontendType::XENOMAI_RASPA)
     {
         twine::init_xenomai(); // must be called before setting up any worker pools
