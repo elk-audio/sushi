@@ -115,11 +115,13 @@ enum OptionIndex
     OPT_IDX_OUTPUT_FILE,
     OPT_IDX_USE_DUMMY,
     OPT_IDX_USE_PORTAUDIO,
+    OPT_IDX_USE_APPLE_COREAUDIO,
     OPT_IDX_AUDIO_INPUT_DEVICE,
     OPT_IDX_AUDIO_OUTPUT_DEVICE,
     OPT_IDX_PA_SUGGESTED_INPUT_LATENCY,
     OPT_IDX_PA_SUGGESTED_OUTPUT_LATENCY,
     OPT_IDX_DUMP_PORTAUDIO,
+    OPT_IDX_DUMP_APPLE_COREAUDIO,
     OPT_IDX_USE_JACK,
     OPT_IDX_CONNECT_PORTS,
     OPT_IDX_JACK_CLIENT,
@@ -291,6 +293,14 @@ const optionparser::Descriptor usage[] =
         "dump-portaudio-devs",
         SushiArg::Optional,
         "\t\t--dump-portaudio-devs \tDump available Portaudio devices to stdout in JSON format."
+    },
+    {
+        OPT_IDX_DUMP_APPLE_COREAUDIO,
+        OPT_TYPE_DISABLED,
+        "",
+        "dump-apple-coreaudio-devs",
+        SushiArg::Optional,
+        "\t\t--dump-apple-coreaudio-devs \tDump available Apple CoreAudio devices to stdout in JSON format."
     },
     {
         OPT_IDX_USE_JACK,

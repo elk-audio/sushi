@@ -34,6 +34,7 @@
 #include "audio_frontends/xenomai_raspa_frontend.h"
 #include "audio_frontends/portaudio_frontend.h"
 #include "audio_frontends/portaudio_devices_dump.h"
+#include "audio_frontends/apple_coreaudio_frontend.h"
 #include "engine/json_configurator.h"
 #include "control_frontends/osc_frontend.h"
 #include "control_frontends/oscpack_osc_messenger.h"
@@ -59,6 +60,7 @@ enum class FrontendType
     DUMMY,
     JACK,
     PORTAUDIO,
+    APPLE_COREAUDIO,
     XENOMAI_RASPA,
     NONE
 };
@@ -162,6 +164,7 @@ int main(int argc, char* argv[])
     float portaudio_suggested_input_latency = SUSHI_PORTAUDIO_INPUT_LATENCY_DEFAULT;
     float portaudio_suggested_output_latency = SUSHI_PORTAUDIO_OUTPUT_LATENCY_DEFAULT;
     bool enable_portaudio_devs_dump = false;
+    bool enable_apple_coreaudio_devs_dump = false;
     std::string grpc_listening_address = SUSHI_GRPC_LISTENING_PORT_DEFAULT;
     FrontendType frontend_type = FrontendType::NONE;
     bool connect_ports = false;
@@ -234,6 +237,10 @@ int main(int argc, char* argv[])
             frontend_type = FrontendType::PORTAUDIO;
             break;
 
+        case OPT_IDX_USE_APPLE_COREAUDIO:
+            frontend_type = FrontendType::APPLE_COREAUDIO;
+            break;
+
         case OPT_IDX_AUDIO_INPUT_DEVICE:
             portaudio_input_device_id = atoi(opt.arg);
             break;
@@ -252,6 +259,10 @@ int main(int argc, char* argv[])
 
         case OPT_IDX_DUMP_PORTAUDIO:
             enable_portaudio_devs_dump = true;
+            break;
+
+        case OPT_IDX_DUMP_APPLE_COREAUDIO:
+            enable_apple_coreaudio_devs_dump = true;
             break;
 
         case OPT_IDX_USE_JACK:
@@ -320,7 +331,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (! (enable_parameter_dump || enable_portaudio_devs_dump) )
+    if (! (enable_parameter_dump || enable_portaudio_devs_dump || enable_apple_coreaudio_devs_dump) )
     {
         print_sushi_headline();
     }
@@ -356,6 +367,16 @@ int main(int argc, char* argv[])
         std::exit(0);
 #else
         std::cerr << "SUSHI not built with Portaudio support, cannot dump devices." << std::endl;
+#endif
+    }
+
+    if (enable_apple_coreaudio_devs_dump)
+    {
+#ifdef SUSHI_BUILD_WITH_APPLE_COREAUDIO
+        std::cout << sushi::audio_frontend::AppleCoreAudioFrontend::generate_devices_info_document() << std::endl;
+        std::exit(0);
+#else
+        std::cerr << "SUSHI not built with Apple CoreAudio support, cannot dump devices." << std::endl;
 #endif
     }
 
@@ -440,6 +461,17 @@ int main(int argc, char* argv[])
                                                                                                       cv_inputs,
                                                                                                       cv_outputs);
             audio_frontend = std::make_unique<sushi::audio_frontend::PortAudioFrontend>(engine.get());
+            break;
+        }
+
+        case FrontendType::APPLE_COREAUDIO:
+        {
+            SUSHI_LOG_INFO("Setting up Apple CoreAudio frontend");
+            frontend_config = std::make_unique<sushi::audio_frontend::AppleCoreAudioFrontendConfiguration>(portaudio_input_device_id,
+                                                                                                           portaudio_output_device_id,
+                                                                                                           cv_inputs,
+                                                                                                           cv_outputs);
+            audio_frontend = std::make_unique<sushi::audio_frontend::AppleCoreAudioFrontend>(engine.get());
             break;
         }
 
