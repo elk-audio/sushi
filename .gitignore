@@ -33,6 +33,7 @@
 
 # Hidden files
 .*
+!.clang-format
 !*/.gitkeep
 !.gitignore
 
