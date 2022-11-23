@@ -99,34 +99,38 @@ void ParameterManager::_output_parameter_notifications(dispatcher::BaseEventDisp
     auto swap_iter = i;
     while (i != _parameter_change_queue.end())
     {
-        if (auto proc_entry = _parameters.find(i->processor_id); proc_entry != _parameters.end())
+        if (auto proc_node = _parameters.find(i->processor_id); proc_node != _parameters.end())
         {
-            auto& entry = proc_entry->second[i->parameter_id];
+            auto& param_entries = proc_node->second;
 
-            /* Send update if the update time has passed and the last update was sent
-             * longer than _update_rate ago */
-            if (i->update_time <= timestamp && (entry.last_update + _update_rate) <= timestamp)
+            if (const auto& param_node = param_entries.find(i->parameter_id); param_node != param_entries.end())
             {
-                if (auto processor = _processors->processor(i->processor_id))
+                auto& param_entry = param_node->second;
+                /* Send update if the update time has passed and the last update was sent
+                 * longer than _update_rate ago */
+                if (i->update_time <= timestamp && (param_entry.last_update + _update_rate) <= timestamp)
                 {
-                    float value = processor->parameter_value(i->parameter_id).second;
-                    if (value != entry.value)
+                    if (auto processor = _processors->processor(i->processor_id))
                     {
-                        send_parameter_notification(i->processor_id, i->parameter_id, value,
-                                                    processor->parameter_value_in_domain(i->parameter_id).second,
-                                                    processor->parameter_value_formatted(i->parameter_id).second,
-                                                    dispatcher);
-                        entry.last_update = timestamp;
-                        entry.value = value;
+                        float value = processor->parameter_value(i->parameter_id).second;
+                        if (value != param_entry.value)
+                        {
+                            send_parameter_notification(i->processor_id, i->parameter_id, value,
+                                                        processor->parameter_value_in_domain(i->parameter_id).second,
+                                                        processor->parameter_value_formatted(i->parameter_id).second,
+                                                        dispatcher);
+                            param_entry.last_update = timestamp;
+                            param_entry.value = value;
+                        }
                     }
                 }
-            }
-            /* If this parameter was not a duplicate, but still updated too recently,
-             * put it at the front of the queue and check next time */
-            else if (entry.last_update != timestamp)
-            {
-                std::iter_swap(i, swap_iter);
-                swap_iter++;
+                    /* If this parameter was not a duplicate, but still updated too recently,
+                     * put it at the front of the queue and check next time */
+                else if (param_entry.last_update != timestamp)
+                {
+                    std::iter_swap(i, swap_iter);
+                    swap_iter++;
+                }
             }
         }
         i++;
@@ -147,9 +151,9 @@ void ParameterManager::_output_processor_notifications(dispatcher::BaseEventDisp
             if (auto processor = _processors->processor(i->processor_id))
             {
                 auto& param_entries = _parameters[i->processor_id];
-                for (const auto& p: param_entries)
+                for (auto& p: param_entries)
                 {
-                    auto& entry = param_entries[p.first];
+                    auto& entry = p.second;
                     float value = processor->parameter_value(p.first).second;
                     if (value != entry.value)
                     {
