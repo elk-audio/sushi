@@ -262,12 +262,6 @@ private:
 class AudioDevice : public AudioObject
 {
 public:
-    enum class Scope
-    {
-        Input,
-        Output
-    };
-
     explicit AudioDevice(AudioObjectID audio_object_id) : AudioObject(audio_object_id) {}
     virtual ~AudioDevice()
     {
@@ -335,22 +329,11 @@ public:
         return string;
     }
 
-    [[nodiscard]] int get_num_channels(Scope scope) const
+    [[nodiscard]] int get_num_channels(bool for_input) const
     {
-        AudioObjectPropertyAddress pa{kAudioDevicePropertyStreamConfiguration, kAudioObjectPropertyScopeInput, kAudioObjectPropertyElementMain};
-
-        switch (scope)
-        {
-            case Scope::Input:
-                pa.mScope = kAudioObjectPropertyScopeInput;
-                break;
-            case Scope::Output:
-                pa.mScope = kAudioObjectPropertyScopeOutput;
-                break;
-            default:
-                SUSHI_LOG_ERROR("Invalid scope given");
-                return -1;
-        }
+        AudioObjectPropertyAddress pa{kAudioDevicePropertyStreamConfiguration,
+                                      for_input ? kAudioObjectPropertyScopeInput : kAudioObjectPropertyScopeOutput,
+                                      kAudioObjectPropertyElementMain};
 
         auto audio_buffer_list = get_property<AudioBufferList>(pa);
 
@@ -493,9 +476,9 @@ rapidjson::Document AppleCoreAudioFrontend::generate_devices_info_document()
         device_obj.AddMember(rapidjson::Value("name", allocator).Move(),
                              rapidjson::Value(device.get_name().c_str(), allocator).Move(), allocator);// TODO: Not sure if temporary std::string object stays alive long enough.
         device_obj.AddMember(rapidjson::Value("inputs", allocator).Move(),
-                             rapidjson::Value(device.get_num_channels(AudioDevice::Scope::Input)).Move(), allocator);
+                             rapidjson::Value(device.get_num_channels(true)).Move(), allocator);
         device_obj.AddMember(rapidjson::Value("outputs", allocator).Move(),
-                             rapidjson::Value(device.get_num_channels(AudioDevice::Scope::Output)).Move(), allocator);
+                             rapidjson::Value(device.get_num_channels(false)).Move(), allocator);
         devices.PushBack(device_obj.Move(), allocator);
     }
     ca_devices.AddMember(rapidjson::Value("devices", allocator).Move(), devices.Move(), allocator);
