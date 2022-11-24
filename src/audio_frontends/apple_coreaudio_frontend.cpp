@@ -49,6 +49,34 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("AppleCoreAudio");
     } while (false)
 
 /**
+ * Converts given CFString to an std::string.
+ * @param cf_string_ref The CFString to convert.
+ * @return A standard string with the contents of given CFString, encoded as UTF8.
+ */
+std::string cf_string_to_std_string(const CFStringRef cf_string_ref)
+{
+    if (cf_string_ref == nullptr)
+        return {};
+
+    // First try the cheap solution (no allocation). Not guaranteed to return anything.
+    const auto* c_string = CFStringGetCStringPtr(cf_string_ref, kCFStringEncodingUTF8);
+
+    if (c_string != nullptr)
+        return c_string;
+
+    // If the above didn't return anything we have to fall back and use CFStringGetCString.
+    CFIndex length = CFStringGetLength(cf_string_ref);
+    CFIndex max_size = CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8);
+
+    std::string output(max_size + 1, 0);// Not sure if max_size includes space for zero-termination.
+    auto result = CFStringGetCString(cf_string_ref, output.data(), max_size, kCFStringEncodingUTF8);
+    if (result == 0)
+        return {};
+
+    return output;
+}
+
+/**
  * This class represents a numerical audio object as we know from the Core Audio API (AudioHardware.h etc).
  * It also implements basic, common capabilities of an audio object, like getting and setting of properties.
  */
@@ -77,7 +105,7 @@ protected:
      * @return The property, or a default constructed value on error.
      */
     template<typename T>
-    T get_property(const AudioObjectPropertyAddress& address) const
+    [[nodiscard]] T get_property(const AudioObjectPropertyAddress& address) const
     {
         if (!_has_property(address))
         {
@@ -85,15 +113,17 @@ protected:
             return {};
         }
 
-        if (_get_property_data_size(address) != sizeof(T))
+        const auto type_size = sizeof(T);// NOLINT Clang-Tidy: Suspicious usage of 'sizeof(A*)'; pointer to aggregate
+
+        if (_get_property_data_size(address) != type_size)
         {
             SUSHI_LOG_ERROR("AudioObject's property size invalid");
             return {};
         }
 
         T data{};
-        auto data_size = _get_property_data(address, sizeof(T), &data);
-        if (data_size == 0 || data_size != sizeof(T))
+        auto data_size = _get_property_data(address, type_size, &data);
+        if (data_size != type_size)
         {
             SUSHI_LOG_ERROR("Failed to get data from AudioObject");
             return {};
@@ -292,19 +322,49 @@ public:
 
     [[nodiscard]] std::string get_name() const
     {
-        return "Device Name (not implemented yet)";
+        const auto* cf_string_ref = get_property<CFStringRef>({kAudioObjectPropertyName,
+                                                               kAudioObjectPropertyScopeGlobal,
+                                                               kAudioObjectPropertyElementMain});
+        if (cf_string_ref == nullptr)
+            return {};
+
+        auto string = cf_string_to_std_string(cf_string_ref);
+
+        CFRelease(cf_string_ref);
+
+        return string;
     }
 
     [[nodiscard]] int get_num_channels(Scope scope) const
     {
+        AudioObjectPropertyAddress pa{kAudioDevicePropertyStreamConfiguration, kAudioObjectPropertyScopeInput, kAudioObjectPropertyElementMain};
+
         switch (scope)
         {
             case Scope::Input:
-                return 0;
+                pa.mScope = kAudioObjectPropertyScopeInput;
+                break;
             case Scope::Output:
-                return 0;
+                pa.mScope = kAudioObjectPropertyScopeOutput;
+                break;
+            default:
+                SUSHI_LOG_ERROR("Invalid scope given");
+                return -1;
         }
-        return -1;
+
+        auto audio_buffer_list = get_property<AudioBufferList>(pa);
+
+        UInt32 channel_count = 0;
+        for (UInt32 i = 0; i < audio_buffer_list.mNumberBuffers; i++)
+            channel_count += audio_buffer_list.mBuffers[i].mNumberChannels;
+
+        if (channel_count > std::numeric_limits<int>::max())
+        {
+            SUSHI_LOG_ERROR("Integer overflow");
+            return -1;
+        }
+
+        return static_cast<int>(channel_count);
     }
 
 private:
