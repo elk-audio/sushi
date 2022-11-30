@@ -26,27 +26,30 @@
 #include "base_audio_frontend.h"
 #include "json_utils.h"
 
+#include <memory>
+
 namespace sushi::audio_frontend {
 
 struct AppleCoreAudioFrontendConfiguration : public BaseAudioFrontendConfiguration {
-    AppleCoreAudioFrontendConfiguration(std::optional<int> input_device_id,
-                                        std::optional<int> output_device_id,
+    AppleCoreAudioFrontendConfiguration(std::optional<std::string> input_device_uid,
+                                        std::optional<std::string> output_device_uid,
                                         int cv_inputs,
                                         int cv_outputs) : BaseAudioFrontendConfiguration(cv_inputs, cv_outputs),
-                                                          input_device_id(input_device_id),
-                                                          output_device_id(output_device_id)
+                                                          input_device_uid(std::move(input_device_uid)),
+                                                          output_device_uid(std::move(output_device_uid))
     {}
 
     ~AppleCoreAudioFrontendConfiguration() override = default;
 
-    std::optional<int> input_device_id;
-    std::optional<int> output_device_id;
+    std::optional<std::string> input_device_uid;
+    std::optional<std::string> output_device_uid;
 };
 
 class AppleCoreAudioFrontend : public BaseAudioFrontend
 {
 public:
     explicit AppleCoreAudioFrontend(engine::BaseEngine* engine);
+    ~AppleCoreAudioFrontend();
 
     AudioFrontendStatus init(BaseAudioFrontendConfiguration* config) override;
     void cleanup() override;
@@ -54,6 +57,10 @@ public:
     void pause(bool enabled) override;
 
     static rapidjson::Document generate_devices_info_document();
+
+private:
+    class Impl;
+    std::unique_ptr<Impl> _pimpl;
 };
 
 }// namespace sushi::audio_frontend

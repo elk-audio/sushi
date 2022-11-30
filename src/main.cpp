@@ -161,6 +161,8 @@ int main(int argc, char* argv[])
 
     std::optional<int> portaudio_input_device_id = std::nullopt;
     std::optional<int> portaudio_output_device_id = std::nullopt;
+    std::optional<std::string> apple_coreaudio_input_device_uid = std::nullopt;
+    std::optional<std::string> apple_coreaudio_output_device_uid = std::nullopt;
     float portaudio_suggested_input_latency = SUSHI_PORTAUDIO_INPUT_LATENCY_DEFAULT;
     float portaudio_suggested_output_latency = SUSHI_PORTAUDIO_OUTPUT_LATENCY_DEFAULT;
     bool enable_portaudio_devs_dump = false;
@@ -247,6 +249,14 @@ int main(int argc, char* argv[])
 
         case OPT_IDX_AUDIO_OUTPUT_DEVICE:
             portaudio_output_device_id = atoi(opt.arg);
+            break;
+
+        case OPT_IDX_AUDIO_INPUT_DEVICE_UID:
+            apple_coreaudio_input_device_uid = opt.arg;
+            break;
+
+        case OPT_IDX_AUDIO_OUTPUT_DEVICE_UID:
+            apple_coreaudio_output_device_uid = opt.arg;
             break;
 
         case OPT_IDX_PA_SUGGESTED_INPUT_LATENCY:
@@ -467,8 +477,9 @@ int main(int argc, char* argv[])
         case FrontendType::APPLE_COREAUDIO:
         {
             SUSHI_LOG_INFO("Setting up Apple CoreAudio frontend");
-            frontend_config = std::make_unique<sushi::audio_frontend::AppleCoreAudioFrontendConfiguration>(portaudio_input_device_id,
-                                                                                                           portaudio_output_device_id,
+
+            frontend_config = std::make_unique<sushi::audio_frontend::AppleCoreAudioFrontendConfiguration>(apple_coreaudio_input_device_uid,
+                                                                                                           apple_coreaudio_output_device_uid,
                                                                                                            cv_inputs,
                                                                                                            cv_outputs);
             audio_frontend = std::make_unique<sushi::audio_frontend::AppleCoreAudioFrontend>(engine.get());

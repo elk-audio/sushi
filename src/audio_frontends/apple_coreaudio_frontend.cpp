@@ -97,6 +97,14 @@ public:
         return _audio_object_id;
     }
 
+    /**
+     * @return True if this object represents an actual object, or false if the audio object id is 0.
+     */
+    [[nodiscard]] bool is_valid() const
+    {
+        return _audio_object_id != 0;
+    }
+
 protected:
     /**
      * Gets the data for property of type T.
@@ -107,7 +115,7 @@ protected:
     template<typename T>
     [[nodiscard]] T get_property(const AudioObjectPropertyAddress& address) const
     {
-        if (!_has_property(address))
+        if (!has_property(address))
         {
             SUSHI_LOG_ERROR("AudioObject doesn't have requested property");
             return {};
@@ -115,14 +123,14 @@ protected:
 
         const auto type_size = sizeof(T);// NOLINT Clang-Tidy: Suspicious usage of 'sizeof(A*)'; pointer to aggregate
 
-        if (_get_property_data_size(address) != type_size)
+        if (get_property_data_size(address) != type_size)
         {
             SUSHI_LOG_ERROR("AudioObject's property size invalid");
             return {};
         }
 
         T data{};
-        auto data_size = _get_property_data(address, type_size, &data);
+        auto data_size = get_property_data(address, type_size, &data);
         if (data_size != type_size)
         {
             SUSHI_LOG_ERROR("Failed to get data from AudioObject");
@@ -163,13 +171,13 @@ protected:
     {
         data_array.resize(0);
 
-        if (!_has_property(address))
+        if (!has_property(address))
         {
             SUSHI_LOG_ERROR("AudioObject doesn't have requested property");
             return false;
         }
 
-        auto data_size = _get_property_data_size(address);
+        auto data_size = get_property_data_size(address);
 
         if (data_size % sizeof(T) != 0)
         {
@@ -188,7 +196,7 @@ protected:
             return false;
         }
 
-        data_size = _get_property_data(address, static_cast<UInt32>(num_bytes), data_array.data());
+        data_size = get_property_data(address, static_cast<UInt32>(num_bytes), data_array.data());
 
         // Resize array based on what we actually got.
         data_array.resize(data_size / sizeof(T));
@@ -210,15 +218,12 @@ protected:
         return data_array;
     }
 
-private:
-    const AudioObjectID _audio_object_id{0};
-
     /**
      * Tests if this AudioObject has property for given address.
      * @param address The address of the property to lookup.
      * @return True if this object has the property, or false if not.
      */
-    [[nodiscard]] bool _has_property(const AudioObjectPropertyAddress& address) const
+    [[nodiscard]] bool has_property(const AudioObjectPropertyAddress& address) const
     {
         return AudioObjectHasProperty(_audio_object_id, &address);
     }
@@ -228,7 +233,7 @@ private:
      * @param address The address of the property to lookup.
      * @return True if settable, or false if read-only or non existent.
      */
-    [[nodiscard]] bool _is_property_settable(const AudioObjectPropertyAddress& address) const
+    [[nodiscard]] bool is_property_settable(const AudioObjectPropertyAddress& address) const
     {
         Boolean is_settable = false;
         CA_RETURN_IF_ERROR(AudioObjectIsPropertySettable(_audio_object_id, &address, &is_settable), false);
@@ -240,7 +245,7 @@ private:
      * @param address The address of the property to lookup.
      * @return The data size of the property, or 0 if the property does not exist or on any other error.
      */
-    [[nodiscard]] UInt32 _get_property_data_size(const AudioObjectPropertyAddress& address) const
+    [[nodiscard]] UInt32 get_property_data_size(const AudioObjectPropertyAddress& address) const
     {
         UInt32 data_size = 0;
         CA_RETURN_IF_ERROR(AudioObjectGetPropertyDataSize(_audio_object_id, &address, 0, nullptr, &data_size), 0);
@@ -254,7 +259,7 @@ private:
      * @param data The memory of size data_size.
      * @return The actual retrieved size of the data. It might be a lower number than the passed in data_size.
      */
-    UInt32 _get_property_data(const AudioObjectPropertyAddress& address, UInt32 data_size, void* data) const
+    UInt32 get_property_data(const AudioObjectPropertyAddress& address, UInt32 data_size, void* data) const
     {
         UInt32 io_data_size = data_size;
         CA_RETURN_IF_ERROR(AudioObjectGetPropertyData(_audio_object_id, &address, 0, nullptr, &data_size, data), 0);
@@ -268,11 +273,14 @@ private:
      * @param data The data to set.
      * @return True if successful, or false if an error occurred.
      */
-    bool _set_property_data(const AudioObjectPropertyAddress& address, UInt32 data_size, const void* data) const
+    bool set_property_data(const AudioObjectPropertyAddress& address, UInt32 data_size, const void* data) const
     {
         CA_RETURN_IF_ERROR(AudioObjectSetPropertyData(_audio_object_id, &address, 0, nullptr, data_size, data), false);
         return true;
     }
+
+private:
+    const AudioObjectID _audio_object_id{0};
 };
 
 /**
@@ -308,8 +316,8 @@ public:
      */
     bool start_io()
     {
-        if (_io_proc_id != nullptr)
-            return false;// Already started.
+        if (!is_valid() || _io_proc_id != nullptr)
+            return false;
 
         CA_RETURN_IF_ERROR(AudioDeviceCreateIOProcID(get_audio_object_id(), audio_device_io_proc, this, &_io_proc_id), false);
         CA_RETURN_IF_ERROR(AudioDeviceStart(get_audio_object_id(), _io_proc_id), false);
@@ -323,7 +331,7 @@ public:
      */
     bool stop_io()
     {
-        if (_io_proc_id == nullptr)
+        if (!is_valid() || _io_proc_id == nullptr)
             return false;
 
         CA_LOG_IF_ERROR(AudioDeviceStop(get_audio_object_id(), _io_proc_id));
@@ -339,6 +347,9 @@ public:
      */
     [[nodiscard]] std::string get_name() const
     {
+        if (!is_valid())
+            return {};
+
         return get_cfstring_property({kAudioObjectPropertyName,
                                       kAudioObjectPropertyScopeGlobal,
                                       kAudioObjectPropertyElementMain});
@@ -351,6 +362,9 @@ public:
      */
     [[nodiscard]] std::string get_uid() const
     {
+        if (!is_valid())
+            return {};
+
         return get_cfstring_property({kAudioDevicePropertyDeviceUID,
                                       kAudioObjectPropertyScopeGlobal,
                                       kAudioObjectPropertyElementMain});
@@ -363,15 +377,30 @@ public:
      */
     [[nodiscard]] int get_num_channels(bool for_input) const
     {
+        if (!is_valid())
+            return -1;
+
         AudioObjectPropertyAddress pa{kAudioDevicePropertyStreamConfiguration,
                                       for_input ? kAudioObjectPropertyScopeInput : kAudioObjectPropertyScopeOutput,
                                       kAudioObjectPropertyElementMain};
 
-        auto audio_buffer_list = get_property<AudioBufferList>(pa);
+        auto data_size = get_property_data_size(pa);
+
+        // Use std::vector as underlying storage so that the allocated memory is under RAII (as opposed to malloc/free).
+        std::vector<uint8_t> storage(data_size);
+
+        AudioBufferList* audio_buffer_list;
+        audio_buffer_list = reinterpret_cast<AudioBufferList*>(storage.data());
+
+        if (get_property_data(pa, data_size, audio_buffer_list) != data_size)
+        {
+            SUSHI_LOG_ERROR("Invalid data returned");
+            return -1;
+        }
 
         UInt32 channel_count = 0;
-        for (UInt32 i = 0; i < audio_buffer_list.mNumberBuffers; i++)
-            channel_count += audio_buffer_list.mBuffers[i].mNumberChannels;
+        for (UInt32 i = 0; i < audio_buffer_list->mNumberBuffers; i++)
+            channel_count += audio_buffer_list->mBuffers[i].mNumberChannels;
 
         if (channel_count > std::numeric_limits<int>::max())
         {
@@ -399,7 +428,10 @@ private:
                               [[maybe_unused]] const AudioBufferList* input_data,
                               [[maybe_unused]] const AudioTimeStamp* input_time,
                               [[maybe_unused]] AudioBufferList* output_data,
-                              [[maybe_unused]] const AudioTimeStamp* output_time) {}
+                              [[maybe_unused]] const AudioTimeStamp* output_time)
+    {
+        fmt::print("Sample time: {}\n", now->mSampleTime);
+    }
 
     /**
      * Static function which gets called by an audio device to provide and get audio data.
@@ -468,23 +500,185 @@ private:
     }
 };
 
+/**
+ * Tries to find an audio device with given UID.
+ * @param audio_devices The list of audio device to search in.
+ * @param uid The UID of the device to find.
+ * @return Pointer to the found device, or nullptr if no device with given UID was found.
+ */
+const AudioDevice* get_device_for_uid(const std::vector<AudioDevice>& audio_devices, const std::string& uid)
+{
+    for (auto& device : audio_devices)
+        if (device.get_uid() == uid)
+            return &device;
+    return nullptr;
+}
+
 namespace sushi::audio_frontend {
 
+class AppleCoreAudioFrontend::Impl
+{
+public:
+    explicit Impl(engine::BaseEngine* engine, AudioObjectID input_device_id, AudioObjectID output_device_id) : _engine(engine),
+                                                                                                               _input_device(input_device_id),
+                                                                                                               _output_device(output_device_id) {}
+
+    AudioFrontendStatus init(const AppleCoreAudioFrontendConfiguration* config)
+    {
+        auto channel_conf_result = configure_audio_channels(config);
+        if (channel_conf_result != AudioFrontendStatus::OK)
+        {
+            SUSHI_LOG_ERROR("Failed to configure audio channels");
+            return channel_conf_result;
+        }
+
+        // TODO: Set latency on engine.
+
+        if (_num_input_channels > 0)
+        {
+            SUSHI_LOG_INFO("Connected input channels to {}", _input_device.get_name());
+            SUSHI_LOG_INFO("Input device has {} available channels", _input_device.get_num_channels(true));
+        }
+        else
+        {
+            SUSHI_LOG_DEBUG("No input channels found not connecting to input device");
+        }
+
+        if (_num_output_channels > 0)
+        {
+            SUSHI_LOG_DEBUG("Connected output channels to {}", _output_device.get_name());
+            SUSHI_LOG_INFO("Output device has {} available channels", _output_device.get_num_channels(false));
+        }
+        else
+        {
+            SUSHI_LOG_INFO("No output channels found not connecting to output device");
+        }
+
+        SUSHI_LOG_INFO("Stream started, using input latency {} and output latency {}", -1, -1);
+
+        return AudioFrontendStatus::OK;
+    }
+
+    AudioFrontendStatus configure_audio_channels(const AppleCoreAudioFrontendConfiguration* config)
+    {
+        if (config->cv_inputs + config->cv_outputs > 0)
+        {
+            SUSHI_LOG_ERROR("CV ins and outs not supported and must be set to 0");
+            return AudioFrontendStatus::AUDIO_HW_ERROR;
+        }
+
+        _num_input_channels = _input_device.get_num_channels(true);
+        _num_output_channels = _output_device.get_num_channels(false);
+
+        _in_buffer = ChunkSampleBuffer(_num_input_channels);
+        _out_buffer = ChunkSampleBuffer(_num_output_channels);
+        _engine->set_audio_input_channels(_num_input_channels);
+        _engine->set_audio_output_channels(_num_output_channels);
+
+        auto status = _engine->set_cv_input_channels(config->cv_inputs);
+        if (status != engine::EngineReturnStatus::OK)
+        {
+            SUSHI_LOG_ERROR("Failed to setup CV input channels");
+            return AudioFrontendStatus::AUDIO_HW_ERROR;
+        }
+
+        status = _engine->set_cv_output_channels(config->cv_outputs);
+        if (status != engine::EngineReturnStatus::OK)
+        {
+            SUSHI_LOG_ERROR("Failed to setup CV output channels");
+            return AudioFrontendStatus::AUDIO_HW_ERROR;
+        }
+
+        SUSHI_LOG_DEBUG("Setting up CoreAudio with {} inputs {} outputs", _num_input_channels, _num_output_channels);
+
+        return AudioFrontendStatus::OK;
+    }
+
+    void start_io()
+    {
+        if (_input_device.is_valid())
+            _input_device.start_io();
+
+        if (_output_device.is_valid())
+            _output_device.start_io();
+    }
+
+    void stop_io()
+    {
+        if (_input_device.is_valid())
+            _input_device.stop_io();
+
+        if (_output_device.is_valid())
+            _output_device.stop_io();
+    }
+
+private:
+    engine::BaseEngine* _engine{nullptr};
+    int _num_input_channels{0};
+    int _num_output_channels{0};
+    AudioDevice _input_device;
+    AudioDevice _output_device;
+    ChunkSampleBuffer _in_buffer{MAX_FRONTEND_CHANNELS};
+    ChunkSampleBuffer _out_buffer{MAX_FRONTEND_CHANNELS};
+};
+
 AppleCoreAudioFrontend::AppleCoreAudioFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine)
+
 {
 }
 
 AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration* config)
 {
-    return BaseAudioFrontend::init(config);
+    auto coreaudio_config = static_cast<AppleCoreAudioFrontendConfiguration*>(config);
+
+    auto ret_code = BaseAudioFrontend::init(config);
+    if (ret_code != AudioFrontendStatus::OK)
+    {
+        return ret_code;
+    }
+
+    auto devices = AudioSystemObject::get_audio_devices();
+
+    AudioObjectID input_device_id = 0;
+    if (coreaudio_config->input_device_uid)
+    {
+        if (auto* input_device = get_device_for_uid(devices, coreaudio_config->input_device_uid.value()))
+            input_device_id = input_device->get_audio_object_id();
+    }
+
+    AudioObjectID output_device_id = 0;
+    if (coreaudio_config->output_device_uid)
+    {
+        if (auto* output_device = get_device_for_uid(devices, coreaudio_config->output_device_uid.value()))
+            output_device_id = output_device->get_audio_object_id();
+    }
+
+    if (input_device_id == 0)
+        input_device_id = AudioSystemObject::get_default_device_id(true);// Fallback to default input device
+
+    if (output_device_id == 0)
+        output_device_id = AudioSystemObject::get_default_device_id(false);// Fallback to default output device
+
+    _pimpl = std::make_unique<Impl>(_engine, input_device_id, output_device_id);
+    return _pimpl->init(coreaudio_config);
 }
 
 void AppleCoreAudioFrontend::cleanup()
 {
+    if (_engine != nullptr)
+        _engine->enable_realtime(false);
+
+    if (_pimpl)
+        _pimpl->stop_io();
 }
 
 void AppleCoreAudioFrontend::run()
 {
+    if (!_pimpl)
+        return SUSHI_LOG_ERROR("Not initialized, cannot start processing");
+
+    _engine->enable_realtime(true);
+    _pimpl->start_io();
 }
 
 void AppleCoreAudioFrontend::pause(bool enabled)
@@ -547,6 +741,9 @@ rapidjson::Document AppleCoreAudioFrontend::generate_devices_info_document()
 
     return document;
 }
+
+// Implemented here to allow Pimpl
+AppleCoreAudioFrontend::~AppleCoreAudioFrontend() = default;
 
 }// namespace sushi::audio_frontend
 
