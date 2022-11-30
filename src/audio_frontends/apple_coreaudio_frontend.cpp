@@ -289,6 +289,19 @@ private:
 class AudioDevice : public AudioObject
 {
 public:
+    /**
+     * Baseclass for other classes who want to receive the audio callbacks for this device.
+     */
+    class AudioCallback
+    {
+    public:
+        virtual void audioCallback([[maybe_unused]] const AudioTimeStamp* now,
+                                   [[maybe_unused]] const AudioBufferList* input_data,
+                                   [[maybe_unused]] const AudioTimeStamp* input_time,
+                                   [[maybe_unused]] AudioBufferList* output_data,
+                                   [[maybe_unused]] const AudioTimeStamp* output_time) {}
+    };
+
     explicit AudioDevice(AudioObjectID audio_object_id) : AudioObject(audio_object_id) {}
     virtual ~AudioDevice()
     {
@@ -314,10 +327,12 @@ public:
      * Starts IO on this device.
      * @return True if successful, or false if an error occurred.
      */
-    bool start_io()
+    bool start_io(AudioCallback* audio_callback)
     {
-        if (!is_valid() || _io_proc_id != nullptr)
+        if (!is_valid() || _io_proc_id != nullptr || audio_callback == nullptr)
             return false;
+
+        _audio_callback = audio_callback;
 
         CA_RETURN_IF_ERROR(AudioDeviceCreateIOProcID(get_audio_object_id(), audio_device_io_proc, this, &_io_proc_id), false);
         CA_RETURN_IF_ERROR(AudioDeviceStart(get_audio_object_id(), _io_proc_id), false);
@@ -338,6 +353,7 @@ public:
         CA_LOG_IF_ERROR(AudioDeviceDestroyIOProcID(get_audio_object_id(), _io_proc_id));
 
         _io_proc_id = nullptr;
+        _audio_callback = nullptr;
 
         return true;
     }
@@ -414,24 +430,7 @@ public:
 private:
     /// Holds the identifier for the io proc audio callbacks.
     AudioDeviceIOProcID _io_proc_id{nullptr};
-
-    /**
-     * This function will be called by the realtime audio IO thread to provide and get a new block of audio data.
-     * @param audio_object_id
-     * @param now
-     * @param input_data
-     * @param input_time
-     * @param output_data
-     * @param output_time
-     */
-    void audio_device_io_proc([[maybe_unused]] const AudioTimeStamp* now,
-                              [[maybe_unused]] const AudioBufferList* input_data,
-                              [[maybe_unused]] const AudioTimeStamp* input_time,
-                              [[maybe_unused]] AudioBufferList* output_data,
-                              [[maybe_unused]] const AudioTimeStamp* output_time)
-    {
-        fmt::print("Sample time: {}\n", now->mSampleTime);
-    }
+    AudioCallback* _audio_callback{nullptr};
 
     /**
      * Static function which gets called by an audio device to provide and get audio data.
@@ -452,7 +451,10 @@ private:
         if (audio_object_id != audio_device->get_audio_object_id())
             return 0;// Wrong audio object id.
 
-        audio_device->audio_device_io_proc(now, input_data, input_time, output_data, output_time);
+        if (audio_device->_audio_callback == nullptr)
+            return 0;// No audio callback installed.
+
+        audio_device->_audio_callback->audioCallback(now, input_data, input_time, output_data, output_time);
 
         return 0;
     }
@@ -516,12 +518,14 @@ const AudioDevice* get_device_for_uid(const std::vector<AudioDevice>& audio_devi
 
 namespace sushi::audio_frontend {
 
-class AppleCoreAudioFrontend::Impl
+class AppleCoreAudioFrontend::Impl : private AudioDevice::AudioCallback
 {
 public:
     explicit Impl(engine::BaseEngine* engine, AudioObjectID input_device_id, AudioObjectID output_device_id) : _engine(engine),
                                                                                                                _input_device(input_device_id),
                                                                                                                _output_device(output_device_id) {}
+
+    virtual ~Impl() = default;
 
     AudioFrontendStatus init(const AppleCoreAudioFrontendConfiguration* config)
     {
@@ -597,10 +601,10 @@ public:
     void start_io()
     {
         if (_input_device.is_valid())
-            _input_device.start_io();
+            _input_device.start_io(this);
 
         if (_output_device.is_valid())
-            _output_device.start_io();
+            _output_device.start_io(this);
     }
 
     void stop_io()
@@ -620,12 +624,14 @@ private:
     AudioDevice _output_device;
     ChunkSampleBuffer _in_buffer{MAX_FRONTEND_CHANNELS};
     ChunkSampleBuffer _out_buffer{MAX_FRONTEND_CHANNELS};
+
+    void audioCallback(const AudioTimeStamp* now, const AudioBufferList* input_data, const AudioTimeStamp* input_time, AudioBufferList* output_data, const AudioTimeStamp* output_time) override
+    {
+        fmt::print("Sample time: {}\n", now->mSampleTime);
+    }
 };
 
-AppleCoreAudioFrontend::AppleCoreAudioFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine)
-
-{
-}
+AppleCoreAudioFrontend::AppleCoreAudioFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
 
 AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration* config)
 {
