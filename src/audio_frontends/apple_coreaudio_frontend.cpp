@@ -289,13 +289,22 @@ private:
 class AudioDevice : public AudioObject
 {
 public:
+    enum class Scope
+    {
+        Undefined = 0,
+        Input,
+        Output,
+        InputOutput,
+    };
+
     /**
      * Baseclass for other classes who want to receive the audio callbacks for this device.
      */
     class AudioCallback
     {
     public:
-        virtual void audioCallback([[maybe_unused]] const AudioTimeStamp* now,
+        virtual void audioCallback([[maybe_unused]] Scope scope,
+                                   [[maybe_unused]] const AudioTimeStamp* now,
                                    [[maybe_unused]] const AudioBufferList* input_data,
                                    [[maybe_unused]] const AudioTimeStamp* input_time,
                                    [[maybe_unused]] AudioBufferList* output_data,
@@ -327,12 +336,13 @@ public:
      * Starts IO on this device.
      * @return True if successful, or false if an error occurred.
      */
-    bool start_io(AudioCallback* audio_callback)
+    bool start_io(AudioCallback* audio_callback, Scope for_scope)
     {
         if (!is_valid() || _io_proc_id != nullptr || audio_callback == nullptr)
             return false;
 
         _audio_callback = audio_callback;
+        _scope = for_scope;
 
         CA_RETURN_IF_ERROR(AudioDeviceCreateIOProcID(get_audio_object_id(), audio_device_io_proc, this, &_io_proc_id), false);
         CA_RETURN_IF_ERROR(AudioDeviceStart(get_audio_object_id(), _io_proc_id), false);
@@ -431,6 +441,7 @@ private:
     /// Holds the identifier for the io proc audio callbacks.
     AudioDeviceIOProcID _io_proc_id{nullptr};
     AudioCallback* _audio_callback{nullptr};
+    Scope _scope{Scope::Undefined};
 
     /**
      * Static function which gets called by an audio device to provide and get audio data.
@@ -454,7 +465,7 @@ private:
         if (audio_device->_audio_callback == nullptr)
             return 0;// No audio callback installed.
 
-        audio_device->_audio_callback->audioCallback(now, input_data, input_time, output_data, output_time);
+        audio_device->_audio_callback->audioCallback(audio_device->_scope, now, input_data, input_time, output_data, output_time);
 
         return 0;
     }
@@ -598,22 +609,43 @@ public:
         return AudioFrontendStatus::OK;
     }
 
-    void start_io()
+    bool start_io()
     {
-        if (_input_device.is_valid())
-            _input_device.start_io(this);
+        if (_input_device.get_audio_object_id() == _output_device.get_audio_object_id())
+        {
+            // Input and output are the same device, start only the output device
+            if (!_output_device.start_io(this, AudioDevice::Scope::InputOutput))
+                return false;
+        }
+        else
+        {
+            SUSHI_LOG_ERROR("Separate input and output device not supported");
+            return false;
 
-        if (_output_device.is_valid())
-            _output_device.start_io(this);
+            if (!_input_device.start_io(this, AudioDevice::Scope::Input))
+                return false;
+
+            if (!_output_device.start_io(this, AudioDevice::Scope::Output))
+            {
+                _input_device.stop_io();// Also stop the input device to prevent only the input side from processing.
+                return false;
+            }
+        }
+
+        return true;
     }
 
-    void stop_io()
+    bool stop_io()
     {
-        if (_input_device.is_valid())
-            _input_device.stop_io();
+        bool result = true;
 
-        if (_output_device.is_valid())
-            _output_device.stop_io();
+        if (_input_device.is_valid() && !_input_device.stop_io())
+            result = false;
+
+        if (_output_device.is_valid() && !_output_device.stop_io())
+            result = false;
+
+        return result;
     }
 
 private:
@@ -625,7 +657,7 @@ private:
     ChunkSampleBuffer _in_buffer{MAX_FRONTEND_CHANNELS};
     ChunkSampleBuffer _out_buffer{MAX_FRONTEND_CHANNELS};
 
-    void audioCallback(const AudioTimeStamp* now, const AudioBufferList* input_data, const AudioTimeStamp* input_time, AudioBufferList* output_data, const AudioTimeStamp* output_time) override
+    void audioCallback(AudioDevice::Scope scope, const AudioTimeStamp* now, const AudioBufferList* input_data, const AudioTimeStamp* input_time, AudioBufferList* output_data, const AudioTimeStamp* output_time) override
     {
         fmt::print("Sample time: {}\n", now->mSampleTime);
     }
@@ -684,7 +716,9 @@ void AppleCoreAudioFrontend::run()
         return SUSHI_LOG_ERROR("Not initialized, cannot start processing");
 
     _engine->enable_realtime(true);
-    _pimpl->start_io();
+
+    if (!_pimpl->start_io())
+        SUSHI_LOG_ERROR("Failed to start audio device(s)");
 }
 
 void AppleCoreAudioFrontend::pause(bool enabled)
