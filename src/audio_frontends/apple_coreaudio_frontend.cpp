@@ -68,7 +68,7 @@ std::string cf_string_to_std_string(const CFStringRef cf_string_ref)
     CFIndex length = CFStringGetLength(cf_string_ref);
     CFIndex max_size = CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8);
 
-    std::string output(max_size + 1, 0);// Not sure if max_size includes space for zero-termination.
+    std::string output(max_size + 1, 0);// Not sure if max_size includes space for null-termination.
     auto result = CFStringGetCString(cf_string_ref, output.data(), max_size, kCFStringEncodingUTF8);
     if (result == 0)
         return {};
@@ -370,7 +370,6 @@ private:
 
     /**
      * Static function which gets called by an audio device to provide and get audio data.
-     * Note: the docs state that
      * @return The return value is currently unused and should always be 0 (see AudioDeviceIOProc in AudioHardware.h).
      */
     static OSStatus audio_device_io_proc(AudioObjectID audio_object_id,
@@ -418,6 +417,13 @@ public:
 
         return audio_devices;
     }
+
+    static AudioObjectID get_default_device_id(bool for_input)
+    {
+        return get_global_instance().get_property<AudioObjectID>({for_input ? kAudioHardwarePropertyDefaultInputDevice : kAudioHardwarePropertyDefaultOutputDevice,
+                                                                  kAudioObjectPropertyScopeGlobal,
+                                                                  kAudioObjectPropertyElementMain});
+    };
 
 private:
     AudioSystemObject() : AudioObject(kAudioObjectSystemObject) {}
@@ -474,7 +480,7 @@ rapidjson::Document AppleCoreAudioFrontend::generate_devices_info_document()
     {
         rapidjson::Value device_obj(rapidjson::kObjectType);
         device_obj.AddMember(rapidjson::Value("name", allocator).Move(),
-                             rapidjson::Value(device.get_name().c_str(), allocator).Move(), allocator);// TODO: Not sure if temporary std::string object stays alive long enough.
+                             rapidjson::Value(device.get_name().c_str(), allocator).Move(), allocator);
         device_obj.AddMember(rapidjson::Value("inputs", allocator).Move(),
                              rapidjson::Value(device.get_num_channels(true)).Move(), allocator);
         device_obj.AddMember(rapidjson::Value("outputs", allocator).Move(),
@@ -483,26 +489,24 @@ rapidjson::Document AppleCoreAudioFrontend::generate_devices_info_document()
     }
     ca_devices.AddMember(rapidjson::Value("devices", allocator).Move(), devices.Move(), allocator);
 
-//    auto default_input = frontend.default_input_device();
-//    if (!default_input.has_value())
-//    {
-//        SUSHI_LOG_ERROR("Could not retrieve Apple CoreAudio default input device");
-//    }
-//    else
-//    {
-//        ca_devices.AddMember(rapidjson::Value("default_input_device", allocator).Move(),
-//                             rapidjson::Value(default_input.value()).Move(), allocator);
-//    }
-//    auto default_output = frontend.default_output_device();
-//    if (!default_output.has_value())
-//    {
-//        SUSHI_LOG_ERROR("Could not retrieve Apple CoreAudio default output device");
-//    }
-//    else
-//    {
-//        ca_devices.AddMember(rapidjson::Value("default_output_device", allocator).Move(),
-//                             rapidjson::Value(default_output.value()).Move(), allocator);
-//    }
+    auto add_default_device_index = [&audio_devices, &ca_devices, &allocator](bool for_input) {
+        auto default_audio_device_object_id = AudioSystemObject::get_default_device_id(for_input);
+
+        for (auto it = audio_devices.begin(); it != audio_devices.end(); it++)
+        {
+            if (it->get_audio_object_id() == default_audio_device_object_id)
+            {
+                ca_devices.AddMember(rapidjson::Value(for_input ? "default_input_device" : "default_output_device", allocator).Move(),
+                                     rapidjson::Value(static_cast<uint64_t>(std::distance(audio_devices.begin(), it))).Move(), allocator);
+                return;
+            }
+        }
+
+        SUSHI_LOG_ERROR("Could not retrieve Apple CoreAudio default {} device", for_input ? "input" : "output");
+    };
+
+    add_default_device_index(true);
+    add_default_device_index(false);
 
     document.AddMember(rapidjson::Value("apple_coreaudio_devices", allocator), ca_devices.Move(), allocator);
 
