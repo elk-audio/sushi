@@ -659,7 +659,6 @@ private:
 
     void audioCallback(AudioDevice::Scope scope, const AudioTimeStamp* now, const AudioBufferList* input_data, const AudioTimeStamp* input_time, AudioBufferList* output_data, const AudioTimeStamp* output_time) override
     {
-        fmt::print("Sample time: {}\n", now->mSampleTime);
     }
 };
 

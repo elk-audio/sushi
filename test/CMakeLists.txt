@@ -160,6 +160,11 @@ if (${SUSHI_WITH_PORTAUDIO})
     set(TEST_COMPILE_DEFINITIONS ${TEST_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_PORTAUDIO)
 endif()
 
+if (${SUSHI_WITH_APPLE_COREAUDIO})
+    set(TEST_FILES ${TEST_FILES} unittests/audio_frontends/apple_coreaudio_frontend_test.cpp unittests/test_utils/apple_coreaudio_mockup.cpp)
+    set(TEST_COMPILE_DEFINITIONS ${TEST_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_APPLE_COREAUDIO)
+endif()
+
 if (${SUSHI_WITH_VST3})
     set(TEST_FILES ${TEST_FILES} unittests/library/vst3x_wrapper_test.cpp)
     set(TEST_COMPILE_DEFINITIONS ${TEST_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_VST3)
