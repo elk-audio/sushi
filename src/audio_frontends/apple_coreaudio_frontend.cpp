@@ -133,6 +133,25 @@ protected:
     }
 
     /**
+     * Get a string property for given address.
+     * Note: please make sure that the property is of type CFStringRef, otherwise behaviour is undefined.
+     * @param address The address of the property.
+     * @return A string containing the UTF8 representation of property at given address.
+     */
+    [[nodiscard]] std::string get_cfstring_property(const AudioObjectPropertyAddress& address) const
+    {
+        const auto* cf_string_ref = get_property<CFStringRef>(address);
+        if (cf_string_ref == nullptr)
+            return {};
+
+        auto string = cf_string_to_std_string(cf_string_ref);
+
+        CFRelease(cf_string_ref);
+
+        return string;
+    }
+
+    /**
      * Gets an array property.
      * @tparam T The type of the property's elements.
      * @param address The address of the property.
@@ -294,6 +313,7 @@ public:
 
         CA_RETURN_IF_ERROR(AudioDeviceCreateIOProcID(get_audio_object_id(), audio_device_io_proc, this, &_io_proc_id), false);
         CA_RETURN_IF_ERROR(AudioDeviceStart(get_audio_object_id(), _io_proc_id), false);
+
         return true;
     }
 
@@ -314,21 +334,33 @@ public:
         return true;
     }
 
+    /**
+     * @return The name of the device.
+     */
     [[nodiscard]] std::string get_name() const
     {
-        const auto* cf_string_ref = get_property<CFStringRef>({kAudioObjectPropertyName,
-                                                               kAudioObjectPropertyScopeGlobal,
-                                                               kAudioObjectPropertyElementMain});
-        if (cf_string_ref == nullptr)
-            return {};
-
-        auto string = cf_string_to_std_string(cf_string_ref);
-
-        CFRelease(cf_string_ref);
-
-        return string;
+        return get_cfstring_property({kAudioObjectPropertyName,
+                                      kAudioObjectPropertyScopeGlobal,
+                                      kAudioObjectPropertyElementMain});
     }
 
+    /**
+     * Returns the UID of this device. The UID is persistent across system boots and cannot be shared with other systems.
+     * For more information, read the documentation of kAudioDevicePropertyDeviceUID inside AudioHardware.h
+     * @return The UID of the device.
+     */
+    [[nodiscard]] std::string get_uid() const
+    {
+        return get_cfstring_property({kAudioDevicePropertyDeviceUID,
+                                      kAudioObjectPropertyScopeGlobal,
+                                      kAudioObjectPropertyElementMain});
+    }
+
+    /**
+     * @param for_input When true the amount of channels for the input will be returned, when false the amount
+     * of channels for the output will be returned.
+     * @return The amount of channels for the input or output.
+     */
     [[nodiscard]] int get_num_channels(bool for_input) const
     {
         AudioObjectPropertyAddress pa{kAudioDevicePropertyStreamConfiguration,
@@ -351,6 +383,7 @@ public:
     }
 
 private:
+    /// Holds the identifier for the io proc audio callbacks.
     AudioDeviceIOProcID _io_proc_id{nullptr};
 
     /**
@@ -481,6 +514,8 @@ rapidjson::Document AppleCoreAudioFrontend::generate_devices_info_document()
         rapidjson::Value device_obj(rapidjson::kObjectType);
         device_obj.AddMember(rapidjson::Value("name", allocator).Move(),
                              rapidjson::Value(device.get_name().c_str(), allocator).Move(), allocator);
+        device_obj.AddMember(rapidjson::Value("uid", allocator).Move(),
+                             rapidjson::Value(device.get_uid().c_str(), allocator).Move(), allocator);
         device_obj.AddMember(rapidjson::Value("inputs", allocator).Move(),
                              rapidjson::Value(device.get_num_channels(true)).Move(), allocator);
         device_obj.AddMember(rapidjson::Value("outputs", allocator).Move(),
