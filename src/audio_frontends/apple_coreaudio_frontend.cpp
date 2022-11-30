@@ -532,9 +532,9 @@ namespace sushi::audio_frontend {
 class AppleCoreAudioFrontend::Impl : private AudioDevice::AudioCallback
 {
 public:
-    explicit Impl(engine::BaseEngine* engine, AudioObjectID input_device_id, AudioObjectID output_device_id) : _engine(engine),
-                                                                                                               _input_device(input_device_id),
-                                                                                                               _output_device(output_device_id) {}
+    explicit Impl(AppleCoreAudioFrontend* owner, AudioObjectID input_device_id, AudioObjectID output_device_id) : _owner(owner),
+                                                                                                                  _input_device(input_device_id),
+                                                                                                                  _output_device(output_device_id) {}
 
     virtual ~Impl() = default;
 
@@ -549,26 +549,6 @@ public:
 
         // TODO: Set latency on engine.
 
-        if (_num_input_channels > 0)
-        {
-            SUSHI_LOG_INFO("Connected input channels to {}", _input_device.get_name());
-            SUSHI_LOG_INFO("Input device has {} available channels", _input_device.get_num_channels(true));
-        }
-        else
-        {
-            SUSHI_LOG_DEBUG("No input channels found not connecting to input device");
-        }
-
-        if (_num_output_channels > 0)
-        {
-            SUSHI_LOG_DEBUG("Connected output channels to {}", _output_device.get_name());
-            SUSHI_LOG_INFO("Output device has {} available channels", _output_device.get_num_channels(false));
-        }
-        else
-        {
-            SUSHI_LOG_INFO("No output channels found not connecting to output device");
-        }
-
         SUSHI_LOG_INFO("Stream started, using input latency {} and output latency {}", -1, -1);
 
         return AudioFrontendStatus::OK;
@@ -582,29 +562,53 @@ public:
             return AudioFrontendStatus::AUDIO_HW_ERROR;
         }
 
-        _num_input_channels = _input_device.get_num_channels(true);
-        _num_output_channels = _output_device.get_num_channels(false);
+        _device_num_input_channels = _input_device.get_num_channels(true);
+        _device_num_output_channels = _output_device.get_num_channels(false);
 
-        _in_buffer = ChunkSampleBuffer(_num_input_channels);
-        _out_buffer = ChunkSampleBuffer(_num_output_channels);
-        _engine->set_audio_input_channels(_num_input_channels);
-        _engine->set_audio_output_channels(_num_output_channels);
+        auto num_input_channels = std::min(_device_num_input_channels, MAX_FRONTEND_CHANNELS);
+        auto num_output_channels = std::min(_device_num_output_channels, MAX_FRONTEND_CHANNELS);
 
-        auto status = _engine->set_cv_input_channels(config->cv_inputs);
+        _in_buffer = ChunkSampleBuffer(num_input_channels);
+        _out_buffer = ChunkSampleBuffer(num_output_channels);
+
+        _owner->_engine->set_audio_input_channels(num_input_channels);
+        _owner->_engine->set_audio_output_channels(num_output_channels);
+
+        auto status = _owner->_engine->set_cv_input_channels(config->cv_inputs);
         if (status != engine::EngineReturnStatus::OK)
         {
             SUSHI_LOG_ERROR("Failed to setup CV input channels");
             return AudioFrontendStatus::AUDIO_HW_ERROR;
         }
 
-        status = _engine->set_cv_output_channels(config->cv_outputs);
+        status = _owner->_engine->set_cv_output_channels(config->cv_outputs);
         if (status != engine::EngineReturnStatus::OK)
         {
             SUSHI_LOG_ERROR("Failed to setup CV output channels");
             return AudioFrontendStatus::AUDIO_HW_ERROR;
         }
 
-        SUSHI_LOG_DEBUG("Setting up CoreAudio with {} inputs {} outputs", _num_input_channels, _num_output_channels);
+        SUSHI_LOG_DEBUG("Setting up CoreAudio with {} inputs {} outputs", num_input_channels, num_output_channels);
+
+        if (num_input_channels > 0)
+        {
+            SUSHI_LOG_INFO("Connected input channels to {}", _input_device.get_name());
+            SUSHI_LOG_INFO("Input device has {} available channels", _device_num_input_channels);
+        }
+        else
+        {
+            SUSHI_LOG_INFO("No input channels found, not connecting to input device");
+        }
+
+        if (num_output_channels > 0)
+        {
+            SUSHI_LOG_INFO("Connected output channels to {}", _output_device.get_name());
+            SUSHI_LOG_INFO("Output device has {} available channels", _device_num_output_channels);
+        }
+        else
+        {
+            SUSHI_LOG_INFO("No output channels found, not connecting to output device");
+        }
 
         return AudioFrontendStatus::OK;
     }
@@ -619,7 +623,7 @@ public:
         }
         else
         {
-            SUSHI_LOG_ERROR("Separate input and output device not supported");
+            SUSHI_LOG_ERROR("Separate input and output device currently not supported");
             return false;
 
             if (!_input_device.start_io(this, AudioDevice::Scope::Input))
@@ -649,16 +653,81 @@ public:
     }
 
 private:
-    engine::BaseEngine* _engine{nullptr};
-    int _num_input_channels{0};
-    int _num_output_channels{0};
+    AppleCoreAudioFrontend* _owner{nullptr};
     AudioDevice _input_device;
     AudioDevice _output_device;
-    ChunkSampleBuffer _in_buffer{MAX_FRONTEND_CHANNELS};
-    ChunkSampleBuffer _out_buffer{MAX_FRONTEND_CHANNELS};
+    int _device_num_input_channels{0};
+    int _device_num_output_channels{0};
+    ChunkSampleBuffer _in_buffer{0};
+    ChunkSampleBuffer _out_buffer{0};
+    engine::ControlBuffer _in_controls;
+    engine::ControlBuffer _out_controls;
+    int64_t _processed_sample_count{0};
 
     void audioCallback(AudioDevice::Scope scope, const AudioTimeStamp* now, const AudioBufferList* input_data, const AudioTimeStamp* input_time, AudioBufferList* output_data, const AudioTimeStamp* output_time) override
     {
+        // TODO: Clear output_data buffers.
+
+        _out_buffer.clear();
+
+        if (scope != AudioDevice::Scope::InputOutput)
+        {
+            // TODO: Implement callbacks from 2 different devices (in case the input device is not the same as the output device).
+            return;
+        }
+
+        if (input_data->mNumberBuffers < 0)
+            return;
+
+        if (output_data->mNumberBuffers < 0)
+            return;
+
+        if (_owner->_pause_manager.should_process())
+        {
+            _copy_interleaved_audio_to_input_buffer(static_cast<const float*>(input_data->mBuffers[0].mData), static_cast<int>(input_data->mBuffers[0].mNumberChannels));
+
+            _owner->_engine->process_chunk(&_in_buffer, &_out_buffer, &_in_controls, &_out_controls, {}, _processed_sample_count);
+
+            if (_owner->_pause_manager.should_ramp())
+                _owner->_pause_manager.ramp_output(_out_buffer);
+        }
+        else
+        {
+            if (_owner->_pause_notified == false)
+            {
+                _owner->_pause_notify->notify();
+                _owner->_pause_notified = true;
+                _owner->_engine->enable_realtime(false);
+            }
+        }
+
+        _copy_output_buffer_to_interleaved_buffer(static_cast<float*>(output_data->mBuffers[0].mData), static_cast<int>(output_data->mBuffers[0].mNumberChannels));
+
+        // TODO: _processed_sample_count += frame_count;
+    }
+
+    void _copy_interleaved_audio_to_input_buffer(const float* input, int num_channels)
+    {
+        for (int ch = 0; ch < std::min(num_channels, _in_buffer.channel_count()); ch++)
+        {
+            float* in_dst = _in_buffer.channel(ch);
+            for (size_t s = 0; s < AUDIO_CHUNK_SIZE; s++)
+            {
+                in_dst[s] = input[s * num_channels + ch];
+            }
+        }
+    }
+
+    void _copy_output_buffer_to_interleaved_buffer(float* output, int num_channels)
+    {
+        for (int ch = 0; ch < std::min(num_channels, _out_buffer.channel_count()); ch++)
+        {
+            const float* out_src = _out_buffer.channel(ch);
+            for (size_t s = 0; s < AUDIO_CHUNK_SIZE; s++)
+            {
+                output[s * num_channels + ch] = out_src[s];
+            }
+        }
     }
 };
 
@@ -696,7 +765,7 @@ AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration*
     if (output_device_id == 0)
         output_device_id = AudioSystemObject::get_default_device_id(false);// Fallback to default output device
 
-    _pimpl = std::make_unique<Impl>(_engine, input_device_id, output_device_id);
+    _pimpl = std::make_unique<Impl>(this, input_device_id, output_device_id);
     return _pimpl->init(coreaudio_config);
 }
 
