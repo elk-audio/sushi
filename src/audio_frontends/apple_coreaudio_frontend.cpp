@@ -141,6 +141,33 @@ protected:
     }
 
     /**
+     * Sets the data for property of type T.
+     * @tparam T The type of the property (it's size must match the size of the property).
+     * @param address The address of the property.
+     * @param value The value to set.
+     * @return True if successful, or false if property could not be set.
+     */
+    template<typename T>
+    [[nodiscard]] bool set_property(const AudioObjectPropertyAddress& address, const T& value) const
+    {
+        if (!has_property(address))
+        {
+            SUSHI_LOG_ERROR("AudioObject doesn't have requested property");
+            return {};
+        }
+
+        const auto type_size = sizeof(T);// NOLINT Clang-Tidy: Suspicious usage of 'sizeof(A*)'; pointer to aggregate
+
+        if (get_property_data_size(address) != type_size)
+        {
+            SUSHI_LOG_ERROR("AudioObject's property size invalid");
+            return {};
+        }
+
+        return set_property_data(address, type_size, &value);
+    }
+
+    /**
      * Get a string property for given address.
      * Note: please make sure that the property is of type CFStringRef, otherwise behaviour is undefined.
      * @param address The address of the property.
@@ -437,6 +464,22 @@ public:
         return static_cast<int>(channel_count);
     }
 
+    /**
+     * @param buffer_frame_size The number of frames in the io buffers.
+     * @return True if succeeded, or false if buffer frame size could not be set.
+     */
+    bool set_buffer_frame_size(uint32_t buffer_frame_size)
+    {
+        if (!is_valid())
+            return false;
+
+        AudioObjectPropertyAddress pa{kAudioDevicePropertyBufferFrameSize,
+                                      kAudioObjectPropertyScopeGlobal,
+                                      kAudioObjectPropertyElementMain};
+
+        return set_property(pa, buffer_frame_size);
+    }
+
 private:
     /// Holds the identifier for the io proc audio callbacks.
     AudioDeviceIOProcID _io_proc_id{nullptr};
@@ -545,6 +588,24 @@ public:
         {
             SUSHI_LOG_ERROR("Failed to configure audio channels");
             return channel_conf_result;
+        }
+
+        if (_input_device.is_valid())
+        {
+            if (!_input_device.set_buffer_frame_size(AUDIO_CHUNK_SIZE))
+            {
+                SUSHI_LOG_ERROR("Failed to set buffer size to {} for device {}", AUDIO_CHUNK_SIZE, _input_device.get_name());
+                return AudioFrontendStatus::AUDIO_HW_ERROR;
+            }
+        }
+
+        if (_output_device.is_valid())
+        {
+            if (!_output_device.set_buffer_frame_size(AUDIO_CHUNK_SIZE))
+            {
+                SUSHI_LOG_ERROR("Failed to set buffer size to {} for device {}", AUDIO_CHUNK_SIZE, _output_device.get_name());
+                return AudioFrontendStatus::AUDIO_HW_ERROR;
+            }
         }
 
         // TODO: Set latency on engine.
