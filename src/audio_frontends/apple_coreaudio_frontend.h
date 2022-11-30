@@ -49,12 +49,11 @@ class AppleCoreAudioFrontend : public BaseAudioFrontend
 {
 public:
     explicit AppleCoreAudioFrontend(engine::BaseEngine* engine);
-    ~AppleCoreAudioFrontend();
+    ~AppleCoreAudioFrontend() override;
 
     AudioFrontendStatus init(BaseAudioFrontendConfiguration* config) override;
     void cleanup() override;
     void run() override;
-    void pause(bool enabled) override;
 
     static rapidjson::Document generate_devices_info_document();
 

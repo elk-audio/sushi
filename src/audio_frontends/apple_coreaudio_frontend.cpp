@@ -721,11 +721,6 @@ void AppleCoreAudioFrontend::run()
         SUSHI_LOG_ERROR("Failed to start audio device(s)");
 }
 
-void AppleCoreAudioFrontend::pause(bool enabled)
-{
-    BaseAudioFrontend::pause(enabled);
-}
-
 rapidjson::Document AppleCoreAudioFrontend::generate_devices_info_document()
 {
     AppleCoreAudioFrontend frontend{nullptr};
