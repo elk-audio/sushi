@@ -438,7 +438,7 @@ TEST_F(TestVst3xWrapper, TestMultipleStates)
     EXPECT_FLOAT_EQ(0.55f, _module_under_test->parameter_value(desc->id()).second);
     EXPECT_FALSE(_module_under_test->bypassed());
 
-    // Retrive the delete events and execute them to delete the RtState objects
+    // Retrieve the delete events and execute them to delete the RtState objects
     // Also make sure that a notification was sent for every state change
     RtEvent rt_event;
     int deleted_states = 0;
