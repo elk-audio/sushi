@@ -19,48 +19,90 @@
  * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include "twine/src/twine_internal.h"
 
 #include "audio_graph.h"
 
-namespace sushi {
-namespace engine {
+namespace sushi::engine {
 
 constexpr bool DISABLE_DENORMALS = true;
 
 void external_render_callback(void* data)
 {
-    /* Signal that this is a realtime audio processing thread */
-    twine::ThreadRtFlag rt_flag;
+    auto worker_data = reinterpret_cast<WorkerData*>(data);
 
-    auto tracks = reinterpret_cast<std::vector<Track*>*>(data);
-    for (auto i : *tracks)
+#ifdef SUSHI_APPLE_THREADING
+    if (worker_data->thread_data.initialized == false)
     {
-        i->render();
+        initialize_thread(worker_data->thread_data);
+        worker_data->thread_data.initialized = true;
     }
+#endif
+
+    for (auto track : *(*worker_data).tracks)
+    {
+        track->render();
+    }
+
+#ifdef SUSHI_APPLE_THREADING
+    if (worker_data->thread_data.should_leave == true)
+    {
+        leave_workgroup_if_needed(worker_data->thread_data);
+    }
+#endif
 }
 
 AudioGraph::AudioGraph(int cpu_cores,
                        int max_no_tracks,
+                       [[maybe_unused]] float sample_rate,
+                       [[maybe_unused]] std::optional<std::string> device_name,
                        bool debug_mode_switches) : _audio_graph(cpu_cores),
                                                    _event_outputs(cpu_cores),
                                                    _cores(cpu_cores),
                                                    _current_core(0)
 {
     assert(cpu_cores > 0);
+
     if (_cores > 1)
     {
         _worker_pool = twine::WorkerPool::create_worker_pool(_cores, DISABLE_DENORMALS, debug_mode_switches);
-        for (auto& i : _audio_graph)
+
+        _worker_data = std::make_unique<WorkerData[]>(_cores);
+
+        int worker_index = 0;
+
+        auto p_workgroup = apple::get_device_workgroup(device_name.value());
+
+        for (auto& tracks : _audio_graph)
         {
-            _worker_pool->add_worker(external_render_callback, &i);
-            i.reserve(max_no_tracks);
+            auto worker_data = &_worker_data[worker_index];
+
+            worker_data->tracks = &tracks;
+
+#ifdef SUSHI_APPLE_THREADING
+            worker_data->thread_data.p_workgroup = p_workgroup;
+            worker_data->thread_data.device_name = device_name;
+            worker_data->thread_data.current_sample_rate = sample_rate;
+#endif
+            _worker_pool->add_worker(external_render_callback, worker_data, 75);
+            tracks.reserve(max_no_tracks);
+
+            worker_index++;
         }
     }
     else
     {
         _audio_graph[0].reserve(max_no_tracks);
     }
+}
+
+AudioGraph::~AudioGraph()
+{
+#ifdef SUSHI_APPLE_THREADING
+    for (int i = _cores - 1; i >= 0; i--)
+    {
+        _worker_data[i].thread_data.should_leave = true;
+    }
+#endif
 }
 
 bool AudioGraph::add(Track* track)
@@ -120,5 +162,4 @@ void AudioGraph::render()
     }
 }
 
-} // namespace engine
-} // namespace sushi
+} // namespace sushi::engine

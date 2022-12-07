@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -7,15 +7,15 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
  * @brief Main entry point to Sushi
- * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Elk Audio AB, Stockholm
  */
 
 #include <vector>
@@ -24,6 +24,8 @@
 #include <optional>
 #include <condition_variable>
 #include <filesystem>
+
+#include "apple_threading_utilities.h"
 
 #include "twine/src/twine_internal.h"
 
@@ -141,6 +143,7 @@ int main(int argc, char* argv[])
     {
         return 1;
     }
+
     if (cl_parser.optionsCount() == 0 || cl_options[OPT_IDX_HELP])
     {
         optionparser::printUsage(fwrite, stdout, usage);
@@ -359,8 +362,11 @@ int main(int argc, char* argv[])
     ////////////////////////////////////////////////////////////////////////////////
     // Logger configuration
     ////////////////////////////////////////////////////////////////////////////////
-    auto ret_code = SUSHI_INITIALIZE_LOGGER(log_filename, "Logger", log_level,
-                                            enable_flush_interval, log_flush_interval,
+    auto ret_code = SUSHI_INITIALIZE_LOGGER(log_filename,
+                                            "Logger",
+                                            log_level,
+                                            enable_flush_interval,
+                                            log_flush_interval,
                                             sentry_crash_handler_path, sentry_dsn);
     if (ret_code != SUSHI_LOG_ERROR_CODE_OK)
     {
@@ -405,14 +411,45 @@ int main(int argc, char* argv[])
         twine::init_xenomai(); // must be called before setting up any worker pools
     }
 
+#ifdef SUSHI_APPLE_THREADING
+    std::optional<std::string> device_name;
+    switch (frontend_type)
+    {
+#ifdef SUSHI_BUILD_WITH_PORTAUDIO
+        case FrontendType::PORTAUDIO:
+        {
+            device_name = sushi::apple::get_portaudio_output_device_name(portaudio_output_device_id);
+            break;
+        }
+#endif
+
+#ifdef SUSHI_BUILD_WITH_APPLE_COREAUDIO
+        case FrontendType::APPLE_COREAUDIO:
+        {
+            device_name = sushi::apple::get_coreaudio_output_device_name(apple_coreaudio_output_device_uid);
+            break;
+        }
+#endif
+        default:
+        {
+            device_name = std::nullopt;
+        }
+    }
+
+#else
+    device_name = std::nullopt;
+#endif
+
     auto engine = std::make_unique<sushi::engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT,
                                                                rt_cpu_cores,
+                                                               device_name,
                                                                debug_mode_switches,
                                                                nullptr);
-    if (! base_plugin_path.empty())
+    if (!base_plugin_path.empty())
     {
         engine->set_base_plugin_path(base_plugin_path);
     }
+
     auto event_dispatcher = engine->event_dispatcher();
     auto midi_dispatcher = std::make_unique<sushi::midi_dispatcher::MidiDispatcher>(engine->event_dispatcher());
     auto configurator = std::make_unique<sushi::jsonconfig::JsonConfigurator>(engine.get(),
@@ -471,6 +508,7 @@ int main(int argc, char* argv[])
             break;
         }
 
+#ifdef SUSHI_BUILD_WITH_PORTAUDIO
         case FrontendType::PORTAUDIO:
         {
             SUSHI_LOG_INFO("Setting up PortAudio frontend");
@@ -483,6 +521,21 @@ int main(int argc, char* argv[])
             audio_frontend = std::make_unique<sushi::audio_frontend::PortAudioFrontend>(engine.get());
             break;
         }
+#endif
+
+#ifdef SUSHI_BUILD_WITH_APPLE_COREAUDIO
+        case FrontendType::APPLE_COREAUDIO:
+        {
+            SUSHI_LOG_INFO("Setting up Apple CoreAudio frontend");
+
+            frontend_config = std::make_unique<sushi::audio_frontend::AppleCoreAudioFrontendConfiguration>(apple_coreaudio_input_device_uid,
+                                                                                                           apple_coreaudio_output_device_uid,
+                                                                                                           cv_inputs,
+                                                                                                           cv_outputs);
+            audio_frontend = std::make_unique<sushi::audio_frontend::AppleCoreAudioFrontend>(engine.get());
+            break;
+        }
+#endif
 
         case FrontendType::APPLE_COREAUDIO:
         {

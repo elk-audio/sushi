@@ -48,8 +48,7 @@
 #include "library/performance_timer.h"
 #include "library/plugin_registry.h"
 
-namespace sushi {
-namespace engine {
+namespace sushi::engine {
 
 class ClipDetector
 {
@@ -100,6 +99,7 @@ public:
      */
     explicit AudioEngine(float sample_rate,
                          int rt_cpu_cores = 1,
+                         [[maybe_unused]] std::optional<std::string> device_name = std::nullopt,
                          bool debug_mode_sw = false,
                          dispatcher::BaseEventDispatcher* event_dispatcher = nullptr);
 
@@ -393,8 +393,8 @@ public:
      * @param processor_name
      * @return
      */
-    std::pair <EngineReturnStatus, ObjectId> create_processor(const PluginInfo& plugin_info,
-                                                              const std::string& processor_name) override;
+    std::pair<EngineReturnStatus, ObjectId> create_processor(const PluginInfo& plugin_info,
+                                                             const std::string& processor_name) override;
 
     /**
      * @brief Add a plugin to a track. The plugin must not currently be active on any track.
@@ -657,6 +657,6 @@ private:
  */
 RealtimeState update_state(RealtimeState current_state);
 
-} // namespace engine
-} // namespace sushi
+} // namespace sushi::engine
+
 #endif //SUSHI_ENGINE_H

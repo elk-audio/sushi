@@ -2,7 +2,7 @@
 #define SUSHI_AUDIO_GRAPH_H
 
 /*
- * Copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -10,16 +10,16 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
  * @brief Wrapper around the list of tracks used for rt processing and its associated
  *        multicore management
- * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Elk Audio AB, Stockholm
  */
 
 #include <vector>
@@ -28,8 +28,24 @@
 
 #include "engine/track.h"
 
-namespace sushi {
-namespace engine {
+#include "apple_threading_utilities.h"
+
+namespace sushi::engine {
+
+/**
+ * This contains the data passed as an argument to each external_render_callback(...) invocation.
+ * On Apple silicon, the added member WorkgroupMemberData is introduced,
+ * to support entering realtime audio thread workgroups in the first callback invocation.
+ */
+struct WorkerData
+{
+    std::vector<sushi::engine::Track*>* tracks = nullptr;
+
+#ifdef SUSHI_APPLE_THREADING
+    apple::MultithreadingData thread_data;
+#endif
+};
+
 
 class AudioGraph
 {
@@ -40,10 +56,18 @@ public:
      *                  exceed the number of cores on the architecture
      * @param max_no_tracks The maximum number of tracks to reserve space for. As
      *                      add() and remove() could be called from an rt thread
-     *                      they must not (de)allocate memory-
+     *                      they must not (de)allocate memory.
+     * @param sample_rate The sample_rate - used for calculating audio thread periodicity. Only used on Apple.
+     * @param device_name The Apple audio device name for which to join a thread group.
      * @param debug_mode_switches Enable xenomai-specific thread debugging
      */
-    AudioGraph(int cpu_cores, int max_no_tracks, bool debug_mode_switches = false);
+    AudioGraph(int cpu_cores,
+               int max_no_tracks,
+               [[maybe_unused]] float sample_rate,
+               [[maybe_unused]] std::optional<std::string> device_name = std::nullopt,
+               bool debug_mode_switches = false);
+
+    ~AudioGraph();
 
     /**
      * @brief Add a track to the graph. The track will be assigned to a cpu
@@ -91,12 +115,14 @@ public:
 private:
     std::vector<std::vector<Track*>>   _audio_graph;
     std::unique_ptr<twine::WorkerPool> _worker_pool;
+
+    std::unique_ptr<WorkerData[]>      _worker_data;
+
     std::vector<RtEventFifo<>>         _event_outputs;
     int _cores;
     int _current_core;
 };
 
-} // namespace engine
-} // namespace sushi
+} // namespace sushi::engine
 
 #endif //SUSHI_AUDIO_GRAPH_H

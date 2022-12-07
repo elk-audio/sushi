@@ -40,7 +40,7 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("portaudio");
  */
 rapidjson::Document generate_portaudio_devices_info_document()
 {
-    PortAudioFrontend frontend{nullptr};
+    PortAudioFrontend frontend {nullptr};
 
     rapidjson::Document document;
     document.SetObject();

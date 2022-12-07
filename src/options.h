@@ -15,8 +15,12 @@
 
 /**
  * @brief Option parsing
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2023 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
+
+#ifndef SUSHI_OPTIONS_H
+#define SUSHI_OPTIONS_H
+
 #include <cstdio>
 #include "optionparser.h"
 
@@ -469,3 +473,5 @@ const optionparser::Descriptor usage[] =
     // Don't touch this one (set default values for optionparse library)
     { 0, 0, 0, 0, 0, 0}
 };
+
+#endif //SUSHI_OPTIONS_H
