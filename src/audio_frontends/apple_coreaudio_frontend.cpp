@@ -678,7 +678,8 @@ public:
     [[nodiscard]] UInt32 get_stream_latency(UInt32 stream_index, bool for_input) const
     {
         auto stream_ids = get_property_array<UInt32>({kAudioDevicePropertyStreams,
-                                                      for_input ? kAudioObjectPropertyScopeInput : kAudioObjectPropertyScopeOutput,
+                                                      for_input ? kAudioObjectPropertyScopeInput
+                                                                : kAudioObjectPropertyScopeOutput,
                                                       kAudioObjectPropertyElementMain});
 
         if (stream_index >= stream_ids.size())
@@ -734,19 +735,16 @@ private:
 
 /**
  * This class represents the Core Audio system object of which only one exists, system wide.
- * Implemented as singleton to prevent multiple, unnecessary instances of it.
  */
-class AudioSystemObject : private AudioObject
+class AudioSystemObject
 {
 public:
-    AudioSystemObject(const AudioSystemObject&) = delete;
-    AudioSystemObject& operator=(const AudioSystemObject&) = delete;
-
     static std::vector<AudioDevice> get_audio_devices()
     {
-        auto device_ids = get_global_instance().get_property_array<UInt32>({kAudioHardwarePropertyDevices,
-                                                                            kAudioObjectPropertyScopeGlobal,
-                                                                            kAudioObjectPropertyElementMain});
+        auto device_ids = AudioObject::get_property_array<UInt32>(kAudioObjectSystemObject,
+                                                                  {kAudioHardwarePropertyDevices,
+                                                                   kAudioObjectPropertyScopeGlobal,
+                                                                   kAudioObjectPropertyElementMain});
 
         std::vector<AudioDevice> audio_devices;
         audio_devices.reserve(device_ids.size());
@@ -761,19 +759,12 @@ public:
 
     static AudioObjectID get_default_device_id(bool for_input)
     {
-        return get_global_instance().get_property<AudioObjectID>({for_input ? kAudioHardwarePropertyDefaultInputDevice : kAudioHardwarePropertyDefaultOutputDevice,
-                                                                  kAudioObjectPropertyScopeGlobal,
-                                                                  kAudioObjectPropertyElementMain});
+        AudioObjectPropertyAddress pa{for_input ? kAudioHardwarePropertyDefaultInputDevice
+                                                : kAudioHardwarePropertyDefaultOutputDevice,
+                                      kAudioObjectPropertyScopeGlobal,
+                                      kAudioObjectPropertyElementMain};
+        return AudioObject::get_property<AudioObjectID>(kAudioObjectSystemObject, pa);
     };
-
-private:
-    AudioSystemObject() : AudioObject(kAudioObjectSystemObject) {}
-
-    static AudioSystemObject& get_global_instance()
-    {
-        static AudioSystemObject instance;
-        return instance;
-    }
 };
 
 /**
@@ -849,7 +840,7 @@ public:
 
         if (!_output_device.set_nominal_sample_rate(sample_rate))
         {
-            SUSHI_LOG_ERROR("Failed to set sample rate to {} for outpu device \"{}\"", sample_rate, _input_device.get_name());
+            SUSHI_LOG_ERROR("Failed to set sample rate to {} for output device \"{}\"", sample_rate, _input_device.get_name());
             return AudioFrontendStatus::AUDIO_HW_ERROR;
         }
 
