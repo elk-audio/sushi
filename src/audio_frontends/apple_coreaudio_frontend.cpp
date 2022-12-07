@@ -495,7 +495,7 @@ public:
      * @param buffer_frame_size The number of frames in the io buffers.
      * @return True if succeeded, or false if buffer frame size could not be set.
      */
-    bool set_buffer_frame_size(uint32_t buffer_frame_size)
+    [[nodiscard]] bool set_buffer_frame_size(uint32_t buffer_frame_size) const
     {
         if (!is_valid())
         {
@@ -514,7 +514,7 @@ public:
      * @param sample_rate The new sample rate. Apple's API seems to accept a value with a max deviation of 0.000000000001.
      * @return True if setting the sample rate succeeded, or false if an error occurred.
      */
-    bool set_nominal_sample_rate(double sample_rate)
+    [[nodiscard]] bool set_nominal_sample_rate(double sample_rate) const
     {
         if (!is_valid())
         {
@@ -526,6 +526,24 @@ public:
                                       kAudioObjectPropertyElementMain};
 
         return set_property(pa, sample_rate);
+    }
+
+    /**
+     * @param for_input True for input or false for output.
+     * @return The device latency. Note that stream latency must be added to this number in order to get the total latency.
+     */
+    [[nodiscard]] UInt32 get_device_latency(bool for_input) const
+    {
+        if (!is_valid())
+        {
+            return 0;
+        }
+
+        AudioObjectPropertyAddress pa{kAudioDevicePropertyLatency,
+                                      for_input ? kAudioObjectPropertyScopeInput : kAudioObjectPropertyScopeOutput,
+                                      kAudioObjectPropertyElementMain};
+
+        return get_property<UInt32>(pa);
     }
 
 private:
@@ -669,26 +687,37 @@ public:
             return channel_conf_result;
         }
 
-        double sample_rate = _owner->_engine->sample_rate() + 0.000000000001;
+        double sample_rate = _owner->_engine->sample_rate();
 
-        if (_output_device.is_valid())
+        if (!_output_device.is_valid())
         {
-            if (!_output_device.set_buffer_frame_size(AUDIO_CHUNK_SIZE))
-            {
-                SUSHI_LOG_ERROR("Failed to set buffer size to {} for output device \"{}\"", AUDIO_CHUNK_SIZE, _output_device.get_name());
-                return AudioFrontendStatus::AUDIO_HW_ERROR;
-            }
-
-            if (!_output_device.set_nominal_sample_rate(sample_rate))
-            {
-                SUSHI_LOG_ERROR("Failed to set sample rate to {} for outpu device \"{}\"", sample_rate, _input_device.get_name());
-                return AudioFrontendStatus::AUDIO_HW_ERROR;
-            }
+            SUSHI_LOG_ERROR("Invalid output device");
+            return AudioFrontendStatus::AUDIO_HW_ERROR;
         }
 
-        // We only have to set the input device's settings if it is not the same device as the output device, in which case the setting will already have been applied above.
-        if (_input_device.is_valid() && _input_device.get_audio_object_id() != _output_device.get_audio_object_id())
+        if (!_output_device.set_buffer_frame_size(AUDIO_CHUNK_SIZE))
         {
+            SUSHI_LOG_ERROR("Failed to set buffer size to {} for output device \"{}\"", AUDIO_CHUNK_SIZE, _output_device.get_name());
+            return AudioFrontendStatus::AUDIO_HW_ERROR;
+        }
+
+        if (!_output_device.set_nominal_sample_rate(sample_rate))
+        {
+            SUSHI_LOG_ERROR("Failed to set sample rate to {} for outpu device \"{}\"", sample_rate, _input_device.get_name());
+            return AudioFrontendStatus::AUDIO_HW_ERROR;
+        }
+
+        UInt32 output_device_latency = _output_device.get_device_latency(false);
+
+        // We only have to set the input device's settings if it is not the same device as the output device, in which case we will be using a single device for both input and output.
+        if (_input_device.get_audio_object_id() != _output_device.get_audio_object_id())
+        {
+            if (!_input_device.is_valid())
+            {
+                SUSHI_LOG_ERROR("Invalid input device");
+                return AudioFrontendStatus::AUDIO_HW_ERROR;
+            }
+
             if (!_input_device.set_buffer_frame_size(AUDIO_CHUNK_SIZE))
             {
                 SUSHI_LOG_ERROR("Failed to set buffer size to {} for input device \"{}\"", AUDIO_CHUNK_SIZE, _input_device.get_name());
@@ -701,6 +730,8 @@ public:
                 return AudioFrontendStatus::AUDIO_HW_ERROR;
             }
         }
+
+        fmt::print("Output device latency: {}", output_device_latency);
 
         // TODO: Set latency on engine.
 
@@ -852,10 +883,14 @@ private:
         }
 
         if (input_data == nullptr || output_data == nullptr)
+        {
             return;
+        }
 
         if (input_data->mNumberBuffers <= 0 || output_data->mNumberBuffers <= 0)
+        {
             return;
+        }
 
         auto input_frame_count = static_cast<int64_t>(input_data->mBuffers[0].mDataByteSize / input_data->mBuffers[0].mNumberChannels / sizeof(float));
         auto output_frame_count = static_cast<int64_t>(output_data->mBuffers[0].mDataByteSize / output_data->mBuffers[0].mNumberChannels / sizeof(float));
