@@ -827,11 +827,23 @@ private:
     engine::ControlBuffer _out_controls;
     int64_t _processed_sample_count{0};
 
-    void audioCallback(AudioDevice::Scope scope, const AudioTimeStamp* now, const AudioBufferList* input_data, const AudioTimeStamp* input_time, AudioBufferList* output_data, const AudioTimeStamp* output_time) override
+    void audioCallback(AudioDevice::Scope scope,
+                       [[maybe_unused]] const AudioTimeStamp* now,
+                       const AudioBufferList* input_data,
+                       [[maybe_unused]] const AudioTimeStamp* input_time,
+                       AudioBufferList* output_data,
+                       [[maybe_unused]] const AudioTimeStamp* output_time) override
     {
-        // TODO: Clear output_data buffers.
-
         _out_buffer.clear();
+
+        // Clear output buffers.
+        if (output_data != nullptr)
+        {
+            for (UInt32 i = 0; i < output_data->mNumberBuffers; i++)
+            {
+                std::memset(output_data->mBuffers[i].mData, 0, output_data->mBuffers[i].mDataByteSize);
+            }
+        }
 
         if (scope != AudioDevice::Scope::INPUT_OUTPUT)
         {
@@ -839,10 +851,7 @@ private:
             return;
         }
 
-        if (input_data->mNumberBuffers < 0)
-            return;
-
-        if (output_data->mNumberBuffers < 0)
+        if (input_data->mNumberBuffers <= 0 || output_data->mNumberBuffers <= 0)
             return;
 
         if (_owner->_pause_manager.should_process())
