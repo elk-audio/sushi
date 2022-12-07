@@ -114,17 +114,28 @@ public:
         return _audio_object_id != 0;
     }
 
-protected:
+    /**
+     * Tests if this AudioObject has property for given address.
+     * @param audio_object_id The ID of the AudioObject to query.
+     * @param address The address of the property to lookup.
+     * @return True if this object has the property, or false if not.
+     */
+    static bool has_property(AudioObjectID audio_object_id, const AudioObjectPropertyAddress& address)
+    {
+        return AudioObjectHasProperty(audio_object_id, &address);
+    }
+
     /**
      * Gets the data for property of type T.
      * @tparam T The type of the property (it's size must match the size of the property).
+     * @param audio_object_id The ID of the AudioObject to query.
      * @param address The address of the property.
      * @return The property, or a default constructed value on error.
      */
     template<typename T>
-    [[nodiscard]] T get_property(const AudioObjectPropertyAddress& address) const
+    static T get_property(AudioObjectID audio_object_id, const AudioObjectPropertyAddress& address)
     {
-        if (!has_property(address))
+        if (!has_property(audio_object_id, address))
         {
             SUSHI_LOG_ERROR("AudioObject doesn't have requested property");
             return {};
@@ -132,14 +143,14 @@ protected:
 
         const auto type_size = sizeof(T);// NOLINT Clang-Tidy: Suspicious usage of 'sizeof(A*)'; pointer to aggregate
 
-        if (get_property_data_size(address) != type_size)
+        if (get_property_data_size(audio_object_id, address) != type_size)
         {
             SUSHI_LOG_ERROR("AudioObject's property size invalid");
             return {};
         }
 
         T data{};
-        auto data_size = get_property_data(address, type_size, &data);
+        auto data_size = get_property_data(audio_object_id, address, type_size, &data);
         if (data_size != type_size)
         {
             SUSHI_LOG_ERROR("Failed to get data from AudioObject");
@@ -153,19 +164,20 @@ protected:
      * Sets the data for property of type T.
      * @tparam T The type of the property (it's size must match the size of the property).
      * @param address The address of the property.
+     * @param audio_object_id The ID of the AudioObject to set the property for.
      * @param value The value to set.
      * @return True if successful, or false if property could not be set.
      */
     template<typename T>
-    [[nodiscard]] bool set_property(const AudioObjectPropertyAddress& address, const T& value) const
+    static bool set_property(AudioObjectID audio_object_id, const AudioObjectPropertyAddress& address, const T& value)
     {
-        if (!has_property(address))
+        if (!has_property(audio_object_id, address))
         {
             SUSHI_LOG_ERROR("AudioObject doesn't have requested property");
             return false;
         }
 
-        if (!is_property_settable(address))
+        if (!is_property_settable(audio_object_id, address))
         {
             SUSHI_LOG_ERROR("Property is not settable");
             return false;
@@ -173,55 +185,35 @@ protected:
 
         const auto type_size = sizeof(T);// NOLINT Clang-Tidy: Suspicious usage of 'sizeof(A*)'; pointer to aggregate
 
-        if (get_property_data_size(address) != type_size)
+        if (get_property_data_size(audio_object_id, address) != type_size)
         {
             SUSHI_LOG_ERROR("AudioObject's property size invalid");
             return false;
         }
 
-        return set_property_data(address, type_size, &value);
-    }
-
-    /**
-     * Get a string property for given address.
-     * Note: please make sure that the property is of type CFStringRef, otherwise behaviour is undefined.
-     * @param address The address of the property.
-     * @return A string containing the UTF8 representation of property at given address.
-     */
-    [[nodiscard]] std::string get_cfstring_property(const AudioObjectPropertyAddress& address) const
-    {
-        const auto* cf_string_ref = get_property<CFStringRef>(address);
-        if (cf_string_ref == nullptr)
-        {
-            return {};
-        }
-
-        auto string = cf_string_to_std_string(cf_string_ref);
-
-        CFRelease(cf_string_ref);
-
-        return string;
+        return set_property_data(audio_object_id, address, type_size, &value);
     }
 
     /**
      * Gets an array property.
      * @tparam T The type of the property's elements.
+     * @param audio_object_id The ID of the AudioObject to get the array from.
      * @param address The address of the property.
      * @param data_array The array to put the property data into.
      * @return True if successful, or false if an error occurred.
      */
     template<typename T>
-    bool get_property_array(const AudioObjectPropertyAddress& address, std::vector<T>& data_array) const
+    static bool get_property_array(AudioObjectID audio_object_id, const AudioObjectPropertyAddress& address, std::vector<T>& data_array)
     {
         data_array.resize(0);
 
-        if (!has_property(address))
+        if (!has_property(audio_object_id, address))
         {
             SUSHI_LOG_ERROR("AudioObject doesn't have requested property");
             return false;
         }
 
-        auto data_size = get_property_data_size(address);
+        auto data_size = get_property_data_size(audio_object_id, address);
 
         if (data_size % sizeof(T) != 0)
         {
@@ -240,7 +232,7 @@ protected:
             return false;
         }
 
-        data_size = get_property_data(address, static_cast<UInt32>(num_bytes), data_array.data());
+        data_size = get_property_data(audio_object_id, address, static_cast<UInt32>(num_bytes), data_array.data());
 
         // Resize array based on what we actually got.
         data_array.resize(data_size / sizeof(T));
@@ -251,19 +243,159 @@ protected:
     /**
      * Gets an array property.
      * @tparam T The type of the property's elements.
+     * @param audio_object_id The ID of the AudioObject to query.
+     * @param address The address of the property.
+     * @return An array with the property's data, or an empty array if an error occurred.
+     */
+    template<typename T>
+    static std::vector<T> get_property_array(AudioObjectID audio_object_id, const AudioObjectPropertyAddress& address)
+    {
+        std::vector<T> data_array;
+        AudioObject::get_property_array(audio_object_id, address, data_array);
+        return data_array;
+    }
+
+    /**
+     * Retrieves the data size of the property for given address.
+     * @param audio_object_id The ID of the AudioObject to query.
+     * @param address The address of the property to lookup.
+     * @return The data size of the property, or 0 if the property does not exist or on any other error.
+     */
+    static UInt32 get_property_data_size(AudioObjectID audio_object_id, const AudioObjectPropertyAddress& address)
+    {
+        UInt32 data_size = 0;
+        CA_RETURN_IF_ERROR(AudioObjectGetPropertyDataSize(audio_object_id, &address, 0, nullptr, &data_size), 0);
+        return data_size;
+    }
+
+    /**
+     * Tests whether the property for given address is settable.
+     * @param audio_object_id The ID of the AudioObject to query.
+     * @param address The address of the property to lookup.
+     * @return True if settable, or false if read-only or non existent.
+     */
+    static bool is_property_settable(AudioObjectID audio_object_id, const AudioObjectPropertyAddress& address)
+    {
+        Boolean is_settable = false;
+        CA_RETURN_IF_ERROR(AudioObjectIsPropertySettable(audio_object_id, &address, &is_settable), false);
+        return is_settable != 0;
+    }
+
+    /**
+     * Gets the property data for given address.
+     * @param audio_object_id The ID of the AudioObject to query.
+     * @param address The address of the property to get the data from.
+     * @param data_size The data size of data.
+     * @param data The memory of size data_size.
+     * @return The actual retrieved size of the data. It might be a lower number than the passed in data_size.
+     */
+    static UInt32 get_property_data(AudioObjectID audio_object_id, const AudioObjectPropertyAddress& address, UInt32 data_size, void* data)
+    {
+        UInt32 io_data_size = data_size;
+        CA_RETURN_IF_ERROR(AudioObjectGetPropertyData(audio_object_id, &address, 0, nullptr, &data_size, data), 0);
+        return io_data_size;
+    }
+
+    /**
+     * Sets the data of property for given address.
+     * @param audio_object_id The ID of the AudioObject to set the property on.
+     * @param address The address of the property to set the data for.
+     * @param data_size The size of the data to set.
+     * @param data The data to set.
+     * @return True if successful, or false if an error occurred.
+     */
+    static bool set_property_data(AudioObjectID audio_object_id, const AudioObjectPropertyAddress& address, UInt32 data_size, const void* data)
+    {
+        CA_RETURN_IF_ERROR(AudioObjectSetPropertyData(audio_object_id, &address, 0, nullptr, data_size, data), false);
+        return true;
+    }
+
+    /**
+     * Get a string property for given address.
+     * Note: please make sure that the property is of type CFStringRef, otherwise behaviour is undefined.
+     * @param audio_object_id The ID of the AudioObject to query.
+     * @param address The address of the property.
+     * @return A string containing the UTF8 representation of property at given address.
+     */
+    static std::string get_cfstring_property(AudioObjectID audio_object_id, const AudioObjectPropertyAddress& address)
+    {
+        const auto* cf_string_ref = get_property<CFStringRef>(audio_object_id, address);
+        if (cf_string_ref == nullptr)
+        {
+            return {};
+        }
+
+        auto string = cf_string_to_std_string(cf_string_ref);
+
+        CFRelease(cf_string_ref);
+
+        return string;
+    }
+
+protected:
+    /**
+     * Gets the data for property of type T for this AudioObject.
+     * @tparam T The type of the property (it's size must match the size of the property).
+     * @param address The address of the property.
+     * @return The property, or a default constructed value on error.
+     */
+    template<typename T>
+    [[nodiscard]] T get_property(const AudioObjectPropertyAddress& address) const
+    {
+        return get_property<T>(_audio_object_id, address);
+    }
+
+    /**
+     * Sets the data for property of type T for this AudioObject.
+     * @tparam T The type of the property (it's size must match the size of the property).
+     * @param address The address of the property.
+     * @param value The value to set.
+     * @return True if successful, or false if property could not be set.
+     */
+    template<typename T>
+    [[nodiscard]] bool set_property(const AudioObjectPropertyAddress& address, const T& value) const
+    {
+        return set_property(_audio_object_id, address, value);
+    }
+
+    /**
+     * Get a string property for given address for this AudioObject.
+     * Note: please make sure that the property is of type CFStringRef, otherwise behaviour is undefined.
+     * @param address The address of the property.
+     * @return A string containing the UTF8 representation of property at given address.
+     */
+    [[nodiscard]] std::string get_cfstring_property(const AudioObjectPropertyAddress& address) const
+    {
+        return get_cfstring_property(_audio_object_id, address);
+    }
+
+    /**
+     * Gets an array property for this AudioObject.
+     * @tparam T The type of the property's elements.
+     * @param address The address of the property.
+     * @param data_array The array to put the property data into.
+     * @return True if successful, or false if an error occurred.
+     */
+    template<typename T>
+    bool get_property_array(const AudioObjectPropertyAddress& address, std::vector<T>& data_array) const
+    {
+        return get_property_array(_audio_object_id, address, data_array);
+    }
+
+    /**
+     * Gets an array property for this AudioObject.
+     * @tparam T The type of the property's elements.
      * @param address The address of the property.
      * @return An array with the property's data, or an empty array if an error occurred.
      */
     template<typename T>
     [[nodiscard]] std::vector<T> get_property_array(const AudioObjectPropertyAddress& address) const
     {
-        std::vector<T> data_array;
-        get_property_array(address, data_array);
-        return data_array;
+        return AudioObject::get_property_array<T>(_audio_object_id, address);
     }
 
     /**
-     * Tests if this AudioObject has property for given address.
+     * Tests if this AudioObject has property for given address for this AudioObject.
      * @param address The address of the property to lookup.
      * @return True if this object has the property, or false if not.
      */
@@ -273,27 +405,23 @@ protected:
     }
 
     /**
-     * Tests whether the property for given address is settable.
+     * Tests whether the property for given address is settable for this AudioObject.
      * @param address The address of the property to lookup.
      * @return True if settable, or false if read-only or non existent.
      */
     [[nodiscard]] bool is_property_settable(const AudioObjectPropertyAddress& address) const
     {
-        Boolean is_settable = false;
-        CA_RETURN_IF_ERROR(AudioObjectIsPropertySettable(_audio_object_id, &address, &is_settable), false);
-        return is_settable != 0;
+        return is_property_settable(_audio_object_id, address);
     }
 
     /**
-     * Retrieves the data size of the property for given address.
+     * Retrieves the data size of the property for this AudioObject at given address.
      * @param address The address of the property to lookup.
      * @return The data size of the property, or 0 if the property does not exist or on any other error.
      */
     [[nodiscard]] UInt32 get_property_data_size(const AudioObjectPropertyAddress& address) const
     {
-        UInt32 data_size = 0;
-        CA_RETURN_IF_ERROR(AudioObjectGetPropertyDataSize(_audio_object_id, &address, 0, nullptr, &data_size), 0);
-        return data_size;
+        return get_property_data_size(_audio_object_id, address);
     }
 
     /**
@@ -305,13 +433,11 @@ protected:
      */
     UInt32 get_property_data(const AudioObjectPropertyAddress& address, UInt32 data_size, void* data) const
     {
-        UInt32 io_data_size = data_size;
-        CA_RETURN_IF_ERROR(AudioObjectGetPropertyData(_audio_object_id, &address, 0, nullptr, &data_size, data), 0);
-        return io_data_size;
+        return get_property_data(_audio_object_id, address, data_size, data);
     }
 
     /**
-     * Sets the data of property for given address.
+     * Sets the data of property for given address for this AudioObject.
      * @param address The address of the property to set the data for.
      * @param data_size The size of the data to set.
      * @param data The data to set.
@@ -319,8 +445,7 @@ protected:
      */
     bool set_property_data(const AudioObjectPropertyAddress& address, UInt32 data_size, const void* data) const
     {
-        CA_RETURN_IF_ERROR(AudioObjectSetPropertyData(_audio_object_id, &address, 0, nullptr, data_size, data), false);
-        return true;
+        return set_property_data(_audio_object_id, address, data_size, data);
     }
 
 private:
@@ -530,7 +655,7 @@ public:
 
     /**
      * @param for_input True for input or false for output.
-     * @return The device latency. Note that stream latency must be added to this number in order to get the total latency.
+     * @return The device latency in samples. Note that stream latency must be added to this number in order to get the total latency.
      */
     [[nodiscard]] UInt32 get_device_latency(bool for_input) const
     {
@@ -544,6 +669,27 @@ public:
                                       kAudioObjectPropertyElementMain};
 
         return get_property<UInt32>(pa);
+    }
+
+    /**
+     * @param stream_index The index of the stream to get the latency for.
+     * @return The latency of the stream for given index in samples, or 0 if the stream for index does not exist.
+     */
+    [[nodiscard]] UInt32 get_stream_latency(UInt32 stream_index, bool for_input) const
+    {
+        auto stream_ids = get_property_array<UInt32>({kAudioDevicePropertyStreams,
+                                                      for_input ? kAudioObjectPropertyScopeInput : kAudioObjectPropertyScopeOutput,
+                                                      kAudioObjectPropertyElementMain});
+
+        if (stream_index >= stream_ids.size())
+        {
+            SUSHI_LOG_ERROR("Stream for index {} does not exist", stream_index);
+            return 0;
+        }
+
+        return AudioObject::get_property<UInt32>(stream_ids[stream_index], {kAudioStreamPropertyLatency,
+                                                                            for_input ? kAudioObjectPropertyScopeInput : kAudioObjectPropertyScopeOutput,
+                                                                            kAudioObjectPropertyElementMain});
     }
 
 private:
@@ -707,7 +853,7 @@ public:
             return AudioFrontendStatus::AUDIO_HW_ERROR;
         }
 
-        UInt32 output_device_latency = _output_device.get_device_latency(false);
+        UInt32 input_latency = 0;
 
         // We only have to set the input device's settings if it is not the same device as the output device, in which case we will be using a single device for both input and output.
         if (_input_device.get_audio_object_id() != _output_device.get_audio_object_id())
@@ -729,13 +875,21 @@ public:
                 SUSHI_LOG_ERROR("Failed to set sample rate to {} for input device \"{}\"", sample_rate, _input_device.get_name());
                 return AudioFrontendStatus::AUDIO_HW_ERROR;
             }
+
+            input_latency = _input_device.get_device_latency(true) + _input_device.get_stream_latency(0, true);// Zero mean primary stream.
+        }
+        else
+        {
+            input_latency = _output_device.get_device_latency(true) + _output_device.get_stream_latency(0, true);// Zero mean primary stream.
         }
 
-        fmt::print("Output device latency: {}", output_device_latency);
+        UInt32 output_latency = _output_device.get_device_latency(false) + _output_device.get_stream_latency(0, false);
 
-        // TODO: Set latency on engine.
+        _owner->_engine->set_output_latency(std::chrono::microseconds(output_latency * 1'000'000 / static_cast<UInt32>(sample_rate)));
 
-        SUSHI_LOG_INFO("Stream started, using input latency {} and output latency {}", -1, -1);
+        SUSHI_LOG_INFO("Stream started, using input latency {}ms and output latency {}ms",
+                       input_latency * 1'000 / static_cast<UInt32>(sample_rate),
+                       output_latency * 1'000 / static_cast<UInt32>(sample_rate));
 
         return AudioFrontendStatus::OK;
     }
