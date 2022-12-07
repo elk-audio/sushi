@@ -1,3 +1,8 @@
+## Unreleased
+
+New features:
+  * Added Apple CoreAudio frontend
+
 ## 1.0.0
 
 New features:
