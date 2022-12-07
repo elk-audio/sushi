@@ -20,10 +20,10 @@
 
 #ifdef SUSHI_BUILD_WITH_APPLE_COREAUDIO
 
+#include <CoreAudio/AudioHardware.h>
+
 #include "apple_coreaudio_frontend.h"
 #include "logging.h"
-
-#include <CoreAudio/AudioHardware.h>
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("AppleCoreAudio");
 
@@ -56,13 +56,20 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("AppleCoreAudio");
 std::string cf_string_to_std_string(const CFStringRef cf_string_ref)
 {
     if (cf_string_ref == nullptr)
+    {
         return {};
+    }
 
     // First try the cheap solution (no allocation). Not guaranteed to return anything.
+    // Note: for this particular case there is not really a benefit of using this function,
+    // because we're going to allocate a new string anyway, however in this case I prefer
+    // to use the 'best practice' here to educate myself properly in the future.
     const auto* c_string = CFStringGetCStringPtr(cf_string_ref, kCFStringEncodingUTF8);
 
     if (c_string != nullptr)
+    {
         return c_string;
+    }
 
     // If the above didn't return anything we have to fall back and use CFStringGetCString.
     CFIndex length = CFStringGetLength(cf_string_ref);
@@ -71,7 +78,9 @@ std::string cf_string_to_std_string(const CFStringRef cf_string_ref)
     std::string output(max_size + 1, 0);// Not sure if max_size includes space for null-termination.
     auto result = CFStringGetCString(cf_string_ref, output.data(), max_size, kCFStringEncodingUTF8);
     if (result == 0)
+    {
         return {};
+    }
 
     return output;
 }
@@ -153,7 +162,13 @@ protected:
         if (!has_property(address))
         {
             SUSHI_LOG_ERROR("AudioObject doesn't have requested property");
-            return {};
+            return false;
+        }
+
+        if (!is_property_settable(address))
+        {
+            SUSHI_LOG_ERROR("Property is not settable");
+            return false;
         }
 
         const auto type_size = sizeof(T);// NOLINT Clang-Tidy: Suspicious usage of 'sizeof(A*)'; pointer to aggregate
@@ -161,7 +176,7 @@ protected:
         if (get_property_data_size(address) != type_size)
         {
             SUSHI_LOG_ERROR("AudioObject's property size invalid");
-            return {};
+            return false;
         }
 
         return set_property_data(address, type_size, &value);
@@ -177,7 +192,9 @@ protected:
     {
         const auto* cf_string_ref = get_property<CFStringRef>(address);
         if (cf_string_ref == nullptr)
+        {
             return {};
+        }
 
         auto string = cf_string_to_std_string(cf_string_ref);
 
@@ -318,10 +335,10 @@ class AudioDevice : public AudioObject
 public:
     enum class Scope
     {
-        Undefined = 0,
-        Input,
-        Output,
-        InputOutput,
+        UNDEFINED = 0,
+        INPUT,
+        OUTPUT,
+        INPUT_OUTPUT,
     };
 
     /**
@@ -366,7 +383,9 @@ public:
     bool start_io(AudioCallback* audio_callback, Scope for_scope)
     {
         if (!is_valid() || _io_proc_id != nullptr || audio_callback == nullptr)
+        {
             return false;
+        }
 
         _audio_callback = audio_callback;
         _scope = for_scope;
@@ -384,7 +403,9 @@ public:
     bool stop_io()
     {
         if (!is_valid() || _io_proc_id == nullptr)
+        {
             return false;
+        }
 
         CA_LOG_IF_ERROR(AudioDeviceStop(get_audio_object_id(), _io_proc_id));
         CA_LOG_IF_ERROR(AudioDeviceDestroyIOProcID(get_audio_object_id(), _io_proc_id));
@@ -401,7 +422,9 @@ public:
     [[nodiscard]] std::string get_name() const
     {
         if (!is_valid())
+        {
             return {};
+        }
 
         return get_cfstring_property({kAudioObjectPropertyName,
                                       kAudioObjectPropertyScopeGlobal,
@@ -416,7 +439,9 @@ public:
     [[nodiscard]] std::string get_uid() const
     {
         if (!is_valid())
+        {
             return {};
+        }
 
         return get_cfstring_property({kAudioDevicePropertyDeviceUID,
                                       kAudioObjectPropertyScopeGlobal,
@@ -431,7 +456,9 @@ public:
     [[nodiscard]] int get_num_channels(bool for_input) const
     {
         if (!is_valid())
+        {
             return -1;
+        }
 
         AudioObjectPropertyAddress pa{kAudioDevicePropertyStreamConfiguration,
                                       for_input ? kAudioObjectPropertyScopeInput : kAudioObjectPropertyScopeOutput,
@@ -471,7 +498,9 @@ public:
     bool set_buffer_frame_size(uint32_t buffer_frame_size)
     {
         if (!is_valid())
+        {
             return false;
+        }
 
         AudioObjectPropertyAddress pa{kAudioDevicePropertyBufferFrameSize,
                                       kAudioObjectPropertyScopeGlobal,
@@ -484,7 +513,7 @@ private:
     /// Holds the identifier for the io proc audio callbacks.
     AudioDeviceIOProcID _io_proc_id{nullptr};
     AudioCallback* _audio_callback{nullptr};
-    Scope _scope{Scope::Undefined};
+    Scope _scope{Scope::UNDEFINED};
 
     /**
      * Static function which gets called by an audio device to provide and get audio data.
@@ -500,13 +529,19 @@ private:
     {
         auto* audio_device = reinterpret_cast<AudioDevice*>(client_data);
         if (audio_device == nullptr)
+        {
             return 0;
+        }
 
         if (audio_object_id != audio_device->get_audio_object_id())
+        {
             return 0;// Wrong audio object id.
+        }
 
         if (audio_device->_audio_callback == nullptr)
+        {
             return 0;// No audio callback installed.
+        }
 
         audio_device->_audio_callback->audioCallback(audio_device->_scope, now, input_data, input_time, output_data, output_time);
 
@@ -534,7 +569,9 @@ public:
         audio_devices.reserve(device_ids.size());
 
         for (auto& id : device_ids)
+        {
             audio_devices.emplace_back(id);
+        }
 
         return audio_devices;
     }
@@ -565,8 +602,12 @@ private:
 const AudioDevice* get_device_for_uid(const std::vector<AudioDevice>& audio_devices, const std::string& uid)
 {
     for (auto& device : audio_devices)
+    {
         if (device.get_uid() == uid)
+        {
             return &device;
+        }
+    }
     return nullptr;
 }
 
@@ -617,7 +658,7 @@ public:
 
     AudioFrontendStatus configure_audio_channels(const AppleCoreAudioFrontendConfiguration* config)
     {
-        if (config->cv_inputs + config->cv_outputs > 0)
+        if (config->cv_inputs > 0 || config->cv_outputs > 0)
         {
             SUSHI_LOG_ERROR("CV ins and outs not supported and must be set to 0");
             return AudioFrontendStatus::AUDIO_HW_ERROR;
@@ -679,18 +720,22 @@ public:
         if (_input_device.get_audio_object_id() == _output_device.get_audio_object_id())
         {
             // Input and output are the same device, start only the output device
-            if (!_output_device.start_io(this, AudioDevice::Scope::InputOutput))
+            if (!_output_device.start_io(this, AudioDevice::Scope::INPUT_OUTPUT))
+            {
                 return false;
+            }
         }
         else
         {
             SUSHI_LOG_ERROR("Separate input and output device currently not supported");
             return false;
 
-            if (!_input_device.start_io(this, AudioDevice::Scope::Input))
+            if (!_input_device.start_io(this, AudioDevice::Scope::INPUT))
+            {
                 return false;
+            }
 
-            if (!_output_device.start_io(this, AudioDevice::Scope::Output))
+            if (!_output_device.start_io(this, AudioDevice::Scope::OUTPUT))
             {
                 _input_device.stop_io();// Also stop the input device to prevent only the input side from processing.
                 return false;
@@ -705,10 +750,14 @@ public:
         bool result = true;
 
         if (_input_device.is_valid() && !_input_device.stop_io())
+        {
             result = false;
+        }
 
         if (_output_device.is_valid() && !_output_device.stop_io())
+        {
             result = false;
+        }
 
         return result;
     }
@@ -731,7 +780,7 @@ private:
 
         _out_buffer.clear();
 
-        if (scope != AudioDevice::Scope::InputOutput)
+        if (scope != AudioDevice::Scope::INPUT_OUTPUT)
         {
             // TODO: Implement callbacks from 2 different devices (in case the input device is not the same as the output device).
             return;
@@ -810,21 +859,29 @@ AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration*
     if (coreaudio_config->input_device_uid)
     {
         if (auto* input_device = get_device_for_uid(devices, coreaudio_config->input_device_uid.value()))
+        {
             input_device_id = input_device->get_audio_object_id();
+        }
     }
 
     AudioObjectID output_device_id = 0;
     if (coreaudio_config->output_device_uid)
     {
         if (auto* output_device = get_device_for_uid(devices, coreaudio_config->output_device_uid.value()))
+        {
             output_device_id = output_device->get_audio_object_id();
+        }
     }
 
     if (input_device_id == 0)
+    {
         input_device_id = AudioSystemObject::get_default_device_id(true);// Fallback to default input device
+    }
 
     if (output_device_id == 0)
+    {
         output_device_id = AudioSystemObject::get_default_device_id(false);// Fallback to default output device
+    }
 
     _pimpl = std::make_unique<Impl>(this, input_device_id, output_device_id);
     return _pimpl->init(coreaudio_config);
@@ -833,21 +890,30 @@ AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration*
 void AppleCoreAudioFrontend::cleanup()
 {
     if (_engine != nullptr)
+    {
         _engine->enable_realtime(false);
+    }
 
     if (_pimpl)
+    {
         _pimpl->stop_io();
+    }
 }
 
 void AppleCoreAudioFrontend::run()
 {
     if (!_pimpl)
-        return SUSHI_LOG_ERROR("Not initialized, cannot start processing");
+    {
+        SUSHI_LOG_ERROR("Not initialized, cannot start processing");
+        return;
+    }
 
     _engine->enable_realtime(true);
 
     if (!_pimpl->start_io())
+    {
         SUSHI_LOG_ERROR("Failed to start audio device(s)");
+    }
 }
 
 rapidjson::Document AppleCoreAudioFrontend::generate_devices_info_document()

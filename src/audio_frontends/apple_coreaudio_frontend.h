@@ -23,10 +23,10 @@
 
 #ifdef SUSHI_BUILD_WITH_APPLE_COREAUDIO
 
-#include "base_audio_frontend.h"
-#include "json_utils.h"
-
 #include <memory>
+
+#include "json_utils.h"
+#include "base_audio_frontend.h"
 
 namespace sushi::audio_frontend {
 
