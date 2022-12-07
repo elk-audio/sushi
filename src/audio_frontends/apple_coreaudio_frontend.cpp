@@ -851,8 +851,17 @@ private:
             return;
         }
 
+        if (input_data == nullptr || output_data == nullptr)
+            return;
+
         if (input_data->mNumberBuffers <= 0 || output_data->mNumberBuffers <= 0)
             return;
+
+        auto input_frame_count = static_cast<int64_t>(input_data->mBuffers[0].mDataByteSize / input_data->mBuffers[0].mNumberChannels / sizeof(float));
+        auto output_frame_count = static_cast<int64_t>(output_data->mBuffers[0].mDataByteSize / output_data->mBuffers[0].mNumberChannels / sizeof(float));
+
+        assert(input_frame_count == AUDIO_CHUNK_SIZE);
+        assert(input_frame_count == output_frame_count);
 
         if (_owner->_pause_manager.should_process())
         {
@@ -875,7 +884,7 @@ private:
 
         _copy_output_buffer_to_interleaved_buffer(static_cast<float*>(output_data->mBuffers[0].mData), static_cast<int>(output_data->mBuffers[0].mNumberChannels));
 
-        // TODO: _processed_sample_count += frame_count;
+        _processed_sample_count += input_frame_count;
     }
 
     void _copy_interleaved_audio_to_input_buffer(const float* input, int num_channels)
