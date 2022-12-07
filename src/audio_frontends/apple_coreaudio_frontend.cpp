@@ -624,6 +624,25 @@ public:
 
     AudioFrontendStatus init(const AppleCoreAudioFrontendConfiguration* config)
     {
+        if (config == nullptr)
+        {
+            SUSHI_LOG_ERROR("Invalid config given");
+            return AudioFrontendStatus::AUDIO_HW_ERROR;
+        }
+
+        if (config->input_device_uid->empty() || config->output_device_uid->empty())
+        {
+            SUSHI_LOG_ERROR("Invalid device UID");
+            return AudioFrontendStatus::AUDIO_HW_ERROR;
+        }
+
+        if (config->input_device_uid != config->output_device_uid)
+        {
+            SUSHI_LOG_ERROR("At the moment the input device must be the same as the output device, please specify the same UID for both the input and output device.");
+            // TODO: Remove this test once IO from 2 different devices is implemented.
+            return AudioFrontendStatus::AUDIO_HW_ERROR;
+        }
+
         auto channel_conf_result = configure_audio_channels(config);
         if (channel_conf_result != AudioFrontendStatus::OK)
         {
