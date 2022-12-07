@@ -36,6 +36,16 @@ OSStatus AudioObjectGetPropertyData(AudioObjectID inObjectID,
     return kAudioHardwareNoError;
 }
 
+OSStatus AudioObjectSetPropertyData(AudioObjectID inObjectID,
+                           const AudioObjectPropertyAddress* inAddress,
+                           UInt32 inQualifierDataSize,
+                           const void* __nullable inQualifierData,
+                           UInt32 inDataSize,
+                           const void* inData)
+{
+    return kAudioHardwareNoError;
+}
+
 OSStatus AudioObjectGetPropertyDataSize(AudioObjectID inObjectID,
                                         const AudioObjectPropertyAddress* inAddress,
                                         UInt32 inQualifierDataSize,
