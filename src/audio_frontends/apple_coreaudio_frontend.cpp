@@ -846,7 +846,8 @@ public:
 
         UInt32 input_latency = 0;
 
-        // We only have to set the input device's settings if it is not the same device as the output device, in which case we will be using a single device for both input and output.
+        // We only have to set the input device's settings if it is not the same device as the output device,
+        // in which case we will be using a single device for both input and output.
         if (_input_device.get_audio_object_id() != _output_device.get_audio_object_id())
         {
             if (!_input_device.is_valid())
@@ -867,16 +868,19 @@ public:
                 return AudioFrontendStatus::AUDIO_HW_ERROR;
             }
 
-            input_latency = _input_device.get_device_latency(true) + _input_device.get_stream_latency(0, true);// Zero mean primary stream.
+            input_latency = _input_device.get_device_latency(true) +
+                            _input_device.get_stream_latency(0, true);// Zero mean primary stream.
         }
         else
         {
-            input_latency = _output_device.get_device_latency(true) + _output_device.get_stream_latency(0, true);// Zero mean primary stream.
+            input_latency = _output_device.get_device_latency(true) +
+                            _output_device.get_stream_latency(0, true);// Zero mean primary stream.
         }
 
         UInt32 output_latency = _output_device.get_device_latency(false) + _output_device.get_stream_latency(0, false);
 
-        _owner->_engine->set_output_latency(std::chrono::microseconds(output_latency * 1'000'000 / static_cast<UInt32>(sample_rate)));
+        auto useconds = std::chrono::microseconds(output_latency * 1'000'000 / static_cast<UInt32>(sample_rate));
+        _owner->_engine->set_output_latency(useconds);
 
         SUSHI_LOG_INFO("Stream started, using input latency {}ms and output latency {}ms",
                        input_latency * 1'000 / static_cast<UInt32>(sample_rate),
