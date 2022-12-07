@@ -122,8 +122,7 @@ enum OptionIndex
     OPT_IDX_AUDIO_OUTPUT_DEVICE_UID,
     OPT_IDX_PA_SUGGESTED_INPUT_LATENCY,
     OPT_IDX_PA_SUGGESTED_OUTPUT_LATENCY,
-    OPT_IDX_DUMP_PORTAUDIO,
-    OPT_IDX_DUMP_APPLE_COREAUDIO,
+    OPT_IDX_DUMP_DEVICES,
     OPT_IDX_USE_JACK,
     OPT_IDX_CONNECT_PORTS,
     OPT_IDX_JACK_CLIENT,
@@ -313,20 +312,12 @@ const optionparser::Descriptor usage[] =
         "\t\t--pa-suggested-output-latency=<latency> \tOutput latency in seconds to suggest to portaudio. Will be rounded up to closest available latency depending on audio API [default=0.0]"
     },
     {
-        OPT_IDX_DUMP_PORTAUDIO,
+        OPT_IDX_DUMP_DEVICES,
         OPT_TYPE_DISABLED,
         "",
-        "dump-portaudio-devs",
+        "dump-audio-devices",
         SushiArg::Optional,
-        "\t\t--dump-portaudio-devs \tDump available Portaudio devices to stdout in JSON format."
-    },
-    {
-        OPT_IDX_DUMP_APPLE_COREAUDIO,
-        OPT_TYPE_DISABLED,
-        "",
-        "dump-apple-coreaudio-devs",
-        SushiArg::Optional,
-        "\t\t--dump-apple-coreaudio-devs \tDump available Apple CoreAudio devices to stdout in JSON format."
+        "\t\t--dump-audio-devices \tDump available audio devices to stdout in JSON format. Requires a frontend to be specified."
     },
     {
         OPT_IDX_USE_JACK,

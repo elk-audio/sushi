@@ -165,8 +165,7 @@ int main(int argc, char* argv[])
     std::optional<std::string> apple_coreaudio_output_device_uid = std::nullopt;
     float portaudio_suggested_input_latency = SUSHI_PORTAUDIO_INPUT_LATENCY_DEFAULT;
     float portaudio_suggested_output_latency = SUSHI_PORTAUDIO_OUTPUT_LATENCY_DEFAULT;
-    bool enable_portaudio_devs_dump = false;
-    bool enable_apple_coreaudio_devs_dump = false;
+    bool enable_audio_devices_dump = false;
     std::string grpc_listening_address = SUSHI_GRPC_LISTENING_PORT_DEFAULT;
     FrontendType frontend_type = FrontendType::NONE;
     bool connect_ports = false;
@@ -267,12 +266,8 @@ int main(int argc, char* argv[])
             portaudio_suggested_output_latency = atof(opt.arg);
             break;
 
-        case OPT_IDX_DUMP_PORTAUDIO:
-            enable_portaudio_devs_dump = true;
-            break;
-
-        case OPT_IDX_DUMP_APPLE_COREAUDIO:
-            enable_apple_coreaudio_devs_dump = true;
+        case OPT_IDX_DUMP_DEVICES:
+            enable_audio_devices_dump = true;
             break;
 
         case OPT_IDX_USE_JACK:
@@ -341,13 +336,9 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (! (enable_parameter_dump || enable_portaudio_devs_dump || enable_apple_coreaudio_devs_dump) )
+    if (! (enable_parameter_dump || enable_audio_devices_dump) )
     {
         print_sushi_headline();
-    }
-    else
-    {
-        frontend_type = FrontendType::DUMMY;
     }
 
     if (output_filename.empty() && !input_filename.empty())
@@ -367,27 +358,34 @@ int main(int argc, char* argv[])
     SUSHI_GET_LOGGER_WITH_MODULE_NAME("main");
 
     ////////////////////////////////////////////////////////////////////////////////
-    // Main body //
+    // Dump audio devices //
     ////////////////////////////////////////////////////////////////////////////////
 
-    if (enable_portaudio_devs_dump)
+    if (enable_audio_devices_dump)
     {
+        if (frontend_type == FrontendType::PORTAUDIO)
+        {
 #ifdef SUSHI_BUILD_WITH_PORTAUDIO
-        std::cout << sushi::audio_frontend::generate_portaudio_devices_info_document() << std::endl;
-        std::exit(0);
+            std::cout << sushi::audio_frontend::generate_portaudio_devices_info_document() << std::endl;
 #else
-        std::cerr << "SUSHI not built with Portaudio support, cannot dump devices." << std::endl;
+            std::cerr << "SUSHI not built with Portaudio support, cannot dump devices." << std::endl;
 #endif
-    }
-
-    if (enable_apple_coreaudio_devs_dump)
-    {
+            std::exit(0);
+        }
+        else if (frontend_type == FrontendType::APPLE_COREAUDIO)
+        {
 #ifdef SUSHI_BUILD_WITH_APPLE_COREAUDIO
-        std::cout << sushi::audio_frontend::AppleCoreAudioFrontend::generate_devices_info_document() << std::endl;
-        std::exit(0);
+            std::cout << sushi::audio_frontend::AppleCoreAudioFrontend::generate_devices_info_document() << std::endl;
 #else
-        std::cerr << "SUSHI not built with Apple CoreAudio support, cannot dump devices." << std::endl;
+            std::cerr << "SUSHI not built with Apple CoreAudio support, cannot dump devices." << std::endl;
 #endif
+            std::exit(0);
+        }
+        else
+        {
+            std::cout << "No frontend specified or specified frontend not supported (please specify ." << std::endl;
+            std::exit(1);
+        }
     }
 
     if (frontend_type == FrontendType::XENOMAI_RASPA)
