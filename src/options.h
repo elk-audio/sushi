@@ -293,7 +293,7 @@ const optionparser::Descriptor usage[] =
         "",
         "audio-output-device-uid",
         SushiArg::Optional,
-        "\t\t--audio-output-device-uid=<device uid> \tIndex of the device to use for audio output with Apple CoreAudio frontend [default=system default]"
+        "\t\t--audio-output-device-uid=<device uid> \tUID of the device to use for audio output with Apple CoreAudio frontend [default=system default]"
     },
     {
         OPT_IDX_PA_SUGGESTED_INPUT_LATENCY,
