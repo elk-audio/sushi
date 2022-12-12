@@ -23,7 +23,7 @@
 
 #include <sndfile.h>
 
-#include "fifo/circularfifo_memory_relaxed_aquire_release.h"
+#include <readerwriterqueue/readerwriterqueue.h>
 
 #include "library/internal_plugin.h"
 
@@ -74,7 +74,7 @@ private:
     int _non_rt_callback(EventId id);
     std::string _available_path(const std::string& requested_path);
 
-    memory_relaxed_aquire_release::CircularFifo<std::array<float, AUDIO_CHUNK_SIZE * N_AUDIO_CHANNELS>, RINGBUFFER_SIZE> _ring_buffer;
+    moodycamel::ReaderWriterQueue<std::array<float, AUDIO_CHUNK_SIZE * N_AUDIO_CHANNELS>> _ring_buffer {RINGBUFFER_SIZE};
 
     std::vector<float> _file_buffer;
     SNDFILE* _output_file{nullptr};

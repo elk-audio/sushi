@@ -98,7 +98,7 @@ void PerformanceTimer::_update_timings()
 {
     std::map<int, std::vector<TimingLogPoint>> sorted_data;
     TimingLogPoint log_point;
-    while (_entry_queue.pop(log_point))
+    while (_entry_queue.try_dequeue(log_point))
     {
         sorted_data[log_point.id].push_back(log_point);
     }

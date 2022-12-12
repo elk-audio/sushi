@@ -24,11 +24,11 @@
 #include <map>
 #include <utility>
 
+#include <readerwriterqueue/readerwriterqueue.h>
+
 #include "pluginterfaces/base/ipluginbase.h"
 #include "public.sdk/source/vst/hosting/eventlist.h"
 #include "public.sdk/source/vst/hosting/parameterchanges.h"
-
-#include "fifo/circularfifo_memory_relaxed_aquire_release.h"
 
 #include "vst3x_host_app.h"
 #include "library/processor.h"
@@ -234,8 +234,9 @@ private:
     SpecialParameter _mod_wheel_parameter;
     SpecialParameter _aftertouch_parameter;
 
-    memory_relaxed_aquire_release::CircularFifo<Vst3xRtState*, STATE_CHANGE_QUEUE_SIZE> _state_change_queue;
-    memory_relaxed_aquire_release::CircularFifo<ParameterUpdate, PARAMETER_UPDATE_QUEUE_SIZE> _parameter_update_queue;
+    moodycamel::ReaderWriterQueue<Vst3xRtState*> _state_change_queue {STATE_CHANGE_QUEUE_SIZE};
+    moodycamel::ReaderWriterQueue<ParameterUpdate> _parameter_update_queue {100};
+
     std::map<Steinberg::Vst::ParamID, const ParameterDescriptor*> _parameters_by_vst3_id;
 
     friend class ComponentHandler;
