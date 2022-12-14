@@ -25,6 +25,7 @@
 
 #include <memory>
 
+#include "apple_coreaudio/apple_coreaudio_object.h"
 #include "json_utils.h"
 #include "base_audio_frontend.h"
 

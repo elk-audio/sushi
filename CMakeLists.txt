@@ -218,6 +218,10 @@ if (${SUSHI_WITH_APPLE_COREAUDIO})
     # Compile definitions
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_APPLE_COREAUDIO)
 
+    set(ADDITIONAL_APPLE_COREAUDIO_SOURCES  src/audio_frontends/apple_coreaudio/apple_coreaudio_utils.cpp
+                                            src/audio_frontends/apple_coreaudio/apple_coreaudio_object.cpp
+                                            src/audio_frontends/apple_coreaudio/apple_coreaudio_device.cpp)
+
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} "-framework CoreAudio")
 endif()
 
@@ -508,6 +512,7 @@ add_executable(sushi MACOSX_BUNDLE
     "${ADDITIONAL_VST2_SOURCES}"
     "${ADDITIONAL_VST3_SOURCES}"
     "${ADDITIONAL_LV2_SOURCES}"
+    "${ADDITIONAL_APPLE_COREAUDIO_SOURCES}"
     "${MIDI_SOURCES}"
 )
 

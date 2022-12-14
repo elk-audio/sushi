@@ -1,0 +1,87 @@
+/*
+* Copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk
+*
+* SUSHI is free software: you can redistribute it and/or modify it under the terms of
+* the GNU Affero General Public License as published by the Free Software Foundation,
+* either version 3 of the License, or (at your option) any later version.
+*
+* SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+* PURPOSE.  See the GNU Affero General Public License for more details.
+*
+* You should have received a copy of the GNU Affero General Public License along with
+* SUSHI.  If not, see http://www.gnu.org/licenses/
+*/
+
+/**
+* @brief Utilities for working with Apple's CoreAudio
+* @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+*/
+
+#ifndef SUSHI_APPLE_COREAUDIO_UTILS_H
+#define SUSHI_APPLE_COREAUDIO_UTILS_H
+
+#include <CoreAudio/AudioHardware.h>
+#include <string>
+
+/**
+ * Helper macro to log OSStatus errors in a consistent and convenient way.
+ */
+#define CA_LOG_IF_ERROR(command)                                         \
+    do                                                                   \
+    {                                                                    \
+        OSStatus result = command;                                       \
+        if (result != kAudioHardwareNoError)                             \
+        {                                                                \
+            SUSHI_LOG_ERROR("{} returned error : {}", #command, result); \
+        }                                                                \
+    } while (false)
+
+/**
+ * Helper macro to return with a value when the OSStatus indicates an error.
+ */
+#define CA_RETURN_IF_ERROR(command, return_value)                        \
+    do                                                                   \
+    {                                                                    \
+        OSStatus result = command;                                       \
+        if (result != kAudioHardwareNoError)                             \
+        {                                                                \
+            SUSHI_LOG_ERROR("{} returned error : {}", #command, result); \
+            return return_value;                                         \
+        }                                                                \
+    } while (false)
+
+/**
+ * Implements the comparison operator for AudioObjectPropertyAddress.
+ * @param lhs Left hand side
+ * @param rhs Right hand side
+ * @return True if equal, or false if not.
+ */
+inline bool operator==(const AudioObjectPropertyAddress& lhs, const AudioObjectPropertyAddress& rhs)
+{
+    return lhs.mElement == rhs.mElement && lhs.mScope == rhs.mScope && lhs.mSelector && rhs.mSelector;
+}
+
+/**
+ * Implements inequality operator for AudioObjectPropertyAddress.
+ * @param lhs Left hand side.
+ * @param rhs Right hand side.
+ * @return True if not equal, or false if it is.
+ */
+inline bool operator!=(const AudioObjectPropertyAddress& lhs, const AudioObjectPropertyAddress& rhs)
+{
+    return !(rhs == lhs);
+}
+
+namespace apple_coreaudio {
+
+/**
+ * Converts given CFString to an std::string.
+ * @param cf_string_ref The CFString to convert.
+ * @return A standard string with the contents of given CFString, encoded as UTF8.
+ */
+std::string cf_string_to_std_string(const CFStringRef& cf_string_ref);
+
+}// namespace apple_coreaudio
+
+#endif// SUSHI_APPLE_COREAUDIO_UTILS_H
