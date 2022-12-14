@@ -4,8 +4,8 @@
 
 TEST(TestTest, DoSomeInitialTesting)
 {
-    AudioDevice audio_device(1);
+    apple_coreaudio::AudioDevice audio_device(1);
 
-    auto devices = AudioSystemObject::get_audio_devices();
+    auto devices = apple_coreaudio::AudioSystemObject::get_audio_devices();
     EXPECT_TRUE(devices.empty());
 }
