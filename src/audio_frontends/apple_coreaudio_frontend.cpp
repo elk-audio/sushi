@@ -86,6 +86,28 @@ std::string cf_string_to_std_string(const CFStringRef cf_string_ref)
 }
 
 /**
+ * Implements the comparison operator for AudioObjectPropertyAddress.
+ * @param lhs Left hand side
+ * @param rhs Right hand side
+ * @return True if equal, or false if not.
+ */
+inline bool operator==(const AudioObjectPropertyAddress& lhs, const AudioObjectPropertyAddress& rhs)
+{
+    return lhs.mElement == rhs.mElement && lhs.mScope == rhs.mScope && lhs.mSelector && rhs.mSelector;
+}
+
+/**
+ * Implements inequality operator for AudioObjectPropertyAddress.
+ * @param lhs Left hand side.
+ * @param rhs Right hand side.
+ * @return True if not equal, or false if it is.
+ */
+inline bool operator!=(const AudioObjectPropertyAddress& lhs, const AudioObjectPropertyAddress& rhs)
+{
+    return !(rhs == lhs);
+}
+
+/**
  * This class represents a numerical audio object as we know from the Core Audio API (AudioHardware.h etc).
  * It also implements basic, common capabilities of an audio object, like getting and setting of properties.
  */
@@ -96,6 +118,15 @@ public:
 
     explicit AudioObject(AudioObjectID audio_object_id) : _audio_object_id(audio_object_id)
     {
+    }
+
+    ~AudioObject()
+    {
+        // Remove property listeners
+        for (auto& listener_address : _property_listeners)
+        {
+            CA_LOG_IF_ERROR(AudioObjectRemovePropertyListener(_audio_object_id, &listener_address, &AudioObjectPropertyListenerProc, this));
+        }
     }
 
     /**
@@ -448,8 +479,63 @@ protected:
         return set_property_data(_audio_object_id, address, data_size, data);
     }
 
+    /**
+     * Adds a property listener for given address.
+     * @param address The address to install a property listener for.
+     * @return True if successful, or false if an error occurred.
+     * If a property listener for given address was already installed then the return value will be true.
+     */
+    bool add_property_listener(const AudioObjectPropertyAddress& address)
+    {
+        for (const auto& listener_address : _property_listeners)
+        {
+            if (listener_address == address)
+                return true;
+        }
+
+        CA_RETURN_IF_ERROR(AudioObjectAddPropertyListener(_audio_object_id, &address, &AudioObjectPropertyListenerProc, this), false);
+
+        _property_listeners.push_back(address);
+
+        return true;
+    }
+
+    /**
+     * Called when a property (for which a listener is installed) changed.
+     * @param address The address of the property which changed.
+     */
+    virtual void property_changed([[maybe_unused]] const AudioObjectPropertyAddress& address) {}
+
 private:
     const AudioObjectID _audio_object_id{0};
+    std::vector<AudioObjectPropertyAddress> _property_listeners;
+
+    static OSStatus AudioObjectPropertyListenerProc(AudioObjectID audio_object_id,
+                                                    UInt32 num_addresses,
+                                                    const AudioObjectPropertyAddress* address,
+                                                    void* __nullable client_data)
+    {
+        if (address == nullptr || client_data == nullptr)
+        {
+            SUSHI_LOG_ERROR("Invalid object passed to AudioObjectPropertyListenerProc");
+            return kAudioHardwareBadObjectError;
+        }
+
+        auto* audio_object = static_cast<AudioObject*>(client_data);
+
+        if (audio_object_id != audio_object->_audio_object_id)
+        {
+            SUSHI_LOG_ERROR("AudioObjectID mismatch (in AudioObjectPropertyListenerProc)");
+            return kAudioHardwareBadObjectError;
+        }
+
+        for (UInt32 i = 0; i < num_addresses; i++)
+        {
+            audio_object->property_changed(address[i]);
+        }
+
+        return kAudioHardwareNoError;
+    }
 };
 
 /**
@@ -467,20 +553,37 @@ public:
     };
 
     /**
-     * Baseclass for other classes who want to receive the audio callbacks for this device.
+     * Baseclass for other classes who want to receive the audio callbacks from this device.
      */
     class AudioCallback
     {
     public:
-        virtual void audioCallback([[maybe_unused]] Scope scope,
-                                   [[maybe_unused]] const AudioTimeStamp* now,
-                                   [[maybe_unused]] const AudioBufferList* input_data,
-                                   [[maybe_unused]] const AudioTimeStamp* input_time,
-                                   [[maybe_unused]] AudioBufferList* output_data,
-                                   [[maybe_unused]] const AudioTimeStamp* output_time) {}
+        /**
+         * Called when the device needs new audio data.
+         * @param scope The scope of this callback.
+         * @param now Current time.
+         * @param input_data The audio input data.
+         * @param input_time The time of the first sample of the input data.
+         * @param output_data The audio output data.
+         * @param output_time The time of the first sample of the output data.
+         */
+        virtual void audio_callback([[maybe_unused]] Scope scope,
+                                    [[maybe_unused]] const AudioTimeStamp* now,
+                                    [[maybe_unused]] const AudioBufferList* input_data,
+                                    [[maybe_unused]] const AudioTimeStamp* input_time,
+                                    [[maybe_unused]] AudioBufferList* output_data,
+                                    [[maybe_unused]] const AudioTimeStamp* output_time) {}
+
+        /**
+         * Called when the device changed its sample rate.
+         * Warning! This call gets made from a random background thread, and there is no synchronisation or whatsoever.
+         * @param new_sample_rate The new sample rate of the device.
+         */
+        virtual void sample_rate_changed([[maybe_unused]] double new_sample_rate) {}
     };
 
     explicit AudioDevice(AudioObjectID audio_object_id) : AudioObject(audio_object_id) {}
+
     virtual ~AudioDevice()
     {
         stop_io();
@@ -517,6 +620,13 @@ public:
 
         CA_RETURN_IF_ERROR(AudioDeviceCreateIOProcID(get_audio_object_id(), audio_device_io_proc, this, &_io_proc_id), false);
         CA_RETURN_IF_ERROR(AudioDeviceStart(get_audio_object_id(), _io_proc_id), false);
+
+        if (!add_property_listener({kAudioDevicePropertyNominalSampleRate,
+                                    kAudioObjectPropertyScopeGlobal,
+                                    kAudioObjectPropertyElementMain}))
+        {
+            SUSHI_LOG_ERROR("Failed to install property listener for sample rate change");
+        }
 
         return true;
     }
@@ -654,6 +764,24 @@ public:
     }
 
     /**
+     * Gets the nominal sample rate of this device.
+     * @return The nominal sample rate, or 0.0 if an error occurred.
+     */
+    [[nodiscard]] double get_nominal_sample_rate() const
+    {
+        if (!is_valid())
+        {
+            return false;
+        }
+
+        AudioObjectPropertyAddress pa{kAudioDevicePropertyNominalSampleRate,
+                                      kAudioObjectPropertyScopeGlobal,
+                                      kAudioObjectPropertyElementMain};
+
+        return get_property<double>(pa);
+    }
+
+    /**
      * @param for_input True for input or false for output.
      * @return The device latency in samples. Note that stream latency must be added to this number in order to get the total latency.
      */
@@ -693,6 +821,20 @@ public:
                                                                             kAudioObjectPropertyElementMain});
     }
 
+protected:
+    void property_changed(const AudioObjectPropertyAddress& address) override
+    {
+        // Nominal sample rate
+        if (address == AudioObjectPropertyAddress{kAudioDevicePropertyNominalSampleRate,
+                                                  kAudioObjectPropertyScopeGlobal,
+                                                  kAudioObjectPropertyElementMain})
+        {
+            // TODO: Synchronise
+            if (_audio_callback)
+                _audio_callback->sample_rate_changed(get_nominal_sample_rate());
+        }
+    }
+
 private:
     /// Holds the identifier for the io proc audio callbacks.
     AudioDeviceIOProcID _io_proc_id{nullptr};
@@ -727,7 +869,7 @@ private:
             return 0;// No audio callback installed.
         }
 
-        audio_device->_audio_callback->audioCallback(audio_device->_scope, now, input_data, input_time, output_data, output_time);
+        audio_device->_audio_callback->audio_callback(audio_device->_scope, now, input_data, input_time, output_data, output_time);
 
         return 0;
     }
@@ -1007,12 +1149,12 @@ private:
     engine::ControlBuffer _out_controls;
     int64_t _processed_sample_count{0};
 
-    void audioCallback(AudioDevice::Scope scope,
-                       [[maybe_unused]] const AudioTimeStamp* now,
-                       const AudioBufferList* input_data,
-                       [[maybe_unused]] const AudioTimeStamp* input_time,
-                       AudioBufferList* output_data,
-                       [[maybe_unused]] const AudioTimeStamp* output_time) override
+    void audio_callback(AudioDevice::Scope scope,
+                        [[maybe_unused]] const AudioTimeStamp* now,
+                        const AudioBufferList* input_data,
+                        [[maybe_unused]] const AudioTimeStamp* input_time,
+                        AudioBufferList* output_data,
+                        [[maybe_unused]] const AudioTimeStamp* output_time) override
     {
         _out_buffer.clear();
 
@@ -1069,6 +1211,11 @@ private:
         _copy_output_buffer_to_interleaved_buffer(static_cast<float*>(output_data->mBuffers[0].mData), static_cast<int>(output_data->mBuffers[0].mNumberChannels));
 
         _processed_sample_count += input_frame_count;
+    }
+
+    void sample_rate_changed(double new_sample_rate) override
+    {
+        SUSHI_LOG_WARNING("Audio device changed sample rate to: {}", new_sample_rate);
     }
 
     void _copy_interleaved_audio_to_input_buffer(const float* input, int num_channels)
