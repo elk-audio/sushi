@@ -1,69 +1,93 @@
 #include <CoreAudio/AudioHardware.h>
 
-OSStatus AudioDeviceCreateIOProcID(AudioObjectID inDevice,
-                                   AudioDeviceIOProc inProc,
-                                   void* inClientData,
-                                   AudioDeviceIOProcID* outIOProcID)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnullability-completeness" // Ignore Apple nonsense
+#include "apple_coreaudio_mockup.h"
+#pragma clang diagnostic pop
+
+AppleAudioHardwareMockup* AppleAudioHardwareMockup::instance = nullptr;
+
+OSStatus AudioDeviceCreateIOProcID(AudioObjectID audio_object_id,
+                                   AudioDeviceIOProc io_proc,
+                                   void* client_data,
+                                   AudioDeviceIOProcID* proc_id)
 {
-    return kAudioHardwareNoError;
+    return AppleAudioHardwareMockup::instance->AudioDeviceCreateIOProcID(
+            audio_object_id,
+            io_proc,
+            client_data,
+            proc_id);
 }
 
-OSStatus AudioDeviceDestroyIOProcID(AudioObjectID inDevice,
-                                    AudioDeviceIOProcID inIOProcID)
+OSStatus AudioDeviceDestroyIOProcID(AudioObjectID audio_object_id, AudioDeviceIOProcID proc_id)
 {
-    return kAudioHardwareNoError;
+    return AppleAudioHardwareMockup::instance->AudioDeviceDestroyIOProcID(audio_object_id, proc_id);
 }
 
-OSStatus AudioDeviceStart(AudioObjectID inDevice,
-                          AudioDeviceIOProcID inProcID)
+OSStatus AudioDeviceStart(AudioObjectID audio_object_id, AudioDeviceIOProcID proc_id)
 {
-    return kAudioHardwareNoError;
+    return AppleAudioHardwareMockup::instance->AudioDeviceStart(audio_object_id, proc_id);
 }
 
-OSStatus AudioDeviceStop(AudioObjectID inDevice,
-                         AudioDeviceIOProcID inProcID)
+OSStatus AudioDeviceStop(AudioObjectID audio_object_id, AudioDeviceIOProcID proc_id)
 {
-    return kAudioHardwareNoError;
+    return AppleAudioHardwareMockup::instance->AudioDeviceStop(audio_object_id, proc_id);
 }
 
-OSStatus AudioObjectGetPropertyData(AudioObjectID inObjectID,
-                                    const AudioObjectPropertyAddress* inAddress,
-                                    UInt32 inQualifierDataSize,
-                                    const void* __nullable inQualifierData,
-                                    UInt32* ioDataSize,
-                                    void* outData)
+OSStatus AudioObjectGetPropertyData(AudioObjectID audio_object_id,
+                                    const AudioObjectPropertyAddress* address,
+                                    UInt32 qualifier_data_size,
+                                    const void* __nullable qualifier_data,
+                                    UInt32* data_size,
+                                    void* out_data)
 {
-    return kAudioHardwareNoError;
+    return AppleAudioHardwareMockup::instance->AudioObjectGetPropertyData(
+            audio_object_id,
+            address,
+            qualifier_data_size,
+            qualifier_data,
+            data_size,
+            out_data);
 }
 
-OSStatus AudioObjectSetPropertyData(AudioObjectID inObjectID,
-                                    const AudioObjectPropertyAddress* inAddress,
-                                    UInt32 inQualifierDataSize,
-                                    const void* __nullable inQualifierData,
-                                    UInt32 inDataSize,
-                                    const void* inData)
+OSStatus AudioObjectSetPropertyData(AudioObjectID audio_object_id,
+                                    const AudioObjectPropertyAddress* address,
+                                    UInt32 qualifier_data_size,
+                                    const void* __nullable qualifier_data,
+                                    UInt32 data_size,
+                                    const void* data)
 {
-    return kAudioHardwareNoError;
+    return AppleAudioHardwareMockup::instance->AudioObjectSetPropertyData(
+            audio_object_id,
+            address,
+            qualifier_data_size,
+            qualifier_data,
+            data_size,
+            data);
 }
 
-OSStatus AudioObjectGetPropertyDataSize(AudioObjectID inObjectID,
-                                        const AudioObjectPropertyAddress* inAddress,
-                                        UInt32 inQualifierDataSize,
-                                        const void* __nullable inQualifierData,
-                                        UInt32* outDataSize)
+OSStatus AudioObjectGetPropertyDataSize(AudioObjectID audio_object_id,
+                                        const AudioObjectPropertyAddress* address,
+                                        UInt32 qualifier_data_size,
+                                        const void* __nullable qualifier_data,
+                                        UInt32* out_data_size)
 {
-    return kAudioHardwareNoError;
+    return AppleAudioHardwareMockup::instance->AudioObjectGetPropertyDataSize(
+            audio_object_id,
+            address,
+            qualifier_data_size,
+            qualifier_data,
+            out_data_size);
 }
 
-Boolean AudioObjectHasProperty(AudioObjectID inObjectID,
-                               const AudioObjectPropertyAddress* inAddress)
+Boolean AudioObjectHasProperty(AudioObjectID audio_object_id, const AudioObjectPropertyAddress* address)
 {
-    return false;
+    return AppleAudioHardwareMockup::instance->AudioObjectHasProperty(audio_object_id, address);
 }
 
-OSStatus AudioObjectIsPropertySettable(AudioObjectID inObjectID,
-                                       const AudioObjectPropertyAddress* inAddress,
-                                       Boolean* outIsSettable)
+OSStatus AudioObjectIsPropertySettable(AudioObjectID audio_object_id,
+                                       const AudioObjectPropertyAddress* address,
+                                       Boolean* out_is_settable)
 {
-    return false;
+    return AppleAudioHardwareMockup::instance->AudioObjectIsPropertySettable(audio_object_id, address, out_is_settable);
 }
