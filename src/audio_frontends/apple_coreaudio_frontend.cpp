@@ -454,7 +454,7 @@ void AppleCoreAudioFrontend::sample_rate_changed(double new_sample_rate)
 
     if (std::abs(new_sample_rate - _engine->sample_rate()) > 1.0)
     {
-        auto return_value = 55;
+        auto return_value = 55; // Note: Elk LIVE Desktop depends on this specific return value.
         SUSHI_LOG_WARNING("Exiting Sushi in response to incompatible external sample rate change (return value: {})", return_value);
         exit(return_value);
     }
