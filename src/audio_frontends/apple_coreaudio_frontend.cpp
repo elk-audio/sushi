@@ -315,6 +315,50 @@ private:
     void sample_rate_changed(double new_sample_rate) override
     {
         SUSHI_LOG_WARNING("Audio device changed sample rate to: {}", new_sample_rate);
+
+#ifdef EXIT_SUSHI_WHEN_AUDIO_DEVICE_CHANGES_TO_INCOMPATIBLE_SAMPLE_RATE
+        // The next piece of code is ugly as **** but prevents a lot of engineering to get to what we need:
+        // notifying the user of Elk LIVE Desktop that the sample rate of their device has changed.
+        // We do that by exiting the application (from a background thread) with a specific return value which
+        // gets interpreted by Elk LIVE Desktop as the reason being the sample rate change.
+        //
+        // Doing this the proper way would look something like this:
+        //   - Install some sort of event loop on the main thread
+        //   - Allow other threads to schedule work on this event loop
+        //   - Allow other threads to signal the event loop to exit (which results in a clean application exit)
+        //
+        // One way of creating a simple event loop would be to use a concurrent queue like this:
+        //
+        // moodycamel::BlockingConcurrentQueue<std::function<void()>> q;
+        //
+        // std::function<bool()> work; // Return value: true to continue the main event loop or false to exit
+        //
+        // for (;;)
+        // {
+        //     if (!q.wait_dequeue_timed(work, std::chrono::milliseconds(500))
+        //     {
+        //         continue; // Nothing dequeued.
+        //     }
+        //
+        //     if (!work)
+        //     {
+        //         SUSHI_LOG_ERROR("Received nullptr function");
+        //         break;
+        //     }
+        //
+        //     if (!work()) // A return value of false means exit the event loop.
+        //     {
+        //         break;
+        //     }
+        // }
+
+        if (std::abs(new_sample_rate - _owner->_engine->sample_rate()) > 1.0)
+        {
+            auto return_value = 55;
+            SUSHI_LOG_WARNING("Exiting Sushi in response to incompatible external sample rate change (return value: {})", return_value);
+            exit(return_value);
+        }
+#endif
     }
 
     void _copy_interleaved_audio_to_input_buffer(const float* input, int num_channels)

@@ -29,6 +29,9 @@
 #include "json_utils.h"
 #include "base_audio_frontend.h"
 
+// See AppleCoreAudioFrontend::sample_rate_changed()
+#define EXIT_SUSHI_WHEN_AUDIO_DEVICE_CHANGES_TO_INCOMPATIBLE_SAMPLE_RATE
+
 namespace sushi::audio_frontend {
 
 struct AppleCoreAudioFrontendConfiguration : public BaseAudioFrontendConfiguration {
