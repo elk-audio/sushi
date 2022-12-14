@@ -89,8 +89,11 @@ public:
 
     AudioDevice& operator=(AudioDevice&& other) noexcept
     {
-        _io_proc_id = other._io_proc_id;
-        other._io_proc_id = nullptr;// Prevent other from destroying the proc ID.
+        // Don't transfer ownership of _io_proc_id because CoreAudio has registered the pointer
+        // to other as client data, so let other stop the callbacks when it goes out of scope.
+
+        _scope = other._scope;
+        AudioObject::operator=(std::move(other));
         return *this;
     }
 

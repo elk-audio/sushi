@@ -42,6 +42,24 @@ public:
 
     ~AudioObject();
 
+    AudioObject(const AudioObject&) = delete;
+    AudioObject& operator=(const AudioObject&) = delete;
+
+    AudioObject(AudioObject&& other) noexcept
+    {
+        *this = std::move(other);// Call into move assignment operator.
+    }
+
+    AudioObject& operator=(AudioObject&& other) noexcept
+    {
+        std::swap(_property_listeners, other._property_listeners);
+
+        _audio_object_id = other._audio_object_id;
+        other._audio_object_id = 0;
+
+        return *this;
+    }
+
     /**
      * @return The AudioObjectID for this AudioObject.
      */
@@ -260,7 +278,7 @@ protected:
     virtual void property_changed([[maybe_unused]] const AudioObjectPropertyAddress& address) {}
 
 private:
-    const AudioObjectID _audio_object_id{0};
+    AudioObjectID _audio_object_id{0};
     std::vector<AudioObjectPropertyAddress> _property_listeners;
 
     static OSStatus AudioObjectPropertyListenerProc(AudioObjectID audio_object_id,

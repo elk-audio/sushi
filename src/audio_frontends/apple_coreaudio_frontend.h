@@ -26,8 +26,9 @@
 #include <memory>
 
 #include "apple_coreaudio/apple_coreaudio_object.h"
-#include "json_utils.h"
+#include "apple_coreaudio/apple_coreaudio_device.h"
 #include "base_audio_frontend.h"
+#include "json_utils.h"
 
 // See AppleCoreAudioFrontend::sample_rate_changed()
 #define EXIT_SUSHI_WHEN_AUDIO_DEVICE_CHANGES_TO_INCOMPATIBLE_SAMPLE_RATE
@@ -49,21 +50,46 @@ struct AppleCoreAudioFrontendConfiguration : public BaseAudioFrontendConfigurati
     std::optional<std::string> output_device_uid;
 };
 
-class AppleCoreAudioFrontend : public BaseAudioFrontend
+class AppleCoreAudioFrontend : public BaseAudioFrontend, private apple_coreaudio::AudioDevice::AudioCallback
 {
 public:
     explicit AppleCoreAudioFrontend(engine::BaseEngine* engine);
-    ~AppleCoreAudioFrontend() override;
+    ~AppleCoreAudioFrontend() override = default;
 
     AudioFrontendStatus init(BaseAudioFrontendConfiguration* config) override;
     void cleanup() override;
     void run() override;
 
+    AudioFrontendStatus configure_audio_channels(const AppleCoreAudioFrontendConfiguration* config);
+
+    bool start_io();
+    bool stop_io();
+
     static rapidjson::Document generate_devices_info_document();
 
 private:
-    class Impl;
-    std::unique_ptr<Impl> _pimpl;
+    apple_coreaudio::AudioDevice _input_device;
+    apple_coreaudio::AudioDevice _output_device;
+    int _device_num_input_channels{0};
+    int _device_num_output_channels{0};
+    ChunkSampleBuffer _in_buffer{0};
+    ChunkSampleBuffer _out_buffer{0};
+    engine::ControlBuffer _in_controls;
+    engine::ControlBuffer _out_controls;
+    int64_t _processed_sample_count{0};
+
+    void _copy_interleaved_audio_to_input_buffer(const float* input, int num_channels);
+    void _copy_output_buffer_to_interleaved_buffer(float* output, int num_channels);
+
+    // apple_coreaudio::AudioDevice::AudioCallback overrides
+    void audio_callback(apple_coreaudio::AudioDevice::Scope scope,
+                        [[maybe_unused]] const AudioTimeStamp* now,
+                        const AudioBufferList* input_data,
+                        [[maybe_unused]] const AudioTimeStamp* input_time,
+                        AudioBufferList* output_data,
+                        [[maybe_unused]] const AudioTimeStamp* output_time) override;
+
+    void sample_rate_changed(double new_sample_rate) override;
 };
 
 }// namespace sushi::audio_frontend
