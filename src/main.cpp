@@ -661,6 +661,7 @@ int main(int argc, char* argv[])
 
     if (use_osc && (frontend_type == FrontendType::JACK
                  || frontend_type == FrontendType::XENOMAI_RASPA
+                 || frontend_type == FrontendType::APPLE_COREAUDIO
                  || frontend_type == FrontendType::PORTAUDIO))
     {
         osc_frontend->run();
