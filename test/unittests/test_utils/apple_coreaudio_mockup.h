@@ -19,8 +19,10 @@ public:
     MOCK_METHOD(OSStatus, AudioDeviceStart, (AudioObjectID audio_object_id, AudioDeviceIOProcID proc_id));
     MOCK_METHOD(OSStatus, AudioDeviceStop, (AudioObjectID audio_object_id, AudioDeviceIOProcID proc_id));
 
+    MOCK_METHOD(OSStatus, AudioObjectAddPropertyListener, (AudioObjectID inObjectID, const AudioObjectPropertyAddress* inAddress, AudioObjectPropertyListenerProc inListener, void* __nullable inClientData));
+    MOCK_METHOD(OSStatus, AudioObjectRemovePropertyListener, (AudioObjectID inObjectID, const AudioObjectPropertyAddress* inAddress, AudioObjectPropertyListenerProc inListener, void* __nullable inClientData));
+
     static AppleAudioHardwareMockup* instance;
 };
-
 
 #endif// SUSHI_APPLE_COREAUDIO_MOCKUP_H

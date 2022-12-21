@@ -1,7 +1,7 @@
 #include <CoreAudio/AudioHardware.h>
 
 #pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wnullability-completeness" // Ignore Apple nonsense
+#pragma clang diagnostic ignored "-Wnullability-completeness"// Ignore Apple nonsense
 #include "apple_coreaudio_mockup.h"
 #pragma clang diagnostic pop
 
@@ -90,4 +90,20 @@ OSStatus AudioObjectIsPropertySettable(AudioObjectID audio_object_id,
                                        Boolean* out_is_settable)
 {
     return AppleAudioHardwareMockup::instance->AudioObjectIsPropertySettable(audio_object_id, address, out_is_settable);
+}
+
+OSStatus AudioObjectAddPropertyListener(AudioObjectID audio_object_id,
+                                        const AudioObjectPropertyAddress* address,
+                                        AudioObjectPropertyListenerProc listener,
+                                        void* __nullable client_data)
+{
+    return AppleAudioHardwareMockup::instance->AudioObjectAddPropertyListener(audio_object_id, address, listener, client_data);
+}
+
+OSStatus AudioObjectRemovePropertyListener(AudioObjectID audio_object_id,
+                                           const AudioObjectPropertyAddress* address,
+                                           AudioObjectPropertyListenerProc listener,
+                                           void* __nullable client_data)
+{
+    return AppleAudioHardwareMockup::instance->AudioObjectRemovePropertyListener(audio_object_id, address, listener, client_data);
 }
