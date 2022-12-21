@@ -392,7 +392,7 @@ void AppleCoreAudioFrontend::audio_callback(apple_coreaudio::AudioDevice::Scope 
     {
         _copy_interleaved_audio_to_input_buffer(static_cast<const float*>(input_data->mBuffers[0].mData), static_cast<int>(input_data->mBuffers[0].mNumberChannels));
 
-        std::chrono::microseconds host_input_time(_time_conversions.host_time_to_nanos(input_time->mHostTime));
+        std::chrono::microseconds host_input_time(_time_conversions.host_time_to_nanos(input_time->mHostTime) / 1000);
         _engine->process_chunk(&_in_buffer, &_out_buffer, &_in_controls, &_out_controls, host_input_time, _processed_sample_count);
 
         if (_pause_manager.should_ramp())
