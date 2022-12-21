@@ -68,7 +68,7 @@ public:
     MOCK_METHOD(void, property_changed, (const AudioObjectPropertyAddress& address));
 };
 
-TEST_F(AppleCoreAudioFrontendTest, get_audio_object_id)
+TEST_F(AppleCoreAudioFrontendTest, AudioObject_get_audio_object_id)
 {
     CustomAudioObject audio_object0(0);
     EXPECT_EQ(audio_object0.get_audio_object_id(), 0);
@@ -77,7 +77,7 @@ TEST_F(AppleCoreAudioFrontendTest, get_audio_object_id)
     EXPECT_EQ(audio_object1.get_audio_object_id(), 1);
 }
 
-TEST_F(AppleCoreAudioFrontendTest, is_valid)
+TEST_F(AppleCoreAudioFrontendTest, AudioObject_is_valid)
 {
     // Zero is not considered a valid object ID.
     CustomAudioObject audio_object0(0);
@@ -88,7 +88,7 @@ TEST_F(AppleCoreAudioFrontendTest, is_valid)
     EXPECT_TRUE(audio_object1.is_valid());
 }
 
-TEST_F(AppleCoreAudioFrontendTest, has_property)
+TEST_F(AppleCoreAudioFrontendTest, AudioObject_has_property)
 {
     CustomAudioObject audio_object(0);
 
@@ -99,7 +99,7 @@ TEST_F(AppleCoreAudioFrontendTest, has_property)
     EXPECT_TRUE(audio_object.has_property({0, 0, 0}));
 }
 
-TEST_F(AppleCoreAudioFrontendTest, is_property_settable)
+TEST_F(AppleCoreAudioFrontendTest, AudioObject_is_property_settable)
 {
     CustomAudioObject audio_object(0);
 
@@ -116,7 +116,7 @@ TEST_F(AppleCoreAudioFrontendTest, is_property_settable)
     EXPECT_TRUE(audio_object.is_property_settable({0, 0, 0}));
 }
 
-TEST_F(AppleCoreAudioFrontendTest, get_property_data_size)
+TEST_F(AppleCoreAudioFrontendTest, AudioObject_get_property_data_size)
 {
     CustomAudioObject audio_object(0);
 
@@ -127,7 +127,7 @@ TEST_F(AppleCoreAudioFrontendTest, get_property_data_size)
     EXPECT_EQ(audio_object.get_property_data_size({1, 1, 1}), sizeof(UInt32));
 }
 
-TEST_F(AppleCoreAudioFrontendTest, get_property_data)
+TEST_F(AppleCoreAudioFrontendTest, AudioObject_get_property_data)
 {
     CustomAudioObject audio_object(0);
 
@@ -140,7 +140,7 @@ TEST_F(AppleCoreAudioFrontendTest, get_property_data)
     EXPECT_EQ(audio_object.get_property_data({1, 1, 1}, sizeof(UInt32), &data), sizeof(UInt32));
 }
 
-TEST_F(AppleCoreAudioFrontendTest, set_property_data)
+TEST_F(AppleCoreAudioFrontendTest, AudioObject_set_property_data)
 {
     CustomAudioObject audio_object(0);
 
@@ -150,7 +150,7 @@ TEST_F(AppleCoreAudioFrontendTest, set_property_data)
     EXPECT_TRUE(audio_object.set_property_data({1, 1, 1}, sizeof(UInt32), &data));
 }
 
-TEST_F(AppleCoreAudioFrontendTest, get_property)
+TEST_F(AppleCoreAudioFrontendTest, AudioObject_get_property)
 {
     CustomAudioObject audio_object(2);
 
@@ -190,7 +190,7 @@ TEST_F(AppleCoreAudioFrontendTest, get_property)
     }
 }
 
-TEST_F(AppleCoreAudioFrontendTest, set_property)
+TEST_F(AppleCoreAudioFrontendTest, AudioObject_set_property)
 {
     CustomAudioObject audio_object(2);
 
@@ -234,7 +234,7 @@ TEST_F(AppleCoreAudioFrontendTest, set_property)
     }
 }
 
-TEST_F(AppleCoreAudioFrontendTest, get_cf_string_property)
+TEST_F(AppleCoreAudioFrontendTest, AudioObject_get_cf_string_property)
 {
     CustomAudioObject audio_object(2);
 
@@ -257,7 +257,7 @@ TEST_F(AppleCoreAudioFrontendTest, get_cf_string_property)
     EXPECT_EQ(audio_object.get_cfstring_property({1, 1, 1}), "");
 }
 
-TEST_F(AppleCoreAudioFrontendTest, get_property_array)
+TEST_F(AppleCoreAudioFrontendTest, AudioObject_get_property_array)
 {
     CustomAudioObject audio_object(2);
 
@@ -296,7 +296,7 @@ TEST_F(AppleCoreAudioFrontendTest, get_property_array)
     }
 }
 
-TEST_F(AppleCoreAudioFrontendTest, add_property_listener)
+TEST_F(AppleCoreAudioFrontendTest, AudioObject_add_property_listener)
 {
     AudioObjectID audio_object_id(2);
     testing::StrictMock<CustomAudioObject> audio_object(audio_object_id);
@@ -334,7 +334,7 @@ TEST_F(AppleCoreAudioFrontendTest, add_property_listener)
     EXPECT_CALL(_mock, AudioObjectRemovePropertyListener).Times(2);
 }
 
-TEST_F(AppleCoreAudioFrontendTest, get_audio_devices)
+TEST_F(AppleCoreAudioFrontendTest, AudioSystemObject_get_audio_devices)
 {
     EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(true));
     EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize).WillOnce([](AudioObjectID audio_object_id, const AudioObjectPropertyAddress* address, UInt32, const void*, UInt32* out_data_size) {
@@ -367,7 +367,7 @@ TEST_F(AppleCoreAudioFrontendTest, get_audio_devices)
     EXPECT_EQ(devices[2].get_audio_object_id(), 4);
 }
 
-TEST_F(AppleCoreAudioFrontendTest, get_default_device_id)
+TEST_F(AppleCoreAudioFrontendTest, AudioSystemObject_get_default_device_id)
 {
     {// For input
         EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(true));
