@@ -22,6 +22,7 @@
 #define SUSHI_APPLE_COREAUDIO_UTILS_H
 
 #include <CoreAudio/AudioHardware.h>
+#include <mach/mach_time.h>
 #include <string>
 
 /**
@@ -81,6 +82,34 @@ namespace apple_coreaudio {
  * @return A standard string with the contents of given CFString, encoded as UTF8.
  */
 std::string cf_string_to_std_string(const CFStringRef& cf_string_ref);
+
+/**
+ * Little struct which holds host time information and provides facilities to convert from host to real time and vice versa.
+ */
+struct TimeConversions {
+public:
+    TimeConversions();
+
+    /**
+     * Converts host time to nanoseconds.
+     * @param host_time_ticks The host time in ticks.
+     * @return The host time in nanoseconds.
+     */
+    [[nodiscard]] uint64_t host_time_to_nanos(uint64_t host_time_ticks) const;
+
+    /**
+     * Converts nanoseconds to host time.
+     * @param host_time_nanos Time in nanoseconds.
+     * @return The host time in ticks.
+     */
+    [[nodiscard]] uint64_t nanos_to_host_time(uint64_t host_time_nanos) const;
+
+private:
+    // Adapted from CAHostTimeBase.h in the Core Audio Utility Classes
+    static uint64_t multiply_by_ratio(uint64_t toMultiply, uint64_t numerator, uint64_t denominator);
+
+    uint64_t _numerator = 0, _denominator = 0;
+};
 
 }// namespace apple_coreaudio
 

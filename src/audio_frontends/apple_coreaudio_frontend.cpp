@@ -38,7 +38,7 @@ AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration*
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
-    auto coreaudio_config = static_cast<AppleCoreAudioFrontendConfiguration*>(config); // NOLINT: Clang-Tidy: Do not use static_cast to downcast from a base to a derived class; use dynamic_cast instead
+    auto coreaudio_config = static_cast<AppleCoreAudioFrontendConfiguration*>(config);// NOLINT: Clang-Tidy: Do not use static_cast to downcast from a base to a derived class; use dynamic_cast instead
 
     auto ret_code = BaseAudioFrontend::init(config);
     if (ret_code != AudioFrontendStatus::OK)
@@ -155,7 +155,7 @@ AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration*
                    input_latency * 1'000 / static_cast<UInt32>(sample_rate),
                    output_latency * 1'000 / static_cast<UInt32>(sample_rate));
 
-    (void)input_latency; // Ignore variable-not-used warning when compiling without Sushi logging (ie. UnitTests)
+    (void) input_latency;// Ignore variable-not-used warning when compiling without Sushi logging (ie. UnitTests)
 
     return AudioFrontendStatus::OK;
 }
@@ -392,7 +392,8 @@ void AppleCoreAudioFrontend::audio_callback(apple_coreaudio::AudioDevice::Scope 
     {
         _copy_interleaved_audio_to_input_buffer(static_cast<const float*>(input_data->mBuffers[0].mData), static_cast<int>(input_data->mBuffers[0].mNumberChannels));
 
-        _engine->process_chunk(&_in_buffer, &_out_buffer, &_in_controls, &_out_controls, {}, _processed_sample_count);
+        std::chrono::microseconds host_input_time(_time_conversions.host_time_to_nanos(input_time->mHostTime));
+        _engine->process_chunk(&_in_buffer, &_out_buffer, &_in_controls, &_out_controls, host_input_time, _processed_sample_count);
 
         if (_pause_manager.should_ramp())
             _pause_manager.ramp_output(_out_buffer);
@@ -454,7 +455,7 @@ void AppleCoreAudioFrontend::sample_rate_changed(double new_sample_rate)
 
     if (std::abs(new_sample_rate - _engine->sample_rate()) > 1.0)
     {
-        auto return_value = 55; // Note: Elk LIVE Desktop depends on this specific return value.
+        auto return_value = 55;// Note: Elk LIVE Desktop depends on this specific return value.
         SUSHI_LOG_WARNING("Exiting Sushi in response to incompatible external sample rate change (return value: {})", return_value);
         exit(return_value);
     }

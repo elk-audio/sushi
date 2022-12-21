@@ -15,7 +15,9 @@
 
 #include "apple_coreaudio_utils.h"
 
-std::string apple_coreaudio::cf_string_to_std_string(const CFStringRef& cf_string_ref)
+namespace apple_coreaudio {
+
+std::string cf_string_to_std_string(const CFStringRef& cf_string_ref)
 {
     if (cf_string_ref == nullptr)
     {
@@ -46,3 +48,40 @@ std::string apple_coreaudio::cf_string_to_std_string(const CFStringRef& cf_strin
 
     return output;
 }
+
+TimeConversions::TimeConversions()
+{
+    mach_timebase_info_data_t info{};
+    mach_timebase_info(&info);
+    _numerator = info.numer;
+    _denominator = info.denom;
+}
+
+uint64_t TimeConversions::host_time_to_nanos(uint64_t host_time_ticks) const
+{
+    return multiply_by_ratio(host_time_ticks, _numerator, _denominator);
+}
+
+uint64_t TimeConversions::nanos_to_host_time(uint64_t host_time_nanos) const
+{
+    return multiply_by_ratio(host_time_nanos, _denominator, _numerator);// NOLINT
+}
+
+uint64_t TimeConversions::multiply_by_ratio(uint64_t toMultiply, uint64_t numerator, uint64_t denominator)
+{
+#if defined(__SIZEOF_INT128__)
+    unsigned __int128 result = toMultiply;
+#else
+    long double result = toMultiply;
+#endif
+
+    if (numerator != denominator)
+    {
+        result *= numerator;
+        result /= denominator;
+    }
+
+    return (uint64_t) result;
+}
+
+}// namespace apple_coreaudio

@@ -70,6 +70,7 @@ public:
 private:
     apple_coreaudio::AudioDevice _input_device;
     apple_coreaudio::AudioDevice _output_device;
+    apple_coreaudio::TimeConversions _time_conversions;
     int _device_num_input_channels{0};
     int _device_num_output_channels{0};
     ChunkSampleBuffer _in_buffer{0};
