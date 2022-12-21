@@ -79,6 +79,10 @@ private:
     engine::ControlBuffer _out_controls;
     int64_t _processed_sample_count{0};
 
+    // See the body of sample_rate_changed for an explanation for this variable.
+    // Note: Elk LIVE Desktop depends on this specific return value.
+    static constexpr int EXIT_RETURN_VALUE_ON_INCOMPATIBLE_SAMPLE_RATE_CHANGE = 55;
+
     void _copy_interleaved_audio_to_input_buffer(const float* input, int num_channels);
     void _copy_output_buffer_to_interleaved_buffer(float* output, int num_channels);
 
