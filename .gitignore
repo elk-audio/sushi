@@ -42,8 +42,7 @@ scratch/
 */scratch
 build*/
 generated/
-cmake-build-debug/
-cmake-build-release/
+cmake-build-*
 third-party/install/
 third-party/rehost/
 
