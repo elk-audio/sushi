@@ -687,11 +687,13 @@ int main(int argc, char* argv[])
     audio_frontend->cleanup();
     event_dispatcher->stop();
 
-    if (osc_frontend && (frontend_type == FrontendType::JACK
-                      || frontend_type == FrontendType::XENOMAI_RASPA
-                      || frontend_type == FrontendType::PORTAUDIO))
+    if (osc_frontend)
     {
         osc_frontend->stop();
+    }
+
+    if (midi_frontend)
+    {
         midi_frontend->stop();
     }
 
