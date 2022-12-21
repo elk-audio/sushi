@@ -61,7 +61,7 @@ bool AudioObject::is_property_settable(AudioObjectID audio_object_id, const Audi
 UInt32 AudioObject::get_property_data(AudioObjectID audio_object_id, const AudioObjectPropertyAddress& address, UInt32 data_size, void* data)
 {
     UInt32 io_data_size = data_size;
-    CA_RETURN_IF_ERROR(AudioObjectGetPropertyData(audio_object_id, &address, 0, nullptr, &data_size, data), 0);
+    CA_RETURN_IF_ERROR(AudioObjectGetPropertyData(audio_object_id, &address, 0, nullptr, &io_data_size, data), 0);
     return io_data_size;
 }
 
@@ -189,12 +189,6 @@ bool AudioObject::get_property_array(AudioObjectID audio_object_id, const AudioO
     data_array.resize(num_elements);
 
     auto num_bytes = data_array.size() * sizeof(T);
-
-    if (num_bytes > std::numeric_limits<UInt32>::max())
-    {
-        SUSHI_LOG_ERROR("Int overflow");
-        return false;
-    }
 
     data_size = get_property_data(audio_object_id, address, static_cast<UInt32>(num_bytes), data_array.data());
 

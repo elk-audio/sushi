@@ -98,6 +98,57 @@ TEST_F(AppleCoreAudioFrontendTest, has_property)
     EXPECT_TRUE(audio_object.has_property({0, 0, 0}));
 }
 
+TEST_F(AppleCoreAudioFrontendTest, is_property_settable)
+{
+    CustomAudioObject audio_object(0);
+
+    EXPECT_CALL(_mock, AudioObjectIsPropertySettable).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, Boolean* out_is_settable) {
+        *out_is_settable = false;
+        return kAudioHardwareNoError;
+    });
+    EXPECT_FALSE(audio_object.is_property_settable({0, 0, 0}));
+
+    EXPECT_CALL(_mock, AudioObjectIsPropertySettable).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, Boolean* out_is_settable) {
+        *out_is_settable = true;
+        return kAudioHardwareNoError;
+    });
+    EXPECT_TRUE(audio_object.is_property_settable({0, 0, 0}));
+}
+
+TEST_F(AppleCoreAudioFrontendTest, get_property_data_size)
+{
+    CustomAudioObject audio_object(0);
+
+    EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* out_data_size) {
+        *out_data_size = sizeof(UInt32);
+        return kAudioHardwareNoError;
+    });
+    EXPECT_EQ(audio_object.get_property_data_size({1,1,1}), sizeof(UInt32));
+}
+
+TEST_F(AppleCoreAudioFrontendTest, get_property_data)
+{
+    CustomAudioObject audio_object(0);
+
+    EXPECT_CALL(_mock, AudioObjectGetPropertyData).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* data_size, void* out_data) {
+        *data_size = sizeof(UInt32);
+        *static_cast<UInt32*>(out_data) = 5;
+        return kAudioHardwareNoError;
+    });
+    UInt32 data;
+    EXPECT_EQ(audio_object.get_property_data({1,1,1}, sizeof(UInt32), &data), sizeof(UInt32));
+}
+
+TEST_F(AppleCoreAudioFrontendTest, set_property_data)
+{
+    CustomAudioObject audio_object(0);
+
+    EXPECT_CALL(_mock, AudioObjectSetPropertyData).WillOnce(Return(kAudioHardwareNoError));
+
+    UInt32 data;
+    EXPECT_TRUE(audio_object.set_property_data({1,1,1}, sizeof(UInt32), &data));
+}
+
 TEST_F(AppleCoreAudioFrontendTest, get_property)
 {
     CustomAudioObject audio_object(2);
@@ -113,6 +164,29 @@ TEST_F(AppleCoreAudioFrontendTest, get_property)
         return kAudioHardwareNoError;
     });
     EXPECT_EQ(audio_object.get_property<UInt32>({1, 1, 1}), 5);
+
+    {// If the property has a data size which is not equal to the size of the data type
+        EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(true));
+        EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* out_data_size) {
+            *out_data_size = sizeof(UInt32) + 1;
+            return kAudioHardwareNoError;
+        });
+        EXPECT_FALSE(audio_object.get_property<UInt32>(2, {1, 1, 1}));
+    }
+
+    {// If the property get data returns an invalid data size
+        EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(true));
+        EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* out_data_size) {
+            *out_data_size = sizeof(UInt32);
+            return kAudioHardwareNoError;
+        });
+        EXPECT_CALL(_mock, AudioObjectGetPropertyData).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* data_size, void* out_data) {
+            *data_size = sizeof(UInt32) + 1;
+            *static_cast<UInt32*>(out_data) = 5;
+            return kAudioHardwareNoError;
+        });
+        EXPECT_FALSE(audio_object.get_property<UInt32>(2, {1, 1, 1}));
+    }
 }
 
 TEST_F(AppleCoreAudioFrontendTest, set_property)
@@ -130,6 +204,33 @@ TEST_F(AppleCoreAudioFrontendTest, set_property)
     });
     EXPECT_CALL(_mock, AudioObjectSetPropertyData).WillOnce(Return(kAudioHardwareNoError));
     EXPECT_TRUE(audio_object.set_property<UInt32>({1, 1, 1}, 5));
+
+    {// If the object has no property, expect false
+        EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(false));
+        EXPECT_FALSE(audio_object.set_property<UInt32>(2, {1, 1, 1}, 5));
+    }
+
+    {// If property is not settable, expect false
+        EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(true));
+        EXPECT_CALL(_mock, AudioObjectIsPropertySettable).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, Boolean* out_is_settable) {
+            *out_is_settable = false;
+            return kAudioHardwareNoError;
+        });
+        EXPECT_FALSE(audio_object.set_property<UInt32>(2, {1, 1, 1}, 5));
+    }
+
+    {// If the data size does not match the size of the type, expect false
+        EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(true));
+        EXPECT_CALL(_mock, AudioObjectIsPropertySettable).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, Boolean* out_is_settable) {
+            *out_is_settable = true;
+            return kAudioHardwareNoError;
+        });
+        EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* out_data_size) {
+            *out_data_size = sizeof(UInt32) + 1;
+            return kAudioHardwareNoError;
+        });
+        EXPECT_FALSE(audio_object.set_property<UInt32>(2, {1, 1, 1}, 5));
+    }
 }
 
 TEST_F(AppleCoreAudioFrontendTest, get_cf_string_property)
@@ -173,6 +274,25 @@ TEST_F(AppleCoreAudioFrontendTest, get_property_array)
     });
 
     EXPECT_EQ(audio_object.get_property_array<UInt32>({1, 1, 1}), std::vector<UInt32>({1, 2, 3}));
+
+    {// If the object has no property at given address, expect an empty vector.
+        EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(false));
+
+        std::vector<UInt32> vector;
+        EXPECT_FALSE(audio_object.get_property_array<UInt32>(2, {1, 1, 1}, vector));
+        EXPECT_TRUE(vector.empty());
+    }
+
+    {// If the property reports a data size which is not a multiple of sizeof(Type), then expect an empty array
+        EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(true));
+        EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* out_data_size) {
+            *out_data_size = 3 * sizeof(UInt32) + 1;
+            return kAudioHardwareNoError;
+        });
+        std::vector<UInt32> vector;
+        EXPECT_FALSE(audio_object.get_property_array<UInt32>(2, {1, 1, 1}, vector));
+        EXPECT_TRUE(vector.empty());
+    }
 }
 
 TEST_F(AppleCoreAudioFrontendTest, add_property_listener)
@@ -212,5 +332,3 @@ TEST_F(AppleCoreAudioFrontendTest, add_property_listener)
     // When the AudioObject goes out of scope, property listeners should be removed
     EXPECT_CALL(_mock, AudioObjectRemovePropertyListener).Times(2);
 }
-
-
