@@ -587,6 +587,7 @@ int main(int argc, char* argv[])
 
     if (frontend_type == FrontendType::JACK
         || frontend_type == FrontendType::XENOMAI_RASPA
+        || frontend_type == FrontendType::APPLE_COREAUDIO
         || frontend_type == FrontendType::PORTAUDIO)
     {
 #ifdef SUSHI_BUILD_WITH_ALSA_MIDI
@@ -659,10 +660,7 @@ int main(int argc, char* argv[])
     event_dispatcher->run();
     midi_frontend->run();
 
-    if (use_osc && (frontend_type == FrontendType::JACK
-                 || frontend_type == FrontendType::XENOMAI_RASPA
-                 || frontend_type == FrontendType::APPLE_COREAUDIO
-                 || frontend_type == FrontendType::PORTAUDIO))
+    if (osc_frontend)
     {
         osc_frontend->run();
     }
