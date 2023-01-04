@@ -72,7 +72,6 @@ public:
     void detect_clipped_samples(const ChunkSampleBuffer& buffer, RtSafeRtEventFifo& queue, bool audio_input);
 
 private:
-
     unsigned int _interval{0};
     std::vector<unsigned int> _input_clip_count;
     std::vector<unsigned int> _output_clip_count;
@@ -92,6 +91,7 @@ public:
      *                     is 1 and means that audio processing is done only in the rt callback
      *                     of the audio frontend.
      *                     With values >1 tracks will be processed in parallel threads.
+     * @param device_name The Audio Device Name - only used on Apple, and will be unused on other platforms.
      * @param debug_mode_sw Enable xenomai specific thread debugging for all audio threads in
      *                      multicore mode.
      * @param event_dispatcher A pointer to a BaseEventDispatcher instance, which AudioEngine takes over ownership of.

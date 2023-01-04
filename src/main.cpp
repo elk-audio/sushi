@@ -25,8 +25,6 @@
 #include <condition_variable>
 #include <filesystem>
 
-#include "apple_threading_utilities.h"
-
 #include "twine/src/twine_internal.h"
 
 #include "logging.h"
@@ -411,8 +409,8 @@ int main(int argc, char* argv[])
         twine::init_xenomai(); // must be called before setting up any worker pools
     }
 
-#ifdef SUSHI_APPLE_THREADING
     std::optional<std::string> device_name;
+#ifdef SUSHI_APPLE_THREADING
     switch (frontend_type)
     {
 #ifdef SUSHI_BUILD_WITH_PORTAUDIO
@@ -440,11 +438,23 @@ int main(int argc, char* argv[])
     device_name = std::nullopt;
 #endif
 
-    auto engine = std::make_unique<sushi::engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT,
-                                                               rt_cpu_cores,
-                                                               device_name,
-                                                               debug_mode_switches,
-                                                               nullptr);
+    std::unique_ptr<sushi::engine::AudioEngine> engine = nullptr;
+
+    try
+    {
+        engine = std::make_unique<sushi::engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT,
+                                                              rt_cpu_cores,
+                                                              device_name,
+                                                              debug_mode_switches,
+                                                              nullptr);
+    }
+    catch (const std::exception &e)
+    {
+        std::string error_msg("Error instantiating AudioEngine: ");
+        error_msg.append(e.what());
+        error_exit(error_msg);
+    }
+
     if (!base_plugin_path.empty())
     {
         engine->set_base_plugin_path(base_plugin_path);
@@ -747,6 +757,18 @@ int main(int argc, char* argv[])
     ////////////////////////////////////////////////////////////////////////////////
     // Cleanup before exiting! //
     ////////////////////////////////////////////////////////////////////////////////
+
+    if (twine::global_worker_pool_exception_ptr != nullptr)
+    {
+        try
+        {
+            std::rethrow_exception(twine::global_worker_pool_exception_ptr);
+        }
+        catch (const std::exception &e)
+        {
+            SUSHI_LOG_ERROR("Exception in twine worker: {}", e.what());
+        }
+    }
 
     audio_frontend->cleanup();
     event_dispatcher->stop();

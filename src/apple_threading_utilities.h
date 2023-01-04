@@ -30,8 +30,6 @@
  */
 #ifdef __APPLE__
 #define SUSHI_APPLE_THREADING
-#else
-typedef void* os_workgroup_t;
 #endif
 
 #include <optional>
@@ -42,47 +40,6 @@ typedef void* os_workgroup_t;
 #include "options.h"
 
 namespace sushi::apple {
-
-/**
- * A structure defining what data need to be stored for each audio-rate worker thread that is part of the
- * audio workgroup.
- * This data is passed to the thread's callback method as a field member of the WorkerData structure - If on Apple.
- * If not, it is excluded.
- */
-struct MultithreadingData
-{
-    bool initialized = false;
-
-    std::optional<std::string> device_name = std::nullopt;
-
-    os_workgroup_t p_workgroup = nullptr;
-    os_workgroup_join_token_s join_token;
-    double current_sample_rate = SUSHI_SAMPLE_RATE_DEFAULT;
-
-    // Atomic since it's set in AudioGraph destructor while worker may be running.
-    std::atomic<bool> should_leave = false;
-};
-
-/**
- * @brief Given an audio output device name, this attempts to fetch and return an Apple audio thread workgroup.
- * @param device_name A validated audio device name.
- * @return The os_workgroup_t found. Apparently this can be nullptr, on failure.
- */
-os_workgroup_t get_device_workgroup(const std::string& device_name);
-
-/**
- * @brief This removes the current thread from a workgroup, if it has previously joined it.
- * Threads must leave all workgroups in the reverse order that they have joined them.
- * Failing to do so before exiting will result in undefined behavior.
- * @param worker_data WorkgroupMemberData structure.
- */
-void leave_workgroup_if_needed(MultithreadingData& worker_data);
-
-/**
- * @brief Sets the thread to realtime, and joins the audio thread workgroup if possible
- * @param worker_data WorkgroupMemberData structure.
- */
-void initialize_thread(MultithreadingData& worker_data);
 
 #ifdef SUSHI_BUILD_WITH_APPLE_COREAUDIO
 

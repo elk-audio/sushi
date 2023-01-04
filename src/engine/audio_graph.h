@@ -2,7 +2,7 @@
 #define SUSHI_AUDIO_GRAPH_H
 
 /*
- * Copyright 2017-2022 Elk Audio AB
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -29,23 +29,9 @@
 #include "engine/track.h"
 
 #include "apple_threading_utilities.h"
+#include "twine/src/apple_threading.h"
 
 namespace sushi::engine {
-
-/**
- * This contains the data passed as an argument to each external_render_callback(...) invocation.
- * On Apple silicon, the added member WorkgroupMemberData is introduced,
- * to support entering realtime audio thread workgroups in the first callback invocation.
- */
-struct WorkerData
-{
-    std::vector<sushi::engine::Track*>* tracks = nullptr;
-
-#ifdef SUSHI_APPLE_THREADING
-    apple::MultithreadingData thread_data;
-#endif
-};
-
 
 class AudioGraph
 {
@@ -58,7 +44,7 @@ public:
      *                      add() and remove() could be called from an rt thread
      *                      they must not (de)allocate memory.
      * @param sample_rate The sample_rate - used for calculating audio thread periodicity. Only used on Apple.
-     * @param device_name The Apple audio device name for which to join a thread group.
+     * @param device_name The Audio Device Name - only used on Apple, and will be unused on other platforms.
      * @param debug_mode_switches Enable xenomai-specific thread debugging
      */
     AudioGraph(int cpu_cores,
@@ -67,7 +53,7 @@ public:
                [[maybe_unused]] std::optional<std::string> device_name = std::nullopt,
                bool debug_mode_switches = false);
 
-    ~AudioGraph();
+    ~AudioGraph() = default;
 
     /**
      * @brief Add a track to the graph. The track will be assigned to a cpu
@@ -115,9 +101,6 @@ public:
 private:
     std::vector<std::vector<Track*>>   _audio_graph;
     std::unique_ptr<twine::WorkerPool> _worker_pool;
-
-    std::unique_ptr<WorkerData[]>      _worker_data;
-
     std::vector<RtEventFifo<>>         _event_outputs;
     int _cores;
     int _current_core;
