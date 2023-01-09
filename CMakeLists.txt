@@ -535,8 +535,7 @@ set(SOURCE_FILES
     src/plugins/wav_writer_plugin.cpp
     src/plugins/mono_summing_plugin.cpp
     src/plugins/stereo_mixer_plugin.cpp
-    src/audio_frontends/offline_frontend.cpp
-    src/apple_threading_utilities.cpp)
+    src/audio_frontends/offline_frontend.cpp)
 
 add_executable(sushi MACOSX_BUNDLE
     "${SOURCE_FILES}"

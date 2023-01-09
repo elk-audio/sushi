@@ -28,6 +28,47 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("AppleCoreAudio");
 
 namespace sushi::audio_frontend {
 
+std::optional<std::string> get_coreaudio_output_device_name(std::optional<std::string> coreaudio_output_device_uid)
+{
+    auto audio_devices = apple_coreaudio::AudioSystemObject::get_audio_devices();
+
+    if (audio_devices.empty())
+    {
+        SUSHI_LOG_ERROR("No Apple CoreAudio devices found");
+        return std::nullopt;
+    }
+
+    std::string id;
+    if (coreaudio_output_device_uid.has_value())
+    {
+        id = coreaudio_output_device_uid.value();
+    }
+    else
+    {
+         id = apple_coreaudio::AudioSystemObject::get_default_device_id(false); // false: for output.
+    }
+
+    for (auto& device : audio_devices)
+    {
+        if (device.get_uid() == id)
+        {
+            return device.get_name();
+        }
+    }
+
+    if (coreaudio_output_device_uid.has_value())
+    {
+        SUSHI_LOG_ERROR("Could not retrieve device name for coreaudio device with uid: {}",
+                        coreaudio_output_device_uid.value());
+    }
+    else
+    {
+        SUSHI_LOG_ERROR("Could not retrieve device name for default coreaudio device, uid: {}", id);
+    }
+
+    return std::nullopt;
+}
+
 AppleCoreAudioFrontend::AppleCoreAudioFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine), _input_device(0), _output_device(0) {}
 
 AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration* config)

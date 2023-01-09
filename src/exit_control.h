@@ -23,13 +23,27 @@
 
 #include <condition_variable>
 
+/**
+ * These three are used for signalling that Sushi should exit, from across threads.
+ * In main(), Sushi waits on this condition variable to exit.
+ */
 extern bool exit_flag;
 extern std::condition_variable exit_notifier;
-
 bool exit_condition();
 
+/**
+ *  By invoking this method, you can signal to Sushi to exit,
+ *  either through passing it to the standard signal(...) method,
+ *  or through calling it directly in the code, e.g. when coming upon an unrecoverable error.
+ *  When invoking this, Sushi will still wind down, cleanly close allocated resources, and flush logs.
+ * @param sig the signal, e.g. SIGINT, SIGTERM.
+ */
 void signal_handler([[maybe_unused]] int sig);
 
+/**
+ * If the error encountered is so severe as to require immediate exit, invoke this, instead of signal_handler.
+ * @param message
+ */
 void error_exit(const std::string& message);
 
 #endif // SUSHI_EXIT_CONTROL_H

@@ -28,7 +28,16 @@
 
 #include "engine/track.h"
 
-#include "apple_threading_utilities.h"
+/**
+ * This logic switches the use of apple silicon-specific threading priorities and workgroups on/off,
+ *  throughout Sushi.
+ *  By default it will always be on when building on Apple.
+ *  But you may want to temporarily bypass that here, for testing purposes.
+ */
+#ifdef __APPLE__
+#define SUSHI_APPLE_THREADING
+#endif
+
 #include "twine/src/apple_threading.h"
 
 namespace sushi::engine {
@@ -49,8 +58,8 @@ public:
      */
     AudioGraph(int cpu_cores,
                int max_no_tracks,
-               [[maybe_unused]] float sample_rate,
-               [[maybe_unused]] std::optional<std::string> device_name = std::nullopt,
+               float sample_rate,
+               std::optional<std::string> device_name = std::nullopt,
                bool debug_mode_switches = false);
 
     ~AudioGraph() = default;

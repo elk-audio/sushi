@@ -235,7 +235,7 @@ private:
     SpecialParameter _aftertouch_parameter;
 
     moodycamel::ReaderWriterQueue<Vst3xRtState*> _state_change_queue {STATE_CHANGE_QUEUE_SIZE};
-    moodycamel::ReaderWriterQueue<ParameterUpdate> _parameter_update_queue {100};
+    moodycamel::ReaderWriterQueue<ParameterUpdate> _parameter_update_queue {PARAMETER_UPDATE_QUEUE_SIZE};
 
     std::map<Steinberg::Vst::ParamID, const ParameterDescriptor*> _parameters_by_vst3_id;
 

@@ -29,6 +29,11 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("audio graph");
 
 constexpr bool DISABLE_DENORMALS = true;
 
+constexpr int ELK_EXIT_SIGNAL = 32;
+
+/**
+ * Real-time worker thread callback method.
+ */
 void external_render_callback(void* data)
 {
     auto tracks = reinterpret_cast<std::vector<sushi::engine::Track*>*>(data);
@@ -37,6 +42,14 @@ void external_render_callback(void* data)
     {
         track->render();
     }
+}
+
+void worker_error_callback([[maybe_unused]] twine::apple::AppleThreadingStatus status)
+{
+#ifdef SUSHI_APPLE_THREADING
+    SUSHI_LOG_ERROR("Error in twine worker: {}", twine::apple::status_to_string(status));
+    signal_handler(ELK_EXIT_SIGNAL);
+#endif
 }
 
 AudioGraph::AudioGraph(int cpu_cores,
@@ -52,42 +65,33 @@ AudioGraph::AudioGraph(int cpu_cores,
 
     if (_cores > 1)
     {
-        _worker_pool = twine::WorkerPool::create_worker_pool(_cores, DISABLE_DENORMALS, debug_mode_switches);
-
-        int worker_index = 0;
-
+        twine::apple::AppleMultiThreadData apple_data;
 #ifdef SUSHI_APPLE_THREADING
-        auto device_workgroup_result = twine::apple::get_device_workgroup(device_name.value());
-
-        if (device_workgroup_result.second != twine::apple::AppleDeviceWorkgroupStatus::OK)
+        apple_data.chunk_size = AUDIO_CHUNK_SIZE;
+        apple_data.current_sample_rate = sample_rate;
+        if (device_name.has_value())
         {
-            auto error_text = twine::apple::statusToString(device_workgroup_result.second);
-            SUSHI_LOG_ERROR("{}", error_text);
-
-            throw std::runtime_error(error_text);
-        }
-        else
-        {
-            SUSHI_LOG_DEBUG("Audio device workgroup fetched successfully.");
+            apple_data.device_name = device_name.value();
         }
 #endif
+
+        _worker_pool = twine::WorkerPool::create_worker_pool(_cores,
+                                                             apple_data,
+                                                             worker_error_callback,
+                                                             DISABLE_DENORMALS,
+                                                             debug_mode_switches);
 
         for (auto& tracks : _audio_graph)
         {
-            twine::apple::AppleMultiThreadData apple_data;
-#ifdef SUSHI_APPLE_THREADING
-            apple_data.chunk_size = AUDIO_CHUNK_SIZE;
-            apple_data.p_workgroup = device_workgroup_result.first;
-            apple_data.current_sample_rate = sample_rate;
-#endif
+            auto status = _worker_pool->add_worker(external_render_callback,
+                                                   &tracks);
 
-            _worker_pool->add_worker(external_render_callback,
-                                     &tracks,
-                                     std::move(apple_data),
-                                     75);
+            if (status != twine::WorkerPoolStatus::OK)
+            {
+                SUSHI_LOG_ERROR("Failed to start worker: {}",  to_error_string(status));
+            }
+
             tracks.reserve(max_no_tracks);
-
-            worker_index++;
         }
     }
     else
@@ -149,15 +153,7 @@ void AudioGraph::render()
     }
     else
     {
-        if (twine::global_worker_pool_exception_ptr != nullptr)
-        {
-            // TODO: Exit!
-            signal_handler(0);
-        }
-        else
-        {
-            _worker_pool->wakeup_and_wait();
-        }
+        _worker_pool->wakeup_and_wait();
     }
 }
 

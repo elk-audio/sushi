@@ -169,3 +169,33 @@ TEST_F(TestPortAudioFrontend, TestProcess)
     ASSERT_EQ(input_data, output_data);
     ASSERT_TRUE(_engine.process_called);
 }
+
+TEST_F(TestPortAudioFrontend, TestGetDeviceName)
+{
+    auto expected_name = "a_device";
+    PaDeviceInfo device_info;
+    device_info.maxInputChannels = 1;
+    device_info.maxOutputChannels = 1;
+    device_info.name = expected_name;
+
+    EXPECT_CALL(*mockPortAudio, Pa_GetDeviceInfo)
+    .WillOnce(Return(&device_info))
+    .WillOnce(Return(&device_info))
+    .WillOnce(Return(nullptr));
+
+    std::optional<int> portaudio_output_device_id = 1;
+
+    auto device_name = sushi::audio_frontend::get_portaudio_output_device_name(portaudio_output_device_id);
+
+    ASSERT_EQ(device_name, expected_name); // The specified device
+
+    EXPECT_CALL(*mockPortAudio, Pa_GetDefaultOutputDevice);
+
+    device_name = sushi::audio_frontend::get_portaudio_output_device_name(std::nullopt);
+
+    ASSERT_EQ(device_name, expected_name); // The default device
+
+    device_name = sushi::audio_frontend::get_portaudio_output_device_name(4);
+
+    EXPECT_FALSE(device_name.has_value());
+}

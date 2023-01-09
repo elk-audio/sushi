@@ -18,7 +18,8 @@
 
 #ifdef SUSHI_BUILD_WITH_LV2
 
-#include "fifo/circularfifo_memory_relaxed_aquire_release.h"
+#include <readerwriterqueue.h>
+
 #include "lv2/worker/worker.h"
 #include "lv2_model.h"
 
@@ -39,7 +40,7 @@ struct Lv2FifoItem
     std::array<std::byte, WORKER_REQUEST_SIZE> block;
 };
 
-using Lv2WorkerFifo = memory_relaxed_aquire_release::CircularFifo<Lv2FifoItem, WORKER_FIFO_SIZE>;
+using Lv2WorkerFifo = moodycamel::ReaderWriterQueue<Lv2FifoItem>;
 
 class Worker
 {
@@ -67,8 +68,8 @@ private:
 
     const LV2_Worker_Interface* _iface = nullptr;
 
-    Lv2WorkerFifo _requests;
-    Lv2WorkerFifo _responses;
+    Lv2WorkerFifo _requests {WORKER_FIFO_SIZE};
+    Lv2WorkerFifo _responses {WORKER_FIFO_SIZE};
 
     std::vector<std::byte> _request;
     std::vector<std::byte> _response;

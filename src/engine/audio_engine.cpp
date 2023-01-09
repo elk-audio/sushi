@@ -93,7 +93,7 @@ void ClipDetector::detect_clipped_samples(const ChunkSampleBuffer& buffer, RtSaf
 
 AudioEngine::AudioEngine(float sample_rate,
                          int rt_cpu_cores,
-                         [[maybe_unused]] std::optional<std::string> device_name,
+                         std::optional<std::string> device_name,
                          bool debug_mode_sw,
                          dispatcher::BaseEventDispatcher* event_dispatcher) : BaseEngine::BaseEngine(sample_rate),
                                                           _audio_graph(rt_cpu_cores,

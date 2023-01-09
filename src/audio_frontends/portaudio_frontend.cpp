@@ -29,6 +29,32 @@ namespace audio_frontend {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("portaudio");
 
+std::optional<std::string> get_portaudio_output_device_name(std::optional<int> portaudio_output_device_id)
+{
+    int device_index = -1;
+
+    if (portaudio_output_device_id.has_value())
+    {
+        device_index = portaudio_output_device_id.value();
+    }
+    else
+    {
+        device_index = Pa_GetDefaultOutputDevice();
+    }
+
+    sushi::audio_frontend::PortAudioFrontend frontend {nullptr};
+
+    auto device_info = frontend.device_info(device_index);
+
+    if (!device_info.has_value())
+    {
+        SUSHI_LOG_ERROR("Could not retrieve device info for Portaudio device with idx: {}", device_index);
+        return std::nullopt;
+    }
+
+    return device_info.value().name;
+}
+
 AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* config)
 {
     auto portaudio_config = static_cast<PortAudioFrontendConfiguration*>(config);

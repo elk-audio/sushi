@@ -35,6 +35,8 @@
 
 namespace sushi::audio_frontend {
 
+[[nodiscard]] std::optional<std::string> get_coreaudio_output_device_name(std::optional<std::string> coreaudio_output_device_uid);
+
 struct AppleCoreAudioFrontendConfiguration : public BaseAudioFrontendConfiguration {
     AppleCoreAudioFrontendConfiguration(std::optional<std::string> input_device_uid,
                                         std::optional<std::string> output_device_uid,

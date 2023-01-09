@@ -12,6 +12,8 @@
 
 #include "audio_frontends/apple_coreaudio/apple_coreaudio_object.h"
 
+#include "audio_frontends/apple_coreaudio_frontend.cpp"
+
 using ::testing::NiceMock;
 using ::testing::Return;
 
@@ -80,6 +82,61 @@ protected:
             *static_cast<DataType*>(out_data) = return_value;
             return kAudioHardwareNoError;
         });
+    }
+
+    void expect_calls_for_getting_output_device_name(AudioObjectID expected_audio_object_id,
+                                                     const AudioObjectPropertyAddress& expected_address,
+                                                     const CFStringRef& cf_string_ref,
+                                                     const CFStringRef& return_value)
+    {
+        EXPECT_CALL(_mock, AudioObjectHasProperty).WillRepeatedly(Return(true));
+
+        EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize).WillOnce([](AudioObjectID audio_object_id, const AudioObjectPropertyAddress* address, UInt32, const void*, UInt32* out_data_size) {
+                EXPECT_EQ(audio_object_id, kAudioObjectSystemObject);
+                AudioObjectPropertyAddress expected{kAudioHardwarePropertyDevices,
+                                                    kAudioObjectPropertyScopeGlobal,
+                                                    kAudioObjectPropertyElementMain};
+                EXPECT_EQ(*address, expected);
+                *out_data_size = 3 * sizeof(UInt32);
+                return kAudioHardwareNoError;
+            })
+            .WillOnce([expected_audio_object_id, &expected_address](AudioObjectID audio_object_id, const AudioObjectPropertyAddress* address, UInt32, const void*, UInt32* out_data_size) {
+                EXPECT_EQ(audio_object_id, expected_audio_object_id);
+                EXPECT_EQ(*address, expected_address);
+                *out_data_size = sizeof(CFStringRef);
+                return kAudioHardwareNoError;
+            })
+            .WillOnce([expected_audio_object_id, &expected_address](AudioObjectID audio_object_id, const AudioObjectPropertyAddress* address, UInt32, const void*, UInt32* out_data_size) {
+                EXPECT_EQ(audio_object_id, expected_audio_object_id);
+                EXPECT_EQ(*address, expected_address);
+                *out_data_size = sizeof(CFStringRef);
+                return kAudioHardwareNoError;
+            });
+
+        EXPECT_CALL(_mock, AudioObjectGetPropertyData).WillOnce([](AudioObjectID audio_object_id, const AudioObjectPropertyAddress* address, UInt32, const void*, UInt32* data_size, void* out_data) {
+                EXPECT_EQ(audio_object_id, kAudioObjectSystemObject);
+                AudioObjectPropertyAddress expected{kAudioHardwarePropertyDevices,
+                                                    kAudioObjectPropertyScopeGlobal,
+                                                    kAudioObjectPropertyElementMain};
+                EXPECT_EQ(*address, expected);
+                *data_size = sizeof(UInt32);
+                static_cast<UInt32*>(out_data)[0] = 1;
+                return kAudioHardwareNoError;
+            })
+            .WillOnce([expected_audio_object_id, &cf_string_ref, &expected_address](AudioObjectID audio_object_id, const AudioObjectPropertyAddress* address, UInt32, const void*, UInt32* data_size, void* out_data) {
+                EXPECT_EQ(audio_object_id, expected_audio_object_id);
+                EXPECT_EQ(*address, expected_address);
+                *data_size = sizeof(CFStringRef);
+                *static_cast<CFStringRef*>(out_data) = cf_string_ref;
+                return kAudioHardwareNoError;
+            })
+            .WillOnce([expected_audio_object_id, &return_value, &expected_address](AudioObjectID audio_object_id, const AudioObjectPropertyAddress* address, UInt32, const void*, UInt32* data_size, void* out_data) {
+                EXPECT_EQ(audio_object_id, expected_audio_object_id);
+                EXPECT_EQ(*address, expected_address);
+                *data_size = sizeof(CFStringRef);
+                *static_cast<CFStringRef*>(out_data) = return_value;
+                return kAudioHardwareNoError;
+            });
     }
 
     testing::StrictMock<AppleAudioHardwareMockup> _mock;
@@ -654,4 +711,50 @@ TEST_F(AppleCoreAudioFrontendTest, AudioDevice_get_sttream_latency)
 
     // Test out of bounds stream
     EXPECT_EQ(audio_device.get_stream_latency(1, true), 0);
+}
+
+TEST_F(AppleCoreAudioFrontendTest, get_coreaudio_output_device_name_valid_argument_test)
+{
+    AudioObjectID expected_audio_object_id = 1;
+    auto cf_string_ref = CFSTR("device_uid");
+    auto device_name = CFSTR("device_name");
+
+    expect_calls_for_getting_output_device_name(expected_audio_object_id,
+                                                {kAudioObjectPropertyName, kAudioObjectPropertyScopeGlobal,
+                                                 kAudioObjectPropertyElementMain},
+                                                cf_string_ref,
+                                                device_name);
+
+    std::optional<std::string> apple_coreaudio_output_device_uid = "device_uid";
+
+    auto fetched_device_name = sushi::audio_frontend::get_coreaudio_output_device_name(apple_coreaudio_output_device_uid);
+
+    EXPECT_TRUE(fetched_device_name.has_value());
+
+    auto std_string = apple_coreaudio::cf_string_to_std_string(device_name);
+
+    EXPECT_EQ(fetched_device_name.value(), std_string);
+}
+
+TEST_F(AppleCoreAudioFrontendTest, get_coreaudio_output_device_name_invalid_argument_test)
+{
+    AudioObjectID expected_audio_object_id = 1;
+    auto cf_string_ref = CFSTR("device_uid");
+    auto device_name = CFSTR("device_name");
+
+    AudioObjectPropertyAddress address {kAudioObjectPropertyName, kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMain};
+
+    expect_calls_for_getting_output_device_name(expected_audio_object_id,
+                                                address,
+                                                cf_string_ref,
+                                                device_name);
+
+    std::optional<std::string> apple_coreaudio_output_device_uid = "INVALID";
+
+    auto fetched_device_name = sushi::audio_frontend::get_coreaudio_output_device_name(apple_coreaudio_output_device_uid);
+
+    apple_coreaudio::AudioDevice audio_device(1);
+    audio_device.get_name(); // Doing this to satisfy a requirement in the "expect" method.
+
+    EXPECT_FALSE(fetched_device_name.has_value());
 }

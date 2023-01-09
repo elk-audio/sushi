@@ -90,8 +90,8 @@ public:
      * @param rt_cpu_cores The maximum number of cpu cores to use for audio processing. Default
      *                     is 1 and means that audio processing is done only in the rt callback
      *                     of the audio frontend.
-     *                     With values >1 tracks will be processed in parallel threads.
-     * @param device_name The Audio Device Name - only used on Apple, and will be unused on other platforms.
+     *                     With values > 1 tracks will be processed in parallel threads.
+     * @param device_name The audio device name - only used on Apple for fetching the audio thread workgroup, and will be unused on other platforms.
      * @param debug_mode_sw Enable xenomai specific thread debugging for all audio threads in
      *                      multicore mode.
      * @param event_dispatcher A pointer to a BaseEventDispatcher instance, which AudioEngine takes over ownership of.
@@ -99,7 +99,7 @@ public:
      */
     explicit AudioEngine(float sample_rate,
                          int rt_cpu_cores = 1,
-                         [[maybe_unused]] std::optional<std::string> device_name = std::nullopt,
+                         std::optional<std::string> device_name = std::nullopt,
                          bool debug_mode_sw = false,
                          dispatcher::BaseEventDispatcher* event_dispatcher = nullptr);
 

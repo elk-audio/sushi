@@ -394,14 +394,14 @@ int main(int argc, char* argv[])
         twine::init_xenomai(); // must be called before setting up any worker pools
     }
 
-    std::optional<std::string> device_name;
+    std::optional<std::string> device_name = std::nullopt;
 #ifdef SUSHI_APPLE_THREADING
     switch (frontend_type)
     {
 #ifdef SUSHI_BUILD_WITH_PORTAUDIO
         case FrontendType::PORTAUDIO:
         {
-            device_name = sushi::apple::get_portaudio_output_device_name(portaudio_output_device_id);
+            device_name = sushi::audio_frontend::get_portaudio_output_device_name(portaudio_output_device_id);
             break;
         }
 #endif
@@ -409,7 +409,7 @@ int main(int argc, char* argv[])
 #ifdef SUSHI_BUILD_WITH_APPLE_COREAUDIO
         case FrontendType::APPLE_COREAUDIO:
         {
-            device_name = sushi::apple::get_coreaudio_output_device_name(apple_coreaudio_output_device_uid);
+            device_name = sushi::audio_frontend::get_coreaudio_output_device_name(apple_coreaudio_output_device_uid);
             break;
         }
 #endif
@@ -418,27 +418,15 @@ int main(int argc, char* argv[])
             device_name = std::nullopt;
         }
     }
-
-#else
-    device_name = std::nullopt;
 #endif
 
     std::unique_ptr<sushi::engine::AudioEngine> engine = nullptr;
 
-    try
-    {
         engine = std::make_unique<sushi::engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT,
                                                               rt_cpu_cores,
                                                               device_name,
                                                               debug_mode_switches,
                                                               nullptr);
-    }
-    catch (const std::exception &e)
-    {
-        std::string error_msg("Error instantiating AudioEngine: ");
-        error_msg.append(e.what());
-        error_exit(error_msg);
-    }
 
     if (!base_plugin_path.empty())
     {
@@ -503,7 +491,6 @@ int main(int argc, char* argv[])
             break;
         }
 
-#ifdef SUSHI_BUILD_WITH_PORTAUDIO
         case FrontendType::PORTAUDIO:
         {
             SUSHI_LOG_INFO("Setting up PortAudio frontend");
@@ -516,25 +503,11 @@ int main(int argc, char* argv[])
             audio_frontend = std::make_unique<sushi::audio_frontend::PortAudioFrontend>(engine.get());
             break;
         }
-#endif
-
-#ifdef SUSHI_BUILD_WITH_APPLE_COREAUDIO
-        case FrontendType::APPLE_COREAUDIO:
-        {
-            SUSHI_LOG_INFO("Setting up Apple CoreAudio frontend");
-
-            frontend_config = std::make_unique<sushi::audio_frontend::AppleCoreAudioFrontendConfiguration>(apple_coreaudio_input_device_uid,
-                                                                                                           apple_coreaudio_output_device_uid,
-                                                                                                           cv_inputs,
-                                                                                                           cv_outputs);
-            audio_frontend = std::make_unique<sushi::audio_frontend::AppleCoreAudioFrontend>(engine.get());
-            break;
-        }
-#endif
 
         case FrontendType::APPLE_COREAUDIO:
         {
             SUSHI_LOG_INFO("Setting up Apple CoreAudio frontend");
+
             frontend_config = std::make_unique<sushi::audio_frontend::AppleCoreAudioFrontendConfiguration>(apple_coreaudio_input_device_uid,
                                                                                                            apple_coreaudio_output_device_uid,
                                                                                                            cv_inputs,
@@ -742,18 +715,6 @@ int main(int argc, char* argv[])
     ////////////////////////////////////////////////////////////////////////////////
     // Cleanup before exiting! //
     ////////////////////////////////////////////////////////////////////////////////
-
-    if (twine::global_worker_pool_exception_ptr != nullptr)
-    {
-        try
-        {
-            std::rethrow_exception(twine::global_worker_pool_exception_ptr);
-        }
-        catch (const std::exception &e)
-        {
-            SUSHI_LOG_ERROR("Exception in twine worker: {}", e.what());
-        }
-    }
 
     audio_frontend->cleanup();
     event_dispatcher->stop();

@@ -7,6 +7,7 @@
 #define private public
 #define protected public
 
+#include "exit_control.cpp"
 #include "engine/audio_graph.cpp"
 #include "test_utils/host_control_mockup.h"
 
@@ -24,7 +25,7 @@ protected:
 
     void SetUp(int cores)
     {
-        _module_under_test = std::make_unique<AudioGraph>(cores, TEST_MAX_TRACKS);
+        _module_under_test = std::make_unique<AudioGraph>(cores, TEST_MAX_TRACKS, SAMPLE_RATE, "");
     }
 
     HostControlMockup             _hc;
