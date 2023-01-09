@@ -464,6 +464,7 @@ set(INCLUDE_DIRS ${INCLUDE_DIRS} ${READERWRITERQUEUE_INCLUDE_DIRS})
 
 set(SOURCE_FILES
     src/main.cpp
+    src/exit_control.cpp
     src/logging.cpp
     src/json_utils.cpp
     src/audio_frontends/base_audio_frontend.cpp

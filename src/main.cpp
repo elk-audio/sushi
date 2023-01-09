@@ -22,11 +22,12 @@
 #include <iostream>
 #include <csignal>
 #include <optional>
-#include <condition_variable>
+
 #include <filesystem>
 
 #include "twine/src/twine_internal.h"
 
+#include "exit_control.h"
 #include "logging.h"
 #include "engine/audio_engine.h"
 #include "audio_frontends/offline_frontend.h"
@@ -65,26 +66,10 @@ enum class FrontendType
     NONE
 };
 
-bool                    exit_flag = false;
-bool                    exit_condition() {return exit_flag;}
-std::condition_variable exit_notifier;
-
-void signal_handler([[maybe_unused]] int sig)
-{
-    exit_flag = true;
-    exit_notifier.notify_one();
-}
-
 void print_sushi_headline()
 {
     std::cout << "SUSHI - Copyright 2017-2022 Elk, Stockholm" << std::endl;
     std::cout << "SUSHI is licensed under the Affero GPL 3.0. Source code is available at github.com/elk-audio" << std::endl;
-}
-
-void error_exit(const std::string& message)
-{
-    std::cerr << message << std::endl;
-    std::exit(1);
 }
 
 void print_version_and_build_info()

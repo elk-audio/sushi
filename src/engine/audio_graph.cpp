@@ -21,6 +21,7 @@
 
 #include "audio_graph.h"
 #include "logging.h"
+#include "exit_control.h"
 
 namespace sushi::engine {
 
@@ -148,7 +149,15 @@ void AudioGraph::render()
     }
     else
     {
-        _worker_pool->wakeup_and_wait();
+        if (twine::global_worker_pool_exception_ptr != nullptr)
+        {
+            // TODO: Exit!
+            signal_handler(0);
+        }
+        else
+        {
+            _worker_pool->wakeup_and_wait();
+        }
     }
 }
 
