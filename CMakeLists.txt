@@ -53,6 +53,8 @@ set(SUSHI_WITH_LINK_DEFAULT ON)
 set(SUSHI_WITH_RPC_INTERFACE_DEFAULT ON)
 set(SUSHI_TWINE_STATIC_DEFAULT OFF)
 set(SUSHI_AUDIO_BUFFER_SIZE_DEFAULT 64)
+set(SUSHI_WITH_SENTRY_DEFAULT OFF)
+set(SUSHI_SENTRY_DSN_DEFAULT "--Sentry default DSN is undefined--")
 
 if (APPLE)
     # macOS defaults
@@ -66,7 +68,7 @@ if (APPLE)
     set(SUSHI_WITH_LV2_MDA_TESTS_DEFAULT OFF)
     set(SUSHI_WITH_UNIT_TESTS_DEFAULT ON)
     set(SUSHI_BUILD_TWINE_DEFAULT ON)
-elseif(DEFINED ENV{OE_CMAKE_TOOLCHAIN_FILE)
+elseif (DEFINED ENV{OE_CMAKE_TOOLCHAIN_FILE)
     # Yocto cross-compilation defaults
     set(SUSHI_WITH_XENOMAI_DEFAULT ON)
     set(SUSHI_WITH_PORTAUDIO_DEFAULT OFF)
@@ -107,6 +109,8 @@ option(SUSHI_WITH_LINK "Enable Ableton Link support" ${SUSHI_WITH_LINK_DEFAULT})
 option(SUSHI_WITH_RPC_INTERFACE "Enable RPC control support" ${SUSHI_WITH_RPC_INTERFACE_DEFAULT})
 option(SUSHI_BUILD_TWINE "Build included Twine library" ${SUSHI_BUILD_TWINE_DEFAULT})
 option(SUSHI_TWINE_STATIC "Link against static version of TWINE library" ${SUSHI_TWINE_STATIC_DEFAULT})
+option(SUSHI_WITH_SENTRY "Enable sentry.io support" ${SUSHI_WITH_SENTRY_DEFAULT})
+option(SUSHI_SENTRY_DSN "Required Sentry DSN Path" ${SUSHI_SENTRY_DSN_DEFAULT})
 
 set(SUSHI_AUDIO_BUFFER_SIZE ${SUSHI_AUDIO_BUFFER_SIZE_DEFAULT} CACHE STRING "Set internal audio buffer size in frames")
 
@@ -152,11 +156,11 @@ if (${SUSHI_WITH_XENOMAI})
     # explicitly link with cobalt lib
     set(XENOMAI_BASE_DIR "/usr/xenomai" CACHE STRING "xenomai base dir path")
 
-    if(NOT "$ENV{CMAKE_SYSROOT}" STREQUAL "")
+    if (NOT "$ENV{CMAKE_SYSROOT}" STREQUAL "")
         set(CMAKE_SYSROOT "$ENV{CMAKE_SYSROOT}")
         message("ENV_CMAKE_SYSROOT = " $ENV{CMAKE_SYSROOT})
     endif()
-    if(NOT "${CMAKE_SYSROOT}" STREQUAL "")
+    if (NOT "${CMAKE_SYSROOT}" STREQUAL "")
         set(XENOMAI_BASE_DIR "${CMAKE_SYSROOT}/usr/xenomai")
         message("XENOMAI_BASE_DIR is " ${XENOMAI_BASE_DIR})
     endif()
@@ -428,6 +432,26 @@ endif()
 
 message("Configured audio buffer size: " ${SUSHI_AUDIO_BUFFER_SIZE} " samples")
 
+###################
+# sentry.io setup #
+###################
+
+if (${SUSHI_WITH_SENTRY})
+    find_package(Threads)
+    find_package(sentry CONFIG REQUIRED)
+
+    message("Building with sentry.io support.")
+
+    if (NOT SUSHI_SENTRY_DSN)
+        set(SUSHI_SENTRY_DSN ${SUSHI_SENTRY_DSN_DEFAULT} CACHE STRING "The DSN to upload the sentry logs and crash reports to, from Sushi" FORCE)
+    endif()
+
+    set(SENTRY_CRASHPAD_HANDLER_PATH "${VCPKG_INSTALLED_DIR}/osx-custom/tools/sentry-native/crashpad_handler")
+
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} sentry::sentry)
+    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_SENTRY -DSUSHI_SENTRY_DSN="${SUSHI_SENTRY_DSN}")
+endif()
+
 ####################
 #  Main Target     #
 ####################
@@ -585,7 +609,7 @@ if (APPLE)
 endif()
 
 install(TARGETS sushi RUNTIME DESTINATION bin, BUNDLE DESTINATION Applications)
-foreach(ITEM ${DOC_FILES_INSTALL})
+foreach (ITEM ${DOC_FILES_INSTALL})
     install(FILES ${ITEM} DESTINATION share/sushi/doc)
 endforeach()
 

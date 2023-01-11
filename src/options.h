@@ -38,6 +38,12 @@
 #define SUSHI_GRPC_LISTENING_PORT_DEFAULT "[::]:51051"
 #define SUSHI_PORTAUDIO_INPUT_LATENCY_DEFAULT 0.0f
 #define SUSHI_PORTAUDIO_OUTPUT_LATENCY_DEFAULT 0.0f
+#define SUSHI_SENTRY_CRASH_HANDLER_PATH_DEFAULT "./crashpad_handler"
+#ifdef SUSHI_BUILD_WITH_SENTRY
+    #define SUSHI_SENTRY_DSN_DEFAULT SUSHI_SENTRY_DSN
+#else
+    #define SUSHI_SENTRY_DSN_DEFAULT ""
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers for optionparse
@@ -137,7 +143,9 @@ enum OptionIndex
     OPT_IDX_GRPC_LISTEN_ADDRESS,
     OPT_IDX_NO_OSC,
     OPT_IDX_NO_GRPC,
-    OPT_IDX_BASE_PLUGIN_PATH
+    OPT_IDX_BASE_PLUGIN_PATH,
+    OPT_IDX_SENTRY_CRASH_HANDLER,
+    OPT_IDX_SENTRY_DSN
 };
 
 // Option types (UNUSED is generally used for options that take a value as argument)
@@ -441,6 +449,22 @@ const optionparser::Descriptor usage[] =
         "base-plugin-path",
         SushiArg::NonEmpty,
         "\t\t--base-plugin-path=<path> \tSpecify a directory to be the base of plugin paths used in JSON / gRPC."
+    },
+    {
+        OPT_IDX_SENTRY_CRASH_HANDLER,
+        OPT_TYPE_UNUSED,
+        "",
+        "sentry-crash-handler",
+        SushiArg::NonEmpty,
+        "\t\t--sentry-crash-handler=<path/to/crash_handler> \tSet the path to the crash handler to use for sentry reports [default path=" SUSHI_STRINGIZE(SUSHI_SENTRY_CRASH_HANDLER_PATH_DEFAULT) "]."
+    },
+    {
+        OPT_IDX_SENTRY_DSN,
+        OPT_TYPE_UNUSED,
+        "",
+        "sentry-dsn",
+        SushiArg::NonEmpty,
+        "\t\t--sentry-dsn=<dsn.address> \tSet the DSN that sentry should upload crashlogs to [default address=" SUSHI_STRINGIZE(SUSHI_SENTRY_DSN_DEFAULT) "]."
     },
     // Don't touch this one (set default values for optionparse library)
     { 0, 0, 0, 0, 0, 0}

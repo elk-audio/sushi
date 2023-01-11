@@ -23,22 +23,29 @@
 #include <algorithm>
 
 #include "logging.h"
+
 #ifndef SUSHI_DISABLE_LOGGING
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/async.h"
+
+#ifdef SUSHI_BUILD_WITH_SENTRY
+#include "sentry_log_sink.h"
+#endif
 
 namespace elk {
 
 std::string Logger::_logger_file_name = "/tmp/sushi.log";
 std::string Logger::_logger_name = "Sushi";
 spdlog::level::level_enum Logger::_min_log_level = spdlog::level::warn;
-std::shared_ptr<spdlog::logger> Logger::logger_instance{nullptr};
+std::shared_ptr<spdlog::logger> Logger::logger_instance {nullptr};
 
 SUSHI_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
                                          const std::string& logger_name,
                                          const std::string& min_log_level,
                                          const bool enable_flush_interval,
-                                         const std::chrono::seconds log_flush_interval)
+                                         const std::chrono::seconds log_flush_interval,
+                                         [[maybe_unused]] const std::string& sentry_crash_handler_path,
+                                         [[maybe_unused]] const std::string& sentry_dsn)
 {
     SUSHI_LOG_ERROR_CODE ret = SUSHI_LOG_ERROR_CODE_OK;
 
@@ -48,7 +55,7 @@ SUSHI_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
     level_map["warning"] = spdlog::level::warn;
     level_map["error"] = spdlog::level::err;
     level_map["critical"] = spdlog::level::critical;
-   
+
     std::string log_level_lowercase = min_log_level;
     std::transform(min_log_level.begin(), min_log_level.end(), log_level_lowercase.begin(), ::tolower);
     spdlog::set_pattern("[%Y-%m-%d %T.%e] [%l] %v");
@@ -68,13 +75,13 @@ SUSHI_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
         {
             return SUSHI_LOG_ERROR_CODE_INVALID_FLUSH_INTERVAL;
         }
-        
     }
 
     if (logger_instance == nullptr)
     {
         ret = SUSHI_LOG_FAILED_TO_START_LOGGER;
     }
+
     if (level_map.count(log_level_lowercase) > 0)
     {
         spdlog::set_level(level_map[log_level_lowercase]);
@@ -83,6 +90,11 @@ SUSHI_LOG_ERROR_CODE Logger::init_logger(const std::string& file_name,
     {
         ret = SUSHI_LOG_ERROR_CODE_INVALID_LOG_LEVEL;
     }
+
+#ifdef SUSHI_BUILD_WITH_SENTRY
+    logger_instance->sinks().push_back(std::make_shared<sentry_sink_mt>(sentry_crash_handler_path, sentry_dsn));
+#endif
+
     return ret;
 }
 
@@ -100,8 +112,8 @@ std::string Logger::get_error_message(SUSHI_LOG_ERROR_CODE status)
 
 std::shared_ptr<spdlog::logger> Logger::setup_logging()
 {
-    const int  MAX_LOG_FILE_SIZE    = 10'000'000;           // In bytes
-    const auto MIN_FLUSH_LEVEL      = spdlog::level::err;   // Min level for automatic flush
+    const int MAX_LOG_FILE_SIZE = 10'000'000; // In bytes
+    const auto MIN_FLUSH_LEVEL = spdlog::level::err; // Min level for automatic flush
 
     spdlog::set_level(_min_log_level);
     auto async_file_logger = spdlog::rotating_logger_mt<spdlog::async_factory>(_logger_name,
@@ -113,6 +125,7 @@ std::shared_ptr<spdlog::logger> Logger::setup_logging()
     async_file_logger->warn("#############################");
     async_file_logger->warn("   Started Sushi Logger!");
     async_file_logger->warn("#############################");
+
     return async_file_logger;
 }
 

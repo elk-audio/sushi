@@ -178,11 +178,13 @@ int main(int argc, char* argv[])
     bool use_grpc = true;
     std::chrono::seconds log_flush_interval = std::chrono::seconds(0);
     std::string base_plugin_path = std::filesystem::current_path();
+    std::string sentry_crash_handler_path = SUSHI_SENTRY_CRASH_HANDLER_PATH_DEFAULT;
+    std::string sentry_dsn = SUSHI_SENTRY_DSN_DEFAULT;
 
-    for (int i = 0; i<cl_parser.optionsCount(); i++)
+    for (int i = 0; i < cl_parser.optionsCount(); i++)
     {
         optionparser::Option& opt = cl_buffer[i];
-        switch(opt.index())
+        switch (opt.index())
         {
         case OPT_IDX_HELP:
         case OPT_IDX_UNKNOWN:
@@ -330,6 +332,14 @@ int main(int argc, char* argv[])
             base_plugin_path = std::string(opt.arg);
             break;
 
+        case OPT_IDX_SENTRY_CRASH_HANDLER:
+            sentry_crash_handler_path = opt.arg;
+            break;
+
+        case OPT_IDX_SENTRY_DSN:
+            sentry_dsn = opt.arg;
+            break;
+
         default:
             SushiArg::print_error("Unhandled option '", opt, "' \n");
             break;
@@ -349,7 +359,9 @@ int main(int argc, char* argv[])
     ////////////////////////////////////////////////////////////////////////////////
     // Logger configuration
     ////////////////////////////////////////////////////////////////////////////////
-    auto ret_code = SUSHI_INITIALIZE_LOGGER(log_filename, "Logger", log_level, enable_flush_interval, log_flush_interval);
+    auto ret_code = SUSHI_INITIALIZE_LOGGER(log_filename, "Logger", log_level,
+                                            enable_flush_interval, log_flush_interval,
+                                            sentry_crash_handler_path, sentry_dsn);
     if (ret_code != SUSHI_LOG_ERROR_CODE_OK)
     {
         std::cerr << SUSHI_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;
@@ -703,7 +715,6 @@ int main(int argc, char* argv[])
         rpc_server->stop();
     }
 #endif
-
     SUSHI_LOG_INFO("Sushi exiting normally!");
     return 0;
 }

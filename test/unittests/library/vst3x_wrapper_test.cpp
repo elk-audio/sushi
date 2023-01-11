@@ -379,13 +379,88 @@ TEST_F(TestVst3xWrapper, TestStateHandling)
     EXPECT_FALSE(_module_under_test->bypassed());
 
     // Retrive the delete event and execute it to delete the RtState object
-    ASSERT_FALSE(_event_queue.empty());
     RtEvent rt_event;
-    _event_queue.pop(rt_event);
-    auto delete_event = Event::from_rt_event(rt_event, IMMEDIATE_PROCESS);
-    ASSERT_TRUE(delete_event);
-    static_cast<AsynchronousDeleteEvent*>(delete_event)->execute();
-    delete delete_event;
+
+    int deleted_states = 0;
+    int notifications = 0;
+    while (_event_queue.pop(rt_event))
+    {
+        if (rt_event.type() == RtEventType::DELETE)
+        {
+            auto delete_event = Event::from_rt_event(rt_event, IMMEDIATE_PROCESS);
+            ASSERT_TRUE(delete_event);
+            static_cast<AsynchronousDeleteEvent*>(delete_event)->execute();
+            delete delete_event;
+            deleted_states++;
+        }
+        if (rt_event.type() == RtEventType::NOTIFY)
+        {
+            notifications++;
+        }
+    }
+
+    EXPECT_EQ(1, deleted_states);
+    EXPECT_EQ(1, notifications);
+}
+
+TEST_F(TestVst3xWrapper, TestMultipleStates)
+{
+    ChunkSampleBuffer buffer(2);
+    SetUp(PLUGIN_FILE, PLUGIN_NAME);
+
+    auto desc = _module_under_test->parameter_from_name("Delay");
+    ASSERT_TRUE(desc);
+
+    ProcessorState state;
+
+    // Test setting state with realtime running
+    state.set_bypass(false);
+    state.add_parameter_change(desc->id(), 0.33);
+
+    auto status = _module_under_test->set_state(&state, true);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+    auto event = _host_control._dummy_dispatcher.retrieve_event();
+    _module_under_test->process_event(event->to_rt_event(0));
+
+    // Send another state, also with manual event passing
+    state.add_parameter_change(desc->id(), 0.55);
+    status = _module_under_test->set_state(&state, true);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+    event = _host_control._dummy_dispatcher.retrieve_event();
+    _module_under_test->process_event(event->to_rt_event(0));
+
+    EXPECT_FALSE(_module_under_test->_state_change_queue.wasEmpty());
+
+    // Process twice and check that we got the value from the second state
+    _module_under_test->process_audio(buffer, buffer);
+    _module_under_test->process_audio(buffer, buffer);
+
+    EXPECT_FLOAT_EQ(0.55f, _module_under_test->parameter_value(desc->id()).second);
+    EXPECT_FALSE(_module_under_test->bypassed());
+
+    // Retrieve the delete events and execute them to delete the RtState objects
+    // Also make sure that a notification was sent for every state change
+    RtEvent rt_event;
+    int deleted_states = 0;
+    int notifications = 0;
+    while (_event_queue.pop(rt_event))
+    {
+        if (rt_event.type() == RtEventType::DELETE)
+        {
+            auto delete_event = Event::from_rt_event(rt_event, IMMEDIATE_PROCESS);
+            ASSERT_TRUE(delete_event);
+            static_cast<AsynchronousDeleteEvent*>(delete_event)->execute();
+            delete delete_event;
+            deleted_states++;
+        }
+        if (rt_event.type() == RtEventType::NOTIFY)
+        {
+            notifications++;
+        }
+    }
+
+    EXPECT_EQ(2, deleted_states);
+    EXPECT_EQ(2, notifications);
 }
 
 TEST_F(TestVst3xWrapper, TestBinaryStateSaving)

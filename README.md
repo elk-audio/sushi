@@ -78,7 +78,6 @@ Sushi handles most dependencies with vcpkg (or as submodules) and will build and
       * Vst 2.4 SDK - Needs to be provided externally as it is not available from Steinberg anymore.
 
   * For LV2:
-
       * liblilv-dev - at least version 0.24.4. Lilv is an official wrapper for LV2.
       * lilv-utils - at least version 0.24.5.
       * lv2-dev - at least version 1.18.2. The main LV2 library.
@@ -86,7 +85,6 @@ Sushi handles most dependencies with vcpkg (or as submodules) and will build and
         The official Ubuntu repositories do not have these latest versions at the time of writing. The best source for them is instead the [KX Studio repositories, which you need to enable manually](https://kx.studio/Repositories).
 
       * For LV2 unit tests:
-
           * lv2-examples - at least version 1.18.2.
           * mda-lv2 - at least version 1.2.4 of [drobilla's port](http://drobilla.net/software/mda-lv2/) - not that from Mod Devices or others.
 
@@ -94,7 +92,6 @@ Sushi handles most dependencies with vcpkg (or as submodules) and will build and
 Instructions:
 
 ```
-$ ./third-party/vcpkg/bootstrap-vcpkg.sh
 $ mkdir build && cd build 
 $ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../third-party/vcpkg/scripts/buildsystems/vcpkg.cmake ..
 ```
@@ -113,20 +110,22 @@ Option                                | Value    | Notes
 --------------------------------------|----------|------------------------------------------------------------------------------------------------------
 SUSHI_AUDIO_BUFFER_SIZE               | 8 - 512  | The buffer size used in the audio processing. Needs to be a power of 2 (8, 16, 32, 64, 128...).
 SUSHI_WITH_XENOMAI                    | on / off | Build Sushi with Xenomai RT-kernel support, only for ElkPowered hardware.
-SUSHI_WITH_JACK                       | on / off | Build Sushi with Jack Audio support, only for standard Linux distributions and macOS
-SUSHI_WITH_PORTAUDIO                  | on / off | Build Sushi with Portaudio support
-SUSHI_WITH_ALSA_MIDI                  | on / off | Build Sushi with Alsa sequencer support for MIDI (Linux only)
+SUSHI_WITH_JACK                       | on / off | Build Sushi with Jack Audio support, only for standard Linux distributions and macOS.
+SUSHI_WITH_PORTAUDIO                  | on / off | Build Sushi with Portaudio support.
+SUSHI_WITH_ALSA_MIDI                  | on / off | Build Sushi with Alsa sequencer support for MIDI (Linux only).
 SUSHI_WITH_RT_MIDI                    | on / off | Build Sushi with RtMidi support for MIDI. Cannot be selected if SUSHI_WITH_ALSA_MIDI is set.
 SUSHI_WITH_LINK                       | on / off | Build Sushi with Ableton Link support.
 SUSHI_WITH_VST2                       | on / off | Include support for loading Vst 2.x plugins in Sushi.
 SUSHI_WITH_VST3                       | on / off | Include support for loading Vst 3.x plugins in Sushi.
-SUSHI_WITH_LV2                        | on / off | Include support for loading LV2 plugins in Sushi. 
+SUSHI_WITH_LV2                        | on / off | Include support for loading LV2 plugins in Sushi.
 SUSHI_WITH_RPC_INTERFACE              | on / off | Build gRPC external control interface, requires gRPC development files.
 SUSHI_BUILD_TWINE                     | on / off | Build and link with the included version of [TWINE](https://github.com/elk-audio/twine), otherwise tries to link with system wide if the option is disabled.
-SUSHI_TWINE_STATIC                    | on / off | Link statically against TWINE (not recommended, useful only in a few cases)
+SUSHI_TWINE_STATIC                    | on / off | Link statically against TWINE (not recommended, useful only in a few cases).
 SUSHI_WITH_UNIT_TESTS                 | on / off | Build and run unit tests together with building Sushi.
 SUSHI_WITH_LV2_MDA_TESTS              | on / off | Include LV2 unit tests which depends on the LV2 drobilla port of the mda plugins being installed. 
 SUSHI_VST2_SDK_PATH                   | path     | Path to external Vst 2.4 SDK. Not included and required if WITH_VST2 is enabled.
+SUSHI_WITH_SENTRY                     | on / off | Build Sushi with Sentry error logging support.
+SUSHI_SENTRY_DSN                      | url      | URL to the default value for the Sushi Sentry logging DSN. This can still be passed as a runtime terminal argument.
 
 The default values for the options are platform-specific (native Linux, Yocto/OE, macOS).
 

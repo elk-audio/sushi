@@ -58,6 +58,9 @@ struct CompileTimeSettings
 #ifdef SUSHI_BUILD_WITH_ABLETON_LINK
             "ableton link",
 #endif
+#ifdef SUSHI_BUILD_WITH_SENTRY
+            "sentry"
+#endif
     };
 };
 

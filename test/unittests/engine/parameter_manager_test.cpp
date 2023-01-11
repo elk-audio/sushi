@@ -2,7 +2,9 @@
 #include "gmock/gmock.h"
 #include "gmock/gmock-actions.h"
 
+#define private public
 #include "engine/parameter_manager.cpp"
+#undef private
 #include "plugins/gain_plugin.h"
 
 #include "test_utils/mock_event_dispatcher.h"
@@ -152,4 +154,17 @@ TEST_F(TestParameterManager, TestErrorHandling)
     EXPECT_CALL(_mock_dispatcher, process(_)).Times(0);
     _module_under_test.output_parameter_notifications(&_mock_dispatcher, 2 * TEST_MAX_INTERVAL);
 
+    // Notify with a non-existing parameter id, should not crash, nor output anything
+    _module_under_test.mark_parameter_changed(_test_track->id(), 1234, TEST_MAX_INTERVAL);
+
+    EXPECT_CALL(_mock_dispatcher, process(_)).Times(0);
+    _module_under_test.output_parameter_notifications(&_mock_dispatcher, 2 * TEST_MAX_INTERVAL);
+
+    // Force a value change for this particular parameter, we still shouldn't output anything
+    if (const auto& value = _module_under_test._parameters[_test_track->id()].find(1234); value != _module_under_test._parameters[_test_track->id()].end())
+    {
+        value->second.value = 0.5;
+    }
+    _module_under_test.mark_parameter_changed(_test_track->id(), 1234, TEST_MAX_INTERVAL);
+    _module_under_test.output_parameter_notifications(&_mock_dispatcher, 2 * TEST_MAX_INTERVAL);
 }
