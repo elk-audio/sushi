@@ -55,7 +55,6 @@ AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration*
     if (coreaudio_config->input_device_uid != coreaudio_config->output_device_uid)
     {
         SUSHI_LOG_ERROR("At the moment the input device must be the same as the output device, please specify the same UID for both the input and output device.");
-        // TODO: Remove this test once IO from 2 different devices is implemented.
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
@@ -368,8 +367,7 @@ void AppleCoreAudioFrontend::audio_callback(apple_coreaudio::AudioDevice::Scope 
 
     if (scope != apple_coreaudio::AudioDevice::Scope::INPUT_OUTPUT)
     {
-        // TODO: Implement callbacks from 2 different devices (in case the input device is not the same as the output device).
-        return;
+        return; // Callbacks from 2 different devices not implemented
     }
 
     if (input_data == nullptr || output_data == nullptr)
