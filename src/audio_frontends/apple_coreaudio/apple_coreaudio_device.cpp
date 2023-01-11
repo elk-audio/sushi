@@ -91,7 +91,17 @@ int apple_coreaudio::AudioDevice::get_num_channels(bool for_input) const
                                   for_input ? kAudioObjectPropertyScopeInput : kAudioObjectPropertyScopeOutput,
                                   kAudioObjectPropertyElementMain};
 
+    if (!has_property(pa))
+    {
+        return -1;
+    }
+
     auto data_size = get_property_data_size(pa);
+
+    if (data_size == 0)
+    {
+        return -1;
+    }
 
     // Use std::vector as underlying storage so that the allocated memory is under RAII (as opposed to malloc/free).
     std::vector<uint8_t> storage(data_size);
@@ -150,7 +160,7 @@ double apple_coreaudio::AudioDevice::get_nominal_sample_rate() const
 {
     if (!is_valid())
     {
-        return false;
+        return 0.0;
     }
 
     AudioObjectPropertyAddress pa{kAudioDevicePropertyNominalSampleRate,
@@ -176,6 +186,11 @@ UInt32 apple_coreaudio::AudioDevice::get_device_latency(bool for_input) const
 
 UInt32 apple_coreaudio::AudioDevice::get_stream_latency(UInt32 stream_index, bool for_input) const
 {
+    if (!is_valid())
+    {
+        return 0;
+    }
+
     auto stream_ids = get_property_array<UInt32>({kAudioDevicePropertyStreams,
                                                   for_input ? kAudioObjectPropertyScopeInput
                                                             : kAudioObjectPropertyScopeOutput,
