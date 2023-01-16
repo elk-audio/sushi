@@ -420,13 +420,11 @@ int main(int argc, char* argv[])
     }
 #endif
 
-    std::unique_ptr<sushi::engine::AudioEngine> engine = nullptr;
-
-        engine = std::make_unique<sushi::engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT,
-                                                              rt_cpu_cores,
-                                                              device_name,
-                                                              debug_mode_switches,
-                                                              nullptr);
+    auto engine = std::make_unique<sushi::engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT,
+                                                               rt_cpu_cores,
+                                                               device_name,
+                                                               debug_mode_switches,
+                                                               nullptr);
 
     if (!base_plugin_path.empty())
     {
