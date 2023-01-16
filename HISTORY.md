@@ -2,9 +2,11 @@
 
 New features:
   * Added Apple CoreAudio frontend
-
+  * Added support for using the 3.3 Twine version, which adds functionality for setting threads to real-time, and joining workgroups.
+ 
 Breaking changes:
   * The argument --dump-portaudio-devs is changed to --dump-audio-devices and now requires a frontend to be specified as well (--coreaudio or --portaudio).
+  * Now, if Sushi fails to set the priority of threads to real-time, and to join workgroups, on macOS, it will exit with an error, instead of continuing to run with the threads' performance settings in an unknown state.
 
 ## 1.0.0
 
