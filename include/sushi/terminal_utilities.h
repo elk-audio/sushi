@@ -150,6 +150,18 @@ ParseStatus parse_options(int argc, char* argv[], sushi::SushiOptions& options)
                 options.portaudio_output_device_id = atoi(opt.arg);
                 break;
 
+            case OPT_IDX_PA_SUGGESTED_INPUT_LATENCY:
+                options.suggested_input_latency = atof(opt.arg);
+                break;
+
+            case OPT_IDX_PA_SUGGESTED_OUTPUT_LATENCY:
+                options.suggested_input_latency = atof(opt.arg);
+                break;
+
+            case OPT_IDX_DUMP_PORTAUDIO:
+                options.enable_portaudio_devs_dump = true;
+                break;
+
             case OPT_IDX_USE_JACK:
                 options.frontend_type = FrontendType::JACK;
                 break;
@@ -165,9 +177,11 @@ ParseStatus parse_options(int argc, char* argv[], sushi::SushiOptions& options)
             case OPT_IDX_JACK_SERVER:
                 options.jack_server_name.assign(opt.arg);
                 break;
+
             case OPT_IDX_USE_XENOMAI_RASPA:
                 options.frontend_type = FrontendType::XENOMAI_RASPA;
                 break;
+
             case OPT_IDX_XENOMAI_DEBUG_MODE_SW:
                 options.debug_mode_switches = true;
                 break;
@@ -188,8 +202,32 @@ ParseStatus parse_options(int argc, char* argv[], sushi::SushiOptions& options)
                 options.osc_send_port = atoi(opt.arg);
                 break;
 
+            case OPT_IDX_OSC_SEND_IP:
+                options.osc_send_ip = opt.arg;
+                break;
+
             case OPT_IDX_GRPC_LISTEN_ADDRESS:
                 options.grpc_listening_address = opt.arg;
+                break;
+
+            case OPT_IDX_NO_OSC:
+                options.use_osc = false;
+                break;
+
+            case OPT_IDX_NO_GRPC:
+                options.use_grpc = false;
+                break;
+
+            case OPT_IDX_BASE_PLUGIN_PATH:
+                options.base_plugin_path = std::string(opt.arg);
+                break;
+
+            case OPT_IDX_SENTRY_CRASH_HANDLER:
+                options.sentry_crash_handler_path = opt.arg;
+                break;
+
+            case OPT_IDX_SENTRY_DSN:
+                options.sentry_dsn = opt.arg;
                 break;
 
             default:

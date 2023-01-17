@@ -111,8 +111,9 @@ struct SushiOptions
     float suggested_input_latency = SUSHI_PORTAUDIO_INPUT_LATENCY_DEFAULT;
     float suggested_output_latency = SUSHI_PORTAUDIO_OUTPUT_LATENCY_DEFAULT;
 
-    // TODO: from develop-main. How were these used? Fix!
     bool enable_portaudio_devs_dump = false;
+
+    // TODO: from develop-main. How were these used? Fix!
     bool use_osc = true;
     bool use_grpc = true;
 

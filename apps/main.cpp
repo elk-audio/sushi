@@ -34,6 +34,7 @@
 #include "factories/offline_factory.h"
 
 #include "logging.h"
+#include "audio_frontends/portaudio_devices_dump.h"
 
 using namespace sushi;
 
@@ -76,9 +77,28 @@ int main(int argc, char* argv[])
     SushiOptions options;
 
     auto option_status = parse_options(argc, argv, options);
-    if (option_status == ParseStatus::ERROR)                  return 1;
-    else if (option_status == ParseStatus::MISSING_ARGUMENTS) return 2;
-    else if (option_status == ParseStatus::EXIT)              return 0;
+    if (option_status == ParseStatus::ERROR)
+    {
+        return 1;
+    }
+    else if (option_status == ParseStatus::MISSING_ARGUMENTS)
+    {
+        return 2;
+    }
+    else if (option_status == ParseStatus::EXIT)
+    {
+        return 0;
+    }
+
+    if (options.enable_portaudio_devs_dump)
+    {
+#ifdef SUSHI_BUILD_WITH_PORTAUDIO
+        std::cout << sushi::audio_frontend::generate_portaudio_devices_info_document() << std::endl;
+        std::exit(0);
+#else
+        std::cerr << "SUSHI not built with Portaudio support, cannot dump devices." << std::endl;
+#endif
+    }
 
     std::unique_ptr<BaseFactory> factory;
 
