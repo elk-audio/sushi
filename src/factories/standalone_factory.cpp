@@ -98,6 +98,8 @@ InitStatus StandaloneFactory::_setup_audio_frontend(const SushiOptions& options,
             SUSHI_LOG_INFO("Setting up PortAudio frontend");
             _frontend_config = std::make_unique<audio_frontend::PortAudioFrontendConfiguration>(options.portaudio_input_device_id,
                                                                                                 options.portaudio_output_device_id,
+                                                                                                options.suggested_input_latency,
+                                                                                                options.suggested_output_latency,
                                                                                                 cv_inputs,
                                                                                                 cv_outputs);
 

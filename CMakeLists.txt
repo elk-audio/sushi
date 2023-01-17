@@ -26,26 +26,13 @@ project(sushi_library
     VERSION ${SUSHI_VERSION_MAJOR}.${SUSHI_VERSION_MINOR}.${SUSHI_VERSION_REVISION}
 )
 
-set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
-
-##################################
-#  Perform Cross Compile setup   #
-##################################
-
-# Procedure is performed only if cross compile is detected, i.e CMAKE_SYSROOT
-# has been explicitly defined
-if(NOT "$ENV{CMAKE_SYSROOT}" STREQUAL "")
-    set(CMAKE_SYSROOT "$ENV{CMAKE_SYSROOT}")
-    set(CMAKE_FIND_ROOT_PATH ${CMAKE_SYSROOT})
-    set(CMAKE_PROGRAM_PATH "$ENV{CMAKE_PROGRAM_PATH}")
-    set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
-    set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
-    set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
 set(CMAKE_CXX_STANDARD 17)
+
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 ##################################
 #  Generate build information    #
@@ -485,24 +472,25 @@ set(SOURCE_FILES
     src/engine/json_configurator.cpp
     src/engine/receiver.cpp
     src/engine/event_timer.cpp
-    src/engine/transport.cppsrc/engine/parameter_manager.cpp
+    src/engine/transport.cpp
+    src/engine/parameter_manager.cpp
     src/engine/processor_container.cpp
     src/engine/plugin_library.cpp
-                      src/engine/controller/controller.cpp
-                      src/engine/controller/system_controller.cpp
-                      src/engine/controller/transport_controller.cpp
-                      src/engine/controller/timing_controller.cpp
-                      src/engine/controller/keyboard_controller.cpp
-                      src/engine/controller/audio_graph_controller.cpp
-                      src/engine/controller/parameter_controller.cpp
-                      src/engine/controller/program_controller.cpp
-                      src/engine/controller/midi_controller.cpp
-                      src/engine/controller/audio_routing_controller.cpp
-                      src/engine/controller/cv_gate_controller.cpp
-                      src/engine/controller/osc_controller.cpp
-                      src/engine/controller/session_controller.cpp
-                      src/engine/controller/real_time_controller.cpp
-        src/factories/base_factory.cpp
+    src/engine/controller/controller.cpp
+    src/engine/controller/system_controller.cpp
+    src/engine/controller/transport_controller.cpp
+    src/engine/controller/timing_controller.cpp
+    src/engine/controller/keyboard_controller.cpp
+    src/engine/controller/audio_graph_controller.cpp
+    src/engine/controller/parameter_controller.cpp
+    src/engine/controller/program_controller.cpp
+    src/engine/controller/midi_controller.cpp
+    src/engine/controller/audio_routing_controller.cpp
+    src/engine/controller/cv_gate_controller.cpp
+    src/engine/controller/osc_controller.cpp
+    src/engine/controller/session_controller.cpp
+    src/engine/controller/real_time_controller.cpp
+    src/factories/base_factory.cpp
     src/factories/passive_factory.cpp
     src/factories/standalone_factory.cpp
     src/factories/offline_factory.cpp
@@ -542,13 +530,12 @@ set(SOURCE_FILES
     src/audio_frontends/passive_frontend.cpp
 )
 
-add_executable(sushi MACOSX_BUNDLE
-    "${SOURCE_FILES}"
-    "${ADDITIONAL_VST2_SOURCES}"
-    "${ADDITIONAL_VST3_SOURCES}"
-    "${ADDITIONAL_LV2_SOURCES}"
-    "${MIDI_SOURCES}"
-)
+# TODO: MACOSX_BUNDLE ? I think not.
+add_library(${PROJECT_NAME} STATIC "${SOURCE_FILES}"
+        "${ADDITIONAL_VST2_SOURCES}"
+        "${ADDITIONAL_VST3_SOURCES}"
+        "${ADDITIONAL_LV2_SOURCES}"
+        "${MIDI_SOURCES}")
 
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 

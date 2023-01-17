@@ -25,6 +25,7 @@
 #include <memory>
 #include <chrono>
 #include <optional>
+#include <filesystem>
 
 #include "compile_time_settings.h"
 #include "engine/base_engine.h"
@@ -106,6 +107,19 @@ struct SushiOptions
     std::string osc_send_ip = SUSHI_OSC_SEND_IP_DEFAULT;
     std::optional<int> portaudio_input_device_id = std::nullopt;
     std::optional<int> portaudio_output_device_id = std::nullopt;
+
+    float suggested_input_latency = SUSHI_PORTAUDIO_INPUT_LATENCY_DEFAULT;
+    float suggested_output_latency = SUSHI_PORTAUDIO_OUTPUT_LATENCY_DEFAULT;
+
+    // TODO: from develop-main. How were these used? Fix!
+    bool enable_portaudio_devs_dump = false;
+    bool use_osc = true;
+    bool use_grpc = true;
+
+    std::string base_plugin_path = std::filesystem::current_path();
+    std::string sentry_crash_handler_path = SUSHI_SENTRY_CRASH_HANDLER_PATH_DEFAULT;
+    std::string sentry_dsn = SUSHI_SENTRY_DSN_DEFAULT;
+
     std::string grpc_listening_address = SUSHI_GRPC_LISTENING_PORT_DEFAULT;
     FrontendType frontend_type = FrontendType::NONE;
     bool connect_ports = false;

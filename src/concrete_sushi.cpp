@@ -41,7 +41,9 @@ void init_logger([[maybe_unused]] const SushiOptions& options)
                                             "Logger",
                                             options.log_level,
                                             options.enable_flush_interval,
-                                            options.log_flush_interval);
+                                            options.log_flush_interval,
+                                            options.sentry_crash_handler_path,
+                                            options.sentry_dsn);
 
     if (ret_code != SUSHI_LOG_ERROR_CODE_OK)
     {
@@ -134,11 +136,6 @@ void ConcreteSushi::exit()
 ext::SushiControl* ConcreteSushi::controller()
 {
     return _engine_controller.get();
-}
-
-engine::Controller* Sushi::controller()
-{
-    return _controller.get();
 }
 
 void ConcreteSushi::set_sample_rate(float sample_rate)

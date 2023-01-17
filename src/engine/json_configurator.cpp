@@ -781,17 +781,9 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value& tra
         auto connect_status = _connect_audio_to_track(track_def, name, track_id);
         if (connect_status != JsonConfigReturnStatus::OK)
         {
-            status = _engine->connect_audio_output_bus(con["engine_bus"].GetInt(),
-                                                       con["track_bus"].GetInt(),
-                                                       track_id);
+            return connect_status;
         }
-        else
-        {
-            status = _engine->connect_audio_output_channel(con["engine_channel"].GetInt(),
-                                                           con["track_channel"].GetInt(),
-                                                           track_id);
 
-        }
         if (status != EngineReturnStatus::OK)
         {
             SUSHI_LOG_ERROR("Error connecting track \"{}\" to output bus, error {}", name, static_cast<int>(status));
@@ -936,7 +928,7 @@ JsonConfigReturnStatus JsonConfigurator::_connect_audio_to_track(const rapidjson
                                                                  ObjectId track_id)
 {
     EngineReturnStatus status;
-    for(const auto& con : track_def["inputs"].GetArray())
+    for (const auto& con : track_def["inputs"].GetArray())
     {
         if (con.HasMember("engine_bus"))
         {
@@ -950,6 +942,7 @@ JsonConfigReturnStatus JsonConfigurator::_connect_audio_to_track(const rapidjson
                                                           con["track_channel"].GetInt(),
                                                           track_id);
         }
+
         if (status != EngineReturnStatus::OK)
         {
             SUSHI_LOG_ERROR("Error connecting input bus to track \"{}\", error {}", track_name, static_cast<int>(status));
@@ -957,7 +950,7 @@ JsonConfigReturnStatus JsonConfigurator::_connect_audio_to_track(const rapidjson
         }
     }
 
-    for(const auto& con : track_def["outputs"].GetArray())
+    for (const auto& con : track_def["outputs"].GetArray())
     {
         if (con.HasMember("engine_bus"))
         {
@@ -972,6 +965,7 @@ JsonConfigReturnStatus JsonConfigurator::_connect_audio_to_track(const rapidjson
                                                            track_id);
 
         }
+
         if (status != EngineReturnStatus::OK)
         {
             SUSHI_LOG_ERROR("Error connection track \"{}\" to output bus, error {}", track_name, static_cast<int>(status));

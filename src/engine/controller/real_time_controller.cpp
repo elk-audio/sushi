@@ -52,19 +52,20 @@ void RealTimeController::set_tempo(float tempo)
 
 void RealTimeController::set_time_signature(ext::TimeSignature time_signature)
 {
-    auto internal_time_signature = engine::to_internal(time_signature);
+    auto internal_time_signature = engine::controller_impl::to_internal(time_signature);
 
     if (_time_signature != internal_time_signature)
     {
         _transport->set_time_signature(internal_time_signature,
                                        false); // update_via_event
+
         _time_signature = internal_time_signature;
     }
 }
 
 void RealTimeController::set_playing_mode(ext::PlayingMode mode)
 {
-    auto internal_playing_mode = engine::to_internal(mode);
+    auto internal_playing_mode = engine::controller_impl::to_internal(mode);
 
     if (_playing_mode != mode)
     {
