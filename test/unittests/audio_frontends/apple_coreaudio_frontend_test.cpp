@@ -1,5 +1,7 @@
 #include "gtest/gtest.h"
 
+#define protected public
+
 #include "audio_frontends/apple_coreaudio/apple_coreaudio_system_object.h"
 #include "audio_frontends/apple_coreaudio/apple_coreaudio_utils.h"
 
@@ -103,49 +105,37 @@ TEST(AppleCoreAudioUtils, cf_string_to_std_string)
 /**
  * Little helper class which publicly exposes protected methods.
  */
-class CustomAudioObject : public apple_coreaudio::AudioObject
+class MockAudioObject : public apple_coreaudio::AudioObject
 {
 public:
-    explicit CustomAudioObject(AudioObjectID audio_object_id) : AudioObject(audio_object_id) {}
-
-    using apple_coreaudio::AudioObject::add_property_listener;
-    using apple_coreaudio::AudioObject::get_cfstring_property;
-    using apple_coreaudio::AudioObject::get_property;
-    using apple_coreaudio::AudioObject::get_property_array;
-    using apple_coreaudio::AudioObject::get_property_data;
-    using apple_coreaudio::AudioObject::get_property_data_size;
-    using apple_coreaudio::AudioObject::has_property;
-    using apple_coreaudio::AudioObject::is_property_settable;
-    using apple_coreaudio::AudioObject::property_changed;
-    using apple_coreaudio::AudioObject::set_property;
-    using apple_coreaudio::AudioObject::set_property_data;
+    explicit MockAudioObject(AudioObjectID audio_object_id) : AudioObject(audio_object_id) {}
 
     MOCK_METHOD(void, property_changed, (const AudioObjectPropertyAddress& address));
 };
 
 TEST_F(AppleCoreAudioFrontendTest, AudioObject_get_audio_object_id)
 {
-    CustomAudioObject audio_object0(0);
+    MockAudioObject audio_object0(0);
     EXPECT_EQ(audio_object0.get_audio_object_id(), 0);
 
-    CustomAudioObject audio_object1(1);
+    MockAudioObject audio_object1(1);
     EXPECT_EQ(audio_object1.get_audio_object_id(), 1);
 }
 
 TEST_F(AppleCoreAudioFrontendTest, AudioObject_is_valid)
 {
     // Zero is not considered a valid object ID.
-    CustomAudioObject audio_object0(0);
+    MockAudioObject audio_object0(0);
     EXPECT_FALSE(audio_object0.is_valid());
 
     // Anything higher than zero is considered a valid object ID.
-    CustomAudioObject audio_object1(1);
+    MockAudioObject audio_object1(1);
     EXPECT_TRUE(audio_object1.is_valid());
 }
 
 TEST_F(AppleCoreAudioFrontendTest, AudioObject_has_property)
 {
-    CustomAudioObject audio_object(0);
+    MockAudioObject audio_object(0);
 
     EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(false));
     EXPECT_FALSE(audio_object.has_property({0, 0, 0}));
@@ -156,7 +146,7 @@ TEST_F(AppleCoreAudioFrontendTest, AudioObject_has_property)
 
 TEST_F(AppleCoreAudioFrontendTest, AudioObject_is_property_settable)
 {
-    CustomAudioObject audio_object(0);
+    MockAudioObject audio_object(0);
 
     EXPECT_CALL(_mock, AudioObjectIsPropertySettable).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, Boolean* out_is_settable) {
         *out_is_settable = false;
@@ -173,7 +163,7 @@ TEST_F(AppleCoreAudioFrontendTest, AudioObject_is_property_settable)
 
 TEST_F(AppleCoreAudioFrontendTest, AudioObject_get_property_data_size)
 {
-    CustomAudioObject audio_object(0);
+    MockAudioObject audio_object(0);
 
     EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* out_data_size) {
         *out_data_size = sizeof(UInt32);
@@ -184,7 +174,7 @@ TEST_F(AppleCoreAudioFrontendTest, AudioObject_get_property_data_size)
 
 TEST_F(AppleCoreAudioFrontendTest, AudioObject_get_property_data)
 {
-    CustomAudioObject audio_object(0);
+    MockAudioObject audio_object(0);
 
     EXPECT_CALL(_mock, AudioObjectGetPropertyData).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* data_size, void* out_data) {
         *data_size = sizeof(UInt32);
@@ -197,7 +187,7 @@ TEST_F(AppleCoreAudioFrontendTest, AudioObject_get_property_data)
 
 TEST_F(AppleCoreAudioFrontendTest, AudioObject_set_property_data)
 {
-    CustomAudioObject audio_object(0);
+    MockAudioObject audio_object(0);
 
     EXPECT_CALL(_mock, AudioObjectSetPropertyData).WillOnce(Return(kAudioHardwareNoError));
 
@@ -207,7 +197,7 @@ TEST_F(AppleCoreAudioFrontendTest, AudioObject_set_property_data)
 
 TEST_F(AppleCoreAudioFrontendTest, AudioObject_get_property)
 {
-    CustomAudioObject audio_object(2);
+    MockAudioObject audio_object(2);
 
     EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(true));
     EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* out_data_size) {
@@ -247,7 +237,7 @@ TEST_F(AppleCoreAudioFrontendTest, AudioObject_get_property)
 
 TEST_F(AppleCoreAudioFrontendTest, AudioObject_set_property)
 {
-    CustomAudioObject audio_object(2);
+    MockAudioObject audio_object(2);
 
     EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(true));
     EXPECT_CALL(_mock, AudioObjectIsPropertySettable).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, Boolean* out_is_settable) {
@@ -291,7 +281,7 @@ TEST_F(AppleCoreAudioFrontendTest, AudioObject_set_property)
 
 TEST_F(AppleCoreAudioFrontendTest, AudioObject_get_cf_string_property)
 {
-    CustomAudioObject audio_object(2);
+    MockAudioObject audio_object(2);
 
     CFStringRef string_ref = CFSTR("SomeTestString");
 
@@ -314,7 +304,7 @@ TEST_F(AppleCoreAudioFrontendTest, AudioObject_get_cf_string_property)
 
 TEST_F(AppleCoreAudioFrontendTest, AudioObject_get_property_array)
 {
-    CustomAudioObject audio_object(2);
+    MockAudioObject audio_object(2);
 
     EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(true));
     EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* out_data_size) {
@@ -354,7 +344,7 @@ TEST_F(AppleCoreAudioFrontendTest, AudioObject_get_property_array)
 TEST_F(AppleCoreAudioFrontendTest, AudioObject_add_property_listener)
 {
     AudioObjectID audio_object_id(2);
-    testing::StrictMock<CustomAudioObject> audio_object(audio_object_id);
+    testing::StrictMock<MockAudioObject> audio_object(audio_object_id);
 
     AudioObjectPropertyListenerProc listener_proc;
     void* client_data = nullptr;
