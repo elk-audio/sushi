@@ -75,40 +75,6 @@ void RealTimeController::set_playing_mode(ext::PlayingMode mode)
     }
 }
 
-bool RealTimeController::set_current_beats(double beat_count)
-{
-    if (_transport->position_source() == sushi::PositionSource::EXTERNAL)
-    {
-        _transport->set_current_beats(beat_count);
-        return true;
-    }
-
-    return false;
-}
-
-bool RealTimeController::set_current_bar_beats(double bar_beat_count)
-{
-    if (_transport->position_source() == sushi::PositionSource::EXTERNAL)
-    {
-        _transport->set_current_bar_beats(bar_beat_count);
-        return true;
-    }
-
-    return false;
-}
-
-void RealTimeController::set_position_source(TransportPositionSource ps)
-{
-    if (ps == sushi::TransportPositionSource::CALCULATED)
-    {
-        _transport->set_position_source(sushi::PositionSource::CALCULATED);
-    }
-    else
-    {
-        _transport->set_position_source(sushi::PositionSource::EXTERNAL);
-    }
-}
-
 void RealTimeController::process_audio(int channel_count, Time timestamp)
 {
     _audio_frontend->process_audio(channel_count, _samples_since_start, timestamp);
