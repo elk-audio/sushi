@@ -110,12 +110,16 @@ private:
 namespace sushi::audio_frontend {
 
 struct AppleCoreAudioFrontendConfiguration : public BaseAudioFrontendConfiguration {
-    AppleCoreAudioFrontendConfiguration(std::optional<int>, std::optional<int>, float, float, int, int) : BaseAudioFrontendConfiguration(0, 0) {}
+    AppleCoreAudioFrontendConfiguration(const std::optional<std::string>&,
+                                        const std::optional<std::string>&,
+                                        int,
+                                        int) : BaseAudioFrontendConfiguration(0, 0) {}
 };
 
 class AppleCoreAudioFrontend : public BaseAudioFrontend
 {
 public:
+    explicit AppleCoreAudioFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine){};
     AudioFrontendStatus init(BaseAudioFrontendConfiguration* config) override;
 
     void cleanup() override{};

@@ -487,7 +487,6 @@ int main(int argc, char* argv[])
         case FrontendType::APPLE_COREAUDIO:
         {
             SUSHI_LOG_INFO("Setting up Apple CoreAudio frontend");
-
             frontend_config = std::make_unique<sushi::audio_frontend::AppleCoreAudioFrontendConfiguration>(apple_coreaudio_input_device_uid,
                                                                                                            apple_coreaudio_output_device_uid,
                                                                                                            cv_inputs,
