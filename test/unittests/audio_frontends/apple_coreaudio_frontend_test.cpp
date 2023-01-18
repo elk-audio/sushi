@@ -16,12 +16,12 @@ using ::testing::Return;
 class AppleCoreAudioFrontendTest : public ::testing::Test
 {
 protected:
-    void SetUp()
+    void SetUp() override
     {
         AppleAudioHardwareMockup::instance = &_mock;
     }
 
-    void TearDown()
+    void TearDown() override
     {
     }
 
