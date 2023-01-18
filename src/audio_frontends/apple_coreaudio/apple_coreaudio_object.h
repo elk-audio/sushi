@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "apple_coreaudio_utils.h"
+#include "library/constants.h"
 
 namespace apple_coreaudio {
 
@@ -42,8 +43,7 @@ public:
 
     ~AudioObject();
 
-    AudioObject(const AudioObject&) = delete;
-    AudioObject& operator=(const AudioObject&) = delete;
+    SUSHI_DECLARE_NON_COPYABLE(AudioObject)
 
     AudioObject(AudioObject&& other) noexcept
     {

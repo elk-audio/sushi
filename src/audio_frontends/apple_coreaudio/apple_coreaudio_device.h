@@ -79,8 +79,7 @@ public:
         stop_io();
     }
 
-    AudioDevice(const AudioDevice&) = delete;
-    AudioDevice& operator=(const AudioDevice&) = delete;
+    SUSHI_DECLARE_NON_COPYABLE(AudioDevice)
 
     AudioDevice(AudioDevice&& other) noexcept : AudioObject(0)
     {
