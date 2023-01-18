@@ -25,7 +25,7 @@ AudioObject::~AudioObject()
     // Remove property listeners
     for (auto& listener_address : _property_listeners)
     {
-        CA_LOG_IF_ERROR(AudioObjectRemovePropertyListener(_audio_object_id, &listener_address, &AudioObjectPropertyListenerProc, this));
+        CA_LOG_IF_ERROR(AudioObjectRemovePropertyListener(_audio_object_id, &listener_address, &_audio_object_property_listener_proc, this));
     }
 }
 
@@ -124,18 +124,18 @@ bool AudioObject::add_property_listener(const AudioObjectPropertyAddress& addres
             return true;
     }
 
-    CA_RETURN_IF_ERROR(AudioObjectAddPropertyListener(_audio_object_id, &address, &AudioObjectPropertyListenerProc, this), false);
+    CA_RETURN_IF_ERROR(AudioObjectAddPropertyListener(_audio_object_id, &address, &_audio_object_property_listener_proc, this), false);
 
     _property_listeners.push_back(address);
 
     return true;
 }
 
-OSStatus AudioObject::AudioObjectPropertyListenerProc(AudioObjectID audio_object_id, UInt32 num_addresses, const AudioObjectPropertyAddress* address, void* client_data)
+OSStatus AudioObject::_audio_object_property_listener_proc(AudioObjectID audio_object_id, UInt32 num_addresses, const AudioObjectPropertyAddress* address, void* client_data)
 {
     if (address == nullptr || client_data == nullptr)
     {
-        SUSHI_LOG_ERROR("Invalid object passed to AudioObjectPropertyListenerProc");
+        SUSHI_LOG_ERROR("Invalid object passed to _audio_object_property_listener_proc");
         return kAudioHardwareBadObjectError;
     }
 
@@ -143,9 +143,9 @@ OSStatus AudioObject::AudioObjectPropertyListenerProc(AudioObjectID audio_object
 
     if (audio_object_id != audio_object->_audio_object_id)
     {
-        SUSHI_LOG_ERROR("AudioObjectID mismatch (in AudioObjectPropertyListenerProc)");
+        SUSHI_LOG_ERROR("AudioObjectID mismatch (in _audio_object_property_listener_proc)");
 
-        SUSHI_LOG_ERROR("AudioObjectID mismatch (in AudioObjectPropertyListenerProc)");
+        SUSHI_LOG_ERROR("AudioObjectID mismatch (in _audio_object_property_listener_proc)");
 
         return kAudioHardwareBadObjectError;
     }

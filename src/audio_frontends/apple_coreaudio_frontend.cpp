@@ -367,7 +367,7 @@ void AppleCoreAudioFrontend::audio_callback(apple_coreaudio::AudioDevice::Scope 
 
     if (scope != apple_coreaudio::AudioDevice::Scope::INPUT_OUTPUT)
     {
-        return; // Callbacks from 2 different devices not implemented
+        return;// Callbacks from 2 different devices not implemented
     }
 
     if (input_data == nullptr || output_data == nullptr)
@@ -451,6 +451,8 @@ void AppleCoreAudioFrontend::sample_rate_changed(double new_sample_rate)
     //     }
     // }
 
+    // Assuming the sample rate doesn't change during audio processing, otherwise we would have a race condition because this method gets called from a background thread.
+    // Since the sample rate doesn't change during processing, the next line will always read the correct value which is acceptable in this exceptional case.
     if (std::abs(new_sample_rate - _engine->sample_rate()) > 1.0)
     {
         SUSHI_LOG_WARNING("Exiting Sushi in response to incompatible external sample rate change (return value: {})", EXIT_RETURN_VALUE_ON_INCOMPATIBLE_SAMPLE_RATE_CHANGE);

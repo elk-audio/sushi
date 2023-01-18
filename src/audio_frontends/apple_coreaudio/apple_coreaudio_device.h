@@ -164,11 +164,6 @@ protected:
     void property_changed(const AudioObjectPropertyAddress& address) override;
 
 private:
-    /// Holds the identifier for the io proc audio callbacks.
-    AudioDeviceIOProcID _io_proc_id{nullptr};
-    AudioCallback* _audio_callback{nullptr};
-    Scope _scope{Scope::UNDEFINED};
-
     /**
      * Static function which gets called by an audio device to provide and get audio data.
      * @return The return value is currently unused and should always be 0 (see AudioDeviceIOProc in AudioHardware.h).
@@ -180,6 +175,11 @@ private:
                                          AudioBufferList* output_data,
                                          const AudioTimeStamp* output_time,
                                          void* client_data);
+
+    /// Holds the identifier for the io proc audio callbacks.
+    AudioDeviceIOProcID _io_proc_id{nullptr};
+    AudioCallback* _audio_callback{nullptr};
+    Scope _scope{Scope::UNDEFINED};
 };
 
 /**

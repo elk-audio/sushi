@@ -278,13 +278,13 @@ protected:
     virtual void property_changed([[maybe_unused]] const AudioObjectPropertyAddress& address) {}
 
 private:
+    static OSStatus _audio_object_property_listener_proc(AudioObjectID audio_object_id,
+                                                         UInt32 num_addresses,
+                                                         const AudioObjectPropertyAddress* _Nonnull address,
+                                                         void* __nullable client_data);
+
     AudioObjectID _audio_object_id{0};
     std::vector<AudioObjectPropertyAddress> _property_listeners;
-
-    static OSStatus AudioObjectPropertyListenerProc(AudioObjectID audio_object_id,
-                                                    UInt32 num_addresses,
-                                                    const AudioObjectPropertyAddress* _Nonnull address,
-                                                    void* __nullable client_data);
 };
 
 }// namespace apple_coreaudio

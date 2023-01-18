@@ -209,14 +209,17 @@ UInt32 apple_coreaudio::AudioDevice::get_stream_latency(UInt32 stream_index, boo
 
 void apple_coreaudio::AudioDevice::property_changed(const AudioObjectPropertyAddress& address)
 {
+    // Note: this function most likely gets called from a background thread (most likely because there is no official specification on this).
+
     // Nominal sample rate
     if (address == AudioObjectPropertyAddress{kAudioDevicePropertyNominalSampleRate,
                                               kAudioObjectPropertyScopeGlobal,
                                               kAudioObjectPropertyElementMain})
     {
-        // TODO: Synchronise
         if (_audio_callback)
+        {
             _audio_callback->sample_rate_changed(get_nominal_sample_rate());
+        }
     }
 }
 
