@@ -52,7 +52,7 @@ std::pair<std::unique_ptr<Sushi>, InitStatus> StandaloneFactory::new_instance(Su
 {
     init_logger(options);
 
-    // TODO: TEST THAT THIS WORKS!
+    // TODO: TEST THAT BUILDING WITH XENOMAI WORKS!
 
 #ifdef SUSHI_BUILD_WITH_XENOMAI
     auto raspa_status = audio_frontend::XenomaiRaspaFrontend::global_init();
@@ -83,6 +83,7 @@ InitStatus StandaloneFactory::_setup_audio_frontend(const SushiOptions& options,
     {
         case FrontendType::JACK:
         {
+#ifdef SUSHI_BUILD_WITH_JACK
             SUSHI_LOG_INFO("Setting up Jack audio frontend");
             _frontend_config = std::make_unique<audio_frontend::JackFrontendConfiguration>(options.jack_client_name,
                                                                                            options.jack_server_name,
@@ -91,6 +92,7 @@ InitStatus StandaloneFactory::_setup_audio_frontend(const SushiOptions& options,
                                                                                            cv_outputs);
 
             _audio_frontend = std::make_unique<audio_frontend::JackFrontend>(_engine.get());
+#endif
             break;
         }
         case FrontendType::PORTAUDIO:
@@ -118,6 +120,14 @@ InitStatus StandaloneFactory::_setup_audio_frontend(const SushiOptions& options,
             break;
         }
 #endif
+        case FrontendType::DUMMY:
+        case FrontendType::OFFLINE:
+        {
+            SUSHI_LOG_ERROR("Standalone Factory cannot be used to create DUMMY/OFFLINE frontends.");
+            assert(false);
+            break;
+        }
+
         default:
         {
             return InitStatus::FAILED_AUDIO_FRONTEND_MISSING;
