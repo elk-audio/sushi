@@ -112,6 +112,6 @@ private:
     uint64_t _numerator = 0, _denominator = 0;
 };
 
-}// namespace apple_coreaudio
+} // namespace apple_coreaudio
 
-#endif// SUSHI_APPLE_COREAUDIO_UTILS_H
+#endif // SUSHI_APPLE_COREAUDIO_UTILS_H

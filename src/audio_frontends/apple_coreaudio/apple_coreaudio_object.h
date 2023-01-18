@@ -47,7 +47,7 @@ public:
 
     AudioObject(AudioObject&& other) noexcept
     {
-        *this = std::move(other);// Call into move assignment operator.
+        *this = std::move(other); // Call into move assignment operator.
     }
 
     AudioObject& operator=(AudioObject&& other) noexcept
@@ -287,6 +287,6 @@ private:
     std::vector<AudioObjectPropertyAddress> _property_listeners;
 };
 
-}// namespace apple_coreaudio
+} // namespace apple_coreaudio
 
 #endif

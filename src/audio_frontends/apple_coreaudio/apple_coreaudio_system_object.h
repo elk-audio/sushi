@@ -23,8 +23,7 @@
 
 #include "apple_coreaudio_device.h"
 
-namespace apple_coreaudio
-{
+namespace apple_coreaudio {
 /**
  * This class represents the Core Audio system object of which only one exists, system wide.
  */
@@ -59,6 +58,6 @@ public:
     };
 };
 
-}
+} // namespace apple_coreaudio
 
-#endif// SUSHI_APPLE_COREAUDIO_SYSTEM_OBJECT_H
+#endif // SUSHI_APPLE_COREAUDIO_SYSTEM_OBJECT_H

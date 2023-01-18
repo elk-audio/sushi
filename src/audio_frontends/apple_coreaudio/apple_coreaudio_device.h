@@ -25,8 +25,7 @@
 #include "logging.h"
 #include "apple_coreaudio_object.h"
 
-namespace apple_coreaudio
-{
+namespace apple_coreaudio {
 
 /**
  * This class represents a CoreAudio device as a thin C++ wrapper around AudioHardware.h APIs.
@@ -83,7 +82,7 @@ public:
 
     AudioDevice(AudioDevice&& other) noexcept : AudioObject(0)
     {
-        *this = std::move(other);// Call into move assignment operator.
+        *this = std::move(other); // Call into move assignment operator.
     }
 
     AudioDevice& operator=(AudioDevice&& other) noexcept
@@ -190,6 +189,6 @@ private:
  */
 const AudioDevice* get_device_for_uid(const std::vector<AudioDevice>& audio_devices, const std::string& uid);
 
-}
+} // namespace apple_coreaudio
 
-#endif// SUSHI_APPLE_COREAUDIO_DEVICE_H
+#endif // SUSHI_APPLE_COREAUDIO_DEVICE_H

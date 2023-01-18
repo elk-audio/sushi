@@ -216,7 +216,7 @@ bool AudioObject::set_property(AudioObjectID audio_object_id, const AudioObjectP
         return false;
     }
 
-    const auto type_size = sizeof(T);// NOLINT Clang-Tidy: Suspicious usage of 'sizeof(A*)'; pointer to aggregate
+    const auto type_size = sizeof(T); // NOLINT Clang-Tidy: Suspicious usage of 'sizeof(A*)'; pointer to aggregate
 
     if (get_property_data_size(audio_object_id, address) != type_size)
     {
@@ -240,7 +240,7 @@ T AudioObject::get_property(AudioObjectID audio_object_id, const AudioObjectProp
         return {};
     }
 
-    const auto type_size = sizeof(T);// NOLINT Clang-Tidy: Suspicious usage of 'sizeof(A*)'; pointer to aggregate
+    const auto type_size = sizeof(T); // NOLINT Clang-Tidy: Suspicious usage of 'sizeof(A*)'; pointer to aggregate
 
     if (get_property_data_size(audio_object_id, address) != type_size)
     {
@@ -263,4 +263,4 @@ T AudioObject::get_property(AudioObjectID audio_object_id, const AudioObjectProp
 template double AudioObject::get_property<double>(AudioObjectID, const AudioObjectPropertyAddress&);
 template UInt32 AudioObject::get_property<UInt32>(AudioObjectID, const AudioObjectPropertyAddress&);
 
-}// namespace apple_coreaudio
+} // namespace apple_coreaudio

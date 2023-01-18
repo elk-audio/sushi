@@ -38,7 +38,7 @@ AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration*
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
-    auto coreaudio_config = static_cast<AppleCoreAudioFrontendConfiguration*>(config);// NOLINT: Clang-Tidy: Do not use static_cast to downcast from a base to a derived class; use dynamic_cast instead
+    auto coreaudio_config = static_cast<AppleCoreAudioFrontendConfiguration*>(config); // NOLINT: Clang-Tidy: Do not use static_cast to downcast from a base to a derived class; use dynamic_cast instead
 
     auto ret_code = BaseAudioFrontend::init(config);
     if (ret_code != AudioFrontendStatus::OK)
@@ -74,12 +74,12 @@ AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration*
 
     if (input_device_id == 0)
     {
-        input_device_id = apple_coreaudio::AudioSystemObject::get_default_device_id(true);// Fallback to default input device
+        input_device_id = apple_coreaudio::AudioSystemObject::get_default_device_id(true); // Fallback to default input device
     }
 
     if (output_device_id == 0)
     {
-        output_device_id = apple_coreaudio::AudioSystemObject::get_default_device_id(false);// Fallback to default output device
+        output_device_id = apple_coreaudio::AudioSystemObject::get_default_device_id(false); // Fallback to default output device
     }
 
     _input_device = apple_coreaudio::AudioDevice(input_device_id);
@@ -137,12 +137,12 @@ AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration*
         }
 
         input_latency = _input_device.get_device_latency(true) +
-                        _input_device.get_stream_latency(0, true);// Zero mean primary stream.
+                        _input_device.get_stream_latency(0, true); // Zero mean primary stream.
     }
     else
     {
         input_latency = _output_device.get_device_latency(true) +
-                        _output_device.get_stream_latency(0, true);// Zero mean primary stream.
+                        _output_device.get_stream_latency(0, true); // Zero mean primary stream.
     }
 
     UInt32 output_latency = _output_device.get_device_latency(false) + _output_device.get_stream_latency(0, false);
@@ -154,7 +154,7 @@ AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration*
                    input_latency * 1'000 / static_cast<UInt32>(sample_rate),
                    output_latency * 1'000 / static_cast<UInt32>(sample_rate));
 
-    (void) input_latency;// Ignore variable-not-used warning when compiling without Sushi logging (ie. UnitTests)
+    (void) input_latency; // Ignore variable-not-used warning when compiling without Sushi logging (ie. UnitTests)
 
     return AudioFrontendStatus::OK;
 }
@@ -325,7 +325,7 @@ bool AppleCoreAudioFrontend::start_io()
 
         if (!_output_device.start_io(this, apple_coreaudio::AudioDevice::Scope::OUTPUT))
         {
-            _input_device.stop_io();// Also stop the input device to prevent only the input side from processing.
+            _input_device.stop_io(); // Also stop the input device to prevent only the input side from processing.
             return false;
         }
     }
@@ -370,7 +370,7 @@ void AppleCoreAudioFrontend::audio_callback(apple_coreaudio::AudioDevice::Scope 
 
     if (scope != apple_coreaudio::AudioDevice::Scope::INPUT_OUTPUT)
     {
-        return;// Callbacks from 2 different devices not implemented
+        return; // Callbacks from 2 different devices not implemented
     }
 
     if (input_data == nullptr || output_data == nullptr)
@@ -488,9 +488,9 @@ void AppleCoreAudioFrontend::_copy_output_buffer_to_interleaved_buffer(float* ou
     }
 }
 
-}// namespace sushi::audio_frontend
+} // namespace sushi::audio_frontend
 
-#endif// SUSHI_BUILD_WITH_APPLE_COREAUDIO
+#endif // SUSHI_BUILD_WITH_APPLE_COREAUDIO
 
 #ifndef SUSHI_BUILD_WITH_APPLE_COREAUDIO
 #include "apple_coreaudio_frontend.h"
@@ -508,6 +508,6 @@ sushi::audio_frontend::AudioFrontendStatus sushi::audio_frontend::AppleCoreAudio
     return AudioFrontendStatus::AUDIO_HW_ERROR;
 }
 
-}// namespace sushi::audio_frontend
+} // namespace sushi::audio_frontend
 
-#endif// SUSHI_BUILD_WITH_APPLE_COREAUDIO
+#endif // SUSHI_BUILD_WITH_APPLE_COREAUDIO

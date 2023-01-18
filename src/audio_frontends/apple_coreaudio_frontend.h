@@ -97,9 +97,9 @@ private:
     void sample_rate_changed(double new_sample_rate) override;
 };
 
-}// namespace sushi::audio_frontend
+} // namespace sushi::audio_frontend
 
-#endif// SUSHI_BUILD_WITH_APPLE_COREAUDIO
+#endif // SUSHI_BUILD_WITH_APPLE_COREAUDIO
 
 #ifndef SUSHI_BUILD_WITH_APPLE_COREAUDIO
 /* If Apple CoreAudio is disabled in the build config, the AppleCoreAudio frontend is replaced with
@@ -122,8 +122,8 @@ public:
     void run() override{};
 };
 
-}// namespace sushi::audio_frontend
+} // namespace sushi::audio_frontend
 
-#endif// SUSHI_BUILD_WITH_APPLE_COREAUDIO
+#endif // SUSHI_BUILD_WITH_APPLE_COREAUDIO
 
-#endif// SUSHI_APPLE_COREAUDIO_FRONTEND_H
+#endif // SUSHI_APPLE_COREAUDIO_FRONTEND_H

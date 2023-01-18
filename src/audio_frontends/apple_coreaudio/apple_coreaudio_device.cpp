@@ -233,12 +233,12 @@ OSStatus apple_coreaudio::AudioDevice::audio_device_io_proc(AudioObjectID audio_
 
     if (audio_object_id != audio_device->get_audio_object_id())
     {
-        return 0;// Wrong audio object id.
+        return 0; // Wrong audio object id.
     }
 
     if (audio_device->_audio_callback == nullptr)
     {
-        return 0;// No audio callback installed.
+        return 0; // No audio callback installed.
     }
 
     audio_device->_audio_callback->audio_callback(audio_device->_scope, now, input_data, input_time, output_data, output_time);

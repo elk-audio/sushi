@@ -39,7 +39,7 @@ std::string cf_string_to_std_string(const CFStringRef& cf_string_ref)
     CFIndex length = CFStringGetLength(cf_string_ref);
     CFIndex max_size = CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8);
 
-    std::string output(max_size + 1, 0);// Not sure if max_size includes space for null-termination.
+    std::string output(max_size + 1, 0); // Not sure if max_size includes space for null-termination.
     auto result = CFStringGetCString(cf_string_ref, output.data(), max_size, kCFStringEncodingUTF8);
     if (result == 0)
     {
@@ -64,7 +64,7 @@ uint64_t TimeConversions::host_time_to_nanos(uint64_t host_time_ticks) const
 
 uint64_t TimeConversions::nanos_to_host_time(uint64_t host_time_nanos) const
 {
-    return multiply_by_ratio(host_time_nanos, _denominator, _numerator);// NOLINT
+    return multiply_by_ratio(host_time_nanos, _denominator, _numerator); // NOLINT
 }
 
 uint64_t TimeConversions::multiply_by_ratio(uint64_t toMultiply, uint64_t numerator, uint64_t denominator)
@@ -84,4 +84,4 @@ uint64_t TimeConversions::multiply_by_ratio(uint64_t toMultiply, uint64_t numera
     return (uint64_t) result;
 }
 
-}// namespace apple_coreaudio
+} // namespace apple_coreaudio
