@@ -479,6 +479,7 @@ set(SOURCE_FILES
     src/plugins/send_return_factory.cpp
     src/plugins/step_sequencer_plugin.cpp
     src/plugins/transposer_plugin.cpp
+    src/plugins/wav_player_plugin.cpp
     src/plugins/wav_writer_plugin.cpp
     src/plugins/mono_summing_plugin.cpp
     src/plugins/stereo_mixer_plugin.cpp
