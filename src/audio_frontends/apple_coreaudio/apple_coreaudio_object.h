@@ -23,8 +23,8 @@
 
 #include <vector>
 
-#include "apple_coreaudio_utils.h"
 #include "library/constants.h"
+#include "apple_coreaudio_utils.h"
 
 namespace apple_coreaudio {
 

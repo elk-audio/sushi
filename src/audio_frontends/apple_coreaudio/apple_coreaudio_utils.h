@@ -21,9 +21,10 @@
 #ifndef SUSHI_APPLE_COREAUDIO_UTILS_H
 #define SUSHI_APPLE_COREAUDIO_UTILS_H
 
-#include <CoreAudio/AudioHardware.h>
-#include <mach/mach_time.h>
 #include <string>
+
+#include <mach/mach_time.h>
+#include <CoreAudio/AudioHardware.h>
 
 /**
  * Helper macro to log OSStatus errors in a consistent and convenient way.

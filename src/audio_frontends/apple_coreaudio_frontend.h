@@ -25,10 +25,10 @@
 
 #include <memory>
 
+#include "json_utils.h"
+#include "base_audio_frontend.h"
 #include "apple_coreaudio/apple_coreaudio_object.h"
 #include "apple_coreaudio/apple_coreaudio_device.h"
-#include "base_audio_frontend.h"
-#include "json_utils.h"
 
 // See AppleCoreAudioFrontend::sample_rate_changed()
 #define EXIT_SUSHI_WHEN_AUDIO_DEVICE_CHANGES_TO_INCOMPATIBLE_SAMPLE_RATE
