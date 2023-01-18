@@ -166,7 +166,10 @@ void AppleCoreAudioFrontend::cleanup()
         _engine->enable_realtime(false);
     }
 
-    stop_io();
+    if (!stop_io())
+    {
+        SUSHI_LOG_ERROR("Failed to stop audio device(s)");
+    }
 }
 
 void AppleCoreAudioFrontend::run()
