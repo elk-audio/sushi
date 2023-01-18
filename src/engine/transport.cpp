@@ -1,22 +1,22 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
- *
- * SUSHI is free software: you can redistribute it and/or modify it under the terms of
- * the GNU Affero General Public License as published by the Free Software Foundation,
- * either version 3 of the License, or (at your option) any later version.
- *
- * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
- */
+* Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+*
+* SUSHI is free software: you can redistribute it and/or modify it under the terms of
+* the GNU Affero General Public License as published by the Free Software Foundation,
+* either version 3 of the License, or (at your option) any later version.
+*
+* SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+* PURPOSE.  See the GNU Affero General Public License for more details.
+*
+* You should have received a copy of the GNU Affero General Public License along with
+* SUSHI.  If not, see http://www.gnu.org/licenses/
+*/
 
 /**
- * @brief Main entry point to Sushi
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
- */
+* @brief Main entry point to Sushi
+* @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+*/
 
 #include <cassert>
 #include <cmath>
@@ -47,12 +47,12 @@ constexpr float PPQN_FLOAT = SUSHI_PPQN_TICK;
 #if SUSHI_BUILD_WITH_ABLETON_LINK
 
 /**
- * @brief Custom realtime clock for Link
- *        It is necessary to compile Link with another Clock implementation than the standard one
- *        as calling clock_get_time() is not safe to do from a Xenomai thread. Instead we supply
- *        our own clock implementation based on twine, which provides a threadsafe implementation
- *        for calling from both xenomai and posix contexts.
- */
+* @brief Custom realtime clock for Link
+*        It is necessary to compile Link with another Clock implementation than the standard one
+*        as calling clock_get_time() is not safe to do from a Xenomai thread. Instead we supply
+*        our own clock implementation based on twine, which provides a threadsafe implementation
+*        for calling from both xenomai and posix contexts.
+*/
 class RtSafeClock
 {
 public:
@@ -64,14 +64,14 @@ public:
 };
 
 /**
- * @brief Wrapping Link with a custom clock
- */
+* @brief Wrapping Link with a custom clock
+*/
 class SushiLink : public ::ableton::BasicLink<RtSafeClock>
 {
 public:
-  using Clock = RtSafeClock;
+    using Clock = RtSafeClock;
 
-  explicit SushiLink(double bpm) : ::ableton::BasicLink<Clock>(bpm) { }
+    explicit SushiLink(double bpm) : ::ableton::BasicLink<Clock>(bpm) { }
 };
 
 #endif
@@ -170,9 +170,9 @@ void Transport::process_event(const RtEvent& event)
             auto mode = event.sync_mode_event()->mode();
 #ifndef SUSHI_BUILD_WITH_ABLETON_LINK
             if (mode == SyncMode::ABLETON_LINK)
-            {
-                mode = SyncMode::INTERNAL;
-            }
+    {
+        mode = SyncMode::INTERNAL;
+    }
 #endif
             if (mode != _syncmode)
             {
@@ -235,10 +235,10 @@ void Transport::set_sync_mode(SyncMode mode, bool update_via_event)
 {
 #ifndef SUSHI_BUILD_WITH_ABLETON_LINK
     if (mode == SyncMode::ABLETON_LINK)
-    {
-        SUSHI_LOG_INFO("Ableton Link sync mode requested, but sushi was built without Link support");
-        return;
-    }
+{
+SUSHI_LOG_INFO("Ableton Link sync mode requested, but sushi was built without Link support");
+return;
+}
 #endif
     switch (mode)
     {
@@ -285,7 +285,7 @@ void Transport::_update_internals()
      * the same way most DAWs do it. This makes 3/4 and 6/8 behave identically, and
      * they will play beatsynched with 4/4, i.e. not on triplets. */
     _beats_per_bar = 4.0f * static_cast<float>(_time_signature.numerator) /
-                            static_cast<float>(_time_signature.denominator);
+                     static_cast<float>(_time_signature.denominator);
 }
 
 void Transport::_update_internal_sync(int64_t samples)
@@ -297,13 +297,12 @@ void Transport::_update_internal_sync(int64_t samples)
     {
         _state_change = _set_playmode == PlayingMode::STOPPED? PlayStateChange::STOPPING : PlayStateChange::STARTING;
         _playmode = _set_playmode;
-        // Notify of new playing mode
+        // Notify new playing mode
         _rt_event_dispatcher->send_event(RtEvent::make_playing_mode_event(0, _set_playmode));
     }
 
-    double beats_per_chunk = _set_tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
-
-_beats_per_chunk = beats_per_chunk;
+    double beats_per_chunk =  _set_tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
+    _beats_per_chunk = beats_per_chunk;
 
     if (_state_change == PlayStateChange::STARTING) // Reset bar beat count when starting
     {
@@ -324,7 +323,7 @@ _beats_per_chunk = beats_per_chunk;
 
     if (_tempo != _set_tempo)
     {
-        // Notify of tempo change
+        // Notify tempo change
         _rt_event_dispatcher->send_event(RtEvent::make_tempo_event(0, _set_tempo));
         _tempo = _set_tempo;
     }
@@ -337,25 +336,22 @@ void Transport::_update_link_sync(Time timestamp)
     if (tempo != _set_tempo)
     {
         _set_tempo = tempo;
-        // Notify of new tempo
+        // Notify new tempo
         _rt_event_dispatcher->send_event(RtEvent::make_tempo_event(0, tempo));
     }
     _tempo = tempo;
 
-    assert(_position_source == PositionSource::CALCULATED);
-
     if (session.isPlaying() != this->playing())
     {
-        auto new_playing_mode = session.isPlaying() ? PlayingMode::PLAYING: PlayingMode::STOPPED;
-        _state_change = new_playing_mode == PlayingMode::STOPPED? PlayStateChange::STOPPING : PlayStateChange::STARTING;
-        _playmode = new_playing_mode;
-        _set_playmode = new_playing_mode;
-        // Notify of new playing mode
+        auto new_playmode = session.isPlaying() ? PlayingMode::PLAYING: PlayingMode::STOPPED;
+        _state_change = new_playmode == PlayingMode::STOPPED? PlayStateChange::STOPPING : PlayStateChange::STARTING;
+        _playmode = new_playmode;
+        _set_playmode = new_playmode;
+        // Notify new playing mode
         _rt_event_dispatcher->send_event(RtEvent::make_playing_mode_event(0, _set_playmode));
     }
 
     _beats_per_chunk =  _tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
-
     if (session.isPlaying())
     {
         _beat_count = session.beatAtTime(timestamp, _beats_per_bar);
