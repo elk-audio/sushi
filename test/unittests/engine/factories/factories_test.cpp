@@ -17,6 +17,7 @@
 #include <gmock/gmock-actions.h>
 
 #include "test_utils/test_utils.h"
+#include "test_utils/portaudio_mockup.h"
 
 #define private public
 #define protected public
@@ -233,13 +234,34 @@ protected:
 
     void SetUp()
     {
+        mockPortAudio = new NiceMock<MockPortAudio>();
+
+        PaError init_value = PaErrorCode::paNoError;
+        EXPECT_CALL(*mockPortAudio, Pa_Initialize).WillRepeatedly(Return(init_value));
+        EXPECT_CALL(*mockPortAudio, Pa_GetDeviceCount).WillRepeatedly(Return(1));
+        EXPECT_CALL(*mockPortAudio, Pa_GetDeviceInfo).WillRepeatedly(Return(&device_info));
+        EXPECT_CALL(*mockPortAudio, Pa_GetStreamInfo).WillRepeatedly(Return(&stream_info));
+        EXPECT_CALL(*mockPortAudio, Pa_OpenStream).WillRepeatedly(Return(init_value));
+
         options.config_filename = "NONE";
         options.use_input_config_file = false;
+
+        device_info.maxInputChannels = 10;
+        device_info.maxOutputChannels = 10;
 
         _path = test_utils::get_data_dir_path();
     }
 
-    void TearDown() {}
+    void TearDown()
+    {
+        // TODO: Terrible to have a global like this.
+        //  This is from portaudio_frontend_test.cpp. But I really don't like the naked global pointer,
+        //  is there really a need for it?
+        delete mockPortAudio;
+    }
+
+    PaDeviceInfo device_info;
+    PaStreamInfo stream_info;
 
     SushiOptions options;
 
@@ -252,7 +274,7 @@ TEST_F(StandaloneFactoryTest, TestStandaloneFactoryWithDefaultConfig)
 {
     options.config_filename = "NONE";
     options.use_input_config_file = false;
-    options.frontend_type = FrontendType::JACK;
+    options.frontend_type = FrontendType::PORTAUDIO;
 
     auto [sushi, status] = _standalone_factory.new_instance(options);
 
@@ -282,7 +304,7 @@ TEST_F(StandaloneFactoryTest, TestStandaloneFactoryWithConfigFile)
 
     options.config_filename = _path;
     options.use_input_config_file = true;
-    options.frontend_type = FrontendType::JACK;
+    options.frontend_type = FrontendType::PORTAUDIO;
 
     auto [sushi, status] = _standalone_factory.new_instance(options);
 

@@ -1,6 +1,9 @@
 #include "gmock/gmock.h"
 #include "portaudio.h"
 
+#ifndef SUSHI_TEST_PORTAUDIO_MOCKUP_H
+#define SUSHI_TEST_PORTAUDIO_MOCKUP_H
+
 class MockPortAudio
 {
 public:
@@ -29,59 +32,29 @@ public:
     MOCK_METHOD(const PaStreamInfo*, Pa_GetStreamInfo, (PaStream*));
 };
 
-MockPortAudio* mockPortAudio;
+extern MockPortAudio* mockPortAudio;
 
-PaError Pa_Initialize()
-{
-    return mockPortAudio->Pa_Initialize();
-}
+PaError Pa_Initialize();
 
-PaError Pa_Terminate()
-{
-    return mockPortAudio->Pa_Terminate();
-}
+PaError Pa_Terminate();
 
-const char* Pa_GetErrorText(PaError error)
-{
-    return mockPortAudio->Pa_GetErrorText(error);
-}
+const char* Pa_GetErrorText(PaError error);
 
-int Pa_GetDeviceCount()
-{
-    return mockPortAudio->Pa_GetDeviceCount();
-}
+int Pa_GetDeviceCount();
 
-int Pa_GetDefaultInputDevice()
-{
-    return mockPortAudio->Pa_GetDefaultInputDevice();
-}
+int Pa_GetDefaultInputDevice();
 
-int Pa_GetDefaultOutputDevice()
-{
-    return mockPortAudio->Pa_GetDefaultOutputDevice();
-}
+int Pa_GetDefaultOutputDevice();
 
-const PaDeviceInfo* Pa_GetDeviceInfo(int device_index)
-{
-    return mockPortAudio->Pa_GetDeviceInfo(device_index);
-}
+const PaDeviceInfo* Pa_GetDeviceInfo(int device_index);
 
 PaError Pa_IsFormatSupported(const PaStreamParameters* input,
                              const PaStreamParameters* output,
-                             double samplerate)
-{
-    return mockPortAudio->Pa_IsFormatSupported(input, output, samplerate);
-}
+                             double samplerate);
 
-PaTime Pa_GetStreamTime(PaStream* stream)
-{
-    return mockPortAudio->Pa_GetStreamTime(stream);
-}
+PaTime Pa_GetStreamTime(PaStream* stream);
 
-PaError Pa_IsStreamActive(PaStream* stream)
-{
-    return mockPortAudio->Pa_IsStreamActive(stream);
-}
+PaError Pa_IsStreamActive(PaStream* stream);
 
 PaError Pa_OpenStream(PaStream** stream,
                        const PaStreamParameters *inputParameters,
@@ -90,29 +63,12 @@ PaError Pa_OpenStream(PaStream** stream,
                        unsigned long framesPerBuffer,
                        PaStreamFlags streamFlags,
                        PaStreamCallback *streamCallback,
-                       void *userData )
-{
-    return mockPortAudio->Pa_OpenStream(stream,
-                                       inputParameters,
-                                       outputParameters,
-                                       sampleRate,
-                                       framesPerBuffer,
-                                       streamFlags,
-                                       streamCallback,
-                                       userData);
-}
+                       void *userData);
 
-PaError Pa_StartStream(PaStream* stream)
-{
-    return mockPortAudio->Pa_StartStream(stream);
-}
+PaError Pa_StartStream(PaStream* stream);
 
-PaError Pa_StopStream(PaStream* stream)
-{
-    return mockPortAudio->Pa_StopStream(stream);
-}
+PaError Pa_StopStream(PaStream* stream);
 
-const PaStreamInfo* Pa_GetStreamInfo(PaStream* stream)
-{
-    return mockPortAudio->Pa_GetStreamInfo(stream);
-}
+const PaStreamInfo* Pa_GetStreamInfo(PaStream* stream);
+
+#endif
