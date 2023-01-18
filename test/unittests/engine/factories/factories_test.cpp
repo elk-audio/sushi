@@ -19,6 +19,25 @@
 #include "test_utils/test_utils.h"
 #include "test_utils/portaudio_mockup.h"
 
+constexpr int MOCK_CHANNEL_COUNT = 10;
+
+#ifndef SUSHI_BUILD_WITH_PORTAUDIO
+#include "audio_frontends/portaudio_frontend.h"
+// Needed for mocking the frontend.
+namespace sushi::audio_frontend {
+PortAudioFrontend::PortAudioFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine)
+{
+    _engine->set_audio_input_channels(MOCK_CHANNEL_COUNT);
+    _engine->set_audio_output_channels(MOCK_CHANNEL_COUNT);
+}
+
+AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration*)
+{
+    return AudioFrontendStatus::OK;
+}
+}
+#endif
+
 #define private public
 #define protected public
 
@@ -246,8 +265,8 @@ protected:
         options.config_filename = "NONE";
         options.use_input_config_file = false;
 
-        device_info.maxInputChannels = 10;
-        device_info.maxOutputChannels = 10;
+        device_info.maxInputChannels = MOCK_CHANNEL_COUNT;
+        device_info.maxOutputChannels = MOCK_CHANNEL_COUNT;
 
         _path = test_utils::get_data_dir_path();
     }
@@ -300,7 +319,7 @@ TEST_F(StandaloneFactoryTest, TestStandaloneFactoryWithDefaultConfig)
 
 TEST_F(StandaloneFactoryTest, TestStandaloneFactoryWithConfigFile)
 {
-    _path.append("config.json");
+    _path.append("config_single_stereo.json");
 
     options.config_filename = _path;
     options.use_input_config_file = true;

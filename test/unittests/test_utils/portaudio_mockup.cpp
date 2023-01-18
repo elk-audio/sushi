@@ -2,27 +2,6 @@
 
 MockPortAudio* mockPortAudio;
 
-// TODO: Include this IF portaudio.h hasn't been included, so as to mock also when portaudio is unavailable?
-
-//typedef struct PaDeviceInfo
-//{
-//int structVersion;  /* this is struct version 2 */
-//const char *name;
-//PaHostApiIndex hostApi; /**< note this is a host API index, not a type id*/
-//
-//int maxInputChannels;
-//int maxOutputChannels;
-//
-///** Default latency values for interactive performance. */
-//PaTime defaultLowInputLatency;
-//PaTime defaultLowOutputLatency;
-///** Default latency values for robust non-interactive applications (eg. playing sound files). */
-//PaTime defaultHighInputLatency;
-//PaTime defaultHighOutputLatency;
-//
-//double defaultSampleRate;
-//} PaDeviceInfo;
-
 PaError Pa_Initialize()
 {
     return mockPortAudio->Pa_Initialize();
