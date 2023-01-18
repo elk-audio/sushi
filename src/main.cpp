@@ -34,6 +34,7 @@
 #include "audio_frontends/xenomai_raspa_frontend.h"
 #include "audio_frontends/portaudio_frontend.h"
 #include "audio_frontends/portaudio_devices_dump.h"
+#include "audio_frontends/apple_coreaudio_frontend.h"
 #include "engine/json_configurator.h"
 #include "control_frontends/osc_frontend.h"
 #include "control_frontends/oscpack_osc_messenger.h"
@@ -59,6 +60,7 @@ enum class FrontendType
     DUMMY,
     JACK,
     PORTAUDIO,
+    APPLE_COREAUDIO,
     XENOMAI_RASPA,
     NONE
 };
@@ -159,9 +161,11 @@ int main(int argc, char* argv[])
 
     std::optional<int> portaudio_input_device_id = std::nullopt;
     std::optional<int> portaudio_output_device_id = std::nullopt;
+    std::optional<std::string> apple_coreaudio_input_device_uid = std::nullopt;
+    std::optional<std::string> apple_coreaudio_output_device_uid = std::nullopt;
     float portaudio_suggested_input_latency = SUSHI_PORTAUDIO_INPUT_LATENCY_DEFAULT;
     float portaudio_suggested_output_latency = SUSHI_PORTAUDIO_OUTPUT_LATENCY_DEFAULT;
-    bool enable_portaudio_devs_dump = false;
+    bool enable_audio_devices_dump = false;
     std::string grpc_listening_address = SUSHI_GRPC_LISTENING_PORT_DEFAULT;
     FrontendType frontend_type = FrontendType::NONE;
     bool connect_ports = false;
@@ -236,12 +240,24 @@ int main(int argc, char* argv[])
             frontend_type = FrontendType::PORTAUDIO;
             break;
 
+        case OPT_IDX_USE_APPLE_COREAUDIO:
+            frontend_type = FrontendType::APPLE_COREAUDIO;
+            break;
+
         case OPT_IDX_AUDIO_INPUT_DEVICE:
             portaudio_input_device_id = atoi(opt.arg);
             break;
 
         case OPT_IDX_AUDIO_OUTPUT_DEVICE:
             portaudio_output_device_id = atoi(opt.arg);
+            break;
+
+        case OPT_IDX_AUDIO_INPUT_DEVICE_UID:
+            apple_coreaudio_input_device_uid = opt.arg;
+            break;
+
+        case OPT_IDX_AUDIO_OUTPUT_DEVICE_UID:
+            apple_coreaudio_output_device_uid = opt.arg;
             break;
 
         case OPT_IDX_PA_SUGGESTED_INPUT_LATENCY:
@@ -252,8 +268,8 @@ int main(int argc, char* argv[])
             portaudio_suggested_output_latency = atof(opt.arg);
             break;
 
-        case OPT_IDX_DUMP_PORTAUDIO:
-            enable_portaudio_devs_dump = true;
+        case OPT_IDX_DUMP_DEVICES:
+            enable_audio_devices_dump = true;
             break;
 
         case OPT_IDX_USE_JACK:
@@ -330,13 +346,9 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (! (enable_parameter_dump || enable_portaudio_devs_dump) )
+    if (! (enable_parameter_dump || enable_audio_devices_dump) )
     {
         print_sushi_headline();
-    }
-    else
-    {
-        frontend_type = FrontendType::DUMMY;
     }
 
     if (output_filename.empty() && !input_filename.empty())
@@ -358,17 +370,34 @@ int main(int argc, char* argv[])
     SUSHI_GET_LOGGER_WITH_MODULE_NAME("main");
 
     ////////////////////////////////////////////////////////////////////////////////
-    // Main body //
+    // Dump audio devices //
     ////////////////////////////////////////////////////////////////////////////////
 
-    if (enable_portaudio_devs_dump)
+    if (enable_audio_devices_dump)
     {
+        if (frontend_type == FrontendType::PORTAUDIO)
+        {
 #ifdef SUSHI_BUILD_WITH_PORTAUDIO
-        std::cout << sushi::audio_frontend::generate_portaudio_devices_info_document() << std::endl;
-        std::exit(0);
+            std::cout << sushi::audio_frontend::generate_portaudio_devices_info_document() << std::endl;
 #else
-        std::cerr << "SUSHI not built with Portaudio support, cannot dump devices." << std::endl;
+            std::cerr << "SUSHI not built with Portaudio support, cannot dump devices." << std::endl;
 #endif
+            std::exit(0);
+        }
+        else if (frontend_type == FrontendType::APPLE_COREAUDIO)
+        {
+#ifdef SUSHI_BUILD_WITH_APPLE_COREAUDIO
+            std::cout << sushi::audio_frontend::AppleCoreAudioFrontend::generate_devices_info_document() << std::endl;
+#else
+            std::cerr << "SUSHI not built with Apple CoreAudio support, cannot dump devices." << std::endl;
+#endif
+            std::exit(0);
+        }
+        else
+        {
+            std::cout << "No frontend specified or specified frontend not supported (please specify ." << std::endl;
+            std::exit(1);
+        }
     }
 
     if (frontend_type == FrontendType::XENOMAI_RASPA)
@@ -452,6 +481,17 @@ int main(int argc, char* argv[])
                                                                                                       cv_inputs,
                                                                                                       cv_outputs);
             audio_frontend = std::make_unique<sushi::audio_frontend::PortAudioFrontend>(engine.get());
+            break;
+        }
+
+        case FrontendType::APPLE_COREAUDIO:
+        {
+            SUSHI_LOG_INFO("Setting up Apple CoreAudio frontend");
+            frontend_config = std::make_unique<sushi::audio_frontend::AppleCoreAudioFrontendConfiguration>(apple_coreaudio_input_device_uid,
+                                                                                                           apple_coreaudio_output_device_uid,
+                                                                                                           cv_inputs,
+                                                                                                           cv_outputs);
+            audio_frontend = std::make_unique<sushi::audio_frontend::AppleCoreAudioFrontend>(engine.get());
             break;
         }
 
@@ -558,6 +598,7 @@ int main(int argc, char* argv[])
 
     if (frontend_type == FrontendType::JACK
         || frontend_type == FrontendType::XENOMAI_RASPA
+        || frontend_type == FrontendType::APPLE_COREAUDIO
         || frontend_type == FrontendType::PORTAUDIO)
     {
 #ifdef SUSHI_BUILD_WITH_ALSA_MIDI
@@ -630,9 +671,7 @@ int main(int argc, char* argv[])
     event_dispatcher->run();
     midi_frontend->run();
 
-    if (use_osc && (frontend_type == FrontendType::JACK
-                 || frontend_type == FrontendType::XENOMAI_RASPA
-                 || frontend_type == FrontendType::PORTAUDIO))
+    if (osc_frontend)
     {
         osc_frontend->run();
     }
@@ -659,11 +698,13 @@ int main(int argc, char* argv[])
     audio_frontend->cleanup();
     event_dispatcher->stop();
 
-    if (osc_frontend && (frontend_type == FrontendType::JACK
-                      || frontend_type == FrontendType::XENOMAI_RASPA
-                      || frontend_type == FrontendType::PORTAUDIO))
+    if (osc_frontend)
     {
         osc_frontend->stop();
+    }
+
+    if (midi_frontend)
+    {
         midi_frontend->stop();
     }
 

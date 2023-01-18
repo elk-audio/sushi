@@ -59,7 +59,8 @@ set(SUSHI_SENTRY_DSN_DEFAULT "--Sentry default DSN is undefined--")
 if (APPLE)
     # macOS defaults
     set(SUSHI_WITH_XENOMAI_DEFAULT OFF)
-    set(SUSHI_WITH_PORTAUDIO_DEFAULT ON)
+    set(SUSHI_WITH_PORTAUDIO_DEFAULT OFF)
+    set(SUSHI_WITH_APPLE_COREAUDIO_DEFAULT ON)
     set(SUSHI_WITH_ALSA_MIDI_DEFAULT OFF)
     set(SUSHI_WITH_RT_MIDI_DEFAULT ON)
     set(SUSHI_WITH_VST2_DEFAULT OFF)
@@ -71,6 +72,7 @@ elseif (DEFINED ENV{OE_CMAKE_TOOLCHAIN_FILE)
     # Yocto cross-compilation defaults
     set(SUSHI_WITH_XENOMAI_DEFAULT ON)
     set(SUSHI_WITH_PORTAUDIO_DEFAULT OFF)
+    set(SUSHI_WITH_APPLE_COREAUDIO_DEFAULT OFF)
     set(SUSHI_WITH_ALSA_MIDI_DEFAULT ON)
     set(SUSHI_WITH_RT_MIDI_DEFAULT OFF)
     set(SUSHI_WITH_LV2_DEFAULT ON)
@@ -82,6 +84,7 @@ else()
     set(SUSHI_WITH_JACK_DEFAULT ON)
     set(SUSHI_WITH_XENOMAI_DEFAULT OFF)
     set(SUSHI_WITH_PORTAUDIO_DEFAULT OFF)
+    set(SUSHI_WITH_APPLE_COREAUDIO_DEFAULT OFF)
     set(SUSHI_WITH_ALSA_MIDI_DEFAULT ON)
     set(SUSHI_WITH_RT_MIDI_DEFAULT OFF)
     set(SUSHI_WITH_LV2_DEFAULT ON)
@@ -94,6 +97,7 @@ endif()
 option(SUSHI_WITH_XENOMAI "Enable Xenomai support" ${SUSHI_WITH_XENOMAI_DEFAULT})
 option(SUSHI_WITH_JACK "Enable Jack support" ${SUSHI_WITH_JACK_DEFAULT})
 option(SUSHI_WITH_PORTAUDIO "Enable PortAudio support" ${SUSHI_WITH_PORTAUDIO_DEFAULT})
+option(SUSHI_WITH_APPLE_COREAUDIO "Enable Apple CoreAudio support" ${SUSHI_WITH_APPLE_COREAUDIO_DEFAULT})
 option(SUSHI_WITH_ALSA_MIDI "Enable alsa midi support" ${SUSHI_WITH_ALSA_MIDI_DEFAULT})
 option(SUSHI_WITH_RT_MIDI "Enable RtMidi support" ${SUSHI_WITH_RT_MIDI_DEFAULT})
 option(SUSHI_WITH_VST2 "Enable Vst 2 support" ${SUSHI_WITH_VST2_DEFAULT})
@@ -206,6 +210,23 @@ if (${SUSHI_WITH_PORTAUDIO})
 
     # Compile definitions
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_PORTAUDIO)
+endif()
+
+###################
+# CoreAudio setup #
+###################
+
+if (${SUSHI_WITH_APPLE_COREAUDIO})
+    message("Building with Apple CoreAudio support.")
+
+    # Compile definitions
+    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_APPLE_COREAUDIO)
+
+    set(ADDITIONAL_APPLE_COREAUDIO_SOURCES  src/audio_frontends/apple_coreaudio/apple_coreaudio_utils.cpp
+                                            src/audio_frontends/apple_coreaudio/apple_coreaudio_object.cpp
+                                            src/audio_frontends/apple_coreaudio/apple_coreaudio_device.cpp)
+
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} "-framework CoreAudio")
 endif()
 
 ###################
@@ -443,6 +464,7 @@ set(SOURCE_FILES
     src/audio_frontends/offline_frontend.cpp
     src/audio_frontends/jack_frontend.cpp
     src/audio_frontends/portaudio_frontend.cpp
+    src/audio_frontends/apple_coreaudio_frontend.cpp
     src/audio_frontends/portaudio_devices_dump.cpp
     src/audio_frontends/xenomai_raspa_frontend.cpp
     src/control_frontends/base_control_frontend.cpp
@@ -514,6 +536,7 @@ add_executable(sushi MACOSX_BUNDLE
     "${ADDITIONAL_VST2_SOURCES}"
     "${ADDITIONAL_VST3_SOURCES}"
     "${ADDITIONAL_LV2_SOURCES}"
+    "${ADDITIONAL_APPLE_COREAUDIO_SOURCES}"
     "${MIDI_SOURCES}"
 )
 

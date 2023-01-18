@@ -1,3 +1,11 @@
+## Unreleased
+
+New features:
+  * Added Apple CoreAudio frontend
+
+Breaking changes:
+  * The argument --dump-portaudio-devs is changed to --dump-audio-devices and now requires a frontend to be specified as well (--coreaudio or --portaudio).
+
 ## 1.0.0
 
 New features:
