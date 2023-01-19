@@ -112,7 +112,10 @@ void ConcreteSushi::start()
     }
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
-    _rpc_server->start();
+    if (_rpc_server != nullptr)
+    {
+        _rpc_server->start();
+    }
 #endif
 }
 
