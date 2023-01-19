@@ -118,7 +118,6 @@ struct SushiOptions
 
     std::string base_plugin_path = std::filesystem::current_path();
 
-    // TODO: Ensure Sentry works after merge
     std::string sentry_crash_handler_path = SUSHI_SENTRY_CRASH_HANDLER_PATH_DEFAULT;
     std::string sentry_dsn = SUSHI_SENTRY_DSN_DEFAULT;
 
