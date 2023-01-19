@@ -63,6 +63,11 @@ void BaseFactory::_instantiate_subsystems(SushiOptions& options)
                                                     options.rt_cpu_cores,
                                                     options.debug_mode_switches);
 
+    if (!options.base_plugin_path.empty())
+    {
+        _engine->set_base_plugin_path(options.base_plugin_path);
+    }
+
     if (options.enable_timings)
     {
         _engine->performance_timer()->enable(true);

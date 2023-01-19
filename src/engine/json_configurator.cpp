@@ -769,6 +769,7 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value& tra
         SUSHI_LOG_ERROR("Track {} in JSON config file duplicate or invalid name", name);
         return JsonConfigReturnStatus::INVALID_TRACK_NAME;
     }
+
     if (status != EngineReturnStatus::OK)
     {
         SUSHI_LOG_ERROR("Track Name {} failed to create", name);
