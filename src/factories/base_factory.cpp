@@ -13,8 +13,6 @@
 * SUSHI. If not, see http://www.gnu.org/licenses/
 */
 
-#include "logging.h"
-
 #include "base_factory.h"
 
 #include "engine/audio_engine.h"
@@ -24,8 +22,6 @@
 
 namespace sushi
 {
-
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("base-factory");
 
 BaseFactory::BaseFactory() = default;
 

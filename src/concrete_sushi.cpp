@@ -20,8 +20,6 @@
 
 #include <iostream>
 
-#include "logging.h"
-
 #include "concrete_sushi.h"
 
 #include "engine/audio_engine.h"
@@ -30,10 +28,10 @@
 #include "sushi_rpc/grpc_server.h"
 #endif
 
+#include "logging.h"
+
 namespace sushi
 {
-
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("sushi");
 
 void init_logger([[maybe_unused]] const SushiOptions& options)
 {
