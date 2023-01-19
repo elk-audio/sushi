@@ -45,7 +45,7 @@ class Controller;
 }
 
 namespace audio_frontend {
-class BaseAudioFrontendConfiguration;
+struct BaseAudioFrontendConfiguration;
 class BaseAudioFrontend;
 class XenomaiRaspaFrontend;
 class PortAudioFrontend;

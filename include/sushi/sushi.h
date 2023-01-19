@@ -41,7 +41,7 @@ class AudioEngine;
 }
 
 namespace audio_frontend {
-class BaseAudioFrontendConfiguration;
+struct BaseAudioFrontendConfiguration;
 class BaseAudioFrontend;
 class PassiveFrontend;
 }
