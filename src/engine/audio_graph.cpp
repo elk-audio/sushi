@@ -44,14 +44,6 @@ void external_render_callback(void* data)
     }
 }
 
-void worker_error_callback([[maybe_unused]] twine::apple::AppleThreadingStatus status)
-{
-#ifdef SUSHI_APPLE_THREADING
-    SUSHI_LOG_ERROR("Error in twine worker: {}", twine::apple::status_to_string(status));
-    signal_handler(ELK_EXIT_SIGNAL);
-#endif
-}
-
 AudioGraph::AudioGraph(int cpu_cores,
                        int max_no_tracks,
                        [[maybe_unused]] float sample_rate,
@@ -77,7 +69,6 @@ AudioGraph::AudioGraph(int cpu_cores,
 
         _worker_pool = twine::WorkerPool::create_worker_pool(_cores,
                                                              apple_data,
-                                                             worker_error_callback,
                                                              DISABLE_DENORMALS,
                                                              debug_mode_switches);
 
@@ -86,9 +77,12 @@ AudioGraph::AudioGraph(int cpu_cores,
             auto status = _worker_pool->add_worker(external_render_callback,
                                                    &tracks);
 
-            if (status != twine::WorkerPoolStatus::OK)
+            if (status.first != twine::WorkerPoolStatus::OK)
             {
-                SUSHI_LOG_ERROR("Failed to start worker: {}",  to_error_string(status));
+#ifdef SUSHI_APPLE_THREADING
+                SUSHI_LOG_ERROR("Failed to start twine worker: {}",  twine::apple::status_to_string(status.second));
+                signal_handler(ELK_EXIT_SIGNAL);
+#endif
             }
 
             tracks.reserve(max_no_tracks);
