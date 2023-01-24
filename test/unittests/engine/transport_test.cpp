@@ -109,7 +109,7 @@ TEST_F(TestTransport, TestTimeline44TimeWithExternalPositionSource)
 {
     constexpr int TEST_SAMPLERATE_X2 = 32768;
     /* Odd samplerate, but it's a convenient factor of 2 which makes testing easier,
-     * since bar boundaries end up on a power of 2 samplecount if AUDIO_CHUNK_SIZE is
+     * since bar boundaries end up on a power of 2 sample count if AUDIO_CHUNK_SIZE is
      * a power of 2*/
     _module_under_test.set_sample_rate(TEST_SAMPLERATE_X2);
     _module_under_test.set_time_signature({4, 4}, false);

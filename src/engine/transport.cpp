@@ -136,6 +136,7 @@ void Transport::set_time(Time timestamp, int64_t samples)
             break;
         }
     }
+
     if (_playmode != PlayingMode::STOPPED)
     {
         _output_ppqn_ticks();
@@ -303,7 +304,7 @@ void Transport::_update_internal_sync(int64_t samples)
 
     double beats_per_chunk = _set_tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
 
-_beats_per_chunk = beats_per_chunk;
+    _beats_per_chunk = beats_per_chunk;
 
     if (_state_change == PlayStateChange::STARTING) // Reset bar beat count when starting
     {
@@ -313,13 +314,20 @@ _beats_per_chunk = beats_per_chunk;
     }
     else if (_playmode != PlayingMode::STOPPED)
     {
-        _current_bar_beat_count += chunks_passed * beats_per_chunk;
-        if (_current_bar_beat_count > _beats_per_bar)
+        if (_position_source == PositionSource::CALCULATED)
         {
-            _current_bar_beat_count = std::fmod(_current_bar_beat_count, _beats_per_bar);
-            _bar_start_beat_count += _beats_per_bar;
+            _current_bar_beat_count += chunks_passed * beats_per_chunk;
+            if (_current_bar_beat_count > _beats_per_bar)
+            {
+                _current_bar_beat_count = std::fmod(_current_bar_beat_count, _beats_per_bar);
+                _bar_start_beat_count += _beats_per_bar;
+            }
+            _beat_count += chunks_passed * beats_per_chunk;
         }
-        _beat_count += chunks_passed * beats_per_chunk;
+        else
+        {
+            _bar_start_beat_count = _beat_count - _current_bar_beat_count;
+        }
     }
 
     if (_tempo != _set_tempo)
