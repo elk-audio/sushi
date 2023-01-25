@@ -61,6 +61,7 @@ configure_file(
 set(SUSHI_WITH_JACK_DEFAULT OFF)
 set(SUSHI_WITH_VST2_DEFAULT OFF)
 set(SUSHI_WITH_VST3_DEFAULT ON)
+set(SUSHI_LINK_VST3_DEFAULT ON)
 set(SUSHI_WITH_LINK_DEFAULT ON)
 set(SUSHI_WITH_RPC_INTERFACE_DEFAULT ON)
 set(SUSHI_TWINE_STATIC_DEFAULT OFF)
@@ -111,6 +112,7 @@ option(SUSHI_WITH_ALSA_MIDI "Enable alsa midi support" ${SUSHI_WITH_ALSA_MIDI_DE
 option(SUSHI_WITH_RT_MIDI "Enable RtMidi support" ${SUSHI_WITH_RT_MIDI_DEFAULT})
 option(SUSHI_WITH_VST2 "Enable Vst 2 support" ${SUSHI_WITH_VST2_DEFAULT})
 option(SUSHI_WITH_VST3 "Enable Vst 3 support" ${SUSHI_WITH_VST3_DEFAULT})
+option(SUSHI_LINK_VST3 "Link Vst 3 library to Sushi" ${SUSHI_LINK_VST3_DEFAULT})
 option(SUSHI_WITH_LV2 "Enable LV2 support" ${SUSHI_WITH_LV2_DEFAULT})
 option(SUSHI_WITH_LV2_MDA_TESTS "Include unit tests depending on LV2 drobilla MDA plugin port." ${SUSHI_WITH_LV2_MDA_TESTS_DEFAULT})
 option(SUSHI_WITH_UNIT_TESTS "Build and run unit tests after compilation" ${SUSHI_WITH_UNIT_TESTS_DEFAULT})
@@ -297,7 +299,7 @@ endif()
 # VST 3 setup #
 ###############
 
-if (${SUSHI_WITH_VST3})
+if (${SUSHI_WITH_VST3} AND ${SUSHI_LINK_VST3})
     message("Building with Vst3 support.")
 
     # Vst 3 host:
