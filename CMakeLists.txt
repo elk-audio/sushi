@@ -299,7 +299,8 @@ endif()
 # VST 3 setup #
 ###############
 
-if (${SUSHI_WITH_VST3} AND ${SUSHI_LINK_VST3})
+# TODO: use this ${SUSHI_LINK_VST3}, and when it's off, link to VST3 SDK included by JUCE.
+if (${SUSHI_WITH_VST3})
     message("Building with Vst3 support.")
 
     # Vst 3 host:
