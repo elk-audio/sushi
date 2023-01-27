@@ -33,6 +33,8 @@
 namespace sushi
 {
 
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("concrete_sushi");
+
 void init_logger([[maybe_unused]] const SushiOptions& options)
 {
     auto ret_code = SUSHI_INITIALIZE_LOGGER(options.log_filename,
@@ -119,6 +121,8 @@ void ConcreteSushi::start()
 
 void ConcreteSushi::exit()
 {
+    SUSHI_LOG_INFO("Exiting Sushi.");
+
     _audio_frontend->cleanup();
     _engine->event_dispatcher()->stop();
 
