@@ -106,7 +106,7 @@ public:
      * @brief Type of event.
      * @return
      */
-    RtEventType type() const {return _type;};
+    RtEventType type() const {return _type;}
 
     /**
      * @brief The processor id of the target for this message.
