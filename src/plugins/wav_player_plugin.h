@@ -40,46 +40,29 @@ constexpr float MAX_WRITE_INTERVAL = 4.0f;
 constexpr float MIN_WRITE_INTERVAL = 0.5f;
 
 
-class WavStreamer : public RtDeletable
+enum class PlayingMode
 {
-public:
-    WavStreamer(const std::string& file);
-
-    void set_sample_rate(float sample_rate)
-    {
-        _sample_rate = sample_rate;
-    }
-
-    void set_loop_mode(bool enabled)
-    {
-        _looping = enabled;
-    }
-
-    void set_playback_speed(float speed)
-    {
-        _speed = speed;
-    }
-
-    void fill_audio_data(ChunkSampleBuffer& buffer);
-
-    bool needs_disc_access();
-
-    void read_from_disk();
-
-    void reset_play_head();
-
-private:
-    float _sample_rate{0};
-    float _wave_samplerate{0};
-    float _speed{1};
-    float _index;
-    bool _looping{false};
-
-
-    std::array<std::vector<std::array<float, 2>>, 3> _sample_data;
+    PLAYING,
+    STARTING,
+    STOPPING,
+    STOPPED,
+    PAUSED,
+    PAUSING,
+    UNPAUSING
 };
 
+// Roughly 3 seconds of stereo audio per block @ 48kHz.
+constexpr size_t BLOCKSIZE = 1'000'000;
+// Extra margin for interpolation
+constexpr size_t PRE_SAMPLES = 1;
+constexpr size_t POST_SAMPLES = 2;
+constexpr size_t INT_MARGIN = PRE_SAMPLES + POST_SAMPLES;
 
+
+struct AudioBlock : public RtDeletable
+{
+    std::array<std::array<float, 2>, BLOCKSIZE + INT_MARGIN> audio_data;
+};
 
 class WavPlayerPlugin : public InternalPlugin, public UidHelper<WavPlayerPlugin>
 {
@@ -110,21 +93,50 @@ public:
     static std::string_view static_uid();
 
 private:
+    bool _load_audio_file(const std::string& path);
+
+    void _close_audio_file();
+
     int _read_audio_data(EventId id);
 
-    float                         _wave_sample_rate;
-    float                         _sample_rate;
+    void _fill_audio_data(ChunkSampleBuffer& buffer, float speed);
 
-    ValueSmootherFilter<float>    _gain_smoother;
+    void _update_mode();
+
+    bool _load_new_block();
+
+    ValueSmootherRamp<float>    _gain_smoother;
 
     FloatParameterValue* _gain_parameter;
     FloatParameterValue* _speed_parameter;
     FloatParameterValue* _fade_parameter;
-    BoolParameterValue* _start_stop_parameter;
-    BoolParameterValue* _loop_parameter;
+    BoolParameterValue*  _start_stop_parameter;
+    BoolParameterValue*  _pause_parameter;
+    BoolParameterValue*  _loop_parameter;
+    BoolParameterValue*  _exp_fade_parameter;
+
+    float _sample_rate{0};
+    float _wave_samplerate{0};
+    float _speed{1};
+    float _index{0};
+    bool _looping{false};
+    bool _playing{false};
+    bool _single_block_file{false};
+
+    std::mutex  _audio_file_mutex;
+    SNDFILE*    _audio_file{nullptr};
+    SF_INFO     _soundfile_info;
+    sf_count_t  _soundfile_index;
 
     BypassManager _bypass_manager;
-    WavStreamer*  _streamer;
+
+    PlayingMode _mode;
+
+
+    AudioBlock* _current_block{nullptr};
+    float _current_block_index{0};
+
+    memory_relaxed_aquire_release::CircularFifo<AudioBlock*, 5> _block_queue;
 };
 
 }// namespace sushi::wav_player_plugin

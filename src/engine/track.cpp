@@ -90,8 +90,8 @@ void Track::configure(float sample_rate)
 {
     for (auto& i : _smoothers)
     {
-        i[LEFT_CHANNEL_INDEX].set_lag_time(MINIMUM_GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
-        i[RIGHT_CHANNEL_INDEX].set_lag_time(MINIMUM_GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
+        i[LEFT_CHANNEL_INDEX].set_lag_time(GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
+        i[RIGHT_CHANNEL_INDEX].set_lag_time(GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
     }
 }
 
