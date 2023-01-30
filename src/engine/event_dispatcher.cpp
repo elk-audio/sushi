@@ -59,6 +59,8 @@ EventDispatcher::~EventDispatcher()
     while(_in_queue.empty() == false)
     {
         Event* event = _in_queue.pop();
+
+// TODO: This SOMETIMES crashes when running Sushi as a NikkeiVST3 with pluginval
         delete event;
     }
 }
