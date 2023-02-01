@@ -6,10 +6,10 @@
 
 #define private public
 
-#include "plugins/wav_player_plugin.cpp"
+#include "plugins/wav_streamer_plugin.cpp"
 
 using namespace sushi;
-using namespace sushi::wav_player_plugin;
+using namespace sushi::wav_streamer_plugin;
 
 constexpr float TEST_SAMPLERATE = 44100;
 const float SAMPLE_DATA[] = {1.0f, 2.0f, 2.0f, 1.0f, 1.0f};

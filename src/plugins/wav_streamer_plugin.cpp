@@ -18,10 +18,10 @@
  * @copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include "plugins/wav_player_plugin.h"
+#include "plugins/wav_streamer_plugin.h"
 #include "logging.h"
 
-namespace sushi::wav_player_plugin {
+namespace sushi::wav_streamer_plugin {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("wav_player");
 
@@ -29,7 +29,9 @@ constexpr auto PLUGIN_UID = "sushi.testing.wav_player";
 constexpr auto DEFAULT_LABEL = "Wav Player";
 constexpr int FILE_PROPERTY_ID = 0;
 
-constexpr float MAX_FADE_TIME = 5;
+//constexpr float MAX_FADE_TIME = 5;
+constexpr auto  MAX_FADE_TIME = std::chrono::duration<float, std::ratio<1,1>>(5);
+constexpr auto  MIN_FADE_TIME = std::chrono::duration<float, std::ratio<1,1>>(GAIN_SMOOTHING_TIME);
 
 // Approximate an exponential audio fade with an x^3 curve. Works pretty good over a 60 dB range.
 inline float exp_approx(float x)
@@ -51,7 +53,7 @@ inline T catmull_rom_cubic_int(T frac_pos, T d0, T d1, T d2, T d3)
 }
 
 
-WavPlayerPlugin::WavPlayerPlugin(HostControl host_control) : InternalPlugin(host_control)
+WavStreamerPlugin::WavStreamerPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
     Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
@@ -68,12 +70,11 @@ WavPlayerPlugin::WavPlayerPlugin(HostControl host_control) : InternalPlugin(host
                                                   new FloatParameterPreProcessor(0.5f, 2.0f));
 
     _fade_parameter   = register_float_parameter("fade_time", "Fade Time", "s",
-                                                  0.0f, 0.0f, MAX_FADE_TIME,
+                                                  0.0f, 0.0f, MAX_FADE_TIME.count(),
                                                   Direction::AUTOMATABLE,
-                                                  new FloatParameterPreProcessor(0.0f, MAX_FADE_TIME));
+                                                  new FloatParameterPreProcessor(0.0f, MAX_FADE_TIME.count()));
 
     _start_stop_parameter = register_bool_parameter("playing", "Playing", "", false, Direction::AUTOMATABLE);
-    _pause_parameter = register_bool_parameter("pause", "Pause", "", false, Direction::AUTOMATABLE);
     _loop_parameter = register_bool_parameter("loop", "Loop", "", false, Direction::AUTOMATABLE);
     _exp_fade_parameter = register_bool_parameter("exp_fade", "Exponential fade", "", false, Direction::AUTOMATABLE);
 
@@ -81,34 +82,33 @@ WavPlayerPlugin::WavPlayerPlugin(HostControl host_control) : InternalPlugin(host
     _max_input_channels = 0;
 }
 
-WavPlayerPlugin::~WavPlayerPlugin()
+WavStreamerPlugin::~WavStreamerPlugin()
 {
 }
 
-ProcessorReturnCode WavPlayerPlugin::init(float sample_rate)
+ProcessorReturnCode WavStreamerPlugin::init(float sample_rate)
 {
     configure(sample_rate);
     return ProcessorReturnCode::OK;
 }
 
-void WavPlayerPlugin::configure(float sample_rate)
+void WavStreamerPlugin::configure(float sample_rate)
 {
     _sample_rate = sample_rate;
     _gain_smoother.set_lag_time(GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
-
 }
 
-void WavPlayerPlugin::set_enabled(bool enabled)
+void WavStreamerPlugin::set_enabled(bool enabled)
 {
     Processor::set_enabled(enabled);
 }
 
-void WavPlayerPlugin::set_bypassed(bool bypassed)
+void WavStreamerPlugin::set_bypassed(bool bypassed)
 {
     _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
 }
 
-void WavPlayerPlugin::process_event(const RtEvent& event)
+void WavStreamerPlugin::process_event(const RtEvent& event)
 {
     switch (event.type())
     {
@@ -122,13 +122,13 @@ void WavPlayerPlugin::process_event(const RtEvent& event)
         case RtEventType::INT_PARAMETER_CHANGE:
         case RtEventType::FLOAT_PARAMETER_CHANGE:
         {
-           /* InternalPlugin::process_event(event);
+            InternalPlugin::process_event(event);
             auto typed_event = event.parameter_change_event();
-            if (typed_event->param_id() == _range_parameter->descriptor()->id())
+            if (typed_event->param_id() == _start_stop_parameter->descriptor()->id())
             {
-                _arp.set_range(_range_parameter->processed_value());
+                _start_stop_playing(_start_stop_parameter->processed_value());
             }
-            break;*/
+            break;
         }
 
         default:
@@ -137,24 +137,30 @@ void WavPlayerPlugin::process_event(const RtEvent& event)
     }
 }
 
-void WavPlayerPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer)
+void WavStreamerPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer)
 {
-    _gain_smoother.set(_gain_parameter->processed_value());
-    if (_bypass_manager.should_process() && _mode != sushi::wav_player_plugin::PlayingMode::STOPPED)
+    if (_bypass_manager.should_process() && _mode != sushi::wav_streamer_plugin::StreamingMode::STOPPED)
     {
+        if (_mode == StreamingMode::PLAYING)
+        {
+            _gain_smoother.set(_gain_parameter->processed_value());
+        }
+
+        //SUSHI_LOG_INFO("Playing {} {}", _current_block_index, _gain_smoother.value());
         // Use an exponential curve to fade audio and not a linear ramp
-        bool exp_fade = _exp_fade_parameter->processed_value();
+        bool lin_fade = true; // _exp_fade_parameter->processed_value();
 
         _fill_audio_data(out_buffer, _wave_samplerate / _sample_rate * _speed_parameter->processed_value());
 
         if (_gain_smoother.stationary())
         {
-            out_buffer.apply_gain(exp_fade ? _gain_smoother.value() : exp_approx(_gain_smoother.value()));
+            out_buffer.apply_gain(lin_fade ? _gain_smoother.value() : exp_approx(_gain_smoother.value()));
         }
         else
         {
-            out_buffer.ramp(exp_fade ? _gain_smoother.value() : exp_approx(_gain_smoother.value()),
-                            exp_fade ? _gain_smoother.next_value() : exp_approx(_gain_smoother.next_value()));
+            float start = _gain_smoother.value();
+            float end = _gain_smoother.next_value();
+            out_buffer.ramp(lin_fade ? start : exp_approx(start), lin_fade ? end : exp_approx(end));
         }
         if (_bypass_manager.should_ramp())
         {
@@ -165,25 +171,28 @@ void WavPlayerPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSam
     {
         out_buffer.clear();
     }
+
+    _mode = _update_mode(_mode);
 }
 
-ProcessorReturnCode WavPlayerPlugin::set_property_value(ObjectId property_id, const std::string& value)
+ProcessorReturnCode WavStreamerPlugin::set_property_value(ObjectId property_id, const std::string& value)
 {
     if (property_id == FILE_PROPERTY_ID)
     {
-        //
+        _load_audio_file(value);
     }
     return InternalPlugin::set_property_value(property_id, value);
 }
 
-std::string_view WavPlayerPlugin::static_uid()
+std::string_view WavStreamerPlugin::static_uid()
 {
     return PLUGIN_UID;
 }
 
-bool WavPlayerPlugin::_load_audio_file(const std::string& path)
+bool WavStreamerPlugin::_load_audio_file(const std::string& path)
 {
     std::scoped_lock lock(_audio_file_mutex);
+
     if (_audio_file)
     {
         _close_audio_file();
@@ -195,17 +204,24 @@ bool WavPlayerPlugin::_load_audio_file(const std::string& path)
         SUSHI_LOG_ERROR("Failed to load audio file: {}, error: {}", path, sf_strerror(nullptr));
         return false;
     }
-    SUSHI_LOG_INFO("Loaded file: {}, {} channels, {} frames, {} Hz", path,  _soundfile_info.channels, _soundfile_info.frames, _soundfile_info.samplerate);
+
+    _wave_samplerate = _soundfile_info.samplerate;
+    SUSHI_LOG_INFO("Loaded file: {}, {} channels, {} frames, {} Hz", path, _soundfile_info.channels,
+                   _soundfile_info.frames, _soundfile_info.samplerate);
+
+    return true;
 }
 
-void WavPlayerPlugin::_close_audio_file()
+void WavStreamerPlugin::_close_audio_file()
 {
     sf_close(_audio_file);
 }
 
-int WavPlayerPlugin::_read_audio_data([[maybe_unused]] EventId id)
+int WavStreamerPlugin::_read_audio_data([[maybe_unused]] EventId id)
 {
     std::scoped_lock lock(_audio_file_mutex);
+
+    bool looping = _loop_parameter->processed_value();
     if (_audio_file)
     {
         SUSHI_LOG_DEBUG("Reading wave data from disk");
@@ -222,15 +238,17 @@ int WavPlayerPlugin::_read_audio_data([[maybe_unused]] EventId id)
                 while (samplecount < BLOCKSIZE)
                 {
                     auto count = sf_readf_float(_audio_file, block->audio_data[INT_MARGIN + samplecount].data(), BLOCKSIZE - samplecount);
-                    if (count < BLOCKSIZE && _looping)
+                    samplecount += count;
+                    if (samplecount < BLOCKSIZE && looping)
                     {
+                        // Start over from the beginning and read again.
                         sf_seek(_audio_file, 0, SEEK_SET);
                     }
                     else
                     {
                         end_reached = true;
+                        break;
                     }
-                    samplecount += count;
                 }
             }
             else // Mono file, read to a temporary buffer first.
@@ -239,15 +257,16 @@ int WavPlayerPlugin::_read_audio_data([[maybe_unused]] EventId id)
                 while (samplecount < BLOCKSIZE)
                 {
                     auto count = sf_readf_float(_audio_file, tmp_buffer.data() + samplecount, BLOCKSIZE - samplecount);
-                    if (count < BLOCKSIZE && _looping)
+                    samplecount += count;
+                    if (samplecount < BLOCKSIZE && looping)
                     {
                         sf_seek(_audio_file, 0, SEEK_SET);
                     }
                     else
                     {
                         end_reached = true;
+                        break;
                     }
-                    samplecount += count;
                 }
                 // Copy interleaved from the temporary buffer to the block
                 for (int i = 0; i < BLOCKSIZE; i++)
@@ -263,11 +282,11 @@ int WavPlayerPlugin::_read_audio_data([[maybe_unused]] EventId id)
     return 0;
 }
 
-void WavPlayerPlugin::_fill_audio_data(ChunkSampleBuffer& buffer, float speed)
+void WavStreamerPlugin::_fill_audio_data(ChunkSampleBuffer& buffer, float speed)
 {
     if (_current_block == nullptr)
     {
-        if (_load_new_block() == false)
+        if (!_load_new_block())
         {
             buffer.clear();
             return;
@@ -275,6 +294,7 @@ void WavPlayerPlugin::_fill_audio_data(ChunkSampleBuffer& buffer, float speed)
     }
 
     bool stereo = buffer.channel_count() > 1;
+
     for (int s = 0; s < AUDIO_CHUNK_SIZE; s++)
     {
         const auto& data = _current_block->audio_data;
@@ -304,31 +324,44 @@ void WavPlayerPlugin::_fill_audio_data(ChunkSampleBuffer& buffer, float speed)
         _current_block_index += speed;
         if (_current_block_index >= BLOCKSIZE)
         {
-            if (_load_new_block() == false)
+            // Don't reset to 0, as we want to preserve the fractional position.
+            _current_block_index -= BLOCKSIZE;
+            if (!_load_new_block())
             {
                 break;
             }
         }
     }
-
 }
 
-void WavPlayerPlugin::_update_mode()
+StreamingMode WavStreamerPlugin::_update_mode(StreamingMode current)
 {
+    switch (current)
+    {
+        case StreamingMode::STARTING:
+            if (_gain_smoother.stationary())
+            {
+                _gain_smoother.set_lag_time(GAIN_SMOOTHING_TIME, _sample_rate / AUDIO_CHUNK_SIZE);
+                return StreamingMode::PLAYING;
+            }
 
+        case StreamingMode::STOPPING:
+            if (_gain_smoother.stationary())
+            {
+                return StreamingMode::STOPPED;
+            }
+        default:
+            return current;
+    }
 }
 
-bool WavPlayerPlugin::_load_new_block()
+bool WavStreamerPlugin::_load_new_block()
 {
     auto old_block = _current_block;
     bool status = _block_queue.pop(_current_block);
 
-    // Don't reset to 0, as we want to preserve the fractional position.
-    _current_block_index -= BLOCKSIZE;
-
     if (status == false)
     {
-        // No new blocks,
         _current_block = nullptr;
     }
 
@@ -347,6 +380,24 @@ bool WavPlayerPlugin::_load_new_block()
     return status;
 }
 
+void WavStreamerPlugin::_start_stop_playing(bool start)
+{
+    auto lag = std::max(MIN_FADE_TIME, MAX_FADE_TIME * _fade_parameter->processed_value());
+
+    if (start && (_mode != StreamingMode::PLAYING && _mode != StreamingMode::STARTING))
+    {
+        _mode = StreamingMode::STARTING;
+        _gain_smoother.set_lag_time(lag, _sample_rate / AUDIO_CHUNK_SIZE);
+        _gain_smoother.set(_gain_parameter->processed_value());
+    }
+
+    if (!start && (_mode != StreamingMode::STOPPED && _mode != StreamingMode::STOPPING))
+    {
+        _mode = StreamingMode::STOPPING;
+        _gain_smoother.set_lag_time(lag, _sample_rate / AUDIO_CHUNK_SIZE);
+        _gain_smoother.set(0.0f);
+    }
+}
 
 
 }// namespace sushi::wav_player_plugin

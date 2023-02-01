@@ -18,8 +18,8 @@
  * @copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#ifndef SUSHI_WAV_PLAYER_PLUGIN_H
-#define SUSHI_WAV_PLAYER_PLUGIN_H
+#ifndef SUSHI_WAV_STREAMER_PLUGIN_H
+#define SUSHI_WAV_STREAMER_PLUGIN_H
 
 #include <array>
 #include <sndfile.h>
@@ -29,30 +29,17 @@
 #include "dsp_library/value_smoother.h"
 #include "library/internal_plugin.h"
 
-namespace sushi::wav_player_plugin {
+namespace sushi::wav_streamer_plugin {
 
-constexpr int N_AUDIO_CHANNELS = 2;
-constexpr int RINGBUFFER_SIZE = 65536 / AUDIO_CHUNK_SIZE;
-constexpr int POST_WRITE_FREQUENCY = (RINGBUFFER_SIZE / 4);
-constexpr int SAMPLE_WRITE_LIMIT = 48000 * N_AUDIO_CHANNELS * 3600; // Limit file size to 1 hour of stereo audio
-constexpr float DEFAULT_WRITE_INTERVAL = 1.0f;
-constexpr float MAX_WRITE_INTERVAL = 4.0f;
-constexpr float MIN_WRITE_INTERVAL = 0.5f;
-
-
-enum class PlayingMode
+enum class StreamingMode
 {
     PLAYING,
     STARTING,
     STOPPING,
-    STOPPED,
-    PAUSED,
-    PAUSING,
-    UNPAUSING
-};
+    STOPPED,};
 
 // Roughly 3 seconds of stereo audio per block @ 48kHz.
-constexpr size_t BLOCKSIZE = 1'000'000;
+constexpr ssize_t BLOCKSIZE = 150'000;
 // Extra margin for interpolation
 constexpr size_t PRE_SAMPLES = 1;
 constexpr size_t POST_SAMPLES = 2;
@@ -64,12 +51,12 @@ struct AudioBlock : public RtDeletable
     std::array<std::array<float, 2>, BLOCKSIZE + INT_MARGIN> audio_data;
 };
 
-class WavPlayerPlugin : public InternalPlugin, public UidHelper<WavPlayerPlugin>
+class WavStreamerPlugin : public InternalPlugin, public UidHelper<WavStreamerPlugin>
 {
 public:
-    WavPlayerPlugin(HostControl host_control);
+    WavStreamerPlugin(HostControl host_control);
 
-    ~WavPlayerPlugin();
+    ~WavStreamerPlugin();
 
     virtual ProcessorReturnCode init(float sample_rate) override;
 
@@ -87,7 +74,7 @@ public:
 
     static int non_rt_callback(void* data, EventId id)
     {
-        return reinterpret_cast<WavPlayerPlugin*>(data)->_read_audio_data(id);
+        return reinterpret_cast<WavStreamerPlugin*>(data)->_read_audio_data(id);
     }
 
     static std::string_view static_uid();
@@ -101,9 +88,11 @@ private:
 
     void _fill_audio_data(ChunkSampleBuffer& buffer, float speed);
 
-    void _update_mode();
+    StreamingMode _update_mode(StreamingMode current);
 
     bool _load_new_block();
+
+    void _start_stop_playing(bool start);
 
     ValueSmootherRamp<float>    _gain_smoother;
 
@@ -111,17 +100,11 @@ private:
     FloatParameterValue* _speed_parameter;
     FloatParameterValue* _fade_parameter;
     BoolParameterValue*  _start_stop_parameter;
-    BoolParameterValue*  _pause_parameter;
     BoolParameterValue*  _loop_parameter;
     BoolParameterValue*  _exp_fade_parameter;
 
     float _sample_rate{0};
     float _wave_samplerate{0};
-    float _speed{1};
-    float _index{0};
-    bool _looping{false};
-    bool _playing{false};
-    bool _single_block_file{false};
 
     std::mutex  _audio_file_mutex;
     SNDFILE*    _audio_file{nullptr};
@@ -130,8 +113,7 @@ private:
 
     BypassManager _bypass_manager;
 
-    PlayingMode _mode;
-
+    StreamingMode _mode{sushi::wav_streamer_plugin::StreamingMode::STOPPED};
 
     AudioBlock* _current_block{nullptr};
     float _current_block_index{0};
@@ -141,4 +123,4 @@ private:
 
 }// namespace sushi::wav_player_plugin
 
-#endif //SUSHI_WAV_PLAYER_PLUGIN_H
+#endif //SUSHI_WAV_STREAMER_PLUGIN_H
