@@ -25,13 +25,15 @@ namespace sushi::wav_streamer_plugin {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("wav_player");
 
-constexpr auto PLUGIN_UID = "sushi.testing.wav_player";
-constexpr auto DEFAULT_LABEL = "Wav Player";
+constexpr auto PLUGIN_UID = "sushi.testing.wav_streamer";
+constexpr auto DEFAULT_LABEL = "Wav Streamer";
 constexpr int FILE_PROPERTY_ID = 0;
 
 //constexpr float MAX_FADE_TIME = 5;
 constexpr auto  MAX_FADE_TIME = std::chrono::duration<float, std::ratio<1,1>>(5);
 constexpr auto  MIN_FADE_TIME = std::chrono::duration<float, std::ratio<1,1>>(GAIN_SMOOTHING_TIME);
+
+constexpr int SEEK_UPDATE_INTERVAL = 200;
 
 // Approximate an exponential audio fade with an x^3 curve. Works pretty good over a 60 dB range.
 inline float exp_approx(float x)
@@ -74,16 +76,31 @@ WavStreamerPlugin::WavStreamerPlugin(HostControl host_control) : InternalPlugin(
                                                   Direction::AUTOMATABLE,
                                                   new FloatParameterPreProcessor(0.0f, MAX_FADE_TIME.count()));
 
+    _seek_parameter   = register_float_parameter("seek", "Seek", "",
+                                                  0.0f, 0.0f, 1.0f,
+                                                  Direction::AUTOMATABLE,
+                                                  new FloatParameterPreProcessor(0.0f, 1.0f));
+
     _start_stop_parameter = register_bool_parameter("playing", "Playing", "", false, Direction::AUTOMATABLE);
     _loop_parameter = register_bool_parameter("loop", "Loop", "", false, Direction::AUTOMATABLE);
     _exp_fade_parameter = register_bool_parameter("exp_fade", "Exponential fade", "", false, Direction::AUTOMATABLE);
 
-    assert(_gain_parameter && _speed_parameter && _fade_parameter && _start_stop_parameter && _loop_parameter && str_pr_ok);
+    assert(_gain_parameter && _speed_parameter && _fade_parameter && _seek_parameter && _start_stop_parameter && _loop_parameter && str_pr_ok);
     _max_input_channels = 0;
 }
 
 WavStreamerPlugin::~WavStreamerPlugin()
 {
+    if (_audio_file)
+    {
+        std::scoped_lock lock(_audio_file_mutex);
+        _close_audio_file();
+    }
+    AudioBlock* block;
+    while (_block_queue.pop(block))
+    {
+        delete block;
+    }
 }
 
 ProcessorReturnCode WavStreamerPlugin::init(float sample_rate)
@@ -137,7 +154,7 @@ void WavStreamerPlugin::process_event(const RtEvent& event)
     }
 }
 
-void WavStreamerPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer)
+void WavStreamerPlugin::process_audio([[maybe_unused]] const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer)
 {
     if (_bypass_manager.should_process() && _mode != sushi::wav_streamer_plugin::StreamingMode::STOPPED)
     {
@@ -172,6 +189,12 @@ void WavStreamerPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkS
         out_buffer.clear();
     }
 
+    if (++_seek_update_count > SEEK_UPDATE_INTERVAL)
+    {
+        _update_seek();
+        _seek_update_count = 0;
+    }
+
     _mode = _update_mode(_mode);
 }
 
@@ -180,6 +203,7 @@ ProcessorReturnCode WavStreamerPlugin::set_property_value(ObjectId property_id, 
     if (property_id == FILE_PROPERTY_ID)
     {
         _load_audio_file(value);
+        _read_audio_data(property_id);
     }
     return InternalPlugin::set_property_value(property_id, value);
 }
@@ -198,16 +222,18 @@ bool WavStreamerPlugin::_load_audio_file(const std::string& path)
         _close_audio_file();
     }
 
-    _audio_file = sf_open(path.c_str(), SFM_READ, &_soundfile_info);
+    _audio_file = sf_open(path.c_str(), SFM_READ, &_audio_file_info);
     if (_audio_file == nullptr)
     {
         SUSHI_LOG_ERROR("Failed to load audio file: {}, error: {}", path, sf_strerror(nullptr));
         return false;
     }
 
-    _wave_samplerate = _soundfile_info.samplerate;
-    SUSHI_LOG_INFO("Loaded file: {}, {} channels, {} frames, {} Hz", path, _soundfile_info.channels,
-                   _soundfile_info.frames, _soundfile_info.samplerate);
+    _wave_samplerate = _audio_file_info.samplerate;
+    _wave_length = _audio_file_info.frames;
+
+    SUSHI_LOG_INFO("Loaded file: {}, {} channels, {} frames, {} Hz", path, _audio_file_info.channels,
+                   _audio_file_info.frames, _audio_file_info.samplerate);
 
     return true;
 }
@@ -230,19 +256,24 @@ int WavStreamerPlugin::_read_audio_data([[maybe_unused]] EventId id)
         while (!_block_queue.wasFull() && !end_reached)
         {
             auto block = new AudioBlock;
-            block->audio_data.fill({0.0,0.0});
-            sf_count_t samplecount = 0;
 
-            if (_soundfile_info.channels == 2)
+            if (sf_seek(_audio_file, 0, SEEK_CUR) < BLOCKSIZE)
             {
+                block->first = true;
+            }
+
+            if (_audio_file_info.channels == 2)
+            {
+                sf_count_t samplecount = 0;
                 while (samplecount < BLOCKSIZE)
                 {
                     auto count = sf_readf_float(_audio_file, block->audio_data[INT_MARGIN + samplecount].data(), BLOCKSIZE - samplecount);
                     samplecount += count;
                     if (samplecount < BLOCKSIZE && looping)
                     {
-                        // Start over from the beginning and read again.
+                        // Start over from the beginning and continue reading.
                         sf_seek(_audio_file, 0, SEEK_SET);
+                        block->last = true;
                     }
                     else
                     {
@@ -253,6 +284,7 @@ int WavStreamerPlugin::_read_audio_data([[maybe_unused]] EventId id)
             }
             else // Mono file, read to a temporary buffer first.
             {
+                sf_count_t samplecount = 0;
                 std::vector<float> tmp_buffer(BLOCKSIZE, 0.0);
                 while (samplecount < BLOCKSIZE)
                 {
@@ -261,6 +293,7 @@ int WavStreamerPlugin::_read_audio_data([[maybe_unused]] EventId id)
                     if (samplecount < BLOCKSIZE && looping)
                     {
                         sf_seek(_audio_file, 0, SEEK_SET);
+                        block->last = true;
                     }
                     else
                     {
@@ -318,7 +351,7 @@ void WavStreamerPlugin::_fill_audio_data(ChunkSampleBuffer& buffer, float speed)
         }
         else
         {
-            buffer.channel(0)[s] = 0.5f * (left + right);
+            buffer.channel(LEFT_CHANNEL_INDEX)[s] = 0.5f * (left + right);
         }
 
         _current_block_index += speed;
@@ -332,6 +365,7 @@ void WavStreamerPlugin::_fill_audio_data(ChunkSampleBuffer& buffer, float speed)
             }
         }
     }
+    _file_index += speed * AUDIO_CHUNK_SIZE;
 }
 
 StreamingMode WavStreamerPlugin::_update_mode(StreamingMode current)
@@ -344,28 +378,36 @@ StreamingMode WavStreamerPlugin::_update_mode(StreamingMode current)
                 _gain_smoother.set_lag_time(GAIN_SMOOTHING_TIME, _sample_rate / AUDIO_CHUNK_SIZE);
                 return StreamingMode::PLAYING;
             }
+            break;
 
         case StreamingMode::STOPPING:
             if (_gain_smoother.stationary())
             {
                 return StreamingMode::STOPPED;
             }
-        default:
-            return current;
+            break;
+
+        default: {}
+
     }
+    return current;
 }
 
 bool WavStreamerPlugin::_load_new_block()
 {
     auto old_block = _current_block;
-    bool status = _block_queue.pop(_current_block);
-
-    if (status == false)
+    if (_block_queue.pop(_current_block))
+    {
+        if (_current_block->first)
+        {
+            _file_index = 0;
+        }
+    }
+    else
     {
         _current_block = nullptr;
     }
 
-    // TODO - or always do this?
     if (_block_queue.wasEmpty())
     {
         // Schedule a request to load more blocks.
@@ -377,12 +419,12 @@ bool WavStreamerPlugin::_load_new_block()
     {
         async_delete(old_block);
     }
-    return status;
+    return _current_block;
 }
 
 void WavStreamerPlugin::_start_stop_playing(bool start)
 {
-    auto lag = std::max(MIN_FADE_TIME, MAX_FADE_TIME * _fade_parameter->processed_value());
+    auto lag = std::max(MIN_FADE_TIME, MAX_FADE_TIME * _fade_parameter->normalized_value());
 
     if (start && (_mode != StreamingMode::PLAYING && _mode != StreamingMode::STARTING))
     {
@@ -396,6 +438,14 @@ void WavStreamerPlugin::_start_stop_playing(bool start)
         _mode = StreamingMode::STOPPING;
         _gain_smoother.set_lag_time(lag, _sample_rate / AUDIO_CHUNK_SIZE);
         _gain_smoother.set(0.0f);
+    }
+}
+
+void WavStreamerPlugin::_update_seek()
+{
+    if (_wave_length > 0 || _file_index > 0)
+    {
+        set_parameter_and_notify(_seek_parameter, _file_index / _wave_length);
     }
 }
 

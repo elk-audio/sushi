@@ -36,10 +36,11 @@ enum class StreamingMode
     PLAYING,
     STARTING,
     STOPPING,
-    STOPPED,};
+    STOPPED
+};
 
-// Roughly 3 seconds of stereo audio per block @ 48kHz.
-constexpr ssize_t BLOCKSIZE = 150'000;
+// Roughly 2 seconds of stereo audio per block @ 48kHz.
+constexpr ssize_t BLOCKSIZE = 100'000;
 // Extra margin for interpolation
 constexpr size_t PRE_SAMPLES = 1;
 constexpr size_t POST_SAMPLES = 2;
@@ -48,6 +49,14 @@ constexpr size_t INT_MARGIN = PRE_SAMPLES + POST_SAMPLES;
 
 struct AudioBlock : public RtDeletable
 {
+    AudioBlock() : first(false), last(false)
+    {
+        audio_data.fill({0.0f, 0.0f});
+    }
+
+    bool first;
+    bool last;
+    int wave_id;
     std::array<std::array<float, 2>, BLOCKSIZE + INT_MARGIN> audio_data;
 };
 
@@ -94,22 +103,25 @@ private:
 
     void _start_stop_playing(bool start);
 
+    void _update_seek();
+
     ValueSmootherRamp<float>    _gain_smoother;
 
     FloatParameterValue* _gain_parameter;
     FloatParameterValue* _speed_parameter;
     FloatParameterValue* _fade_parameter;
+    FloatParameterValue* _seek_parameter;
     BoolParameterValue*  _start_stop_parameter;
     BoolParameterValue*  _loop_parameter;
     BoolParameterValue*  _exp_fade_parameter;
 
     float _sample_rate{0};
     float _wave_samplerate{0};
+    float _wave_length{1};
 
     std::mutex  _audio_file_mutex;
     SNDFILE*    _audio_file{nullptr};
-    SF_INFO     _soundfile_info;
-    sf_count_t  _soundfile_index;
+    SF_INFO     _audio_file_info;
 
     BypassManager _bypass_manager;
 
@@ -117,6 +129,9 @@ private:
 
     AudioBlock* _current_block{nullptr};
     float _current_block_index{0};
+    float _file_index{0};
+
+    int _seek_update_count{0};
 
     memory_relaxed_aquire_release::CircularFifo<AudioBlock*, 5> _block_queue;
 };
