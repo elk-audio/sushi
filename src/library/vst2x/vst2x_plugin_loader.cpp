@@ -184,7 +184,7 @@ void PluginLoader::close_library_handle(LibraryHandle library_handle)
 {
     // Not sure if we should really need to unload the executable manually.
     // Apples docs say that as long you match the number of "CFBundleCreate..." with
-    // "CFRelease" we should be fine. Also it apparentely only loads bundle once.
+    // "CFRelease" we should be fine. Also, it apparently only loads bundle once.
     CFRelease(library_handle);
     if (CFGetRetainCount(library_handle) == 1)
     {
