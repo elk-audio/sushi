@@ -21,6 +21,7 @@
 #include <array>
 #include <map>
 #include <algorithm>
+#include <iostream>
 
 #include "logging.h"
 
@@ -116,10 +117,31 @@ std::shared_ptr<spdlog::logger> Logger::setup_logging()
     const auto MIN_FLUSH_LEVEL = spdlog::level::err; // Min level for automatic flush
 
     spdlog::set_level(_min_log_level);
-    auto async_file_logger = spdlog::rotating_logger_mt<spdlog::async_factory>(_logger_name,
+
+    auto async_file_logger = spdlog::get(_logger_name);
+
+    if (async_file_logger == nullptr)
+    {
+         async_file_logger = spdlog::rotating_logger_mt<spdlog::async_factory>(_logger_name,
                                                                                _logger_file_name,
                                                                                MAX_LOG_FILE_SIZE,
                                                                                1);
+    }
+    else
+    {
+// TODO: From what I understand this happens because the logger created persists for the duration that the executable where it
+//  was created runs.
+//  That was never a problem in Sushi, but in Nikkei it is.
+//  For now, this is "just" committed to the the Sushi as library branch. But we'll need to make a better solution before merging.
+         std::cerr << "spdlog already has a logger with that name!" << std::endl;
+
+         logger_instance.reset();
+
+         async_file_logger = spdlog::rotating_logger_mt<spdlog::async_factory>(_logger_name.append(std::to_string(std::rand())),
+                                                                               _logger_file_name,
+                                                                               MAX_LOG_FILE_SIZE,
+                                                                               1);
+    }
 
     async_file_logger->flush_on(MIN_FLUSH_LEVEL);
     async_file_logger->warn("#############################");
