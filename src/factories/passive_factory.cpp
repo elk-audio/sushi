@@ -30,6 +30,7 @@
 #include "engine/json_configurator.h"
 
 #include "engine/controller/real_time_controller.h"
+#include "control_frontends/oscpack_osc_messenger.h"
 
 namespace sushi
 {
@@ -96,7 +97,36 @@ InitStatus PassiveFactory::_set_up_control([[maybe_unused]] const SushiOptions& 
                                                               _midi_dispatcher.get(),
                                                               _audio_frontend.get());
 
-    // TODO: NO OSC MESSENGER - YET.
+    if (options.use_osc)
+    {
+        auto oscpack_messenger = new osc::OscpackOscMessenger(options.osc_server_port,
+                                                              options.osc_send_port,
+                                                              options.osc_send_ip);
+
+        _osc_frontend = std::make_unique<control_frontend::OSCFrontend>(_engine.get(),
+                                                                        _engine_controller.get(),
+                                                                        oscpack_messenger);
+
+        _engine_controller->set_osc_frontend(_osc_frontend.get());
+
+        auto osc_status = _osc_frontend->init();
+        if (osc_status != control_frontend::ControlFrontendStatus::OK)
+        {
+            return InitStatus::FAILED_OSC_FRONTEND_INITIALIZATION;
+        }
+
+        if (configurator)
+        {
+            configurator->set_osc_frontend(_osc_frontend.get());
+
+            auto status = configurator->load_osc();
+            if (status != jsonconfig::JsonConfigReturnStatus::OK &&
+                status != jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
+            {
+                return InitStatus::FAILED_LOAD_OSC;
+            }
+        }
+    }
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     _rpc_server = std::make_unique<sushi_rpc::GrpcServer>(options.grpc_listening_address, _engine_controller.get());
