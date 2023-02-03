@@ -46,19 +46,41 @@ constexpr size_t PRE_SAMPLES = 1;
 constexpr size_t POST_SAMPLES = 2;
 constexpr size_t INT_MARGIN = PRE_SAMPLES + POST_SAMPLES;
 
-
+/**
+ * @brief A block of stereo audio data with some basic control data
+ */
 struct AudioBlock : public RtDeletable
 {
-    AudioBlock() : first(false), last(false)
+    AudioBlock() : wave_index(0), wave_id(0), last(false)
     {
         audio_data.fill({0.0f, 0.0f});
     }
 
-    bool first;
-    bool last;
+    int64_t wave_index;
     int wave_id;
+    bool last;
     std::array<std::array<float, 2>, BLOCKSIZE + INT_MARGIN> audio_data;
 };
+
+/**
+ * @brief Fill an AudioBlock with data from a stereo file
+ * @param file  An open SDNFILE object
+ * @param block An allocated AudioBlock to be populated
+ * @param looping If true, reading starts over from the beginning of the file if the end is reached
+ * @return The number of frames read
+ */
+int64_t fill_stereo_block(SNDFILE* file, AudioBlock* block, bool looping);
+
+/**
+ * @brief Fill an AudioBlock with data from a mono file
+ * @param file  An open SDNFILE object
+ * @param block An allocated AudioBlock to be populated
+ * @param looping If true, reading starts over from the beginning of the file if the end is reached
+ * @return The number of frames read
+ */
+int64_t fill_mono_block(SNDFILE* file, AudioBlock* block, bool looping);
+
+void fill_remainder(AudioBlock* block, std::array<std::array<float, 2>, INT_MARGIN>& remainder);
 
 class WavStreamerPlugin : public InternalPlugin, public UidHelper<WavStreamerPlugin>
 {
@@ -81,9 +103,14 @@ public:
 
     ProcessorReturnCode set_property_value(ObjectId property_id, const std::string& value) override;
 
-    static int non_rt_callback(void* data, EventId id)
+    static int read_data_callback(void* data, [[maybe_unused]] EventId id)
     {
-        return reinterpret_cast<WavStreamerPlugin*>(data)->_read_audio_data(id);
+        return reinterpret_cast<WavStreamerPlugin*>(data)->_read_audio_data();
+    }
+
+    static int set_seek_callback(void* data, [[maybe_unused]] EventId id)
+    {
+        return reinterpret_cast<WavStreamerPlugin*>(data)->_set_seek();
     }
 
     static std::string_view static_uid();
@@ -93,7 +120,7 @@ private:
 
     void _close_audio_file();
 
-    int _read_audio_data(EventId id);
+    int _read_audio_data();
 
     void _fill_audio_data(ChunkSampleBuffer& buffer, float speed);
 
@@ -103,14 +130,18 @@ private:
 
     void _start_stop_playing(bool start);
 
-    void _update_seek();
+    void _update_position_display();
+
+    int _set_seek();
 
     ValueSmootherRamp<float>    _gain_smoother;
 
     FloatParameterValue* _gain_parameter;
     FloatParameterValue* _speed_parameter;
     FloatParameterValue* _fade_parameter;
+    FloatParameterValue* _pos_parameter;
     FloatParameterValue* _seek_parameter;
+    FloatParameterValue* _length_parameter;
     BoolParameterValue*  _start_stop_parameter;
     BoolParameterValue*  _loop_parameter;
     BoolParameterValue*  _exp_fade_parameter;
@@ -118,6 +149,9 @@ private:
     float _sample_rate{0};
     float _wave_samplerate{0};
     float _wave_length{1};
+    int   _wave_id{0};
+
+    std::array<std::array<float, 2>, INT_MARGIN> _remainder;
 
     std::mutex  _audio_file_mutex;
     SNDFILE*    _audio_file{nullptr};

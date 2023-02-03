@@ -29,10 +29,10 @@ constexpr auto PLUGIN_UID = "sushi.testing.wav_streamer";
 constexpr auto DEFAULT_LABEL = "Wav Streamer";
 constexpr int FILE_PROPERTY_ID = 0;
 
-//constexpr float MAX_FADE_TIME = 5;
 constexpr auto  MAX_FADE_TIME = std::chrono::duration<float, std::ratio<1,1>>(5);
 constexpr auto  MIN_FADE_TIME = std::chrono::duration<float, std::ratio<1,1>>(GAIN_SMOOTHING_TIME);
 
+constexpr float MAX_FILE_LENGTH = 60 * 60 * 24;
 constexpr int SEEK_UPDATE_INTERVAL = 200;
 
 // Approximate an exponential audio fade with an x^3 curve. Works pretty good over a 60 dB range.
@@ -55,6 +55,68 @@ inline T catmull_rom_cubic_int(T frac_pos, T d0, T d1, T d2, T d3)
 }
 
 
+int64_t fill_stereo_block(SNDFILE* file, AudioBlock* block, bool looping)
+{
+    sf_count_t samplecount = 0;
+    while (samplecount < BLOCKSIZE)
+    {
+        auto count = sf_readf_float(file, block->audio_data[INT_MARGIN + samplecount].data(), BLOCKSIZE - samplecount);
+        samplecount += count;
+        if (samplecount < BLOCKSIZE)
+        {
+            block->last = true;
+            if (looping)
+            {
+                // Start over from the beginning and continue reading.
+                sf_seek(file, 0, SEEK_SET);
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+    return samplecount;
+}
+
+int64_t fill_mono_block(SNDFILE* file, AudioBlock* block, bool looping)
+{
+    sf_count_t samplecount = 0;
+    std::vector<float> tmp_buffer(BLOCKSIZE, 0.0);
+    while (samplecount < BLOCKSIZE)
+    {
+        auto count = sf_readf_float(file, tmp_buffer.data() + samplecount, BLOCKSIZE - samplecount);
+        samplecount += count;
+        if (samplecount < BLOCKSIZE)
+        {
+            block->last = true;
+            if (looping)
+            {
+                sf_seek(file, 0, SEEK_SET);
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+    // Copy interleaved from the temporary buffer to the block
+    for (int i = 0; i < BLOCKSIZE; i++)
+    {
+        block->audio_data[i + INT_MARGIN] = {tmp_buffer[i], tmp_buffer[i]};
+    }
+    return samplecount;
+}
+
+void fill_remainder(AudioBlock* block, std::array<std::array<float, 2>, INT_MARGIN>& remainder)
+{
+    for (size_t i = 0; i < INT_MARGIN; i++ )
+    {
+        block->audio_data[i] = remainder[i];
+        remainder[i] = block->audio_data[i + BLOCKSIZE];
+    }
+}
+
 WavStreamerPlugin::WavStreamerPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
     Processor::set_name(PLUGIN_UID);
@@ -76,16 +138,27 @@ WavStreamerPlugin::WavStreamerPlugin(HostControl host_control) : InternalPlugin(
                                                   Direction::AUTOMATABLE,
                                                   new FloatParameterPreProcessor(0.0f, MAX_FADE_TIME.count()));
 
+
     _seek_parameter   = register_float_parameter("seek", "Seek", "",
-                                                  0.0f, 0.0f, 1.0f,
-                                                  Direction::AUTOMATABLE,
-                                                  new FloatParameterPreProcessor(0.0f, 1.0f));
+                                                 0.0f, 0.0f, 1.0f,
+                                                 Direction::AUTOMATABLE,
+                                                 new FloatParameterPreProcessor(0.0f, 1.0f));
+
+    _pos_parameter   = register_float_parameter("position", "Position", "",
+                                                0.0f, 0.0f, 1.0f,
+                                                Direction::OUTPUT,
+                                                new FloatParameterPreProcessor(0.0f, 1.0f));
+
+    _length_parameter = register_float_parameter("length", "Length", "s",
+                                                 0.0f, 0.0f, MAX_FILE_LENGTH,
+                                                 Direction::OUTPUT,
+                                                 new FloatParameterPreProcessor(0.0f, MAX_FILE_LENGTH));
 
     _start_stop_parameter = register_bool_parameter("playing", "Playing", "", false, Direction::AUTOMATABLE);
     _loop_parameter = register_bool_parameter("loop", "Loop", "", false, Direction::AUTOMATABLE);
     _exp_fade_parameter = register_bool_parameter("exp_fade", "Exponential fade", "", false, Direction::AUTOMATABLE);
 
-    assert(_gain_parameter && _speed_parameter && _fade_parameter && _seek_parameter && _start_stop_parameter && _loop_parameter && str_pr_ok);
+    assert(_gain_parameter && _speed_parameter && _fade_parameter && _pos_parameter && _start_stop_parameter && _loop_parameter && str_pr_ok);
     _max_input_channels = 0;
 }
 
@@ -145,6 +218,10 @@ void WavStreamerPlugin::process_event(const RtEvent& event)
             {
                 _start_stop_playing(_start_stop_parameter->processed_value());
             }
+            else if (typed_event->param_id() == _seek_parameter->descriptor()->id())
+            {
+                request_non_rt_task(set_seek_callback);
+            }
             break;
         }
 
@@ -191,7 +268,7 @@ void WavStreamerPlugin::process_audio([[maybe_unused]] const ChunkSampleBuffer& 
 
     if (++_seek_update_count > SEEK_UPDATE_INTERVAL)
     {
-        _update_seek();
+        _update_position_display();
         _seek_update_count = 0;
     }
 
@@ -203,7 +280,7 @@ ProcessorReturnCode WavStreamerPlugin::set_property_value(ObjectId property_id, 
     if (property_id == FILE_PROPERTY_ID)
     {
         _load_audio_file(value);
-        _read_audio_data(property_id);
+        _read_audio_data();
     }
     return InternalPlugin::set_property_value(property_id, value);
 }
@@ -226,13 +303,18 @@ bool WavStreamerPlugin::_load_audio_file(const std::string& path)
     if (_audio_file == nullptr)
     {
         SUSHI_LOG_ERROR("Failed to load audio file: {}, error: {}", path, sf_strerror(nullptr));
+        _wave_length = 0.0f;
         return false;
     }
 
     _wave_samplerate = _audio_file_info.samplerate;
     _wave_length = _audio_file_info.frames;
+    _wave_id += 1;
 
-    SUSHI_LOG_INFO("Loaded file: {}, {} channels, {} frames, {} Hz", path, _audio_file_info.channels,
+    // TODO - Needs to be done in the audio thread.
+    //set_parameter_and_notify(_length_parameter, _wave_length / _sample_rate / MAX_FILE_LENGTH);
+
+    SUSHI_LOG_INFO("Opened file: {}, {} channels, {} frames, {} Hz", path, _audio_file_info.channels,
                    _audio_file_info.frames, _audio_file_info.samplerate);
 
     return true;
@@ -243,73 +325,36 @@ void WavStreamerPlugin::_close_audio_file()
     sf_close(_audio_file);
 }
 
-int WavStreamerPlugin::_read_audio_data([[maybe_unused]] EventId id)
+int WavStreamerPlugin::_read_audio_data()
 {
     std::scoped_lock lock(_audio_file_mutex);
 
     bool looping = _loop_parameter->processed_value();
     if (_audio_file)
     {
-        SUSHI_LOG_DEBUG("Reading wave data from disk");
-        bool end_reached = false;
-
-        while (!_block_queue.wasFull() && !end_reached)
+        while (!_block_queue.wasFull())
         {
             auto block = new AudioBlock;
+            block->wave_index = sf_seek(_audio_file, 0, SEEK_CUR);
+            block->wave_id = _wave_id;
 
-            if (sf_seek(_audio_file, 0, SEEK_CUR) < BLOCKSIZE)
-            {
-                block->first = true;
-            }
-
+            sf_count_t samplecount;
             if (_audio_file_info.channels == 2)
             {
-                sf_count_t samplecount = 0;
-                while (samplecount < BLOCKSIZE)
-                {
-                    auto count = sf_readf_float(_audio_file, block->audio_data[INT_MARGIN + samplecount].data(), BLOCKSIZE - samplecount);
-                    samplecount += count;
-                    if (samplecount < BLOCKSIZE && looping)
-                    {
-                        // Start over from the beginning and continue reading.
-                        sf_seek(_audio_file, 0, SEEK_SET);
-                        block->last = true;
-                    }
-                    else
-                    {
-                        end_reached = true;
-                        break;
-                    }
-                }
+                samplecount = fill_stereo_block(_audio_file, block, looping);
             }
-            else // Mono file, read to a temporary buffer first.
+            else
             {
-                sf_count_t samplecount = 0;
-                std::vector<float> tmp_buffer(BLOCKSIZE, 0.0);
-                while (samplecount < BLOCKSIZE)
-                {
-                    auto count = sf_readf_float(_audio_file, tmp_buffer.data() + samplecount, BLOCKSIZE - samplecount);
-                    samplecount += count;
-                    if (samplecount < BLOCKSIZE && looping)
-                    {
-                        sf_seek(_audio_file, 0, SEEK_SET);
-                        block->last = true;
-                    }
-                    else
-                    {
-                        end_reached = true;
-                        break;
-                    }
-                }
-                // Copy interleaved from the temporary buffer to the block
-                for (int i = 0; i < BLOCKSIZE; i++)
-                {
-                    block->audio_data[i + INT_MARGIN] = {tmp_buffer[i], tmp_buffer[i]};
-                }
+                samplecount = fill_mono_block(_audio_file, block, looping);
             }
 
-            SUSHI_LOG_DEBUG("Pushed 1 audio block");
+            fill_remainder(block, _remainder);
             _block_queue.push(block);
+
+            if (samplecount < BLOCKSIZE)
+            {
+                break;
+            }
         }
     }
     return 0;
@@ -317,7 +362,7 @@ int WavStreamerPlugin::_read_audio_data([[maybe_unused]] EventId id)
 
 void WavStreamerPlugin::_fill_audio_data(ChunkSampleBuffer& buffer, float speed)
 {
-    if (_current_block == nullptr)
+    if (_current_block == nullptr || (_current_block && _current_block->wave_id != _wave_id))
     {
         if (!_load_new_block())
         {
@@ -395,30 +440,54 @@ StreamingMode WavStreamerPlugin::_update_mode(StreamingMode current)
 
 bool WavStreamerPlugin::_load_new_block()
 {
-    auto old_block = _current_block;
-    if (_block_queue.pop(_current_block))
+    auto prev_block = _current_block;
+    AudioBlock* new_block = nullptr;
+
+    while (_block_queue.pop(new_block))
     {
-        if (_current_block->first)
+        if (new_block->wave_id == _wave_id)
         {
-            _file_index = 0;
+            _file_index = new_block->wave_index;
+            float length = _wave_length / _sample_rate / MAX_FILE_LENGTH;
+            if (length != _length_parameter->normalized_value())
+            {
+                set_parameter_and_notify(_length_parameter, length);
+            }
+            break;
+        }
+        else // Block is stale
+        {
+            if (prev_block)
+            {
+                async_delete(prev_block);
+            }
+            prev_block = new_block;
+            new_block = nullptr;
         }
     }
-    else
+
+    _current_block = new_block;
+
+    if (prev_block)
     {
-        _current_block = nullptr;
+        if (prev_block->last && !_loop_parameter->processed_value())
+        {
+            // We've reached the end of the file and loop mode is disabled
+            _mode = StreamingMode::STOPPING;
+            _gain_smoother.set_lag_time(MIN_FADE_TIME, _sample_rate / AUDIO_CHUNK_SIZE);
+            _gain_smoother.set(0);
+            _file_index = 0;
+            set_parameter_and_notify(_start_stop_parameter, false);
+        }
+        async_delete(prev_block);
     }
 
     if (_block_queue.wasEmpty())
     {
         // Schedule a request to load more blocks.
-        request_non_rt_task(non_rt_callback);
+        request_non_rt_task(read_data_callback);
     }
 
-    // Delete old block in non-rt thread.
-    if (old_block)
-    {
-        async_delete(old_block);
-    }
     return _current_block;
 }
 
@@ -441,13 +510,26 @@ void WavStreamerPlugin::_start_stop_playing(bool start)
     }
 }
 
-void WavStreamerPlugin::_update_seek()
+void WavStreamerPlugin::_update_position_display()
 {
     if (_wave_length > 0 || _file_index > 0)
     {
-        set_parameter_and_notify(_seek_parameter, _file_index / _wave_length);
+        set_parameter_and_notify(_pos_parameter, std::fmod(_file_index / _wave_length, 1.0f));
     }
 }
 
+int WavStreamerPlugin::_set_seek()
+{
+    std::scoped_lock lock(_audio_file_mutex);
+    if (_audio_file)
+    {
+        float pos = _seek_parameter->normalized_value();
+        SUSHI_LOG_INFO("Setting seek to {}", pos);
+        sf_seek(_audio_file, pos * _wave_length, SEEK_SET);
+
+        _wave_id +=1;
+    }
+    return 0;
+}
 
 }// namespace sushi::wav_player_plugin
