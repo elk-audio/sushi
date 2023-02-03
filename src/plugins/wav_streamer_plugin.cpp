@@ -29,7 +29,7 @@ constexpr auto PLUGIN_UID = "sushi.testing.wav_streamer";
 constexpr auto DEFAULT_LABEL = "Wav Streamer";
 constexpr int FILE_PROPERTY_ID = 0;
 
-constexpr auto  MAX_FADE_TIME = std::chrono::duration<float, std::ratio<1,1>>(5);
+constexpr auto  MAX_FADE_TIME = std::chrono::duration<float, std::ratio<1,1>>(100);
 constexpr auto  MIN_FADE_TIME = std::chrono::duration<float, std::ratio<1,1>>(GAIN_SMOOTHING_TIME);
 
 constexpr float MAX_FILE_LENGTH = 60 * 60 * 24;
