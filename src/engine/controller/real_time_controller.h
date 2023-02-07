@@ -81,7 +81,7 @@ public:
     void receive_midi(int input, MidiDataByte data, Time timestamp) override;
     void set_midi_callback(PassiveMidiCallback&& callback) override;
 
-    sushi::Time calculate_timestamp_from_start(float sample_rate) override;
+    sushi::Time calculate_timestamp_from_start(float sample_rate) const override;
     void increment_samples_since_start(uint64_t sample_count, Time timestamp) override;
 
 private:

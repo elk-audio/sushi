@@ -125,7 +125,7 @@ public:
      *        based on the sample count from session start.
      * @return The currently calculated Timestamp.
      */
-    virtual sushi::Time calculate_timestamp_from_start(float sample_rate) = 0;
+    virtual sushi::Time calculate_timestamp_from_start(float sample_rate) const = 0;
 
     /**
      * @brief Call this at the end of each ProcessBlock, to update the sample count and timestamp used for

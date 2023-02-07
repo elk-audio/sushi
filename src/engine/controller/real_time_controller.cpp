@@ -41,7 +41,7 @@ void RealTimeController::set_tempo(float tempo)
 {
     // TODO: This works, but, it triggers the non-rt-safe Ableton Link event code.
     //  We want Ableton Link to be disabled anyway when Sushi is passive!
-    //  So that work is a separate story (AUD-460).
+    //  So that work is a separate story (ELM-278).
     if (_tempo != tempo)
     {
         _transport->set_tempo(tempo,
@@ -134,7 +134,7 @@ void RealTimeController::set_midi_callback(PassiveMidiCallback&& callback)
     _midi_frontend->set_callback(std::move(callback));
 }
 
-sushi::Time RealTimeController::calculate_timestamp_from_start(float sample_rate)
+sushi::Time RealTimeController::calculate_timestamp_from_start(float sample_rate) const
 {
     uint64_t micros = _samples_since_start * 1'000'000.0 / sample_rate;
     auto timestamp = std::chrono::microseconds(micros);
