@@ -103,15 +103,9 @@ public:
 
     ProcessorReturnCode set_property_value(ObjectId property_id, const std::string& value) override;
 
-    static int read_data_callback(void* data, [[maybe_unused]] EventId id)
-    {
-        return reinterpret_cast<WavStreamerPlugin*>(data)->_read_audio_data();
-    }
+    static int read_data_callback(void* data, EventId id);
 
-    static int set_seek_callback(void* data, [[maybe_unused]] EventId id)
-    {
-        return reinterpret_cast<WavStreamerPlugin*>(data)->_set_seek();
-    }
+    static int set_seek_callback(void* data, EventId id);
 
     static std::string_view static_uid();
 
@@ -132,7 +126,7 @@ private:
 
     void _update_position_display();
 
-    int _set_seek();
+    void _set_seek();
 
     ValueSmootherRamp<float>    _gain_smoother;
 
@@ -147,15 +141,15 @@ private:
     BoolParameterValue*  _exp_fade_parameter;
 
     float _sample_rate{0};
-    float _wave_samplerate{0};
-    float _wave_length{1};
-    int   _wave_id{0};
+    float _file_samplerate{0};
+    float _file_length{1};
+    int   _file_idx{0};
 
     std::array<std::array<float, 2>, INT_MARGIN> _remainder;
 
-    std::mutex  _audio_file_mutex;
-    SNDFILE*    _audio_file{nullptr};
-    SF_INFO     _audio_file_info;
+    std::mutex  _file_mutex;
+    SNDFILE*    _file{nullptr};
+    SF_INFO     _file_info;
 
     BypassManager _bypass_manager;
 
