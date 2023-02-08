@@ -110,7 +110,7 @@ public:
     static std::string_view static_uid();
 
 private:
-    bool _load_audio_file(const std::string& path);
+    bool _open_audio_file(const std::string& path);
 
     void _close_audio_file();
 
@@ -125,6 +125,8 @@ private:
     void _start_stop_playing(bool start);
 
     void _update_position_display();
+
+    void _update_file_length_display();
 
     void _set_seek();
 
@@ -156,8 +158,8 @@ private:
     StreamingMode _mode{sushi::wav_streamer_plugin::StreamingMode::STOPPED};
 
     AudioBlock* _current_block{nullptr};
-    float _current_block_index{0};
-    float _file_index{0};
+    float _current_block_pos{0};
+    float _file_pos{0};
 
     int _seek_update_count{0};
 

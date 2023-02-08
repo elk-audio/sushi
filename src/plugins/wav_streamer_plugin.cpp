@@ -236,6 +236,7 @@ void WavStreamerPlugin::process_audio([[maybe_unused]] const ChunkSampleBuffer& 
     if (_current_block == nullptr || (_current_block && _current_block->wave_id != _file_idx))
     {
         _load_new_block();
+        _update_file_length_display();
     }
 
     if (_current_block && _bypass_manager.should_process() && _mode != sushi::wav_streamer_plugin::StreamingMode::STOPPED)
@@ -285,7 +286,7 @@ ProcessorReturnCode WavStreamerPlugin::set_property_value(ObjectId property_id, 
     auto status = InternalPlugin::set_property_value(property_id, value);
     if (status == ProcessorReturnCode::OK && property_id == FILE_PROPERTY_ID)
     {
-        _load_audio_file(value);
+        _open_audio_file(value);
         _read_audio_data();
     }
     return status;
@@ -296,7 +297,7 @@ std::string_view WavStreamerPlugin::static_uid()
     return PLUGIN_UID;
 }
 
-bool WavStreamerPlugin::_load_audio_file(const std::string& path)
+bool WavStreamerPlugin::_open_audio_file(const std::string& path)
 {
     std::scoped_lock lock(_file_mutex);
 
@@ -375,8 +376,8 @@ void WavStreamerPlugin::_fill_audio_data(ChunkSampleBuffer& buffer, float speed)
     {
         const auto& data = _current_block->audio_data;
 
-        auto first = static_cast<int>(_current_block_index);
-        float frac_pos = _current_block_index - std::floor(_current_block_index);
+        auto first = static_cast<int>(_current_block_pos);
+        float frac_pos = _current_block_pos - std::floor(_current_block_pos);
         assert(first >= 0);
         assert(first < BLOCKSIZE);
 
@@ -396,18 +397,18 @@ void WavStreamerPlugin::_fill_audio_data(ChunkSampleBuffer& buffer, float speed)
             buffer.channel(LEFT_CHANNEL_INDEX)[s] = 0.5f * (left + right);
         }
 
-        _current_block_index += speed;
-        if (_current_block_index >= BLOCKSIZE)
+        _current_block_pos += speed;
+        if (_current_block_pos >= BLOCKSIZE)
         {
             // Don't reset to 0, as we want to preserve the fractional position.
-            _current_block_index -= BLOCKSIZE;
+            _current_block_pos -= BLOCKSIZE;
             if (!_load_new_block())
             {
                 break;
             }
         }
     }
-    _file_index += speed * AUDIO_CHUNK_SIZE;
+    _file_pos += speed * AUDIO_CHUNK_SIZE;
 }
 
 StreamingMode WavStreamerPlugin::_update_mode(StreamingMode current)
@@ -444,12 +445,8 @@ bool WavStreamerPlugin::_load_new_block()
     {
         if (new_block->wave_id == _file_idx)
         {
-            _file_index = new_block->wave_index;
-            float length = _file_length / _sample_rate / MAX_FILE_LENGTH;
-            if (length != _length_parameter->normalized_value())
-            {
-                set_parameter_and_notify(_length_parameter, length);
-            }
+            _file_pos = new_block->wave_index;
+            _update_file_length_display();
             break;
         }
         else // Block is stale
@@ -467,13 +464,13 @@ bool WavStreamerPlugin::_load_new_block()
 
     if (prev_block)
     {
-        if (prev_block->last && !_loop_parameter->processed_value())
+        if ((prev_block->last && !_loop_parameter->processed_value()) || _file == nullptr)
         {
-            // We've reached the end of the file and loop mode is disabled
+            // We've reached the end of the file and loop mode is disabled or file was closed, stop.
             _mode = StreamingMode::STOPPING;
             _gain_smoother.set_lag_time(MIN_FADE_TIME, _sample_rate / AUDIO_CHUNK_SIZE);
             _gain_smoother.set(0);
-            _file_index = 0;
+            _file_pos = 0;
             set_parameter_and_notify(_start_stop_parameter, false);
         }
         async_delete(prev_block);
@@ -481,7 +478,7 @@ bool WavStreamerPlugin::_load_new_block()
 
     if (_block_queue.wasEmpty())
     {
-        // Schedule a request to load more blocks.
+        // Schedule a task to load more blocks.
         request_non_rt_task(read_data_callback);
     }
 
@@ -509,9 +506,18 @@ void WavStreamerPlugin::_start_stop_playing(bool start)
 
 void WavStreamerPlugin::_update_position_display()
 {
-    if (_file_length > 0 || _file_index > 0)
+    if (_file_length > 0 || _file_pos > 0)
     {
-        set_parameter_and_notify(_pos_parameter, std::fmod(_file_index / _file_length, 1.0f));
+        set_parameter_and_notify(_pos_parameter, std::fmod(_file_pos / _file_length, 1.0f));
+    }
+}
+
+void WavStreamerPlugin::_update_file_length_display()
+{
+    float length = _file_length / _sample_rate / MAX_FILE_LENGTH;
+    if (length != _length_parameter->normalized_value())
+    {
+        set_parameter_and_notify(_length_parameter, length);
     }
 }
 
