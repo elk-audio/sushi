@@ -65,7 +65,7 @@ int64_t fill_stereo_block(SNDFILE* file, AudioBlock* block, bool looping)
         samplecount += count;
         if (samplecount < BLOCKSIZE)
         {
-            block->last = true;
+            block->is_last = true;
             if (looping)
             {
                 // Start over from the beginning and continue reading.
@@ -90,7 +90,7 @@ int64_t fill_mono_block(SNDFILE* file, AudioBlock* block, bool looping)
         samplecount += count;
         if (samplecount < BLOCKSIZE)
         {
-            block->last = true;
+            block->is_last = true;
             if (looping)
             {
                 sf_seek(file, 0, SEEK_SET);
@@ -234,7 +234,7 @@ void WavStreamerPlugin::process_event(const RtEvent& event)
 
 void WavStreamerPlugin::process_audio([[maybe_unused]] const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer)
 {
-    if (_current_block == nullptr || (_current_block && _current_block->wave_id != _file_idx))
+    if (_current_block == nullptr || (_current_block && _current_block->file_idx != _file_idx))
     {
         _load_new_block();
         _update_file_length_display();
@@ -293,6 +293,23 @@ ProcessorReturnCode WavStreamerPlugin::set_property_value(ObjectId property_id, 
     return status;
 }
 
+int WavStreamerPlugin::set_seek_callback(void* data, [[maybe_unused]] EventId id)
+{
+    assert(data);
+    auto instance = reinterpret_cast<WavStreamerPlugin*>(data);
+    instance->_set_seek();
+    instance->_read_audio_data();
+    return 0;
+}
+
+int WavStreamerPlugin::read_data_callback(void* data, [[maybe_unused]] EventId id)
+{
+    assert(data);
+    auto instance = reinterpret_cast<WavStreamerPlugin*>(data);
+    instance->_read_audio_data();
+    return 0;
+}
+
 std::string_view WavStreamerPlugin::static_uid()
 {
     return PLUGIN_UID;
@@ -345,8 +362,8 @@ int WavStreamerPlugin::_read_audio_data()
         while (!_block_queue.wasFull())
         {
             auto block = new AudioBlock;
-            block->wave_index = sf_seek(_file, 0, SEEK_CUR);
-            block->wave_id = _file_idx;
+            block->file_pos = sf_seek(_file, 0, SEEK_CUR);
+            block->file_idx = _file_idx;
 
             sf_count_t samplecount;
             if (_file_info.channels == 2)
@@ -445,9 +462,9 @@ bool WavStreamerPlugin::_load_new_block()
 
     while (_block_queue.pop(new_block))
     {
-        if (new_block->wave_id == _file_idx)
+        if (new_block->file_idx == _file_idx)
         {
-            _file_pos = new_block->wave_index;
+            _file_pos = new_block->file_pos;
             _update_file_length_display();
             break;
         }
@@ -466,7 +483,7 @@ bool WavStreamerPlugin::_load_new_block()
 
     if (prev_block)
     {
-        if ((prev_block->last && !_loop_parameter->processed_value()) || _file == nullptr)
+        if ((prev_block->is_last && !_loop_parameter->processed_value()) || _file == nullptr)
         {
             _handle_end_of_file();
         }
@@ -506,6 +523,7 @@ void WavStreamerPlugin::_update_position_display(bool looping)
     float position = 0;
     if (_file_length > 0.0f)
     {
+        // If looping is on, a block will contain both the start and the end of the files, hence wraparound
         if (looping)
         {
             position = std::fmod(_file_pos / _file_length, 1.0f);
@@ -542,23 +560,6 @@ void WavStreamerPlugin::_set_seek()
 
         _file_idx +=1;
     }
-}
-
-int WavStreamerPlugin::set_seek_callback(void* data, [[maybe_unused]] EventId id)
-{
-    assert(data);
-    auto instance = reinterpret_cast<WavStreamerPlugin*>(data);
-    instance->_set_seek();
-    instance->_read_audio_data();
-    return 0;
-}
-
-int WavStreamerPlugin::read_data_callback(void* data, [[maybe_unused]] EventId id)
-{
-    assert(data);
-    auto instance = reinterpret_cast<WavStreamerPlugin*>(data);
-    instance->_read_audio_data();
-    return 0;
 }
 
 void WavStreamerPlugin::_handle_end_of_file()

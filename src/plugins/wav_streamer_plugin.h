@@ -41,6 +41,8 @@ enum class StreamingMode
 
 // Roughly 2 seconds of stereo audio per block @ 48kHz.
 constexpr ssize_t BLOCKSIZE = 100'000;
+constexpr ssize_t QUEUE_SIZE = 4;
+
 // Extra margin for interpolation
 constexpr size_t PRE_SAMPLES = 1;
 constexpr size_t POST_SAMPLES = 2;
@@ -51,14 +53,14 @@ constexpr size_t INT_MARGIN = PRE_SAMPLES + POST_SAMPLES;
  */
 struct AudioBlock : public RtDeletable
 {
-    AudioBlock() : wave_index(0), wave_id(0), last(false)
+    AudioBlock() : file_pos(0), file_idx(0), is_last(false)
     {
         audio_data.fill({0.0f, 0.0f});
     }
 
-    int64_t wave_index;
-    int wave_id;
-    bool last;
+    int64_t file_pos;
+    int file_idx;
+    bool is_last;
     std::array<std::array<float, 2>, BLOCKSIZE + INT_MARGIN> audio_data;
 };
 
@@ -132,7 +134,7 @@ private:
 
     void _handle_end_of_file();
 
-    ValueSmootherRamp<float>    _gain_smoother;
+    ValueSmootherRamp<float>  _gain_smoother;
 
     FloatParameterValue* _gain_parameter;
     FloatParameterValue* _speed_parameter;
@@ -165,7 +167,7 @@ private:
 
     int _seek_update_count{0};
 
-    memory_relaxed_aquire_release::CircularFifo<AudioBlock*, 5> _block_queue;
+    memory_relaxed_aquire_release::CircularFifo<AudioBlock*, QUEUE_SIZE> _block_queue;
 };
 
 }// namespace sushi::wav_player_plugin
