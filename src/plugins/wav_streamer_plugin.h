@@ -124,11 +124,13 @@ private:
 
     void _start_stop_playing(bool start);
 
-    void _update_position_display();
+    void _update_position_display(bool looping);
 
     void _update_file_length_display();
 
     void _set_seek();
+
+    void _handle_end_of_file();
 
     ValueSmootherRamp<float>    _gain_smoother;
 

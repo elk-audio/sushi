@@ -36,9 +36,10 @@ constexpr float MAX_FILE_LENGTH = 60 * 60 * 24;
 constexpr int SEEK_UPDATE_INTERVAL = 200;
 
 // Approximate an exponential audio fade with an x^3 curve. Works pretty good over a 60 dB range.
-inline float exp_approx(float x)
+inline float exp_approx(float x, float range)
 {
-    return x * x * x;
+    float norm = range > 0 ? x / range : 0.0f;
+    return norm * norm * norm * range;
 }
 
 // Catmull-Rom splines, aka Hermite interpolation
@@ -241,26 +242,26 @@ void WavStreamerPlugin::process_audio([[maybe_unused]] const ChunkSampleBuffer& 
 
     if (_current_block && _bypass_manager.should_process() && _mode != sushi::wav_streamer_plugin::StreamingMode::STOPPED)
     {
+        float gain_value = _gain_parameter->processed_value();
+        bool exp_fade = _exp_fade_parameter->processed_value();
+
         if (_mode == StreamingMode::PLAYING)
         {
-            _gain_smoother.set(_gain_parameter->processed_value());
+            _gain_smoother.set(gain_value);
         }
-
-        //SUSHI_LOG_INFO("Playing {} {}", _current_block_index, _gain_smoother.value());
-        // Use an exponential curve to fade audio and not a linear ramp
-        bool lin_fade = true; // _exp_fade_parameter->processed_value();
 
         _fill_audio_data(out_buffer, _file_samplerate / _sample_rate * _speed_parameter->processed_value());
 
         if (_gain_smoother.stationary())
         {
-            out_buffer.apply_gain(lin_fade ? _gain_smoother.value() : exp_approx(_gain_smoother.value()));
+            float gain = exp_fade ? exp_approx(_gain_smoother.value(), gain_value) :  _gain_smoother.value();
+            out_buffer.apply_gain(gain);
         }
         else
         {
-            float start = _gain_smoother.value();
-            float end = _gain_smoother.next_value();
-            out_buffer.ramp(lin_fade ? start : exp_approx(start), lin_fade ? end : exp_approx(end));
+            float start = exp_fade ? exp_approx(_gain_smoother.value(), gain_value) : _gain_smoother.value();
+            float end = exp_fade ? exp_approx(_gain_smoother.next_value(), gain_value) : _gain_smoother.next_value();
+            out_buffer.ramp(start, end);
         }
         if (_bypass_manager.should_ramp())
         {
@@ -274,7 +275,7 @@ void WavStreamerPlugin::process_audio([[maybe_unused]] const ChunkSampleBuffer& 
 
     if (++_seek_update_count > SEEK_UPDATE_INTERVAL)
     {
-        _update_position_display();
+        _update_position_display(_loop_parameter->processed_value());
         _seek_update_count = 0;
     }
 
@@ -307,19 +308,19 @@ bool WavStreamerPlugin::_open_audio_file(const std::string& path)
     }
 
     _file = sf_open(path.c_str(), SFM_READ, &_file_info);
+    _file_idx += 1;
+
     if (_file == nullptr)
     {
-        std::string str_error = sf_strerror(nullptr);
-        SUSHI_LOG_ERROR("Failed to load audio file: {}, error: {}", path, str_error);
-
         _file_length = 0.0f;
+        std::string str_error = sf_strerror(nullptr);
         InternalPlugin::set_property_value(FILE_PROPERTY_ID, "Error: " + str_error);
+        SUSHI_LOG_ERROR("Failed to load audio file: {}, error: {}", path, str_error);
         return false;
     }
 
     _file_samplerate = _file_info.samplerate;
     _file_length = _file_info.frames;
-    _file_idx += 1;
 
     // The file length parameter will be updated from the audio thread
     SUSHI_LOG_INFO("Opened file: {}, {} channels, {} frames, {} Hz", path, _file_info.channels, _file_info.frames, _file_info.samplerate);
@@ -331,6 +332,7 @@ void WavStreamerPlugin::_close_audio_file()
 {
     sf_close(_file);
     _file_length = 0;
+    _file_pos = 0;
 }
 
 int WavStreamerPlugin::_read_audio_data()
@@ -466,12 +468,7 @@ bool WavStreamerPlugin::_load_new_block()
     {
         if ((prev_block->last && !_loop_parameter->processed_value()) || _file == nullptr)
         {
-            // We've reached the end of the file and loop mode is disabled or file was closed, stop.
-            _mode = StreamingMode::STOPPING;
-            _gain_smoother.set_lag_time(MIN_FADE_TIME, _sample_rate / AUDIO_CHUNK_SIZE);
-            _gain_smoother.set(0);
-            _file_pos = 0;
-            set_parameter_and_notify(_start_stop_parameter, false);
+            _handle_end_of_file();
         }
         async_delete(prev_block);
     }
@@ -504,11 +501,24 @@ void WavStreamerPlugin::_start_stop_playing(bool start)
     }
 }
 
-void WavStreamerPlugin::_update_position_display()
+void WavStreamerPlugin::_update_position_display(bool looping)
 {
-    if (_file_length > 0 || _file_pos > 0)
+    float position = 0;
+    if (_file_length > 0.0f)
     {
-        set_parameter_and_notify(_pos_parameter, std::fmod(_file_pos / _file_length, 1.0f));
+        if (looping)
+        {
+            position = std::fmod(_file_pos / _file_length, 1.0f);
+        }
+        else
+        {
+            position = std::clamp(_file_pos / _file_length, 0.0f, 1.0f);
+        }
+    }
+
+    if (position != _pos_parameter->normalized_value())
+    {
+        set_parameter_and_notify(_pos_parameter, position);
     }
 }
 
@@ -549,6 +559,16 @@ int WavStreamerPlugin::read_data_callback(void* data, [[maybe_unused]] EventId i
     auto instance = reinterpret_cast<WavStreamerPlugin*>(data);
     instance->_read_audio_data();
     return 0;
+}
+
+void WavStreamerPlugin::_handle_end_of_file()
+{
+    _mode = StreamingMode::STOPPED;
+    _gain_smoother.set_direct(0.0f);
+    _file_pos = 0;
+    set_parameter_and_notify(_start_stop_parameter, false);
+    request_non_rt_task(set_seek_callback);
+    _update_position_display(false);
 }
 
 }// namespace sushi::wav_player_plugin

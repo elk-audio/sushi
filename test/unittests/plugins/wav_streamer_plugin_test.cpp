@@ -16,8 +16,14 @@ constexpr int   TEST_CHANNEL_COUNT = 2;
 
 static const std::string SAMPLE_FILE = "Kawai-K11-GrPiano-C4_mono.wav";
 
+TEST(TestWaveStreamerPluginInternal, TestGainScaleFunction)
+{
+    EXPECT_NEAR(0.125f, exp_approx(0.5f, 1.0f), 0.001f);
+    EXPECT_NEAR(0.015625, exp_approx(0.25f, 1.0f), 0.001f);
+    EXPECT_NEAR(0.25f, exp_approx(1.0f, 2.0f), 0.001f);
+    EXPECT_NEAR(0.0625f, exp_approx(0.25f, 0.5f), 0.001f);
+}
 
-/* Test the Voice class */
 class TestWaveStreamerPlugin : public ::testing::Test
 {
 protected:
@@ -57,17 +63,44 @@ TEST_F(TestWaveStreamerPlugin, TestInstantiation)
     test_utils::assert_buffer_value(0.0, out_buffer);
 }
 
-TEST_F(TestWaveStreamerPlugin, TestWaveLoading)
+TEST_F(TestWaveStreamerPlugin, TestWaveLoadingAndPlaying)
 {
-    LoadFile(SAMPLE_FILE);
+    auto playin_param_id = _module_under_test->parameter_from_name("playing")->id();
+    auto len_param_id = _module_under_test->parameter_from_name("length")->id();
+    auto pos_param_id = _module_under_test->parameter_from_name("position")->id();
 
-    auto param_id = _module_under_test->parameter_from_name("playing")->id();
-    _module_under_test->process_event(RtEvent::make_parameter_change_event(0, 0, param_id, 1.0f));
+    // Load non-existing file
+    LoadFile("NO FILE");
+    EXPECT_EQ("Error:", _module_under_test->property_value(FILE_PROPERTY_ID).second.substr(0, 6));
+    EXPECT_EQ(0.0f, _module_under_test->parameter_value(len_param_id).second);
+    EXPECT_EQ(0.0f, _module_under_test->parameter_value(pos_param_id).second);
+
+    // Load actual file and verify we got something on the output
+    LoadFile(SAMPLE_FILE);
+    _module_under_test->process_event(RtEvent::make_parameter_change_event(0, 0, playin_param_id, 1.0f));
 
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(TEST_CHANNEL_COUNT);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(TEST_CHANNEL_COUNT);
-    _module_under_test->process_audio(in_buffer, out_buffer);
-    test_utils::assert_buffer_non_null(out_buffer);
+    for (int i = 0; i <= SEEK_UPDATE_INTERVAL; ++i)
+    {
+        _module_under_test->process_audio(in_buffer, out_buffer);
+        test_utils::assert_buffer_non_null(out_buffer);
+    }
+
+    // Verify that output parameters are updated
+    EXPECT_NE(0.0f, _module_under_test->parameter_value(len_param_id).second);
+    EXPECT_NE(0.0f, _module_under_test->parameter_value(pos_param_id).second);
+    EXPECT_EQ(1.0f, _module_under_test->parameter_value(playin_param_id).second);
+
+    // Load non-existing file again and verify that playback stops and parameters are updated.
+    LoadFile("NO FILE");
+    for (int i = 0; i <= + SEEK_UPDATE_INTERVAL * 2 ; ++i)
+    {
+        _module_under_test->process_audio(in_buffer, out_buffer);
+    }
+    EXPECT_EQ(0.0f, _module_under_test->parameter_value(len_param_id).second);
+    EXPECT_EQ(0.0f, _module_under_test->parameter_value(pos_param_id).second);
+    EXPECT_EQ(0.0f, _module_under_test->parameter_value(playin_param_id).second);
 }
 
 
