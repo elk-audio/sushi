@@ -14,7 +14,7 @@
  */
 
 /**
- * @brief Simple plugin playing wav files.
+ * @brief Plugin for streaming large wav files from disk
  * @copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
@@ -159,7 +159,8 @@ WavStreamerPlugin::WavStreamerPlugin(HostControl host_control) : InternalPlugin(
     _loop_parameter = register_bool_parameter("loop", "Loop", "", false, Direction::AUTOMATABLE);
     _exp_fade_parameter = register_bool_parameter("exp_fade", "Exponential fade", "", false, Direction::AUTOMATABLE);
 
-    assert(_gain_parameter && _speed_parameter && _fade_parameter && _pos_parameter && _start_stop_parameter && _loop_parameter && str_pr_ok);
+    assert(_gain_parameter && _speed_parameter && _fade_parameter && _pos_parameter &&
+           _start_stop_parameter &&_loop_parameter && _exp_fade_parameter && str_pr_ok);
     _max_input_channels = 0;
 }
 
@@ -257,13 +258,13 @@ void WavStreamerPlugin::process_audio([[maybe_unused]] const ChunkSampleBuffer& 
             float gain = exp_fade ? exp_approx(_gain_smoother.value(), gain_value) :  _gain_smoother.value();
             out_buffer.apply_gain(gain);
         }
-        else
+        else // Ramp because start/stop or gain parameter changed
         {
             float start = exp_fade ? exp_approx(_gain_smoother.value(), gain_value) : _gain_smoother.value();
             float end = exp_fade ? exp_approx(_gain_smoother.next_value(), gain_value) : _gain_smoother.next_value();
             out_buffer.ramp(start, end);
         }
-        if (_bypass_manager.should_ramp())
+        if (_bypass_manager.should_ramp()) // Ramp because bypass was triggered
         {
             _bypass_manager.ramp_output(out_buffer);
         }
@@ -338,10 +339,9 @@ bool WavStreamerPlugin::_open_audio_file(const std::string& path)
 
     _file_samplerate = _file_info.samplerate;
     _file_length = _file_info.frames;
-
     // The file length parameter will be updated from the audio thread
-    SUSHI_LOG_INFO("Opened file: {}, {} channels, {} frames, {} Hz", path, _file_info.channels, _file_info.frames, _file_info.samplerate);
 
+    SUSHI_LOG_INFO("Opened file: {}, {} channels, {} frames, {} Hz", path, _file_info.channels, _file_info.frames, _file_info.samplerate);
     return true;
 }
 
@@ -366,15 +366,15 @@ int WavStreamerPlugin::_read_audio_data()
             block->file_idx = _file_idx;
 
             sf_count_t samplecount;
-            if (_file_info.channels == 2)
-            {
-                samplecount = fill_stereo_block(_file, block, looping);
-            }
-            else
+            if (_file_info.channels == 1)
             {
                 samplecount = fill_mono_block(_file, block, looping);
             }
-            // Blocks overlap to make interpolation more efficient
+            else
+            {
+                samplecount = fill_stereo_block(_file, block, looping);
+            }
+            // Blocks overlap to make interpolation easier
             fill_remainder(block, _remainder);
             _block_queue.push(block);
 
@@ -523,12 +523,12 @@ void WavStreamerPlugin::_update_position_display(bool looping)
     float position = 0;
     if (_file_length > 0.0f)
     {
-        // If looping is on, a block will contain both the start and the end of the files, hence wraparound
+        // If looping is on, the last block will contain both the start and the end of the files, so let position wraparound
         if (looping)
         {
             position = std::fmod(_file_pos / _file_length, 1.0f);
         }
-        else
+        else // The last block will contain a bit of silence at the end, let position stay at 1.0
         {
             position = std::clamp(_file_pos / _file_length, 0.0f, 1.0f);
         }
@@ -557,7 +557,6 @@ void WavStreamerPlugin::_set_seek()
         float pos = _seek_parameter->normalized_value();
         SUSHI_LOG_DEBUG("Setting seek to {}", pos);
         sf_seek(_file, pos * _file_length, SEEK_SET);
-
         _file_idx +=1;
     }
 }
@@ -567,6 +566,7 @@ void WavStreamerPlugin::_handle_end_of_file()
     _mode = StreamingMode::STOPPED;
     _gain_smoother.set_direct(0.0f);
     _file_pos = 0;
+
     set_parameter_and_notify(_start_stop_parameter, false);
     request_non_rt_task(set_seek_callback);
     _update_position_display(false);

@@ -14,7 +14,7 @@
  */
 
 /**
- * @brief Simple plugin for playing wav files.
+ * @brief Plugin for streaming large wav files from disk
  * @copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
