@@ -148,7 +148,7 @@ void Vst3xWrapper::_cleanup()
     }
 
     Vst3xRtState* state;
-    while (_state_change_queue.try_dequeue(state))
+    while (_state_change_queue.pop(state))
     {
         delete state;
     }
@@ -235,7 +235,7 @@ void Vst3xWrapper::process_event(const RtEvent& event)
         {
             auto typed_event = event.parameter_change_event();
             _add_parameter_change(typed_event->param_id(), typed_event->value(), typed_event->sample_offset());
-            _parameter_update_queue.try_enqueue({typed_event->param_id(), typed_event->value()});
+            _parameter_update_queue.push({typed_event->param_id(), typed_event->value()});
             _notify_parameter_change = true;
             break;
         }
@@ -314,7 +314,7 @@ void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
     {
         _fill_processing_context();
 
-        if (_state_change_queue.try_dequeue(state_update))
+        if (_state_change_queue.pop(state_update))
         {
             _process_data.inputParameterChanges = state_update;
         }
@@ -985,7 +985,7 @@ void Vst3xWrapper::_forward_params(Steinberg::Vst::ProcessData& data)
                     auto float_value = static_cast<float>(value);
                     auto e = RtEvent::make_parameter_change_event(this->id(), 0, id, float_value);
                     output_event(e);
-                    _parameter_update_queue.try_enqueue({id, float_value});
+                    _parameter_update_queue.push({id, float_value});
                     _notify_parameter_change = true;
                 }
             }
@@ -1064,7 +1064,7 @@ int Vst3xWrapper::_parameter_update_callback(EventId /*id*/)
 {
     ParameterUpdate update;
     int res = 0;
-    while (_parameter_update_queue.try_dequeue(update))
+    while (_parameter_update_queue.pop(update))
     {
         res |= _instance.controller()->setParamNormalized(update.id, update.value);
     }
@@ -1134,7 +1134,7 @@ void Vst3xWrapper::_set_binary_state(std::vector<std::byte>& state)
 
 void Vst3xWrapper::_set_state_rt(Vst3xRtState* state)
 {
-    if (_state_change_queue.try_enqueue(state) == false)
+    if (_state_change_queue.push(state) == false)
     {
         /* If the queue of parameter batches is full, ignore it and make sure the object doesn't leak.
          * This should most likely never happen, even the case of 2 state changes in the same process

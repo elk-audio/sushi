@@ -97,7 +97,7 @@ void WavWriterPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSam
         {
             in_buffer.to_interleaved(&temp_buffer[0]);
         }
-        _ring_buffer.try_enqueue(temp_buffer);
+        _ring_buffer.push(temp_buffer);
     }
 
     // Post RtEvent to write at an interval specified by POST_WRITE_FREQUENCY
@@ -152,7 +152,7 @@ void WavWriterPlugin::_post_write_event()
 int WavWriterPlugin::_write_to_file()
 {
     std::array<float, AUDIO_CHUNK_SIZE * N_AUDIO_CHANNELS> cur_buffer;
-    while (_ring_buffer.try_dequeue(cur_buffer))
+    while (_ring_buffer.pop(cur_buffer))
     {
         for (auto cur_sample : cur_buffer)
         {

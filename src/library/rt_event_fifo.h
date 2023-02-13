@@ -21,8 +21,7 @@
 #ifndef SUSHI_REALTIME_FIFO_H
 #define SUSHI_REALTIME_FIFO_H
 
-#include <readerwriterqueue/readerwriterqueue.h>
-
+#include "fifo/circularfifo_memory_relaxed_aquire_release.h"
 #include "library/simple_fifo.h"
 #include "library/rt_event.h"
 #include "library/rt_event_pipe.h"
@@ -37,35 +36,20 @@ constexpr int MAX_EVENTS_IN_QUEUE = 1024;
 class RtSafeRtEventFifo : public RtEventPipe
 {
 public:
-    inline bool push(const RtEvent& event)
-    {
-        return _fifo.try_enqueue(event);
-    }
+
+    inline bool push(const RtEvent& event) {return _fifo.push(event);}
 
     inline bool pop(RtEvent& event)
     {
-        return _fifo.try_dequeue(event);
+        return _fifo.pop(event);
     }
 
-    inline bool empty()
-    {
-        if (_fifo.peek() == nullptr)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
+    inline bool empty() {return _fifo.wasEmpty();}
 
-    void send_event(const RtEvent &event) override
-    {
-        push(event);
-    }
+    void send_event(const RtEvent &event) override {push(event);}
 
 private:
-    moodycamel::ReaderWriterQueue<RtEvent> _fifo {MAX_EVENTS_IN_QUEUE};
+    memory_relaxed_aquire_release::CircularFifo<RtEvent, MAX_EVENTS_IN_QUEUE> _fifo;
 };
 
 /**

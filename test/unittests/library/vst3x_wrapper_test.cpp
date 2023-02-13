@@ -427,8 +427,7 @@ TEST_F(TestVst3xWrapper, TestMultipleStates)
     status = _module_under_test->set_state(&state, true);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
 
-    bool was_empty = !_module_under_test->_state_change_queue.peek();
-    EXPECT_FALSE(was_empty);
+    EXPECT_FALSE(_module_under_test->_state_change_queue.wasEmpty());
 
     event = _host_control._dummy_dispatcher.retrieve_event();
     _module_under_test->process_event(event->to_rt_event(0));

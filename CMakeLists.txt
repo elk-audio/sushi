@@ -121,6 +121,7 @@ if (SUSHI_WITH_ALSA_MIDI AND SUSHI_WITH_RT_MIDI)
     message(FATAL_ERROR "Both alsa midi and RtMidi set to on. Use only one midi frontend at a time")
 endif()
 
+
 ###############################
 # Sub-directory configuration #
 ###############################
@@ -251,9 +252,9 @@ if (${SUSHI_WITH_ALSA_MIDI})
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_ALSA_MIDI)
 endif()
 
-################
-# RtMidi setup #
-################
+#################
+# RtMidi ssetup #
+#################
 
 if (${SUSHI_WITH_RT_MIDI})
     message("Building with RtMidi support.")
@@ -454,13 +455,6 @@ if (${SUSHI_WITH_SENTRY})
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_SENTRY -DSUSHI_SENTRY_DSN="${SUSHI_SENTRY_DSN}")
 endif()
 
-#####################
-# readerwriterqueue #
-#####################
-
-find_path(READERWRITERQUEUE_INCLUDE_DIRS "readerwriterqueue/readerwriterqueue.h")
-set(INCLUDE_DIRS ${INCLUDE_DIRS} ${READERWRITERQUEUE_INCLUDE_DIRS})
-
 ####################
 #  Main Target     #
 ####################
@@ -573,6 +567,7 @@ set(COMMON_LIBRARIES
     SndFile::sndfile
     pthread
     dl
+    fifo
     spdlog::spdlog
     oscpack
     ${TWINE_LIB}

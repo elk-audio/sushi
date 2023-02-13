@@ -1,3 +1,5 @@
+add_subdirectory(fifo EXCLUDE_FROM_ALL)
+
 add_subdirectory(lv2_host)
 
 ###########################

@@ -28,8 +28,7 @@
 #include <mutex>
 #include <vector>
 
-#include <readerwriterqueue/readerwriterqueue.h>
-
+#include "fifo/circularfifo_memory_relaxed_aquire_release.h"
 #include "twine/twine.h"
 
 #include "base_performance_timer.h"
@@ -87,7 +86,7 @@ public:
         if (_enabled)
         {
             TimingLogPoint tp{node_id, twine::current_rt_time() - start_time};
-            _entry_queue.try_enqueue(tp);
+            _entry_queue.push(tp);
             // if queue is full, drop entries silently.
         }
     }
@@ -104,7 +103,7 @@ public:
         {
             TimingLogPoint tp{node_id, twine::current_rt_time() - start_time};
             _queue_lock.lock();
-            _entry_queue.try_enqueue(tp);
+            _entry_queue.push(tp);
             _queue_lock.unlock();
             // if queue is full, drop entries silently.
         }
@@ -168,8 +167,7 @@ protected:
     std::map<int, TimingNode>  _timings;
     std::mutex _timing_lock;
     SpinLock _queue_lock;
-
-    alignas(ASSUMED_CACHE_LINE_SIZE) moodycamel::ReaderWriterQueue<TimingLogPoint> _entry_queue {MAX_LOG_ENTRIES};
+    alignas(ASSUMED_CACHE_LINE_SIZE) memory_relaxed_aquire_release::CircularFifo<TimingLogPoint, MAX_LOG_ENTRIES> _entry_queue;
 };
 
 } // namespace performance

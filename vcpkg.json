@@ -16,7 +16,6 @@
     },
     "portaudio",
     "rtmidi",
-    "sentry-native",
-    "readerwriterqueue"
+    "sentry-native"
   ]
 }
