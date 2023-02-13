@@ -53,6 +53,15 @@ TEST_F(TestAudioGraph, TestSingleCoreOperation)
     ASSERT_EQ(0u, _module_under_test->_audio_graph[0].size());
 }
 
+/**
+ * On Apple computers, if Twine is built with CoreAudio support, this unit test will fail,
+ * since it fails to join a real-time thread workgroup - since there isn't one.
+ * To re-enable the test, we'll first need to build Twine statically only for these test,
+ * and either mock CoreAudio, or disable it in this static Twine build for these tests.
+ *
+ * It can also fail on Linux in other cases (e.g. sometimes when running in a Dockerized container).
+ */
+#ifndef DISABLE_MULTICORE_UNIT_TESTS
 TEST_F(TestAudioGraph, TestMultiCoreOperation)
 {
     SetUp(3);
@@ -76,6 +85,7 @@ TEST_F(TestAudioGraph, TestMultiCoreOperation)
     EXPECT_EQ(1, queues[1].size());
     EXPECT_EQ(0, queues[2].size());
 }
+#endif
 
 TEST_F(TestAudioGraph, TestMaxNumberOfTracks)
 {

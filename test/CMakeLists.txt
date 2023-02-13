@@ -209,6 +209,11 @@ add_dependencies(unit_tests ${TEST_DEPENDENCIES})
 # Disable Link in tests as this slows down the testing a lot due to network activity etc
 remove_definitions(-DSUSHI_BUILD_WITH_ABLETON_LINK)
 
+
+if(${SUSHI_DISABLE_MULTICORE_UNIT_TESTS})
+    target_compile_definitions(unit_tests PRIVATE -DDISABLE_MULTICORE_UNIT_TESTS)
+endif()
+
 add_test(unit_tests unit_tests)
 
 ### Custom target for running the tests

@@ -126,7 +126,7 @@ SUSHI_WITH_LV2_MDA_TESTS              | on / off | Include LV2 unit tests which 
 SUSHI_VST2_SDK_PATH                   | path     | Path to external Vst 2.4 SDK. Not included and required if WITH_VST2 is enabled.
 SUSHI_WITH_SENTRY                     | on / off | Build Sushi with Sentry error logging support.
 SUSHI_SENTRY_DSN                      | url      | URL to the default value for the Sushi Sentry logging DSN. This can still be passed as a runtime terminal argument.
-
+SUSHI_DISABLE_MULTICORE_UNIT_TESTS    | on / off | Disable unit-tests dependent on multi-core processing.
 The default values for the options are platform-specific (native Linux, Yocto/OE, macOS).
 
 _Note_:
