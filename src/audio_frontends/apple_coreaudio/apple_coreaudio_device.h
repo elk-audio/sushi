@@ -159,6 +159,19 @@ public:
      */
     [[nodiscard]] UInt32 get_stream_latency(UInt32 stream_index, bool for_input) const;
 
+    /**
+     * @return An UInt32 whose value indicates to which clock domain this device belongs.
+     * All devices with the same value belong to the same clock domain.
+     * A value of 0 means no information about the clock domain is given.
+     */
+    [[nodiscard]] UInt32 get_clock_domain_id() const;
+
+    /**
+     *
+     * @return A list of AudioObjectIDs of devices which are related to this device. AudioDevices are related if they share the same IOAudioDevice object.
+     */
+    [[nodiscard]] std::vector<UInt32> get_related_devices() const;
+
 protected:
     void property_changed(const AudioObjectPropertyAddress& address) override;
 

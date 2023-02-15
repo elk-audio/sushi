@@ -207,6 +207,24 @@ UInt32 apple_coreaudio::AudioDevice::get_stream_latency(UInt32 stream_index, boo
                                                                         kAudioObjectPropertyElementMain});
 }
 
+UInt32 apple_coreaudio::AudioDevice::get_clock_domain_id() const
+{
+    if (!is_valid())
+    {
+        return 0;
+    }
+
+    return get_property<UInt32>({kAudioDevicePropertyClockDomain, kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMain});
+}
+
+std::vector<UInt32> apple_coreaudio::AudioDevice::get_related_devices() const
+{
+    auto ids = get_property_array<UInt32>({kAudioDevicePropertyRelatedDevices,
+                                           kAudioObjectPropertyScopeGlobal,
+                                           kAudioObjectPropertyElementMain});
+    return ids;
+}
+
 void apple_coreaudio::AudioDevice::property_changed(const AudioObjectPropertyAddress& address)
 {
     // Note: this function most likely gets called from a background thread (most likely because there is no official specification on this).
