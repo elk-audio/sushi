@@ -232,7 +232,7 @@ if (APPLE)
                                                 src/audio_frontends/apple_coreaudio/apple_coreaudio_object.cpp
                                                 src/audio_frontends/apple_coreaudio/apple_coreaudio_device.cpp)
 
-        set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} "-framework CoreAudio")
+        set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} "-framework CoreAudio -framework Foundation")
     endif()
 
 endif()
@@ -473,7 +473,7 @@ set(SOURCE_FILES
     src/audio_frontends/offline_frontend.cpp
     src/audio_frontends/jack_frontend.cpp
     src/audio_frontends/portaudio_frontend.cpp
-    src/audio_frontends/apple_coreaudio_frontend.cpp
+    src/audio_frontends/apple_coreaudio_frontend.mm
     src/audio_frontends/portaudio_devices_dump.cpp
     src/audio_frontends/xenomai_raspa_frontend.cpp
     src/control_frontends/base_control_frontend.cpp

@@ -24,6 +24,10 @@
 #include "apple_coreaudio/apple_coreaudio_system_object.h"
 #include "logging.h"
 
+#include <CoreFoundation/CoreFoundation.h>
+#include <Foundation/NSString.h>
+#include <Foundation/NSDictionary.h>
+
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("AppleCoreAudio");
 
 namespace sushi::audio_frontend {
@@ -69,7 +73,7 @@ std::optional<std::string> get_coreaudio_output_device_name(std::optional<std::s
     return std::nullopt;
 }
 
-AppleCoreAudioFrontend::AppleCoreAudioFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine), _input_device(0), _output_device(0) {}
+AppleCoreAudioFrontend::AppleCoreAudioFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine), _audio_device(0) {}
 
 AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration* config)
 {
@@ -93,38 +97,40 @@ AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration*
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
-    if (coreaudio_config->input_device_uid != coreaudio_config->output_device_uid)
+    if (coreaudio_config->input_device_uid == coreaudio_config->output_device_uid)
     {
-        SUSHI_LOG_ERROR("At the moment the input device must be the same as the output device, please specify the same UID for both the input and output device.");
-        return AudioFrontendStatus::AUDIO_HW_ERROR;
+        // Input device is same as output device. We're going to open a single device.
+
+        auto devices = apple_coreaudio::AudioSystemObject::get_audio_devices();
+
+        AudioObjectID output_device_id = 0;
+        if (auto* output_device = get_device_for_uid(devices, coreaudio_config->output_device_uid.value()))
+        {
+            output_device_id = output_device->get_audio_object_id();
+        }
+
+        if (output_device_id == 0)
+        {
+            SUSHI_LOG_ERROR("Failed to open audio device for specified UID");
+            return AudioFrontendStatus::AUDIO_HW_ERROR;
+        }
+
+        _audio_device = apple_coreaudio::AudioDevice(output_device_id);
     }
-
-    auto devices = apple_coreaudio::AudioSystemObject::get_audio_devices();
-
-    AudioObjectID input_device_id = 0;
-    if (auto* input_device = get_device_for_uid(devices, coreaudio_config->input_device_uid.value()))
+    else
     {
-        input_device_id = input_device->get_audio_object_id();
-    }
+        // Input device is not the same as the output device. Let's create an aggregate device.
 
-    AudioObjectID output_device_id = 0;
-    if (auto* output_device = get_device_for_uid(devices, coreaudio_config->output_device_uid.value()))
-    {
-        output_device_id = output_device->get_audio_object_id();
-    }
+        auto aggregate_device_id = _create_aggregate_device(coreaudio_config->input_device_uid.value(), coreaudio_config->output_device_uid.value());
 
-    if (input_device_id == 0)
-    {
-        input_device_id = apple_coreaudio::AudioSystemObject::get_default_device_id(true); // Fallback to default input device
-    }
+        if (aggregate_device_id == 0)
+        {
+            SUSHI_LOG_ERROR("Failed to create aggregate device");
+            return AudioFrontendStatus::AUDIO_HW_ERROR;
+        }
 
-    if (output_device_id == 0)
-    {
-        output_device_id = apple_coreaudio::AudioSystemObject::get_default_device_id(false); // Fallback to default output device
+        _audio_device = apple_coreaudio::AudioDevice(aggregate_device_id);
     }
-
-    _input_device = apple_coreaudio::AudioDevice(input_device_id);
-    _output_device = apple_coreaudio::AudioDevice(output_device_id);
 
     auto channel_conf_result = configure_audio_channels(coreaudio_config);
     if (channel_conf_result != AudioFrontendStatus::OK)
@@ -135,58 +141,30 @@ AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration*
 
     double sample_rate = _engine->sample_rate();
 
-    if (!_output_device.is_valid())
+    if (!_audio_device.is_valid())
     {
         SUSHI_LOG_ERROR("Invalid output device");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
-    if (!_output_device.set_buffer_frame_size(AUDIO_CHUNK_SIZE))
+    if (!_audio_device.set_buffer_frame_size(AUDIO_CHUNK_SIZE))
     {
-        SUSHI_LOG_ERROR("Failed to set buffer size to {} for output device \"{}\"", AUDIO_CHUNK_SIZE, _output_device.get_name());
+        SUSHI_LOG_ERROR("Failed to set buffer size to {} for output device \"{}\"", AUDIO_CHUNK_SIZE, _audio_device.get_name());
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
-    if (!_output_device.set_nominal_sample_rate(sample_rate))
+    if (!_audio_device.set_nominal_sample_rate(sample_rate))
     {
-        SUSHI_LOG_ERROR("Failed to set sample rate to {} for output device \"{}\"", sample_rate, _input_device.get_name());
+        SUSHI_LOG_ERROR("Failed to set sample rate to {} for output device \"{}\"", sample_rate, _audio_device.get_name());
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
     UInt32 input_latency;
 
-    // We only have to set the input device's settings if it is not the same device as the output device,
-    // in which case we will be using a single device for both input and output.
-    if (_input_device.get_audio_object_id() != _output_device.get_audio_object_id())
-    {
-        if (!_input_device.is_valid())
-        {
-            SUSHI_LOG_ERROR("Invalid input device");
-            return AudioFrontendStatus::AUDIO_HW_ERROR;
-        }
+    input_latency = _audio_device.get_device_latency(true) +
+                    _audio_device.get_stream_latency(0, true); // Zero mean primary stream.
 
-        if (!_input_device.set_buffer_frame_size(AUDIO_CHUNK_SIZE))
-        {
-            SUSHI_LOG_ERROR("Failed to set buffer size to {} for input device \"{}\"", AUDIO_CHUNK_SIZE, _input_device.get_name());
-            return AudioFrontendStatus::AUDIO_HW_ERROR;
-        }
-
-        if (!_input_device.set_nominal_sample_rate(sample_rate))
-        {
-            SUSHI_LOG_ERROR("Failed to set sample rate to {} for input device \"{}\"", sample_rate, _input_device.get_name());
-            return AudioFrontendStatus::AUDIO_HW_ERROR;
-        }
-
-        input_latency = _input_device.get_device_latency(true) +
-                        _input_device.get_stream_latency(0, true); // Zero mean primary stream.
-    }
-    else
-    {
-        input_latency = _output_device.get_device_latency(true) +
-                        _output_device.get_stream_latency(0, true); // Zero mean primary stream.
-    }
-
-    UInt32 output_latency = _output_device.get_device_latency(false) + _output_device.get_stream_latency(0, false);
+    UInt32 output_latency = _audio_device.get_device_latency(false) + _audio_device.get_stream_latency(0, false);
 
     auto useconds = std::chrono::microseconds(output_latency * 1'000'000 / static_cast<UInt32>(sample_rate));
     _engine->set_output_latency(useconds);
@@ -198,6 +176,39 @@ AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration*
     (void) input_latency; // Ignore variable-not-used warning when compiling without Sushi logging (ie. UnitTests)
 
     return AudioFrontendStatus::OK;
+}
+
+AudioObjectID AppleCoreAudioFrontend::_create_aggregate_device(const std::string& input_device_uid, const std::string& output_device_uid)
+{
+    NSString* input_uid = [NSString stringWithUTF8String:input_device_uid.c_str()];
+    NSString* output_uid = [NSString stringWithUTF8String:output_device_uid.c_str()];
+
+    NSDictionary* description = @{
+        @(kAudioAggregateDeviceUIDKey): @"audio.elk.sushi.aggregate",
+        @(kAudioAggregateDeviceIsPrivateKey): @(1),
+        @(kAudioAggregateDeviceSubDeviceListKey): @[
+            @{
+                @(kAudioSubDeviceUIDKey): input_uid,
+                @(kAudioSubDeviceDriftCompensationKey): @(0),
+                @(kAudioSubDeviceDriftCompensationQualityKey): @(kAudioSubDeviceDriftCompensationMinQuality),
+            },
+            @{
+                @(kAudioSubDeviceUIDKey): output_uid,
+                @(kAudioSubDeviceDriftCompensationKey): @(1),
+                @(kAudioSubDeviceDriftCompensationQualityKey): @(kAudioSubDeviceDriftCompensationMinQuality),
+            },
+        ],
+    };
+
+    AudioObjectID aggregate_device_id{0};
+    OSStatus status = AudioHardwareCreateAggregateDevice((CFDictionaryRef) description, &aggregate_device_id);
+    if (status != noErr)
+    {
+        SUSHI_LOG_ERROR("Failed to create aggregate device");
+        return 0;
+    }
+
+    return aggregate_device_id;
 }
 
 void AppleCoreAudioFrontend::cleanup()
@@ -287,8 +298,8 @@ AudioFrontendStatus AppleCoreAudioFrontend::configure_audio_channels(const Apple
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
-    _device_num_input_channels = _input_device.get_num_channels(true);
-    _device_num_output_channels = _output_device.get_num_channels(false);
+    _device_num_input_channels = _audio_device.get_num_channels(true);
+    _device_num_output_channels = _audio_device.get_num_channels(false);
 
     if (_device_num_input_channels < 0 || _device_num_output_channels < 0)
     {
@@ -323,7 +334,7 @@ AudioFrontendStatus AppleCoreAudioFrontend::configure_audio_channels(const Apple
 
     if (num_input_channels > 0)
     {
-        SUSHI_LOG_INFO("Connected input channels to {}", _input_device.get_name());
+        SUSHI_LOG_INFO("Connected input channels to {}", _audio_device.get_name());
         SUSHI_LOG_INFO("Input device has {} available channels", _device_num_input_channels);
     }
     else
@@ -333,7 +344,7 @@ AudioFrontendStatus AppleCoreAudioFrontend::configure_audio_channels(const Apple
 
     if (num_output_channels > 0)
     {
-        SUSHI_LOG_INFO("Connected output channels to {}", _output_device.get_name());
+        SUSHI_LOG_INFO("Connected output channels to {}", _audio_device.get_name());
         SUSHI_LOG_INFO("Output device has {} available channels", _device_num_output_channels);
     }
     else
@@ -346,29 +357,9 @@ AudioFrontendStatus AppleCoreAudioFrontend::configure_audio_channels(const Apple
 
 bool AppleCoreAudioFrontend::start_io()
 {
-    if (_input_device.get_audio_object_id() == _output_device.get_audio_object_id())
+    if (!_audio_device.start_io(this, apple_coreaudio::AudioDevice::Scope::INPUT_OUTPUT))
     {
-        // Input and output are the same device, start only the output device
-        if (!_output_device.start_io(this, apple_coreaudio::AudioDevice::Scope::INPUT_OUTPUT))
-        {
-            return false;
-        }
-    }
-    else
-    {
-        SUSHI_LOG_ERROR("Separate input and output device currently not supported");
         return false;
-
-        if (!_input_device.start_io(this, apple_coreaudio::AudioDevice::Scope::INPUT))
-        {
-            return false;
-        }
-
-        if (!_output_device.start_io(this, apple_coreaudio::AudioDevice::Scope::OUTPUT))
-        {
-            _input_device.stop_io(); // Also stop the input device to prevent only the input side from processing.
-            return false;
-        }
     }
 
     return true;
@@ -378,12 +369,7 @@ bool AppleCoreAudioFrontend::stop_io()
 {
     bool result = true;
 
-    if (_input_device.is_valid() && !_input_device.stop_io())
-    {
-        result = false;
-    }
-
-    if (_output_device.is_valid() && !_output_device.stop_io())
+    if (_audio_device.is_valid() && !_audio_device.stop_io())
     {
         result = false;
     }
