@@ -15,6 +15,9 @@
 
 #include "apple_coreaudio_device.h"
 
+#include <Foundation/NSString.h>
+#include <Foundation/NSDictionary.h>
+
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("AppleCoreAudio");
 
 bool apple_coreaudio::AudioDevice::start_io(apple_coreaudio::AudioDevice::AudioCallback* audio_callback, apple_coreaudio::AudioDevice::Scope for_scope)
@@ -262,6 +265,39 @@ OSStatus apple_coreaudio::AudioDevice::audio_device_io_proc(AudioObjectID audio_
     audio_device->_audio_callback->audio_callback(audio_device->_scope, now, input_data, input_time, output_data, output_time);
 
     return 0;
+}
+
+apple_coreaudio::AudioDevice apple_coreaudio::AudioDevice::create_aggregate_device(const std::string& input_device_uid, const std::string& output_device_uid)
+{
+    NSString* input_uid = [NSString stringWithUTF8String:input_device_uid.c_str()];
+    NSString* output_uid = [NSString stringWithUTF8String:output_device_uid.c_str()];
+
+    NSDictionary* description = @{
+        @(kAudioAggregateDeviceUIDKey): @"audio.elk.sushi.aggregate",
+        @(kAudioAggregateDeviceIsPrivateKey): @(0),
+        @(kAudioAggregateDeviceSubDeviceListKey): @[
+            @{
+                @(kAudioSubDeviceUIDKey): input_uid,
+                @(kAudioSubDeviceDriftCompensationKey): @(0),
+                @(kAudioSubDeviceDriftCompensationQualityKey): @(kAudioSubDeviceDriftCompensationMinQuality),
+            },
+            @{
+                @(kAudioSubDeviceUIDKey): output_uid,
+                @(kAudioSubDeviceDriftCompensationKey): @(1),
+                @(kAudioSubDeviceDriftCompensationQualityKey): @(kAudioSubDeviceDriftCompensationMinQuality),
+            },
+        ],
+    };
+
+    AudioObjectID aggregate_device_id{0};
+    OSStatus status = AudioHardwareCreateAggregateDevice((CFDictionaryRef) description, &aggregate_device_id);
+    if (status != noErr)
+    {
+        SUSHI_LOG_ERROR("Failed to create aggregate device");
+        return apple_coreaudio::AudioDevice(0);
+    }
+
+    return apple_coreaudio::AudioDevice(aggregate_device_id);
 }
 
 const apple_coreaudio::AudioDevice* apple_coreaudio::get_device_for_uid(const std::vector<AudioDevice>& audio_devices, const std::string& uid)

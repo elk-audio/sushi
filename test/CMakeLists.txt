@@ -166,7 +166,7 @@ if (${SUSHI_WITH_APPLE_COREAUDIO})
             unittests/audio_frontends/apple_coreaudio_frontend_test.cpp
             unittests/test_utils/apple_coreaudio_mockup.cpp
             ../src/audio_frontends/apple_coreaudio/apple_coreaudio_object.cpp
-            ../src/audio_frontends/apple_coreaudio/apple_coreaudio_device.cpp
+            ../src/audio_frontends/apple_coreaudio/apple_coreaudio_device.mm
             ../src/audio_frontends/apple_coreaudio/apple_coreaudio_utils.cpp)
     set(TEST_COMPILE_DEFINITIONS ${TEST_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_APPLE_COREAUDIO)
     set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} "-framework CoreAudio")

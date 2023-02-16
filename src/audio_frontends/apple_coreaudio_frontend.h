@@ -87,8 +87,6 @@ private:
     void _copy_interleaved_audio_to_input_buffer(const float* input, int num_channels);
     void _copy_output_buffer_to_interleaved_buffer(float* output, int num_channels);
 
-    AudioObjectID _create_aggregate_device(const std::string& input_device_uid, const std::string& output_device_uid);
-
     // apple_coreaudio::AudioDevice::AudioCallback overrides
     void audio_callback(apple_coreaudio::AudioDevice::Scope scope,
                         [[maybe_unused]] const AudioTimeStamp* now,

@@ -24,10 +24,6 @@
 #include "apple_coreaudio/apple_coreaudio_system_object.h"
 #include "logging.h"
 
-#include <CoreFoundation/CoreFoundation.h>
-#include <Foundation/NSString.h>
-#include <Foundation/NSDictionary.h>
-
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("AppleCoreAudio");
 
 namespace sushi::audio_frontend {
@@ -121,15 +117,15 @@ AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration*
     {
         // Input device is not the same as the output device. Let's create an aggregate device.
 
-        auto aggregate_device_id = _create_aggregate_device(coreaudio_config->input_device_uid.value(), coreaudio_config->output_device_uid.value());
+        auto aggregate_device = apple_coreaudio::AudioDevice::create_aggregate_device(coreaudio_config->input_device_uid.value(), coreaudio_config->output_device_uid.value());
 
-        if (aggregate_device_id == 0)
+        if (!aggregate_device.is_valid())
         {
             SUSHI_LOG_ERROR("Failed to create aggregate device");
             return AudioFrontendStatus::AUDIO_HW_ERROR;
         }
 
-        _audio_device = apple_coreaudio::AudioDevice(aggregate_device_id);
+        _audio_device = std::move(aggregate_device);
     }
 
     auto channel_conf_result = configure_audio_channels(coreaudio_config);
@@ -176,39 +172,6 @@ AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration*
     (void) input_latency; // Ignore variable-not-used warning when compiling without Sushi logging (ie. UnitTests)
 
     return AudioFrontendStatus::OK;
-}
-
-AudioObjectID AppleCoreAudioFrontend::_create_aggregate_device(const std::string& input_device_uid, const std::string& output_device_uid)
-{
-    NSString* input_uid = [NSString stringWithUTF8String:input_device_uid.c_str()];
-    NSString* output_uid = [NSString stringWithUTF8String:output_device_uid.c_str()];
-
-    NSDictionary* description = @{
-        @(kAudioAggregateDeviceUIDKey): @"audio.elk.sushi.aggregate",
-        @(kAudioAggregateDeviceIsPrivateKey): @(1),
-        @(kAudioAggregateDeviceSubDeviceListKey): @[
-            @{
-                @(kAudioSubDeviceUIDKey): input_uid,
-                @(kAudioSubDeviceDriftCompensationKey): @(0),
-                @(kAudioSubDeviceDriftCompensationQualityKey): @(kAudioSubDeviceDriftCompensationMinQuality),
-            },
-            @{
-                @(kAudioSubDeviceUIDKey): output_uid,
-                @(kAudioSubDeviceDriftCompensationKey): @(1),
-                @(kAudioSubDeviceDriftCompensationQualityKey): @(kAudioSubDeviceDriftCompensationMinQuality),
-            },
-        ],
-    };
-
-    AudioObjectID aggregate_device_id{0};
-    OSStatus status = AudioHardwareCreateAggregateDevice((CFDictionaryRef) description, &aggregate_device_id);
-    if (status != noErr)
-    {
-        SUSHI_LOG_ERROR("Failed to create aggregate device");
-        return 0;
-    }
-
-    return aggregate_device_id;
 }
 
 void AppleCoreAudioFrontend::cleanup()

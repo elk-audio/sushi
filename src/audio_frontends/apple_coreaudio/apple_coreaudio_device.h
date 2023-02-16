@@ -172,6 +172,8 @@ public:
      */
     [[nodiscard]] std::vector<UInt32> get_related_devices() const;
 
+    static AudioDevice create_aggregate_device(const std::string& input_device_uid, const std::string& output_device_uid);
+
 protected:
     void property_changed(const AudioObjectPropertyAddress& address) override;
 
