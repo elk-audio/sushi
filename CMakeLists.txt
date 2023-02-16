@@ -215,21 +215,26 @@ if (${SUSHI_WITH_PORTAUDIO})
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_PORTAUDIO)
 endif()
 
-###################
-# CoreAudio setup #
-###################
+if (APPLE)
+    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_APPLE_THREADING)
 
-if (${SUSHI_WITH_APPLE_COREAUDIO})
-    message("Building with Apple CoreAudio support.")
+    ###################
+    # CoreAudio setup #
+    ###################
 
-    # Compile definitions
-    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_APPLE_COREAUDIO)
+    if (${SUSHI_WITH_APPLE_COREAUDIO})
+        message("Building with Apple CoreAudio support.")
 
-    set(ADDITIONAL_APPLE_COREAUDIO_SOURCES  src/audio_frontends/apple_coreaudio/apple_coreaudio_utils.cpp
-                                            src/audio_frontends/apple_coreaudio/apple_coreaudio_object.cpp
-                                            src/audio_frontends/apple_coreaudio/apple_coreaudio_device.cpp)
+        # Compile definitions
+        set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_APPLE_COREAUDIO)
 
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} "-framework CoreAudio")
+        set(ADDITIONAL_APPLE_COREAUDIO_SOURCES  src/audio_frontends/apple_coreaudio/apple_coreaudio_utils.cpp
+                                                src/audio_frontends/apple_coreaudio/apple_coreaudio_object.cpp
+                                                src/audio_frontends/apple_coreaudio/apple_coreaudio_device.cpp)
+
+        set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} "-framework CoreAudio")
+    endif()
+
 endif()
 
 ###################

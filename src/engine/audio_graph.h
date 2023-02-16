@@ -25,19 +25,7 @@
 #include <vector>
 
 #include "twine/twine.h"
-
 #include "engine/track.h"
-
-/**
- * This logic switches the use of apple silicon-specific threading priorities and workgroups on/off,
- *  throughout Sushi.
- *  By default it will always be on when building on Apple.
- *  But you may want to temporarily bypass that here, for testing purposes.
- */
-#ifdef __APPLE__
-#define SUSHI_APPLE_THREADING
-#endif
-
 #include "twine/src/apple_threading.h"
 
 namespace sushi::engine {
