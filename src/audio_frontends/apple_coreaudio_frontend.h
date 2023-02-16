@@ -70,7 +70,7 @@ public:
     static rapidjson::Document generate_devices_info_document();
 
 private:
-    apple_coreaudio::AudioDevice _audio_device;
+    std::unique_ptr<apple_coreaudio::AudioDevice> _audio_device;
     apple_coreaudio::TimeConversions _time_conversions;
     int _device_num_input_channels{0};
     int _device_num_output_channels{0};

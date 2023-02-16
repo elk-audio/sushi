@@ -71,12 +71,10 @@ public:
         virtual void sample_rate_changed([[maybe_unused]] double new_sample_rate) {}
     };
 
+    AudioDevice() : AudioObject(0) {}
     explicit AudioDevice(AudioObjectID audio_object_id) : AudioObject(audio_object_id) {}
 
-    virtual ~AudioDevice()
-    {
-        stop_io();
-    }
+    virtual ~AudioDevice();
 
     SUSHI_DECLARE_NON_COPYABLE(AudioDevice)
 
@@ -85,17 +83,7 @@ public:
         *this = std::move(other); // Call into move assignment operator.
     }
 
-    AudioDevice& operator=(AudioDevice&& other) noexcept
-    {
-        // Since we're going to adopt another AudioDeviceID we must stop any audio IO proc.
-        stop_io();
-
-        // Don't transfer ownership of _io_proc_id because CoreAudio has registered the pointer
-        // to other as client data, so let other stop the callbacks when it goes out of scope.
-        _scope = other._scope;
-        AudioObject::operator=(std::move(other));
-        return *this;
-    }
+    AudioDevice& operator=(AudioDevice&& other) noexcept;
 
     /**
      * Starts IO on this device.
@@ -168,11 +156,12 @@ public:
 
     /**
      *
-     * @return A list of AudioObjectIDs of devices which are related to this device. AudioDevices are related if they share the same IOAudioDevice object.
+     * @return A list of AudioObjectIDs of devices which are related to this device.
+     * AudioDevices are related if they share the same IOAudioDevice object.
      */
     [[nodiscard]] std::vector<UInt32> get_related_devices() const;
 
-    static AudioDevice create_aggregate_device(const std::string& input_device_uid, const std::string& output_device_uid);
+    static std::unique_ptr<AudioDevice> create_aggregate_device(const AudioDevice& input_device, const AudioDevice& output_device);
 
 protected:
     void property_changed(const AudioObjectPropertyAddress& address) override;

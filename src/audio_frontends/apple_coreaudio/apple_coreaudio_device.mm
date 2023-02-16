@@ -20,6 +20,36 @@
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("AppleCoreAudio");
 
+namespace apple_coreaudio {
+
+class AggregateAudioDevice : public AudioDevice
+{
+public:
+    AggregateAudioDevice(AudioObjectID audio_object_id, AudioDevice input_device, AudioDevice output_device)
+        : AudioDevice(audio_object_id),
+          _input_device(std::move(input_device)),
+          _output_device(std::move(output_device))
+    {
+    }
+
+    ~AggregateAudioDevice() override
+    {
+        stop_io();
+        CA_LOG_IF_ERROR(AudioHardwareDestroyAggregateDevice(get_audio_object_id()));
+    }
+
+private:
+    AudioDevice _input_device;
+    AudioDevice _output_device;
+};
+
+} // namespace apple_coreaudio
+
+apple_coreaudio::AudioDevice::~AudioDevice()
+{
+    stop_io();
+}
+
 bool apple_coreaudio::AudioDevice::start_io(apple_coreaudio::AudioDevice::AudioCallback* audio_callback, apple_coreaudio::AudioDevice::Scope for_scope)
 {
     if (!is_valid() || _io_proc_id != nullptr || audio_callback == nullptr)
@@ -267,10 +297,15 @@ OSStatus apple_coreaudio::AudioDevice::audio_device_io_proc(AudioObjectID audio_
     return 0;
 }
 
-apple_coreaudio::AudioDevice apple_coreaudio::AudioDevice::create_aggregate_device(const std::string& input_device_uid, const std::string& output_device_uid)
+std::unique_ptr<apple_coreaudio::AudioDevice> apple_coreaudio::AudioDevice::create_aggregate_device(const AudioDevice& input_device, const AudioDevice& output_device)
 {
-    NSString* input_uid = [NSString stringWithUTF8String:input_device_uid.c_str()];
-    NSString* output_uid = [NSString stringWithUTF8String:output_device_uid.c_str()];
+    if (!input_device.is_valid() || !output_device.is_valid())
+    {
+        return nullptr;
+    }
+
+    NSString* input_uid = [NSString stringWithUTF8String:input_device.get_uid().c_str()];
+    NSString* output_uid = [NSString stringWithUTF8String:output_device.get_uid().c_str()];
 
     NSDictionary* description = @{
         @(kAudioAggregateDeviceUIDKey): @"audio.elk.sushi.aggregate",
@@ -294,10 +329,26 @@ apple_coreaudio::AudioDevice apple_coreaudio::AudioDevice::create_aggregate_devi
     if (status != noErr)
     {
         SUSHI_LOG_ERROR("Failed to create aggregate device");
-        return apple_coreaudio::AudioDevice(0);
+        return nullptr;
     }
 
-    return apple_coreaudio::AudioDevice(aggregate_device_id);
+    auto aggregate_device = std::make_unique<AggregateAudioDevice>(aggregate_device_id, AudioDevice(), AudioDevice());
+
+    auto device = apple_coreaudio::AudioDevice(aggregate_device_id);
+
+    return aggregate_device;
+}
+
+apple_coreaudio::AudioDevice& apple_coreaudio::AudioDevice::operator=(apple_coreaudio::AudioDevice&& other) noexcept
+{
+    // Since we're going to adopt another AudioDeviceID we must stop any audio IO proc.
+    stop_io();
+
+    // Don't transfer ownership of _io_proc_id because CoreAudio has registered the pointer
+    // to other as client data, so let other stop the callbacks when it goes out of scope.
+    _scope = other._scope;
+    AudioObject::operator=(std::move(other));
+    return *this;
 }
 
 const apple_coreaudio::AudioDevice* apple_coreaudio::get_device_for_uid(const std::vector<AudioDevice>& audio_devices, const std::string& uid)
