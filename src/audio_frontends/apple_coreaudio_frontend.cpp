@@ -329,7 +329,7 @@ AudioFrontendStatus AppleCoreAudioFrontend::configure_audio_channels(const Apple
 
 bool AppleCoreAudioFrontend::start_io()
 {
-    if (!_audio_device->start_io(this, apple_coreaudio::AudioDevice::Scope::INPUT_OUTPUT))
+    if (!_audio_device->start_io(this))
     {
         return false;
     }
@@ -349,12 +349,7 @@ bool AppleCoreAudioFrontend::stop_io()
     return result;
 }
 
-void AppleCoreAudioFrontend::audio_callback(apple_coreaudio::AudioDevice::Scope scope,
-                                            [[maybe_unused]] const AudioTimeStamp* now,
-                                            const AudioBufferList* input_data,
-                                            [[maybe_unused]] const AudioTimeStamp* input_time,
-                                            AudioBufferList* output_data,
-                                            [[maybe_unused]] const AudioTimeStamp* output_time)
+void AppleCoreAudioFrontend::audio_callback([[maybe_unused]] const AudioTimeStamp* now, const AudioBufferList* input_data, const AudioTimeStamp* input_time, AudioBufferList* output_data, [[maybe_unused]] const AudioTimeStamp* output_time)
 {
     _out_buffer.clear();
 
@@ -365,11 +360,6 @@ void AppleCoreAudioFrontend::audio_callback(apple_coreaudio::AudioDevice::Scope 
         {
             std::memset(output_data->mBuffers[i].mData, 0, output_data->mBuffers[i].mDataByteSize);
         }
-    }
-
-    if (scope != apple_coreaudio::AudioDevice::Scope::INPUT_OUTPUT)
-    {
-        return; // Callbacks from 2 different devices not implemented
     }
 
     if (input_data == nullptr || output_data == nullptr)

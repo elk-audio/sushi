@@ -535,20 +535,20 @@ TEST_F(TestAppleCoreAudioFrontend, AudioDevice_start_io)
 
     {
         apple_coreaudio::AudioDevice invalid_audio_device(0);
-        EXPECT_FALSE(invalid_audio_device.start_io(&callback, apple_coreaudio::AudioDevice::Scope::INPUT))
+        EXPECT_FALSE(invalid_audio_device.start_io(&callback))
                 << "Refuse to start an audio device when the AudioObjectID is invalid.";
     }
 
     apple_coreaudio::AudioDevice audio_device(5);
 
-    EXPECT_FALSE(audio_device.start_io(nullptr, apple_coreaudio::AudioDevice::Scope::INPUT))
+    EXPECT_FALSE(audio_device.start_io(nullptr))
             << "When the callback is nullptr, the audio device should not start.";
 
     EXPECT_CALL(_mock, AudioDeviceCreateIOProcID).WillOnce(assign_dummy_io_proc);
     EXPECT_CALL(_mock, AudioDeviceStart);
     EXPECT_CALL(_mock, AudioObjectAddPropertyListener);
 
-    EXPECT_TRUE(audio_device.start_io(&callback, apple_coreaudio::AudioDevice::Scope::INPUT));
+    EXPECT_TRUE(audio_device.start_io(&callback));
 
     // At destruction the audio device should properly close and stop etc.
     EXPECT_CALL(_mock, AudioObjectRemovePropertyListener);
@@ -564,7 +564,7 @@ TEST_F(TestAppleCoreAudioFrontend, AudioDevice_stop_io)
     EXPECT_CALL(_mock, AudioDeviceCreateIOProcID).WillOnce(assign_dummy_io_proc);
     EXPECT_CALL(_mock, AudioDeviceStart);
     EXPECT_CALL(_mock, AudioObjectAddPropertyListener);
-    audio_device.start_io(&callback, apple_coreaudio::AudioDevice::Scope::INPUT);
+    audio_device.start_io(&callback);
 
     EXPECT_CALL(_mock, AudioDeviceStop);
     EXPECT_CALL(_mock, AudioDeviceDestroyIOProcID);

@@ -67,6 +67,11 @@ public:
         }
     }
 
+    [[nodiscard]] int get_num_channels(bool for_input) const override
+    {
+        return for_input ? _input_device.get_num_channels(true) : _output_device.get_num_channels(false);
+    }
+
 private:
     AudioDevice _input_device;
     AudioDevice _output_device;
@@ -79,7 +84,7 @@ apple_coreaudio::AudioDevice::~AudioDevice()
     stop_io();
 }
 
-bool apple_coreaudio::AudioDevice::start_io(apple_coreaudio::AudioDevice::AudioCallback* audio_callback, apple_coreaudio::AudioDevice::Scope for_scope)
+bool apple_coreaudio::AudioDevice::start_io(apple_coreaudio::AudioDevice::AudioCallback* audio_callback)
 {
     if (!is_valid() || _io_proc_id != nullptr || audio_callback == nullptr)
     {
@@ -87,9 +92,8 @@ bool apple_coreaudio::AudioDevice::start_io(apple_coreaudio::AudioDevice::AudioC
     }
 
     _audio_callback = audio_callback;
-    _scope = for_scope;
 
-    CA_RETURN_IF_ERROR(AudioDeviceCreateIOProcID(get_audio_object_id(), audio_device_io_proc, this, &_io_proc_id), false);
+    CA_RETURN_IF_ERROR(AudioDeviceCreateIOProcID(get_audio_object_id(), _audio_device_io_proc, this, &_io_proc_id), false);
     CA_RETURN_IF_ERROR(AudioDeviceStart(get_audio_object_id(), _io_proc_id), false);
 
     if (!add_property_listener({kAudioDevicePropertyNominalSampleRate,
@@ -308,7 +312,7 @@ void apple_coreaudio::AudioDevice::property_changed(const AudioObjectPropertyAdd
     }
 }
 
-OSStatus apple_coreaudio::AudioDevice::audio_device_io_proc(AudioObjectID audio_object_id, const AudioTimeStamp* now, const AudioBufferList* input_data, const AudioTimeStamp* input_time, AudioBufferList* output_data, const AudioTimeStamp* output_time, void* client_data)
+OSStatus apple_coreaudio::AudioDevice::_audio_device_io_proc(AudioObjectID audio_object_id, const AudioTimeStamp* now, const AudioBufferList* input_data, const AudioTimeStamp* input_time, AudioBufferList* output_data, const AudioTimeStamp* output_time, void* client_data)
 {
     auto* audio_device = reinterpret_cast<AudioDevice*>(client_data);
     if (audio_device == nullptr)
@@ -326,7 +330,7 @@ OSStatus apple_coreaudio::AudioDevice::audio_device_io_proc(AudioObjectID audio_
         return 0; // No audio callback installed.
     }
 
-    audio_device->_audio_callback->audio_callback(audio_device->_scope, now, input_data, input_time, output_data, output_time);
+    audio_device->_audio_callback->audio_callback(now, input_data, input_time, output_data, output_time);
 
     return 0;
 }
@@ -380,7 +384,6 @@ apple_coreaudio::AudioDevice& apple_coreaudio::AudioDevice::operator=(apple_core
 
     // Don't transfer ownership of _io_proc_id because CoreAudio has registered the pointer
     // to other as client data, so let other stop the callbacks when it goes out of scope.
-    _scope = other._scope;
     AudioObject::operator=(std::move(other));
     return *this;
 }

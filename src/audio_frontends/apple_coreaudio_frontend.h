@@ -88,12 +88,7 @@ private:
     void _copy_output_buffer_to_interleaved_buffer(float* output, int num_channels);
 
     // apple_coreaudio::AudioDevice::AudioCallback overrides
-    void audio_callback(apple_coreaudio::AudioDevice::Scope scope,
-                        [[maybe_unused]] const AudioTimeStamp* now,
-                        const AudioBufferList* input_data,
-                        [[maybe_unused]] const AudioTimeStamp* input_time,
-                        AudioBufferList* output_data,
-                        [[maybe_unused]] const AudioTimeStamp* output_time) override;
+    void audio_callback(const AudioTimeStamp* now, const AudioBufferList* input_data, const AudioTimeStamp* input_time, AudioBufferList* output_data, const AudioTimeStamp* output_time) override;
 
     void sample_rate_changed(double new_sample_rate) override;
 };

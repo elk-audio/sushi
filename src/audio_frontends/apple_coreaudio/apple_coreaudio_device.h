@@ -56,8 +56,7 @@ public:
          * @param output_data The audio output data.
          * @param output_time The time of the first sample of the output data.
          */
-        virtual void audio_callback([[maybe_unused]] Scope scope,
-                                    [[maybe_unused]] const AudioTimeStamp* now,
+        virtual void audio_callback([[maybe_unused]] const AudioTimeStamp* now,
                                     [[maybe_unused]] const AudioBufferList* input_data,
                                     [[maybe_unused]] const AudioTimeStamp* input_time,
                                     [[maybe_unused]] AudioBufferList* output_data,
@@ -89,7 +88,7 @@ public:
      * Starts IO on this device.
      * @return True if successful, or false if an error occurred.
      */
-    bool start_io(AudioCallback* audio_callback, Scope for_scope);
+    bool start_io(apple_coreaudio::AudioDevice::AudioCallback* audio_callback);
 
     /**
      * Stops IO on this device.
@@ -122,7 +121,7 @@ public:
      * of channels for the output will be returned.
      * @return The amount of channels for the input or output.
      */
-    [[nodiscard]] int get_num_channels(bool for_input) const;
+    [[nodiscard]] virtual int get_num_channels(bool for_input) const;
 
     /**
      * @param buffer_frame_size The number of frames in the io buffers.
@@ -183,18 +182,17 @@ private:
      * Static function which gets called by an audio device to provide and get audio data.
      * @return The return value is currently unused and should always be 0 (see AudioDeviceIOProc in AudioHardware.h).
      */
-    static OSStatus audio_device_io_proc(AudioObjectID audio_object_id,
-                                         const AudioTimeStamp* now,
-                                         const AudioBufferList* input_data,
-                                         const AudioTimeStamp* input_time,
-                                         AudioBufferList* output_data,
-                                         const AudioTimeStamp* output_time,
-                                         void* client_data);
+    static OSStatus _audio_device_io_proc(AudioObjectID audio_object_id,
+                                          const AudioTimeStamp* now,
+                                          const AudioBufferList* input_data,
+                                          const AudioTimeStamp* input_time,
+                                          AudioBufferList* output_data,
+                                          const AudioTimeStamp* output_time,
+                                          void* client_data);
 
     /// Holds the identifier for the io proc audio callbacks.
     AudioDeviceIOProcID _io_proc_id{nullptr};
     AudioCallback* _audio_callback{nullptr};
-    Scope _scope{Scope::UNDEFINED}; // TODO: Remove because no longer necessary
 };
 
 /**
