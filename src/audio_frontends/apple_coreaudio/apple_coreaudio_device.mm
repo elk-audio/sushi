@@ -330,7 +330,40 @@ OSStatus apple_coreaudio::AudioDevice::_audio_device_io_proc(AudioObjectID audio
         return 0; // No audio callback installed.
     }
 
-    audio_device->_audio_callback->audio_callback(now, input_data, input_time, output_data, output_time);
+    if (output_data == nullptr)
+    {
+        return 0;
+    }
+
+    // Clear output buffers.
+    for (UInt32 i = 0; i < output_data->mNumberBuffers; i++)
+    {
+        std::memset(output_data->mBuffers[i].mData, 0, output_data->mBuffers[i].mDataByteSize);
+    }
+
+    // Do this check after the output buffers have been cleared.
+    if (input_data == nullptr)
+    {
+        return 0;
+    }
+
+    if (input_data->mNumberBuffers <= 0 || output_data->mNumberBuffers <= 0)
+    {
+        return 0;
+    }
+
+    auto input_frame_count = static_cast<int32_t>(input_data->mBuffers[0].mDataByteSize / input_data->mBuffers[0].mNumberChannels / sizeof(float));
+    auto output_frame_count = static_cast<int32_t>(output_data->mBuffers[0].mDataByteSize / output_data->mBuffers[0].mNumberChannels / sizeof(float));
+
+    assert(input_frame_count == AUDIO_CHUNK_SIZE);
+    assert(input_frame_count == output_frame_count);
+
+    audio_device->_audio_callback->audio_callback(static_cast<const float*>(input_data->mBuffers[0].mData),
+                                                  static_cast<int>(input_data->mBuffers[0].mNumberChannels),
+                                                  static_cast<float*>(output_data->mBuffers[0].mData),
+                                                  static_cast<int>(output_data->mBuffers[0].mNumberChannels),
+                                                  input_frame_count,
+                                                  input_time->mHostTime);
 
     return 0;
 }

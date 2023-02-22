@@ -49,18 +49,18 @@ public:
     public:
         /**
          * Called when the device needs new audio data.
-         * @param scope The scope of this callback.
-         * @param now Current time.
          * @param input_data The audio input data.
-         * @param input_time The time of the first sample of the input data.
+         * @param num_input_channels Number of input channels in the input buffer.
          * @param output_data The audio output data.
-         * @param output_time The time of the first sample of the output data.
+         * @param num_output_channels Number of output channels in the output buffer.
+         * @param input_host_time The time at which the input data was captured.
          */
-        virtual void audio_callback([[maybe_unused]] const AudioTimeStamp* now,
-                                    [[maybe_unused]] const AudioBufferList* input_data,
-                                    [[maybe_unused]] const AudioTimeStamp* input_time,
-                                    [[maybe_unused]] AudioBufferList* output_data,
-                                    [[maybe_unused]] const AudioTimeStamp* output_time) {}
+        virtual void audio_callback([[maybe_unused]] const float* input_data,
+                                    [[maybe_unused]] int num_input_channels,
+                                    [[maybe_unused]] float* output_data,
+                                    [[maybe_unused]] int num_output_channels,
+                                    [[maybe_unused]] int num_frames,
+                                    [[maybe_unused]] uint64_t input_host_time) {}
 
         /**
          * Called when the device changed its sample rate.

@@ -349,41 +349,16 @@ bool AppleCoreAudioFrontend::stop_io()
     return result;
 }
 
-void AppleCoreAudioFrontend::audio_callback([[maybe_unused]] const AudioTimeStamp* now, const AudioBufferList* input_data, const AudioTimeStamp* input_time, AudioBufferList* output_data, [[maybe_unused]] const AudioTimeStamp* output_time)
+void AppleCoreAudioFrontend::audio_callback(const float* input_data, int num_input_channels, float* output_data, int num_output_channels, int num_samples, uint64_t host_input_time)
 {
     _out_buffer.clear();
 
-    // Clear output buffers.
-    if (output_data != nullptr)
-    {
-        for (UInt32 i = 0; i < output_data->mNumberBuffers; i++)
-        {
-            std::memset(output_data->mBuffers[i].mData, 0, output_data->mBuffers[i].mDataByteSize);
-        }
-    }
-
-    if (input_data == nullptr || output_data == nullptr)
-    {
-        return;
-    }
-
-    if (input_data->mNumberBuffers <= 0 || output_data->mNumberBuffers <= 0)
-    {
-        return;
-    }
-
-    auto input_frame_count = static_cast<int64_t>(input_data->mBuffers[0].mDataByteSize / input_data->mBuffers[0].mNumberChannels / sizeof(float));
-    auto output_frame_count = static_cast<int64_t>(output_data->mBuffers[0].mDataByteSize / output_data->mBuffers[0].mNumberChannels / sizeof(float));
-
-    assert(input_frame_count == AUDIO_CHUNK_SIZE);
-    assert(input_frame_count == output_frame_count);
-
     if (_pause_manager.should_process())
     {
-        _copy_interleaved_audio_to_input_buffer(static_cast<const float*>(input_data->mBuffers[0].mData), static_cast<int>(input_data->mBuffers[0].mNumberChannels));
+        _copy_interleaved_audio_to_input_buffer(input_data, num_input_channels);
 
-        std::chrono::microseconds host_input_time(_time_conversions.host_time_to_nanos(input_time->mHostTime) / 1000);
-        _engine->process_chunk(&_in_buffer, &_out_buffer, &_in_controls, &_out_controls, host_input_time, _processed_sample_count);
+        std::chrono::microseconds host_input_time_us(_time_conversions.host_time_to_nanos(host_input_time) / 1000);
+        _engine->process_chunk(&_in_buffer, &_out_buffer, &_in_controls, &_out_controls, host_input_time_us, _processed_sample_count);
 
         if (_pause_manager.should_ramp())
             _pause_manager.ramp_output(_out_buffer);
@@ -398,9 +373,9 @@ void AppleCoreAudioFrontend::audio_callback([[maybe_unused]] const AudioTimeStam
         }
     }
 
-    _copy_output_buffer_to_interleaved_buffer(static_cast<float*>(output_data->mBuffers[0].mData), static_cast<int>(output_data->mBuffers[0].mNumberChannels));
+    _copy_output_buffer_to_interleaved_buffer(output_data, num_output_channels);
 
-    _processed_sample_count += input_frame_count;
+    _processed_sample_count += num_samples;
 }
 
 void AppleCoreAudioFrontend::sample_rate_changed(double new_sample_rate)
