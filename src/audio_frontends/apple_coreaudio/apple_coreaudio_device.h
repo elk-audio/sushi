@@ -127,7 +127,7 @@ public:
      * @param for_input True to get the number of input streams, or false to get the number of output streams.
      * @return The number of streams, or -1 if an error occurred.
      */
-    size_t get_num_streams(bool for_input) const;
+    [[nodiscard]] size_t get_num_streams(bool for_input) const;
 
     /**
      * @param buffer_frame_size The number of frames in the io buffers.

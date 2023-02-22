@@ -413,6 +413,18 @@ std::unique_ptr<apple_coreaudio::AudioDevice> apple_coreaudio::AudioDevice::crea
         return nullptr;
     }
 
+    if (input_device.is_aggregate_device())
+    {
+        SUSHI_LOG_ERROR("Input device \"{}\" is an aggregate device which cannot be part of another aggregate device", input_device.get_name());
+        return nullptr;
+    }
+
+    if (output_device.is_aggregate_device())
+    {
+        SUSHI_LOG_ERROR("Output device \"{}\" is an aggregate device which cannot be part of another aggregate device", output_device.get_name());
+        return nullptr;
+    }
+
     NSString* input_uid = [NSString stringWithUTF8String:input_device.get_uid().c_str()];
     NSString* output_uid = [NSString stringWithUTF8String:output_device.get_uid().c_str()];
 
