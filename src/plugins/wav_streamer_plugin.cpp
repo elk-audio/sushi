@@ -329,10 +329,18 @@ bool WavStreamerPlugin::_open_audio_file(const std::string& path)
     _file = sf_open(path.c_str(), SFM_READ, &_file_info);
     _file_idx += 1;
 
-    if (_file == nullptr)
+    if (_file == nullptr || _file_info.channels > 2)
     {
         _file_length = 0.0f;
-        std::string str_error = sf_strerror(nullptr);
+        std::string str_error;
+        if (_file_info.channels > 2)
+        {
+            str_error = "Multichannel files not supported";
+        }
+        else
+        {
+            str_error = sf_strerror(nullptr);
+        }
         InternalPlugin::set_property_value(FILE_PROPERTY_ID, "Error: " + str_error);
         SUSHI_LOG_ERROR("Failed to load audio file: {}, error: {}", path, str_error);
         return false;
