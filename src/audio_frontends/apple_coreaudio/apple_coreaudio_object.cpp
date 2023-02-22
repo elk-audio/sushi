@@ -205,6 +205,7 @@ bool AudioObject::get_property_array(AudioObjectID audio_object_id, const AudioO
 
 // Force implementations for these types to be generated, so we can log from this function (which is not possible in the header file).
 template std::vector<UInt32> AudioObject::get_property_array(AudioObjectID audio_object_id, const AudioObjectPropertyAddress& address);
+template std::vector<AudioValueRange> AudioObject::get_property_array(AudioObjectID audio_object_id, const AudioObjectPropertyAddress& address);
 
 template<typename T>
 bool AudioObject::set_property(AudioObjectID audio_object_id, const AudioObjectPropertyAddress& address, const T& value)

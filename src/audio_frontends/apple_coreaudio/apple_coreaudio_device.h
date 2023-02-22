@@ -149,6 +149,11 @@ public:
     [[nodiscard]] double nominal_sample_rate() const;
 
     /**
+     * @return Returns an array with all possible nominal sample rates the device can run at.
+     */
+    [[nodiscard]] std::vector<double> available_nominal_sample_rates() const;
+
+    /**
      * @param for_input True for input or false for output.
      * @return The device latency in samples. Note that stream latency must be added to this number in order to get the total latency.
      */

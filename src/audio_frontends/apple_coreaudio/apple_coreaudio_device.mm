@@ -266,6 +266,29 @@ double apple_coreaudio::AudioDevice::nominal_sample_rate() const
     return get_property<double>(pa);
 }
 
+std::vector<double> apple_coreaudio::AudioDevice::available_nominal_sample_rates() const
+{
+    if (!is_valid())
+    {
+        return {};
+    }
+
+    auto rates = get_property_array<AudioValueRange>({kAudioDevicePropertyAvailableNominalSampleRates,
+                                                      kAudioObjectPropertyScopeGlobal,
+                                                      kAudioObjectPropertyElementMain});
+
+    std::vector<double> available_sample_rates;
+    available_sample_rates.reserve(rates.size());
+
+    for (auto& rate : rates)
+    {
+        assert(rate.mMinimum == rate.mMaximum);
+        available_sample_rates.push_back(rate.mMaximum);
+    }
+
+    return available_sample_rates;
+}
+
 UInt32 apple_coreaudio::AudioDevice::device_latency(bool for_input) const
 {
     if (!is_valid())

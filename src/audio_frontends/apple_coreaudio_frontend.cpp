@@ -230,6 +230,15 @@ rapidjson::Document AppleCoreAudioFrontend::generate_devices_info_document()
                              rapidjson::Value(device.num_channels(true)).Move(), allocator);
         device_obj.AddMember(rapidjson::Value("outputs", allocator).Move(),
                              rapidjson::Value(device.num_channels(false)).Move(), allocator);
+
+        rapidjson::Value sample_rates(rapidjson::kArrayType);
+        for (auto& rate : device.available_nominal_sample_rates())
+        {
+            sample_rates.PushBack(static_cast<uint64_t>(rate), allocator);
+        }
+
+        device_obj.AddMember(rapidjson::Value("available_sample_rates", allocator).Move(), sample_rates, allocator);
+
         devices.PushBack(device_obj.Move(), allocator);
     }
     ca_devices.AddMember(rapidjson::Value("devices", allocator).Move(), devices.Move(), allocator);
