@@ -22,6 +22,13 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("AppleCoreAudio");
 
 namespace apple_coreaudio {
 
+/**
+ * A class which represents a Core Audio Aggregate Device. This aggregate can have 2 device, one for input and one for output.
+ * The main reason for existence of this class is to allow passing audio between 2 different devices.
+ * Different devices often have different clocks, and a slightly different sample rate, even when the nominal rates are equal.
+ * To pass audio between these devices you'd have to add async src to account for drift. To avoid doing that manually, this class
+ * uses the Core Audio aggregate device API which handles the drift correction transparently
+ */
 class AggregateAudioDevice : public AudioDevice
 {
 public:
@@ -388,7 +395,7 @@ OSStatus apple_coreaudio::AudioDevice::_audio_device_io_proc(AudioObjectID audio
                                                   static_cast<int>(input_data->mBuffers[input_stream_index].mNumberChannels),
                                                   static_cast<float*>(output_data->mBuffers[output_stream_index].mData),
                                                   static_cast<int>(output_data->mBuffers[output_stream_index].mNumberChannels),
-                                                  input_frame_count,
+                                                  std::min(input_frame_count, output_frame_count),
                                                   input_time->mHostTime);
 
     return 0;
@@ -406,7 +413,7 @@ std::unique_ptr<apple_coreaudio::AudioDevice> apple_coreaudio::AudioDevice::crea
 
     NSDictionary* description = @{
         @(kAudioAggregateDeviceUIDKey): @"audio.elk.sushi.aggregate",
-        @(kAudioAggregateDeviceIsPrivateKey): @(0),
+        @(kAudioAggregateDeviceIsPrivateKey): @(1),
         @(kAudioAggregateDeviceSubDeviceListKey): @[
             @{
                 @(kAudioSubDeviceUIDKey): input_uid,

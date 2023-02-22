@@ -180,6 +180,16 @@ public:
      */
     [[nodiscard]] std::vector<UInt32> get_related_devices() const;
 
+    /**
+     * Creates an aggregate device from given input- and output device.
+     * This aggregate device is opinionated in the sense that the input channels of the input_device will be used
+     * as input and the output channels of the output device as output. This discards the the output channels
+     * of the input device and the input channels of the output device.
+     * Said otherwise, while an aggregate device normally can have many sub devices, this particular instance will only have 2.
+     * @param input_device The device to use as intput.
+     * @param output_device The device to use as output.
+     * @return An aggregate device, or nullptr if an error occurred.
+     */
     static std::unique_ptr<AudioDevice> create_aggregate_device(const AudioDevice& input_device, const AudioDevice& output_device);
 
     /**
@@ -192,6 +202,7 @@ protected:
 
     /**
      * Selects an input or output stream.
+     * Note: when this device is an aggregate device the number of streams will be the total of all streams of all devices.
      * @param for_input True to select an input stream, or false to select an output stream.
      * @param selected_stream_index The index of the stream to select.
      */
