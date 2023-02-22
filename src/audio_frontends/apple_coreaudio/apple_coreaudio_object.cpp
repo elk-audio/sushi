@@ -179,6 +179,11 @@ bool AudioObject::get_property_array(AudioObjectID audio_object_id, const AudioO
 
     auto data_size = get_property_data_size(audio_object_id, address);
 
+    if (data_size == 0)
+    {
+        return true; // No data available.
+    }
+
     if (data_size % sizeof(T) != 0)
     {
         SUSHI_LOG_ERROR("Invalid array property size");

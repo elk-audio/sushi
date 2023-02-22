@@ -399,6 +399,17 @@ TEST_F(TestAppleCoreAudioFrontend, AudioObject_get_property_array)
         EXPECT_FALSE(audio_object.get_property_array<UInt32>(2, {1, 1, 1}, vector));
         EXPECT_TRUE(vector.empty());
     }
+
+    { // If the property reports a data size of zero, then expect an empty array
+        EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(true));
+        EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* out_data_size) {
+            *out_data_size = 0;
+            return kAudioHardwareNoError;
+        });
+        std::vector<UInt32> vector;
+        EXPECT_TRUE(audio_object.get_property_array<UInt32>(2, {1, 1, 1}, vector));
+        EXPECT_TRUE(vector.empty());
+    }
 }
 
 TEST_F(TestAppleCoreAudioFrontend, AudioObject_add_property_listener)
