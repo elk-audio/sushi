@@ -124,6 +124,12 @@ public:
     [[nodiscard]] virtual int get_num_channels(bool for_input) const;
 
     /**
+     * @param for_input True to get the number of input streams, or false to get the number of output streams.
+     * @return The number of streams, or -1 if an error occurred.
+     */
+    size_t get_num_streams(bool for_input) const;
+
+    /**
      * @param buffer_frame_size The number of frames in the io buffers.
      * @return True if succeeded, or false if buffer frame size could not be set.
      */
@@ -147,6 +153,13 @@ public:
      * @return The device latency in samples. Note that stream latency must be added to this number in order to get the total latency.
      */
     [[nodiscard]] UInt32 get_device_latency(bool for_input) const;
+
+    /**
+     *
+     * @param for_input True to get the latency for the selected input stream, or false to get the latency for the selected output stream.
+     * @return The latency of the selected stream in samples, or 0 if the stream for index does not exist.
+     */
+    [[nodiscard]] UInt32 get_selected_stream_latency(bool for_input) const;
 
     /**
      * @param stream_index The index of the stream to get the latency for.
@@ -177,6 +190,13 @@ public:
 protected:
     void property_changed(const AudioObjectPropertyAddress& address) override;
 
+    /**
+     * Selects an input or output stream.
+     * @param for_input True to select an input stream, or false to select an output stream.
+     * @param selected_stream_index The index of the stream to select.
+     */
+    void select_stream(bool for_input, size_t selected_stream_index);
+
 private:
     /**
      * Static function which gets called by an audio device to provide and get audio data.
@@ -190,9 +210,18 @@ private:
                                           const AudioTimeStamp* output_time,
                                           void* client_data);
 
+    /**
+     * @param for_input True to get input streams, or false to get output streams.
+     * @return An array with AudioObjectIDs of streams for given input.
+     */
+    [[nodiscard]] std::vector<UInt32> _get_stream_ids(bool for_input) const;
+
     /// Holds the identifier for the io proc audio callbacks.
     AudioDeviceIOProcID _io_proc_id{nullptr};
     AudioCallback* _audio_callback{nullptr};
+
+    size_t _selected_input_stream_index{0};
+    size_t _selected_output_stream_index{0};
 };
 
 /**

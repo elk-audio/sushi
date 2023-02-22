@@ -626,7 +626,8 @@ TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_num_channels)
         audio_buffer_lists[0].mBuffers[2].mNumberChannels = 3;
         return kAudioHardwareNoError;
     });
-    EXPECT_EQ(audio_device.get_num_channels(true), 6);
+    // By default, an audio device selects the first stream only, so while there are multiple streams (buffers) available we expect a channel count of 1.
+    EXPECT_EQ(audio_device.get_num_channels(true), 1);
 }
 
 TEST_F(TestAppleCoreAudioFrontend, AudioDevice_set_buffer_frame_size)

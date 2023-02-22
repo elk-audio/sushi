@@ -45,6 +45,9 @@ public:
 
         _input_device = AudioDevice(sub_devices[0]);
         _output_device = AudioDevice(sub_devices[1]);
+
+        select_stream(true, 0);                                     // Select the first input stream of the input device.
+        select_stream(false, _input_device.get_num_streams(false)); // Select the first output stream of the output device.
     }
 
     ~AggregateAudioDevice() override
@@ -174,7 +177,7 @@ int apple_coreaudio::AudioDevice::get_num_channels(bool for_input) const
         return -1;
     }
 
-    // Use std::vector as underlying storage so that the allocated memory is under RAII (as opposed to malloc/free).
+    // Use std::vector as underlying storage so that the allocated memory is under RAII.
     std::vector<uint8_t> storage(data_size);
 
     AudioBufferList* audio_buffer_list;
@@ -186,9 +189,14 @@ int apple_coreaudio::AudioDevice::get_num_channels(bool for_input) const
         return -1;
     }
 
-    UInt32 channel_count = 0;
-    for (UInt32 i = 0; i < audio_buffer_list->mNumberBuffers; i++)
-        channel_count += audio_buffer_list->mBuffers[i].mNumberChannels;
+    auto selected_stream_index = for_input ? _selected_input_stream_index : _selected_output_stream_index;
+    if (selected_stream_index >= audio_buffer_list->mNumberBuffers)
+    {
+        SUSHI_LOG_ERROR("Invalid stream index");
+        return -1;
+    }
+
+    UInt32 channel_count = audio_buffer_list->mBuffers[selected_stream_index].mNumberChannels;
 
     if (channel_count > std::numeric_limits<int>::max())
     {
@@ -197,6 +205,11 @@ int apple_coreaudio::AudioDevice::get_num_channels(bool for_input) const
     }
 
     return static_cast<int>(channel_count);
+}
+
+size_t apple_coreaudio::AudioDevice::get_num_streams(bool for_input) const
+{
+    return _get_stream_ids(for_input).size();
 }
 
 bool apple_coreaudio::AudioDevice::set_buffer_frame_size(uint32_t buffer_frame_size) const
@@ -255,6 +268,14 @@ UInt32 apple_coreaudio::AudioDevice::get_device_latency(bool for_input) const
     return get_property<UInt32>(pa);
 }
 
+std::vector<UInt32> apple_coreaudio::AudioDevice::_get_stream_ids(bool for_input) const
+{
+    return get_property_array<UInt32>({kAudioDevicePropertyStreams,
+                                       for_input ? kAudioObjectPropertyScopeInput
+                                                 : kAudioObjectPropertyScopeOutput,
+                                       kAudioObjectPropertyElementMain});
+}
+
 UInt32 apple_coreaudio::AudioDevice::get_stream_latency(UInt32 stream_index, bool for_input) const
 {
     if (!is_valid())
@@ -262,10 +283,7 @@ UInt32 apple_coreaudio::AudioDevice::get_stream_latency(UInt32 stream_index, boo
         return 0;
     }
 
-    auto stream_ids = get_property_array<UInt32>({kAudioDevicePropertyStreams,
-                                                  for_input ? kAudioObjectPropertyScopeInput
-                                                            : kAudioObjectPropertyScopeOutput,
-                                                  kAudioObjectPropertyElementMain});
+    auto stream_ids = _get_stream_ids(for_input);
 
     if (stream_index >= stream_ids.size())
     {
@@ -276,6 +294,11 @@ UInt32 apple_coreaudio::AudioDevice::get_stream_latency(UInt32 stream_index, boo
     return AudioObject::get_property<UInt32>(stream_ids[stream_index], {kAudioStreamPropertyLatency,
                                                                         for_input ? kAudioObjectPropertyScopeInput : kAudioObjectPropertyScopeOutput,
                                                                         kAudioObjectPropertyElementMain});
+}
+
+UInt32 apple_coreaudio::AudioDevice::get_selected_stream_latency(bool for_input) const
+{
+    return get_stream_latency(for_input ? _selected_input_stream_index : _selected_output_stream_index, for_input);
 }
 
 UInt32 apple_coreaudio::AudioDevice::get_clock_domain_id() const
@@ -312,7 +335,7 @@ void apple_coreaudio::AudioDevice::property_changed(const AudioObjectPropertyAdd
     }
 }
 
-OSStatus apple_coreaudio::AudioDevice::_audio_device_io_proc(AudioObjectID audio_object_id, const AudioTimeStamp* now, const AudioBufferList* input_data, const AudioTimeStamp* input_time, AudioBufferList* output_data, const AudioTimeStamp* output_time, void* client_data)
+OSStatus apple_coreaudio::AudioDevice::_audio_device_io_proc(AudioObjectID audio_object_id, const AudioTimeStamp*, const AudioBufferList* input_data, const AudioTimeStamp* input_time, AudioBufferList* output_data, const AudioTimeStamp*, void* client_data)
 {
     auto* audio_device = reinterpret_cast<AudioDevice*>(client_data);
     if (audio_device == nullptr)
@@ -347,21 +370,24 @@ OSStatus apple_coreaudio::AudioDevice::_audio_device_io_proc(AudioObjectID audio
         return 0;
     }
 
-    if (input_data->mNumberBuffers <= 0 || output_data->mNumberBuffers <= 0)
+    auto input_stream_index = audio_device->_selected_input_stream_index;
+    auto output_stream_index = audio_device->_selected_output_stream_index;
+
+    if (input_data->mNumberBuffers <= input_stream_index || output_data->mNumberBuffers <= output_stream_index)
     {
         return 0;
     }
 
-    auto input_frame_count = static_cast<int32_t>(input_data->mBuffers[0].mDataByteSize / input_data->mBuffers[0].mNumberChannels / sizeof(float));
-    auto output_frame_count = static_cast<int32_t>(output_data->mBuffers[0].mDataByteSize / output_data->mBuffers[0].mNumberChannels / sizeof(float));
+    auto input_frame_count = static_cast<int32_t>(input_data->mBuffers[input_stream_index].mDataByteSize / input_data->mBuffers[input_stream_index].mNumberChannels / sizeof(float));
+    auto output_frame_count = static_cast<int32_t>(output_data->mBuffers[output_stream_index].mDataByteSize / output_data->mBuffers[output_stream_index].mNumberChannels / sizeof(float));
 
     assert(input_frame_count == AUDIO_CHUNK_SIZE);
     assert(input_frame_count == output_frame_count);
 
-    audio_device->_audio_callback->audio_callback(static_cast<const float*>(input_data->mBuffers[0].mData),
-                                                  static_cast<int>(input_data->mBuffers[0].mNumberChannels),
-                                                  static_cast<float*>(output_data->mBuffers[0].mData),
-                                                  static_cast<int>(output_data->mBuffers[0].mNumberChannels),
+    audio_device->_audio_callback->audio_callback(static_cast<const float*>(input_data->mBuffers[input_stream_index].mData),
+                                                  static_cast<int>(input_data->mBuffers[input_stream_index].mNumberChannels),
+                                                  static_cast<float*>(output_data->mBuffers[output_stream_index].mData),
+                                                  static_cast<int>(output_data->mBuffers[output_stream_index].mNumberChannels),
                                                   input_frame_count,
                                                   input_time->mHostTime);
 
@@ -426,6 +452,16 @@ bool apple_coreaudio::AudioDevice::is_aggregate_device() const
     return get_property<UInt32>({kAudioObjectPropertyClass,
                                  kAudioObjectPropertyScopeGlobal,
                                  kAudioObjectPropertyElementMain}) == kAudioAggregateDeviceClassID;
+}
+
+void apple_coreaudio::AudioDevice::select_stream(bool for_input, size_t selected_stream_index)
+{
+    if (selected_stream_index >= get_num_streams(for_input))
+    {
+        return;
+    }
+
+    for_input ? _selected_input_stream_index = selected_stream_index : _selected_output_stream_index = selected_stream_index;
 }
 
 const apple_coreaudio::AudioDevice* apple_coreaudio::get_device_for_uid(const std::vector<AudioDevice>& audio_devices, const std::string& uid)

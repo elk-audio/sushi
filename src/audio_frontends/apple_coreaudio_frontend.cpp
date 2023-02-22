@@ -164,12 +164,8 @@ AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration*
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
-    UInt32 input_latency;
-
-    input_latency = _audio_device->get_device_latency(true) +
-                    _audio_device->get_stream_latency(0, true); // Zero mean primary stream.
-
-    UInt32 output_latency = _audio_device->get_device_latency(false) + _audio_device->get_stream_latency(0, false);
+    UInt32 input_latency = _audio_device->get_device_latency(true) + _audio_device->get_selected_stream_latency(true);
+    UInt32 output_latency = _audio_device->get_device_latency(false) + _audio_device->get_selected_stream_latency(false);
 
     auto useconds = std::chrono::microseconds(output_latency * 1'000'000 / static_cast<UInt32>(sample_rate));
     _engine->set_output_latency(useconds);
