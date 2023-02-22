@@ -31,13 +31,13 @@ namespace sushi {
  * @brief Class that implements smoothing of a value over a set time period using either
  *        linear ramping, filtering through a 1 pole lowpass filter or an exponential ramp
  *        that is specifically made for with long audio fades as it has an exponential
- *        curve when fading in.
+ *        curve when fading in or out.
  *        The time set with set_lag_time() represents the actual ramping time in the linear ramp
  *        and volume case, and the 90% rise time in the filter case.
  *        The base template is not intended to be used directly but through one of the
  *        aliases ValueSmootherFilter or ValueSmootherRamp.
  * @tparam T The type used for the stored value.
- * @tparam mode The mode of filtering used. Should be either RAMP, FILTER or VOLUME
+ * @tparam mode The mode of filtering used. Should be either RAMP, FILTER or EXP_RAMP
  */
 template <typename T, int mode>
 class ValueSmoother
@@ -74,12 +74,12 @@ public:
         if (value != _target_value)
         {
             _target_value = value;
-            if constexpr (mode == RAMP)
+            if constexpr (mode == Mode::RAMP)
             {
                 _spec.step = std::min(1.0f, (_target_value - _current_value) / _spec.steps);
                 _spec.count = _spec.steps;
             }
-            if constexpr (mode == EXP_RAMP)
+            else if constexpr (mode == Mode::EXP_RAMP)
             {
                 _spec.count = _spec.steps;
                 _spec.step = std::exp((std::log(std::max(STATIONARY_LIMIT, value)) -
@@ -95,7 +95,7 @@ public:
     void set_direct(T target_value)
     {
         _target_value = target_value;
-        if constexpr (mode == EXP_RAMP)
+        if constexpr (mode == Mode::EXP_RAMP)
         {
             _current_value = std::max(STATIONARY_LIMIT, target_value);
         }
@@ -104,7 +104,7 @@ public:
             _current_value = target_value;
         }
 
-        if constexpr (mode == RAMP)
+        if constexpr (mode == Mode::RAMP)
         {
             _spec.count = 0;
         }
@@ -190,13 +190,13 @@ private:
 
     void _update_internals(std::chrono::duration<float, std::ratio<1,1>> lag_time, float sample_rate)
     {
-        if constexpr (mode == FILTER)
+        if constexpr (mode == Mode::FILTER)
         {
             _spec.coeff = std::exp(-1.0 * TIMECONSTANTS_RISE_TIME / (lag_time.count() * sample_rate));
         }
         else
         {
-            if constexpr (mode == EXP_RAMP)
+            if constexpr (mode == Mode::EXP_RAMP)
             {
                 _current_value = std::max(_current_value, STATIONARY_LIMIT);
             }

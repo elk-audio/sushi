@@ -136,7 +136,7 @@ private:
 
     void _handle_end_of_file();
 
-    ValueSmootherRamp<float>   _gain_smoother;
+    ValueSmootherRamp<float>    _gain_smoother;
     ValueSmootherExpRamp<float> _exp_gain_smoother;
 
     FloatParameterValue* _gain_parameter;
