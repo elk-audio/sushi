@@ -87,11 +87,11 @@ void fill_remainder(AudioBlock* block, std::array<std::array<float, 2>, INT_MARG
 class WavStreamerPlugin : public InternalPlugin, public UidHelper<WavStreamerPlugin>
 {
 public:
-    WavStreamerPlugin(HostControl host_control);
+    explicit WavStreamerPlugin(HostControl host_control);
 
-    ~WavStreamerPlugin();
+    ~WavStreamerPlugin() override;
 
-    virtual ProcessorReturnCode init(float sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
 
     void configure(float sample_rate) override;
 

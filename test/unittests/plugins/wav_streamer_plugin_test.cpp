@@ -27,7 +27,7 @@ TEST(TestWaveStreamerPluginInternal, TestGainScaleFunction)
 class TestWaveStreamerPlugin : public ::testing::Test
 {
 protected:
-    void SetUp()
+    void SetUp() override
     {
         _module_under_test = std::make_unique<WavStreamerPlugin>(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
         ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
@@ -65,7 +65,7 @@ TEST_F(TestWaveStreamerPlugin, TestInstantiation)
 
 TEST_F(TestWaveStreamerPlugin, TestWaveLoadingAndPlaying)
 {
-    auto playin_param_id = _module_under_test->parameter_from_name("playing")->id();
+    auto playing_param_id = _module_under_test->parameter_from_name("playing")->id();
     auto len_param_id = _module_under_test->parameter_from_name("length")->id();
     auto pos_param_id = _module_under_test->parameter_from_name("position")->id();
 
@@ -77,7 +77,7 @@ TEST_F(TestWaveStreamerPlugin, TestWaveLoadingAndPlaying)
 
     // Load actual file and verify we got something on the output
     LoadFile(SAMPLE_FILE);
-    _module_under_test->process_event(RtEvent::make_parameter_change_event(0, 0, playin_param_id, 1.0f));
+    _module_under_test->process_event(RtEvent::make_parameter_change_event(0, 0, playing_param_id, 1.0f));
 
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(TEST_CHANNEL_COUNT);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(TEST_CHANNEL_COUNT);
@@ -90,7 +90,7 @@ TEST_F(TestWaveStreamerPlugin, TestWaveLoadingAndPlaying)
     // Verify that output parameters are updated
     EXPECT_NE(0.0f, _module_under_test->parameter_value(len_param_id).second);
     EXPECT_NE(0.0f, _module_under_test->parameter_value(pos_param_id).second);
-    EXPECT_EQ(1.0f, _module_under_test->parameter_value(playin_param_id).second);
+    EXPECT_EQ(1.0f, _module_under_test->parameter_value(playing_param_id).second);
 
     // Load non-existing file again and verify that playback stops and parameters are updated.
     LoadFile("NO FILE");
@@ -100,7 +100,7 @@ TEST_F(TestWaveStreamerPlugin, TestWaveLoadingAndPlaying)
     }
     EXPECT_EQ(0.0f, _module_under_test->parameter_value(len_param_id).second);
     EXPECT_EQ(0.0f, _module_under_test->parameter_value(pos_param_id).second);
-    EXPECT_EQ(0.0f, _module_under_test->parameter_value(playin_param_id).second);
+    EXPECT_EQ(0.0f, _module_under_test->parameter_value(playing_param_id).second);
 }
 
 

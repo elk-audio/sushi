@@ -120,6 +120,7 @@ void fill_remainder(AudioBlock* block, std::array<std::array<float, 2>, INT_MARG
 
 WavStreamerPlugin::WavStreamerPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
+    _file_info = {0, 0, 0, 0, 0, 0};
     Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
     [[maybe_unused]] bool str_pr_ok = register_property("file", "File", "");
@@ -337,8 +338,8 @@ bool WavStreamerPlugin::_open_audio_file(const std::string& path)
         return false;
     }
 
-    _file_samplerate = _file_info.samplerate;
-    _file_length = _file_info.frames;
+    _file_samplerate = static_cast<float>(_file_info.samplerate);
+    _file_length = static_cast<float>(_file_info.frames);
     // The file length parameter will be updated from the audio thread
 
     SUSHI_LOG_INFO("Opened file: {}, {} channels, {} frames, {} Hz", path, _file_info.channels, _file_info.frames, _file_info.samplerate);
@@ -464,7 +465,7 @@ bool WavStreamerPlugin::_load_new_block()
     {
         if (new_block->file_idx == _file_idx)
         {
-            _file_pos = new_block->file_pos;
+            _file_pos = static_cast<float>(new_block->file_pos);
             _update_file_length_display();
             break;
         }
@@ -556,7 +557,7 @@ void WavStreamerPlugin::_set_seek()
     {
         float pos = _seek_parameter->normalized_value();
         SUSHI_LOG_DEBUG("Setting seek to {}", pos);
-        sf_seek(_file, pos * _file_length, SEEK_SET);
+        sf_seek(_file, static_cast<sf_count_t>(std::floor(pos * _file_length)), SEEK_SET);
         _file_idx +=1;
     }
 }
