@@ -623,25 +623,45 @@ TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_num_channels)
 
     // Return -1 when the object has no stream configuration property.
     apple_coreaudio::AudioDevice audio_device(5);
-    EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(false));
+    EXPECT_CALL(_mock, AudioObjectHasProperty)
+            .WillOnce(Return(false));
+
     EXPECT_EQ(audio_device.get_num_channels(true), -1);
 
-    EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(true));
-    EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* out_data_size) {
-        *out_data_size = sizeof(AudioBufferList) + 2 * sizeof(AudioBuffer);
-        return kAudioHardwareNoError;
-    });
-    EXPECT_CALL(_mock, AudioObjectGetPropertyData).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* data_size, void* out_data) {
-        *data_size = sizeof(AudioBufferList) + 2 * sizeof(AudioBuffer);
-        auto* audio_buffer_lists = static_cast<AudioBufferList*>(out_data);
-        audio_buffer_lists[0].mNumberBuffers = 3;
-        audio_buffer_lists[0].mBuffers[0].mNumberChannels = 1;
-        audio_buffer_lists[0].mBuffers[1].mNumberChannels = 2;
-        audio_buffer_lists[0].mBuffers[2].mNumberChannels = 3;
-        return kAudioHardwareNoError;
-    });
+    EXPECT_CALL(_mock, AudioObjectHasProperty)
+            .WillOnce(Return(true))
+            .WillOnce(Return(true));
+
+    EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize)
+            .WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* out_data_size) {
+                *out_data_size = sizeof(AudioBufferList) + 2 * sizeof(AudioBuffer);
+                return kAudioHardwareNoError;
+            })
+            .WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* out_data_size) {
+                *out_data_size = sizeof(AudioBufferList);
+                return kAudioHardwareNoError;
+            });
+    
+    EXPECT_CALL(_mock, AudioObjectGetPropertyData)
+            .WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* data_size, void* out_data) {
+                *data_size = sizeof(AudioBufferList) + 2 * sizeof(AudioBuffer);
+                auto* audio_buffer_lists = static_cast<AudioBufferList*>(out_data);
+                audio_buffer_lists[0].mNumberBuffers = 3;
+                audio_buffer_lists[0].mBuffers[0].mNumberChannels = 1;
+                audio_buffer_lists[0].mBuffers[1].mNumberChannels = 2;
+                audio_buffer_lists[0].mBuffers[2].mNumberChannels = 3;
+                return kAudioHardwareNoError;
+            })
+            .WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* data_size, void* out_data) {
+                *data_size = sizeof(AudioBufferList);
+                auto* audio_buffer_lists = static_cast<AudioBufferList*>(out_data);
+                audio_buffer_lists[0].mNumberBuffers = 0;
+                return kAudioHardwareNoError;
+            });
+
     // By default, an audio device selects the first stream only, so while there are multiple streams (buffers) available we expect a channel count of 1.
     EXPECT_EQ(audio_device.get_num_channels(true), 1);
+    EXPECT_EQ(audio_device.get_num_channels(true), 0);
 }
 
 TEST_F(TestAppleCoreAudioFrontend, AudioDevice_set_buffer_frame_size)

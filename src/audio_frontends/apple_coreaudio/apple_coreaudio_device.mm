@@ -196,6 +196,11 @@ int apple_coreaudio::AudioDevice::get_num_channels(bool for_input) const
         return -1;
     }
 
+    if (audio_buffer_list->mNumberBuffers == 0)
+    {
+        return 0;
+    }
+
     auto selected_stream_index = for_input ? _selected_input_stream_index : _selected_output_stream_index;
     if (selected_stream_index >= audio_buffer_list->mNumberBuffers)
     {
