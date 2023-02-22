@@ -31,20 +31,23 @@ protected:
 
     void expect_calls_to_get_cf_string_property(AudioObjectID expected_audio_object_id, const AudioObjectPropertyAddress& expected_addr, const CFStringRef& cf_string_ref)
     {
-        EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(true));
-        EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize).WillOnce([expected_audio_object_id, &expected_addr](AudioObjectID audio_object_id, const AudioObjectPropertyAddress* address, UInt32, const void*, UInt32* out_data_size) {
-            EXPECT_EQ(audio_object_id, expected_audio_object_id);
-            EXPECT_EQ(*address, expected_addr);
-            *out_data_size = sizeof(CFStringRef);
-            return kAudioHardwareNoError;
-        });
-        EXPECT_CALL(_mock, AudioObjectGetPropertyData).WillOnce([expected_audio_object_id, &cf_string_ref, &expected_addr](AudioObjectID audio_object_id, const AudioObjectPropertyAddress* address, UInt32, const void*, UInt32* data_size, void* out_data) {
-            EXPECT_EQ(audio_object_id, expected_audio_object_id);
-            EXPECT_EQ(*address, expected_addr);
-            *data_size = sizeof(CFStringRef);
-            *static_cast<CFStringRef*>(out_data) = cf_string_ref;
-            return kAudioHardwareNoError;
-        });
+        EXPECT_CALL(_mock, AudioObjectHasProperty)
+                .WillOnce(Return(true));
+        EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize)
+                .WillOnce([expected_audio_object_id, expected_addr](AudioObjectID audio_object_id, const AudioObjectPropertyAddress* address, UInt32, const void*, UInt32* out_data_size) {
+                    EXPECT_EQ(audio_object_id, expected_audio_object_id);
+                    EXPECT_EQ(*address, expected_addr);
+                    *out_data_size = sizeof(CFStringRef);
+                    return kAudioHardwareNoError;
+                });
+        EXPECT_CALL(_mock, AudioObjectGetPropertyData)
+                .WillOnce([expected_audio_object_id, cf_string_ref, expected_addr](AudioObjectID audio_object_id, const AudioObjectPropertyAddress* address, UInt32, const void*, UInt32* data_size, void* out_data) {
+                    EXPECT_EQ(audio_object_id, expected_audio_object_id);
+                    EXPECT_EQ(*address, expected_addr);
+                    *data_size = sizeof(CFStringRef);
+                    *static_cast<CFStringRef*>(out_data) = cf_string_ref;
+                    return kAudioHardwareNoError;
+                });
     }
 
     template<class DataType>
@@ -686,32 +689,164 @@ TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_device_latency)
     EXPECT_EQ(audio_device.get_device_latency(false), 330);
 }
 
-TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_sttream_latency)
+TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_stream_latency)
 {
     apple_coreaudio::AudioDevice invalid_audio_device(0);
     EXPECT_EQ(invalid_audio_device.get_stream_latency(0, true), 0);
-
-    // Because GMOCK can't have different expectations set for the same call we creatively use the expectations below
-    // for both getting the array of streams ids (of size 1) and the latency property of the stream with index 0.
-    // The side effect of this is that the latency is 1, which is also the id of the first stream. But for testing this is fine.
 
     EXPECT_CALL(_mock, AudioObjectHasProperty).WillRepeatedly(Return(true));
     EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize).WillRepeatedly([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* out_data_size) {
         *out_data_size = sizeof(UInt32);
         return kAudioHardwareNoError;
     });
-    EXPECT_CALL(_mock, AudioObjectGetPropertyData).WillRepeatedly([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* data_size, void* out_data) {
-        *data_size = sizeof(UInt32);
-        static_cast<UInt32*>(out_data)[0] = 1; // This is the id of stream with index 0
-        return kAudioHardwareNoError;
-    });
+    EXPECT_CALL(_mock, AudioObjectGetPropertyData)
+            .WillOnce([](AudioObjectID, const AudioObjectPropertyAddress* pa, UInt32, const void*, UInt32* data_size, void* out_data) {
+                EXPECT_EQ(*pa, AudioObjectPropertyAddress({kAudioDevicePropertyStreams,
+                                                           kAudioObjectPropertyScopeInput,
+                                                           kAudioObjectPropertyElementMain}));
+                *data_size = sizeof(UInt32);
+                static_cast<UInt32*>(out_data)[0] = 1; // This is the id of stream with index 0
+                return kAudioHardwareNoError;
+            })
+            .WillOnce([](AudioObjectID, const AudioObjectPropertyAddress* pa, UInt32, const void*, UInt32* data_size, void* out_data) {
+                EXPECT_EQ(*pa, AudioObjectPropertyAddress({kAudioStreamPropertyLatency,
+                                                           kAudioObjectPropertyScopeInput,
+                                                           kAudioObjectPropertyElementMain}));
+                *data_size = sizeof(UInt32);
+                static_cast<UInt32*>(out_data)[0] = 16;
+                return kAudioHardwareNoError;
+            })
+            .WillOnce([](AudioObjectID, const AudioObjectPropertyAddress* pa, UInt32, const void*, UInt32* data_size, void*) {
+                EXPECT_EQ(*pa, AudioObjectPropertyAddress({kAudioDevicePropertyStreams,
+                                                           kAudioObjectPropertyScopeInput,
+                                                           kAudioObjectPropertyElementMain}));
+                *data_size = 0;
+                return kAudioHardwareBadObjectError;
+            });
 
     apple_coreaudio::AudioDevice audio_device(1);
 
-    EXPECT_EQ(audio_device.get_stream_latency(0, true), 1);
+    EXPECT_EQ(audio_device.get_stream_latency(0, true), 16);
 
     // Test out of bounds stream
     EXPECT_EQ(audio_device.get_stream_latency(1, true), 0);
+}
+
+TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_selected_stream_latency)
+{
+    EXPECT_CALL(_mock, AudioObjectHasProperty).WillRepeatedly(Return(true));
+
+    EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize).WillRepeatedly([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* out_data_size) {
+        *out_data_size = sizeof(UInt32);
+        return kAudioHardwareNoError;
+    });
+
+    EXPECT_CALL(_mock, AudioObjectGetPropertyData)
+            .WillOnce(Return(kAudioHardwareNoError))
+            .WillOnce([](AudioObjectID, const AudioObjectPropertyAddress* pa, UInt32, const void*, UInt32* data_size, void* out_data) {
+                EXPECT_EQ(*pa, AudioObjectPropertyAddress({kAudioStreamPropertyLatency,
+                                                           kAudioObjectPropertyScopeInput,
+                                                           kAudioObjectPropertyElementMain}));
+                *data_size = sizeof(UInt32);
+                static_cast<UInt32*>(out_data)[0] = 16;
+                return kAudioHardwareNoError;
+            })
+            .WillOnce(Return(kAudioHardwareNoError))
+            .WillOnce([](AudioObjectID, const AudioObjectPropertyAddress* pa, UInt32, const void*, UInt32* data_size, void* out_data) {
+                EXPECT_EQ(*pa, AudioObjectPropertyAddress({kAudioStreamPropertyLatency,
+                                                           kAudioObjectPropertyScopeOutput,
+                                                           kAudioObjectPropertyElementMain}));
+                *data_size = sizeof(UInt32);
+                static_cast<UInt32*>(out_data)[0] = 16;
+                return kAudioHardwareNoError;
+            });
+
+    apple_coreaudio::AudioDevice audio_device(1);
+    EXPECT_EQ(audio_device.get_selected_stream_latency(true), 16);
+    EXPECT_EQ(audio_device.get_selected_stream_latency(false), 16);
+}
+
+TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_clock_domain_id)
+{
+    apple_coreaudio::AudioDevice invalid_audio_device(0);
+    EXPECT_EQ(invalid_audio_device.get_clock_domain_id(), 0);
+
+    apple_coreaudio::AudioDevice audio_device(1);
+    expect_calls_to_get_property(1, {kAudioDevicePropertyClockDomain, kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMain}, 5);
+    EXPECT_EQ(audio_device.get_clock_domain_id(), 5);
+}
+
+TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_related_devices)
+{
+    EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(true));
+
+    EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize).WillRepeatedly([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* out_data_size) {
+        *out_data_size = 3 * sizeof(UInt32);
+        return kAudioHardwareNoError;
+    });
+
+    EXPECT_CALL(_mock, AudioObjectGetPropertyData)
+            .WillOnce([](AudioObjectID, const AudioObjectPropertyAddress* pa, UInt32, const void*, UInt32* data_size, void* out_data) {
+                EXPECT_EQ(*pa, AudioObjectPropertyAddress({kAudioDevicePropertyRelatedDevices,
+                                                           kAudioObjectPropertyScopeGlobal,
+                                                           kAudioObjectPropertyElementMain}));
+                *data_size = 3 * sizeof(UInt32);
+                static_cast<UInt32*>(out_data)[0] = 1;
+                static_cast<UInt32*>(out_data)[1] = 2;
+                static_cast<UInt32*>(out_data)[2] = 3;
+                return kAudioHardwareNoError;
+            });
+
+    apple_coreaudio::AudioDevice audio_device(1);
+    auto devices = audio_device.get_related_devices();
+    EXPECT_EQ(devices.at(0), 1);
+    EXPECT_EQ(devices.at(1), 2);
+    EXPECT_EQ(devices.at(2), 3);
+}
+
+TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_num_streams)
+{
+    EXPECT_CALL(_mock, AudioObjectHasProperty)
+            .WillRepeatedly(Return(true));
+
+    EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize)
+            .WillRepeatedly([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* out_data_size) {
+                *out_data_size = 3 * sizeof(UInt32);
+                return kAudioHardwareNoError;
+            });
+
+    EXPECT_CALL(_mock, AudioObjectGetPropertyData)
+            .WillOnce([](AudioObjectID, const AudioObjectPropertyAddress* pa, UInt32, const void*, UInt32* data_size, void* out_data) {
+                EXPECT_EQ(*pa, AudioObjectPropertyAddress({kAudioDevicePropertyStreams,
+                                                           kAudioObjectPropertyScopeInput,
+                                                           kAudioObjectPropertyElementMain}));
+                *data_size = 3 * sizeof(UInt32);
+                static_cast<UInt32*>(out_data)[0] = 1;
+                static_cast<UInt32*>(out_data)[1] = 2;
+                static_cast<UInt32*>(out_data)[2] = 3;
+                return kAudioHardwareNoError;
+            })
+            .WillOnce([](AudioObjectID, const AudioObjectPropertyAddress* pa, UInt32, const void*, UInt32* data_size, void* out_data) {
+                EXPECT_EQ(*pa, AudioObjectPropertyAddress({kAudioDevicePropertyStreams,
+                                                           kAudioObjectPropertyScopeOutput,
+                                                           kAudioObjectPropertyElementMain}));
+                *data_size = 3 * sizeof(UInt32);
+                static_cast<UInt32*>(out_data)[0] = 4;
+                static_cast<UInt32*>(out_data)[1] = 5;
+                static_cast<UInt32*>(out_data)[2] = 6;
+                return kAudioHardwareNoError;
+            });
+
+    apple_coreaudio::AudioDevice audio_device(1);
+    EXPECT_EQ(audio_device.get_num_streams(true), 3);
+    EXPECT_EQ(audio_device.get_num_streams(false), 3);
+}
+
+TEST_F(TestAppleCoreAudioFrontend, AudioDevice_is_aggregate_device)
+{
+    expect_calls_to_get_property(5, {kAudioObjectPropertyClass, kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMain}, kAudioAggregateDeviceClassID);
+    apple_coreaudio::AudioDevice audio_device(5);
+    EXPECT_TRUE(audio_device.is_aggregate_device());
 }
 
 TEST_F(AppleCoreAudioFrontendTest, get_coreaudio_output_device_name_valid_argument_test)
