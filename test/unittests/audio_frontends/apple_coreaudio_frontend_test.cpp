@@ -6,7 +6,7 @@
 #include "audio_frontends/apple_coreaudio/apple_coreaudio_utils.h"
 
 #pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wnullability-completeness"// Ignore Apple nonsense
+#pragma clang diagnostic ignored "-Wnullability-completeness" // Ignore Apple nonsense
 #include "../test_utils/apple_coreaudio_mockup.h"
 #pragma clang diagnostic pop
 
@@ -268,7 +268,7 @@ TEST_F(TestAppleCoreAudioFrontend, AudioObject_get_property)
     });
     EXPECT_EQ(audio_object.get_property<UInt32>({1, 1, 1}), 5);
 
-    {// If the property has a data size which is not equal to the size of the data type
+    { // If the property has a data size which is not equal to the size of the data type
         EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(true));
         EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* out_data_size) {
             *out_data_size = sizeof(UInt32) + 1;
@@ -277,7 +277,7 @@ TEST_F(TestAppleCoreAudioFrontend, AudioObject_get_property)
         EXPECT_FALSE(audio_object.get_property<UInt32>(2, {1, 1, 1}));
     }
 
-    {// If the property get data returns an invalid data size
+    { // If the property get data returns an invalid data size
         EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(true));
         EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* out_data_size) {
             *out_data_size = sizeof(UInt32);
@@ -308,12 +308,12 @@ TEST_F(TestAppleCoreAudioFrontend, AudioObject_set_property)
     EXPECT_CALL(_mock, AudioObjectSetPropertyData).WillOnce(Return(kAudioHardwareNoError));
     EXPECT_TRUE(audio_object.set_property<UInt32>({1, 1, 1}, 5));
 
-    {// If the object has no property, expect false
+    { // If the object has no property, expect false
         EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(false));
         EXPECT_FALSE(audio_object.set_property<UInt32>(2, {1, 1, 1}, 5));
     }
 
-    {// If property is not settable, expect false
+    { // If property is not settable, expect false
         EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(true));
         EXPECT_CALL(_mock, AudioObjectIsPropertySettable).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, Boolean* out_is_settable) {
             *out_is_settable = false;
@@ -322,7 +322,7 @@ TEST_F(TestAppleCoreAudioFrontend, AudioObject_set_property)
         EXPECT_FALSE(audio_object.set_property<UInt32>(2, {1, 1, 1}, 5));
     }
 
-    {// If the data size does not match the size of the type, expect false
+    { // If the data size does not match the size of the type, expect false
         EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(true));
         EXPECT_CALL(_mock, AudioObjectIsPropertySettable).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, Boolean* out_is_settable) {
             *out_is_settable = true;
@@ -378,7 +378,7 @@ TEST_F(TestAppleCoreAudioFrontend, AudioObject_get_property_array)
 
     EXPECT_EQ(audio_object.get_property_array<UInt32>({1, 1, 1}), std::vector<UInt32>({1, 2, 3}));
 
-    {// If the object has no property at given address, expect an empty vector.
+    { // If the object has no property at given address, expect an empty vector.
         EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(false));
 
         std::vector<UInt32> vector;
@@ -386,7 +386,7 @@ TEST_F(TestAppleCoreAudioFrontend, AudioObject_get_property_array)
         EXPECT_TRUE(vector.empty());
     }
 
-    {// If the property reports a data size which is not a multiple of sizeof(Type), then expect an empty array
+    { // If the property reports a data size which is not a multiple of sizeof(Type), then expect an empty array
         EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(true));
         EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize).WillOnce([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* out_data_size) {
             *out_data_size = 3 * sizeof(UInt32) + 1;
@@ -471,7 +471,7 @@ TEST_F(TestAppleCoreAudioFrontend, AudioSystemObject_get_audio_devices)
 
 TEST_F(TestAppleCoreAudioFrontend, AudioSystemObject_get_default_device_id)
 {
-    {// For input
+    { // For input
         AudioObjectPropertyAddress expected_addr{kAudioHardwarePropertyDefaultInputDevice,
                                                  kAudioObjectPropertyScopeGlobal,
                                                  kAudioObjectPropertyElementMain};
@@ -493,7 +493,7 @@ TEST_F(TestAppleCoreAudioFrontend, AudioSystemObject_get_default_device_id)
         EXPECT_EQ(apple_coreaudio::AudioSystemObject::get_default_device_id(true), 5);
     }
 
-    {// For output
+    { // For output
         AudioObjectPropertyAddress expected_addr{kAudioHardwarePropertyDefaultOutputDevice,
                                                  kAudioObjectPropertyScopeGlobal,
                                                  kAudioObjectPropertyElementMain};
@@ -525,7 +525,7 @@ static OSStatus dummy_audio_device_io_proc(AudioObjectID,
                                            void*) { return kAudioHardwareNoError; }
 
 auto assign_dummy_io_proc = [](AudioObjectID, AudioDeviceIOProc, void*, AudioDeviceIOProcID* proc_id) {
-    *proc_id = dummy_audio_device_io_proc;// AudioDevice needs this in order to make stop_io() do something.
+    *proc_id = dummy_audio_device_io_proc; // AudioDevice needs this in order to make stop_io() do something.
     return kAudioHardwareNoError;
 };
 
@@ -701,7 +701,7 @@ TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_sttream_latency)
     });
     EXPECT_CALL(_mock, AudioObjectGetPropertyData).WillRepeatedly([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* data_size, void* out_data) {
         *data_size = sizeof(UInt32);
-        static_cast<UInt32*>(out_data)[0] = 1;// This is the id of stream with index 0
+        static_cast<UInt32*>(out_data)[0] = 1; // This is the id of stream with index 0
         return kAudioHardwareNoError;
     });
 

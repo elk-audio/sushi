@@ -25,17 +25,46 @@ namespace apple_coreaudio {
 class AggregateAudioDevice : public AudioDevice
 {
 public:
-    AggregateAudioDevice(AudioObjectID audio_object_id, AudioDevice input_device, AudioDevice output_device)
-        : AudioDevice(audio_object_id),
-          _input_device(std::move(input_device)),
-          _output_device(std::move(output_device))
+    explicit AggregateAudioDevice(AudioObjectID audio_object_id) : AudioDevice(audio_object_id)
     {
+        auto sub_devices = get_property_array<UInt32>({kAudioAggregateDevicePropertyActiveSubDeviceList,
+                                                       kAudioObjectPropertyScopeGlobal,
+                                                       kAudioObjectPropertyElementMain});
+
+        if (!is_aggregate_device())
+        {
+            SUSHI_LOG_ERROR("AudioDevice is not an aggregate");
+            return;
+        }
+
+        if (sub_devices.size() < 2)
+        {
+            SUSHI_LOG_ERROR("Not enough sub devices available");
+            return;
+        }
+
+        _input_device = AudioDevice(sub_devices[0]);
+        _output_device = AudioDevice(sub_devices[1]);
     }
 
     ~AggregateAudioDevice() override
     {
         stop_io();
         CA_LOG_IF_ERROR(AudioHardwareDestroyAggregateDevice(get_audio_object_id()));
+    }
+
+    [[nodiscard]] std::string get_name(Scope scope) const override
+    {
+        switch (scope)
+        {
+            case Scope::INPUT:
+                return _input_device.get_name();
+            case Scope::OUTPUT:
+                return _output_device.get_name();
+            case Scope::INPUT_OUTPUT:
+            case Scope::UNDEFINED:
+                return _input_device.get_name() + " / " + _output_device.get_name();
+        }
     }
 
 private:
@@ -99,6 +128,11 @@ std::string apple_coreaudio::AudioDevice::get_name() const
     return get_cfstring_property({kAudioObjectPropertyName,
                                   kAudioObjectPropertyScopeGlobal,
                                   kAudioObjectPropertyElementMain});
+}
+
+std::string apple_coreaudio::AudioDevice::get_name(apple_coreaudio::AudioDevice::Scope) const
+{
+    return get_name();
 }
 
 std::string apple_coreaudio::AudioDevice::get_uid() const
@@ -332,7 +366,7 @@ std::unique_ptr<apple_coreaudio::AudioDevice> apple_coreaudio::AudioDevice::crea
         return nullptr;
     }
 
-    auto aggregate_device = std::make_unique<AggregateAudioDevice>(aggregate_device_id, AudioDevice(), AudioDevice());
+    auto aggregate_device = std::make_unique<AggregateAudioDevice>(aggregate_device_id);
 
     auto device = apple_coreaudio::AudioDevice(aggregate_device_id);
 
@@ -349,6 +383,13 @@ apple_coreaudio::AudioDevice& apple_coreaudio::AudioDevice::operator=(apple_core
     _scope = other._scope;
     AudioObject::operator=(std::move(other));
     return *this;
+}
+
+bool apple_coreaudio::AudioDevice::is_aggregate_device() const
+{
+    return get_property<UInt32>({kAudioObjectPropertyClass,
+                                 kAudioObjectPropertyScopeGlobal,
+                                 kAudioObjectPropertyElementMain}) == kAudioAggregateDeviceClassID;
 }
 
 const apple_coreaudio::AudioDevice* apple_coreaudio::get_device_for_uid(const std::vector<AudioDevice>& audio_devices, const std::string& uid)

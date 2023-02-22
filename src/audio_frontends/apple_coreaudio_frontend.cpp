@@ -306,7 +306,7 @@ AudioFrontendStatus AppleCoreAudioFrontend::configure_audio_channels(const Apple
 
     if (num_input_channels > 0)
     {
-        SUSHI_LOG_INFO("Connected input channels to {}", _audio_device->get_name());
+        SUSHI_LOG_INFO("Connected input channels to \"{}\"", _audio_device->get_name(apple_coreaudio::AudioDevice::Scope::INPUT));
         SUSHI_LOG_INFO("Input device has {} available channels", _device_num_input_channels);
     }
     else
@@ -316,7 +316,7 @@ AudioFrontendStatus AppleCoreAudioFrontend::configure_audio_channels(const Apple
 
     if (num_output_channels > 0)
     {
-        SUSHI_LOG_INFO("Connected output channels to {}", _audio_device->get_name());
+        SUSHI_LOG_INFO("Connected output channels to \"{}\"", _audio_device->get_name(apple_coreaudio::AudioDevice::Scope::OUTPUT));
         SUSHI_LOG_INFO("Output device has {} available channels", _device_num_output_channels);
     }
     else

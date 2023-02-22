@@ -103,6 +103,14 @@ public:
     [[nodiscard]] std::string get_name() const;
 
     /**
+     * Gets the name of the device. When the device is an aggregate there will be different names
+     * for the input device and output device, hence the ability to choose the scope.
+     * @param scope The scope for which to get the name for.
+     * @return The name of the device.
+     */
+    [[nodiscard]] virtual std::string get_name(Scope scope) const;
+
+    /**
      * Returns the UID of this device. The UID is persistent across system boots and cannot be shared with other systems.
      * For more information, read the documentation of kAudioDevicePropertyDeviceUID inside AudioHardware.h
      * @return The UID of the device.
@@ -155,13 +163,17 @@ public:
     [[nodiscard]] UInt32 get_clock_domain_id() const;
 
     /**
-     *
      * @return A list of AudioObjectIDs of devices which are related to this device.
      * AudioDevices are related if they share the same IOAudioDevice object.
      */
     [[nodiscard]] std::vector<UInt32> get_related_devices() const;
 
     static std::unique_ptr<AudioDevice> create_aggregate_device(const AudioDevice& input_device, const AudioDevice& output_device);
+
+    /**
+     * @return True if this audio device is an aggregate device, or false if not.
+     */
+    [[nodiscard]] bool is_aggregate_device() const;
 
 protected:
     void property_changed(const AudioObjectPropertyAddress& address) override;
@@ -182,7 +194,7 @@ private:
     /// Holds the identifier for the io proc audio callbacks.
     AudioDeviceIOProcID _io_proc_id{nullptr};
     AudioCallback* _audio_callback{nullptr};
-    Scope _scope{Scope::UNDEFINED};
+    Scope _scope{Scope::UNDEFINED}; // TODO: Remove because no longer necessary
 };
 
 /**
