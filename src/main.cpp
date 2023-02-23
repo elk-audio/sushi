@@ -92,8 +92,14 @@ void print_version_and_build_info()
     std::cout << "Built on: " << CompileTimeSettings::build_timestamp << std::endl;
 }
 
+void pipe_signal_handler([[maybe_unused]] int sig)
+{
+    std::cout << "Pipe signal received and ignored: " << sig << std::endl;
+}
+
 int main(int argc, char* argv[])
 {
+
 #ifdef SUSHI_BUILD_WITH_XENOMAI
     auto ret = sushi::audio_frontend::XenomaiRaspaFrontend::global_init();
     if (ret < 0)
@@ -104,7 +110,7 @@ int main(int argc, char* argv[])
 
     signal(SIGINT, exit_signal_handler);
     signal(SIGTERM, exit_signal_handler);
-    signal(SIGPIPE, SIG_IGN);
+    signal(SIGPIPE, pipe_signal_handler);
 
     ////////////////////////////////////////////////////////////////////////////////
     // Command Line arguments parsing
