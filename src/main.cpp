@@ -102,8 +102,8 @@ int main(int argc, char* argv[])
     }
 #endif
 
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
+    signal(SIGINT, exit_signal_handler);
+    signal(SIGTERM, exit_signal_handler);
     signal(SIGPIPE, SIG_IGN);
 
     ////////////////////////////////////////////////////////////////////////////////

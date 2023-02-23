@@ -81,7 +81,7 @@ AudioGraph::AudioGraph(int cpu_cores,
             {
 #ifdef SUSHI_APPLE_THREADING
                 SUSHI_LOG_ERROR("Failed to start twine worker: {}",  twine::apple::status_to_string(status.second));
-                signal_handler(ELK_EXIT_SIGNAL);
+                exit_signal_handler(ELK_EXIT_SIGNAL);
 #endif
             }
 
