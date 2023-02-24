@@ -176,13 +176,7 @@ ProcessorReturnCode Vst3xWrapper::init(float sample_rate)
     {
         return ProcessorReturnCode::PLUGIN_INIT_ERROR;
     }
-    auto res = _instance.component()->setActive(Steinberg::TBool(true));
-    if (res != Steinberg::kResultOk)
-    {
-        SUSHI_LOG_ERROR("Failed to activate component with error code: {}", res);
-        return ProcessorReturnCode::PLUGIN_INIT_ERROR;
-    }
-    res = _instance.controller()->setComponentHandler(&_component_handler);
+    auto res = _instance.controller()->setComponentHandler(&_component_handler);
     if (res != Steinberg::kResultOk)
     {
         SUSHI_LOG_ERROR("Failed to set component handler with error code: {}", res);
