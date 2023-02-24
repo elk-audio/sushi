@@ -123,12 +123,15 @@ WavStreamerPlugin::WavStreamerPlugin(HostControl host_control) : InternalPlugin(
     _file_info = {0, 0, 0, 0, 0, 0};
     Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
+
+    _remainder.fill({0,0});
+
     [[maybe_unused]] bool str_pr_ok = register_property("file", "File", "");
 
     _gain_parameter  = register_float_parameter("volume", "Volume", "dB",
-                                                0.0f, -120.0f, 36.0f,
+                                                0.0f, -90.0f, 24.0f,
                                                 Direction::AUTOMATABLE,
-                                                new dBToLinPreProcessor(-120.0f, 36.0f));
+                                                new dBToLinPreProcessor(-90.0f, 24.0f));
 
     _speed_parameter  = register_float_parameter("playback_speed", "Playback Speed", "",
                                                   1.0f, 0.5f, 2.0f,
@@ -189,6 +192,7 @@ void WavStreamerPlugin::configure(float sample_rate)
 {
     _sample_rate = sample_rate;
     _gain_smoother.set_lag_time(GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
+    _exp_gain_smoother.set_lag_time(GAIN_SMOOTHING_TIME, sample_rate / AUDIO_CHUNK_SIZE);
 }
 
 void WavStreamerPlugin::set_enabled(bool enabled)
@@ -245,30 +249,16 @@ void WavStreamerPlugin::process_audio([[maybe_unused]] const ChunkSampleBuffer& 
     if (_current_block && _bypass_manager.should_process() && _mode != sushi::wav_streamer_plugin::StreamingMode::STOPPED)
     {
         float gain_value = _gain_parameter->processed_value();
-        bool exp_fade = _exp_fade_parameter->processed_value();
 
-        if (_mode == StreamingMode::PLAYING)
+        if (_mode == StreamingMode::PLAYING || _mode == StreamingMode::STARTING)
         {
             _gain_smoother.set(gain_value);
+            _exp_gain_smoother.set(gain_value);
         }
 
         _fill_audio_data(out_buffer, _file_samplerate / _sample_rate * _speed_parameter->processed_value());
 
-        if (_gain_smoother.stationary())
-        {
-            float gain = exp_fade ? exp_approx(_gain_smoother.value(), gain_value) :  _gain_smoother.value();
-            out_buffer.apply_gain(gain);
-        }
-        else // Ramp because start/stop or gain parameter changed
-        {
-            float start = exp_fade ? exp_approx(_gain_smoother.value(), gain_value) : _gain_smoother.value();
-            float end = exp_fade ? exp_approx(_gain_smoother.next_value(), gain_value) : _gain_smoother.next_value();
-            out_buffer.ramp(start, end);
-        }
-        if (_bypass_manager.should_ramp()) // Ramp because bypass was triggered
-        {
-            _bypass_manager.ramp_output(out_buffer);
-        }
+        _handle_fades(out_buffer);
     }
     else
     {
@@ -447,6 +437,7 @@ StreamingMode WavStreamerPlugin::_update_mode(StreamingMode current)
             if (_gain_smoother.stationary())
             {
                 _gain_smoother.set_lag_time(GAIN_SMOOTHING_TIME, _sample_rate / AUDIO_CHUNK_SIZE);
+                _exp_gain_smoother.set_lag_time(GAIN_SMOOTHING_TIME, _sample_rate / AUDIO_CHUNK_SIZE);
                 return StreamingMode::PLAYING;
             }
             break;
@@ -517,6 +508,8 @@ void WavStreamerPlugin::_start_stop_playing(bool start)
         _mode = StreamingMode::STARTING;
         _gain_smoother.set_lag_time(lag, _sample_rate / AUDIO_CHUNK_SIZE);
         _gain_smoother.set(_gain_parameter->processed_value());
+        _exp_gain_smoother.set_lag_time(lag, _sample_rate / AUDIO_CHUNK_SIZE);
+        _exp_gain_smoother.set(_gain_parameter->processed_value());
     }
 
     if (!start && (_mode != StreamingMode::STOPPED && _mode != StreamingMode::STOPPING))
@@ -524,6 +517,8 @@ void WavStreamerPlugin::_start_stop_playing(bool start)
         _mode = StreamingMode::STOPPING;
         _gain_smoother.set_lag_time(lag, _sample_rate / AUDIO_CHUNK_SIZE);
         _gain_smoother.set(0.0f);
+        _exp_gain_smoother.set_lag_time(lag, _sample_rate / AUDIO_CHUNK_SIZE);
+        _exp_gain_smoother.set(0.0f);
     }
 }
 
@@ -574,11 +569,43 @@ void WavStreamerPlugin::_handle_end_of_file()
 {
     _mode = StreamingMode::STOPPED;
     _gain_smoother.set_direct(0.0f);
+    _exp_gain_smoother.set_direct(0.0f);
     _file_pos = 0;
 
     set_parameter_and_notify(_start_stop_parameter, false);
     request_non_rt_task(set_seek_callback);
     _update_position_display(false);
+}
+
+void WavStreamerPlugin::_handle_fades(ChunkSampleBuffer& buffer)
+{
+    if (_gain_smoother.stationary()) // Both smoothers run with the same lag, so both should be stationary
+    {
+        buffer.apply_gain(_gain_smoother.value());
+    }
+    else // Ramp because start/stop or gain parameter changed
+    {
+        float start;
+        float end;
+        if (_exp_fade_parameter->processed_value()) // Exponential fade is enabled
+        {
+            start = _exp_gain_smoother.value();
+            end = _exp_gain_smoother.next_value();
+            _gain_smoother.next_value();
+        }
+        else
+        {
+            start = _gain_smoother.value();
+            end = _gain_smoother.next_value();
+            _exp_gain_smoother.next_value();
+        }
+        buffer.ramp(start, end);
+    }
+
+    if (_bypass_manager.should_ramp()) // Ramp because bypass was triggered
+    {
+        _bypass_manager.ramp_output(buffer);
+    }
 }
 
 }// namespace sushi::wav_player_plugin
