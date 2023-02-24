@@ -240,7 +240,8 @@ void WavStreamerPlugin::process_event(const RtEvent& event)
 
 void WavStreamerPlugin::process_audio([[maybe_unused]] const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer)
 {
-    if (_current_block == nullptr || (_current_block && _current_block->file_idx != _file_idx))
+    // If there is no current block, or the current block is outdated.
+    if (!_current_block || (_current_block && _current_block->file_idx < _file_idx))
     {
         _load_new_block();
         _update_file_length_display();
