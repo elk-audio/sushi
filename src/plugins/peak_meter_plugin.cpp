@@ -185,7 +185,7 @@ void PeakMeterPlugin::_process_peak_detection(const ChunkSampleBuffer& in, bool 
             set_parameter_and_notify(_level_parameters[ch], to_normalised_dB(filter.value()));
             _peak_hysteresis = false;
         }
-        filter.next_value();
+        SUSHI_DISCARD_RESULT(filter.next_value());
     }
 }
 

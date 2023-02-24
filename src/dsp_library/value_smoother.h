@@ -114,13 +114,13 @@ public:
      * @brief Read the current value without updating the object
      * @return The current smoothed value
      */
-    T value() const  {return _current_value;}
+    [[nodiscard]] T value() const  {return _current_value;}
 
     /**
      * @brief Advance the smoother one sample point and return the new current value
      * @return The current smoothed value
      */
-    T next_value()
+    [[nodiscard]] T next_value()
     {
         if constexpr (mode == Mode::RAMP || mode == Mode::EXP_RAMP)
         {

@@ -57,5 +57,8 @@ constexpr int SUSHI_PPQN_TICK = 24;
 #define SUSHI_DECLARE_NON_COPYABLE(type) type(const type& other) = delete; \
                                          type& operator=(const type&) = delete;
 
-
+/* Use to disable warning when discarding the return value of a function
+ * marked with nodiscard
+ * */
+#define  SUSHI_DISCARD_RESULT(expression) static_cast<void>(expression)
 #endif //SUSHI_CONSTANTS_H
