@@ -29,7 +29,7 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("audio graph");
 
 constexpr bool DISABLE_DENORMALS = true;
 
-constexpr int ELK_EXIT_SIGNAL = 32;
+constexpr int SUSHI_EXIT_SIGNAL = 32;
 
 /**
  * Real-time worker thread callback method.
@@ -81,7 +81,7 @@ AudioGraph::AudioGraph(int cpu_cores,
             {
 #ifdef SUSHI_APPLE_THREADING
                 SUSHI_LOG_ERROR("Failed to start twine worker: {}",  twine::apple::status_to_string(status.second));
-                exit_signal_handler(ELK_EXIT_SIGNAL);
+                exit_on_signal(SUSHI_EXIT_SIGNAL);
 #endif
             }
 

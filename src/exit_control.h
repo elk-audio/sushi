@@ -38,10 +38,10 @@ bool exit_condition();
  *  When invoking this, Sushi will still wind down, cleanly close allocated resources, and flush logs.
  * @param sig the signal, e.g. SIGINT, SIGTERM.
  */
-void exit_signal_handler([[maybe_unused]] int sig);
+void exit_on_signal([[maybe_unused]] int sig);
 
 /**
- * If the error encountered is so severe as to require immediate exit, invoke this, instead of exit_signal_handler.
+ * If the error encountered is so severe as to require immediate exit, invoke this, instead of exit_on_signal.
  * @param message
  */
 void error_exit(const std::string& message);

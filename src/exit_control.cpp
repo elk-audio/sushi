@@ -30,7 +30,7 @@ bool exit_condition()
     return exit_flag;
 }
 
-void exit_signal_handler([[maybe_unused]] int sig)
+void exit_on_signal([[maybe_unused]] int sig)
 {
     exit_flag = true;
     exit_notifier.notify_one();
