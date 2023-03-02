@@ -50,9 +50,9 @@ std::optional<std::string> get_coreaudio_output_device_name(std::optional<std::s
 
     for (auto& device : audio_devices)
     {
-        if (device.get_uid() == id)
+        if (device.uid() == id)
         {
-            return device.get_name();
+            return device.name();
         }
     }
 
@@ -100,7 +100,7 @@ AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration*
         // Input device is same as output device. We're going to open a single device.
 
         AudioObjectID audio_device_id = 0;
-        if (auto* audio_device = get_device_for_uid(devices, coreaudio_config->output_device_uid.value()))
+        if (auto* audio_device = device_for_uid(devices, coreaudio_config->output_device_uid.value()))
         {
             audio_device_id = audio_device->get_audio_object_id();
         }
@@ -117,8 +117,8 @@ AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration*
     {
         // Input device is not the same as the output device. Let's create an aggregate device.
 
-        auto* input_audio_device = get_device_for_uid(devices, coreaudio_config->input_device_uid.value());
-        auto* output_audio_device = get_device_for_uid(devices, coreaudio_config->output_device_uid.value());
+        auto* input_audio_device = device_for_uid(devices, coreaudio_config->input_device_uid.value());
+        auto* output_audio_device = device_for_uid(devices, coreaudio_config->output_device_uid.value());
 
         if (input_audio_device == nullptr || output_audio_device == nullptr)
         {
@@ -154,18 +154,18 @@ AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration*
 
     if (!_audio_device->set_buffer_frame_size(AUDIO_CHUNK_SIZE))
     {
-        SUSHI_LOG_ERROR("Failed to set buffer size to {} for output device \"{}\"", AUDIO_CHUNK_SIZE, _audio_device->get_name());
+        SUSHI_LOG_ERROR("Failed to set buffer size to {} for output device \"{}\"", AUDIO_CHUNK_SIZE, _audio_device->name());
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
     if (!_audio_device->set_nominal_sample_rate(sample_rate))
     {
-        SUSHI_LOG_ERROR("Failed to set sample rate to {} for output device \"{}\"", sample_rate, _audio_device->get_name());
+        SUSHI_LOG_ERROR("Failed to set sample rate to {} for output device \"{}\"", sample_rate, _audio_device->name());
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
-    UInt32 input_latency = _audio_device->get_device_latency(true) + _audio_device->get_selected_stream_latency(true);
-    UInt32 output_latency = _audio_device->get_device_latency(false) + _audio_device->get_selected_stream_latency(false);
+    UInt32 input_latency = _audio_device->device_latency(true) + _audio_device->selected_stream_latency(true);
+    UInt32 output_latency = _audio_device->device_latency(false) + _audio_device->selected_stream_latency(false);
 
     auto useconds = std::chrono::microseconds(output_latency * 1'000'000 / static_cast<UInt32>(sample_rate));
     _engine->set_output_latency(useconds);
@@ -223,13 +223,13 @@ rapidjson::Document AppleCoreAudioFrontend::generate_devices_info_document()
     {
         rapidjson::Value device_obj(rapidjson::kObjectType);
         device_obj.AddMember(rapidjson::Value("name", allocator).Move(),
-                             rapidjson::Value(device.get_name().c_str(), allocator).Move(), allocator);
+                             rapidjson::Value(device.name().c_str(), allocator).Move(), allocator);
         device_obj.AddMember(rapidjson::Value("uid", allocator).Move(),
-                             rapidjson::Value(device.get_uid().c_str(), allocator).Move(), allocator);
+                             rapidjson::Value(device.uid().c_str(), allocator).Move(), allocator);
         device_obj.AddMember(rapidjson::Value("inputs", allocator).Move(),
-                             rapidjson::Value(device.get_num_channels(true)).Move(), allocator);
+                             rapidjson::Value(device.num_channels(true)).Move(), allocator);
         device_obj.AddMember(rapidjson::Value("outputs", allocator).Move(),
-                             rapidjson::Value(device.get_num_channels(false)).Move(), allocator);
+                             rapidjson::Value(device.num_channels(false)).Move(), allocator);
         devices.PushBack(device_obj.Move(), allocator);
     }
     ca_devices.AddMember(rapidjson::Value("devices", allocator).Move(), devices.Move(), allocator);
@@ -266,8 +266,8 @@ AudioFrontendStatus AppleCoreAudioFrontend::configure_audio_channels(const Apple
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
-    _device_num_input_channels = _audio_device->get_num_channels(true);
-    _device_num_output_channels = _audio_device->get_num_channels(false);
+    _device_num_input_channels = _audio_device->num_channels(true);
+    _device_num_output_channels = _audio_device->num_channels(false);
 
     if (_device_num_input_channels < 0 || _device_num_output_channels < 0)
     {
@@ -302,7 +302,7 @@ AudioFrontendStatus AppleCoreAudioFrontend::configure_audio_channels(const Apple
 
     if (num_input_channels > 0)
     {
-        SUSHI_LOG_INFO("Connected input channels to \"{}\"", _audio_device->get_name(apple_coreaudio::AudioDevice::Scope::INPUT));
+        SUSHI_LOG_INFO("Connected input channels to \"{}\"", _audio_device->name(apple_coreaudio::AudioDevice::Scope::INPUT));
         SUSHI_LOG_INFO("Input device has {} available channels", _device_num_input_channels);
     }
     else
@@ -312,7 +312,7 @@ AudioFrontendStatus AppleCoreAudioFrontend::configure_audio_channels(const Apple
 
     if (num_output_channels > 0)
     {
-        SUSHI_LOG_INFO("Connected output channels to \"{}\"", _audio_device->get_name(apple_coreaudio::AudioDevice::Scope::OUTPUT));
+        SUSHI_LOG_INFO("Connected output channels to \"{}\"", _audio_device->name(apple_coreaudio::AudioDevice::Scope::OUTPUT));
         SUSHI_LOG_INFO("Output device has {} available channels", _device_num_output_channels);
     }
     else

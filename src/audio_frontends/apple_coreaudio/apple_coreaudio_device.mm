@@ -23,11 +23,11 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("AppleCoreAudio");
 namespace apple_coreaudio {
 
 /**
- * A class which represents a Core Audio Aggregate Device. This aggregate can have 2 device, one for input and one for output.
- * The main reason for existence of this class is to allow passing audio between 2 different devices.
+ * A class which represents a Core Audio Aggregate Device. This aggregate can have 2 devices, one for input and one for output.
+ * The main reason for the existence of this class is to allow passing audio between 2 different devices.
  * Different devices often have different clocks, and a slightly different sample rate, even when the nominal rates are equal.
- * To pass audio between these devices you'd have to add async src to account for drift. To avoid doing that manually, this class
- * uses the Core Audio aggregate device API which handles the drift correction transparently
+ * To pass audio between these devices you'd have to add async SRC to account for drift. To avoid doing that manually, this class
+ * uses the Core Audio aggregate device API which handles the drift correction transparently.
  */
 class AggregateAudioDevice : public AudioDevice
 {
@@ -54,7 +54,7 @@ public:
         _output_device = AudioDevice(sub_devices[1]);
 
         select_stream(true, 0);                                     // Select the first input stream of the input device.
-        select_stream(false, _input_device.get_num_streams(false)); // Select the first output stream of the output device.
+        select_stream(false, _input_device.num_streams(false)); // Select the first output stream of the output device.
     }
 
     ~AggregateAudioDevice() override
@@ -63,23 +63,23 @@ public:
         CA_LOG_IF_ERROR(AudioHardwareDestroyAggregateDevice(get_audio_object_id()));
     }
 
-    [[nodiscard]] std::string get_name(Scope scope) const override
+    [[nodiscard]] std::string name(Scope scope) const override
     {
         switch (scope)
         {
             case Scope::INPUT:
-                return _input_device.get_name();
+                return _input_device.name();
             case Scope::OUTPUT:
-                return _output_device.get_name();
+                return _output_device.name();
             case Scope::INPUT_OUTPUT:
             case Scope::UNDEFINED:
-                return _input_device.get_name() + " / " + _output_device.get_name();
+                return _input_device.name() + " / " + _output_device.name();
         }
     }
 
-    [[nodiscard]] int get_num_channels(bool for_input) const override
+    [[nodiscard]] int num_channels(bool for_input) const override
     {
-        return for_input ? _input_device.get_num_channels(true) : _output_device.get_num_channels(false);
+        return for_input ? _input_device.num_channels(true) : _output_device.num_channels(false);
     }
 
 private:
@@ -132,7 +132,7 @@ bool apple_coreaudio::AudioDevice::stop_io()
     return true;
 }
 
-std::string apple_coreaudio::AudioDevice::get_name() const
+std::string apple_coreaudio::AudioDevice::name() const
 {
     if (!is_valid())
     {
@@ -144,12 +144,12 @@ std::string apple_coreaudio::AudioDevice::get_name() const
                                   kAudioObjectPropertyElementMain});
 }
 
-std::string apple_coreaudio::AudioDevice::get_name(apple_coreaudio::AudioDevice::Scope) const
+std::string apple_coreaudio::AudioDevice::name(apple_coreaudio::AudioDevice::Scope) const
 {
-    return get_name();
+    return name();
 }
 
-std::string apple_coreaudio::AudioDevice::get_uid() const
+std::string apple_coreaudio::AudioDevice::uid() const
 {
     if (!is_valid())
     {
@@ -161,7 +161,7 @@ std::string apple_coreaudio::AudioDevice::get_uid() const
                                   kAudioObjectPropertyElementMain});
 }
 
-int apple_coreaudio::AudioDevice::get_num_channels(bool for_input) const
+int apple_coreaudio::AudioDevice::num_channels(bool for_input) const
 {
     if (!is_valid())
     {
@@ -219,9 +219,9 @@ int apple_coreaudio::AudioDevice::get_num_channels(bool for_input) const
     return static_cast<int>(channel_count);
 }
 
-size_t apple_coreaudio::AudioDevice::get_num_streams(bool for_input) const
+size_t apple_coreaudio::AudioDevice::num_streams(bool for_input) const
 {
-    return _get_stream_ids(for_input).size();
+    return _stream_ids(for_input).size();
 }
 
 bool apple_coreaudio::AudioDevice::set_buffer_frame_size(uint32_t buffer_frame_size) const
@@ -252,7 +252,7 @@ bool apple_coreaudio::AudioDevice::set_nominal_sample_rate(double sample_rate) c
     return set_property(pa, sample_rate);
 }
 
-double apple_coreaudio::AudioDevice::get_nominal_sample_rate() const
+double apple_coreaudio::AudioDevice::nominal_sample_rate() const
 {
     if (!is_valid())
     {
@@ -266,7 +266,7 @@ double apple_coreaudio::AudioDevice::get_nominal_sample_rate() const
     return get_property<double>(pa);
 }
 
-UInt32 apple_coreaudio::AudioDevice::get_device_latency(bool for_input) const
+UInt32 apple_coreaudio::AudioDevice::device_latency(bool for_input) const
 {
     if (!is_valid())
     {
@@ -280,7 +280,7 @@ UInt32 apple_coreaudio::AudioDevice::get_device_latency(bool for_input) const
     return get_property<UInt32>(pa);
 }
 
-std::vector<UInt32> apple_coreaudio::AudioDevice::_get_stream_ids(bool for_input) const
+std::vector<UInt32> apple_coreaudio::AudioDevice::_stream_ids(bool for_input) const
 {
     return get_property_array<UInt32>({kAudioDevicePropertyStreams,
                                        for_input ? kAudioObjectPropertyScopeInput
@@ -288,14 +288,14 @@ std::vector<UInt32> apple_coreaudio::AudioDevice::_get_stream_ids(bool for_input
                                        kAudioObjectPropertyElementMain});
 }
 
-UInt32 apple_coreaudio::AudioDevice::get_stream_latency(UInt32 stream_index, bool for_input) const
+UInt32 apple_coreaudio::AudioDevice::stream_latency(UInt32 stream_index, bool for_input) const
 {
     if (!is_valid())
     {
         return 0;
     }
 
-    auto stream_ids = _get_stream_ids(for_input);
+    auto stream_ids = _stream_ids(for_input);
 
     if (stream_index >= stream_ids.size())
     {
@@ -308,22 +308,24 @@ UInt32 apple_coreaudio::AudioDevice::get_stream_latency(UInt32 stream_index, boo
                                                                         kAudioObjectPropertyElementMain});
 }
 
-UInt32 apple_coreaudio::AudioDevice::get_selected_stream_latency(bool for_input) const
+UInt32 apple_coreaudio::AudioDevice::selected_stream_latency(bool for_input) const
 {
-    return get_stream_latency(for_input ? _selected_input_stream_index : _selected_output_stream_index, for_input);
+    return stream_latency(for_input ? _selected_input_stream_index : _selected_output_stream_index, for_input);
 }
 
-UInt32 apple_coreaudio::AudioDevice::get_clock_domain_id() const
+UInt32 apple_coreaudio::AudioDevice::clock_domain_id() const
 {
     if (!is_valid())
     {
         return 0;
     }
 
-    return get_property<UInt32>({kAudioDevicePropertyClockDomain, kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMain});
+    return get_property<UInt32>({kAudioDevicePropertyClockDomain,
+                                 kAudioObjectPropertyScopeGlobal,
+                                 kAudioObjectPropertyElementMain});
 }
 
-std::vector<UInt32> apple_coreaudio::AudioDevice::get_related_devices() const
+std::vector<UInt32> apple_coreaudio::AudioDevice::related_devices() const
 {
     auto ids = get_property_array<UInt32>({kAudioDevicePropertyRelatedDevices,
                                            kAudioObjectPropertyScopeGlobal,
@@ -342,12 +344,18 @@ void apple_coreaudio::AudioDevice::property_changed(const AudioObjectPropertyAdd
     {
         if (_audio_callback)
         {
-            _audio_callback->sample_rate_changed(get_nominal_sample_rate());
+            _audio_callback->sample_rate_changed(nominal_sample_rate());
         }
     }
 }
 
-OSStatus apple_coreaudio::AudioDevice::_audio_device_io_proc(AudioObjectID audio_object_id, const AudioTimeStamp*, const AudioBufferList* input_data, const AudioTimeStamp* input_time, AudioBufferList* output_data, const AudioTimeStamp*, void* client_data)
+OSStatus apple_coreaudio::AudioDevice::_audio_device_io_proc(AudioObjectID audio_object_id,
+                                                             const AudioTimeStamp*,
+                                                             const AudioBufferList* input_data,
+                                                             const AudioTimeStamp* input_time,
+                                                             AudioBufferList* output_data,
+                                                             const AudioTimeStamp*,
+                                                             void* client_data)
 {
     auto* audio_device = reinterpret_cast<AudioDevice*>(client_data);
     if (audio_device == nullptr)
@@ -406,7 +414,8 @@ OSStatus apple_coreaudio::AudioDevice::_audio_device_io_proc(AudioObjectID audio
     return 0;
 }
 
-std::unique_ptr<apple_coreaudio::AudioDevice> apple_coreaudio::AudioDevice::create_aggregate_device(const AudioDevice& input_device, const AudioDevice& output_device)
+std::unique_ptr<apple_coreaudio::AudioDevice> apple_coreaudio::AudioDevice::create_aggregate_device(const AudioDevice& input_device,
+                                                                                                    const AudioDevice& output_device)
 {
     if (!input_device.is_valid() || !output_device.is_valid())
     {
@@ -415,18 +424,20 @@ std::unique_ptr<apple_coreaudio::AudioDevice> apple_coreaudio::AudioDevice::crea
 
     if (input_device.is_aggregate_device())
     {
-        SUSHI_LOG_ERROR("Input device \"{}\" is an aggregate device which cannot be part of another aggregate device", input_device.get_name());
+        SUSHI_LOG_ERROR("Input device \"{}\" is an aggregate device which cannot be part of another aggregate device",
+                        input_device.name());
         return nullptr;
     }
 
     if (output_device.is_aggregate_device())
     {
-        SUSHI_LOG_ERROR("Output device \"{}\" is an aggregate device which cannot be part of another aggregate device", output_device.get_name());
+        SUSHI_LOG_ERROR("Output device \"{}\" is an aggregate device which cannot be part of another aggregate device",
+                        output_device.name());
         return nullptr;
     }
 
-    NSString* input_uid = [NSString stringWithUTF8String:input_device.get_uid().c_str()];
-    NSString* output_uid = [NSString stringWithUTF8String:output_device.get_uid().c_str()];
+    NSString* input_uid = [NSString stringWithUTF8String:input_device.uid().c_str()];
+    NSString* output_uid = [NSString stringWithUTF8String:output_device.uid().c_str()];
 
     NSDictionary* description = @{
         @(kAudioAggregateDeviceUIDKey): @"audio.elk.sushi.aggregate",
@@ -480,7 +491,7 @@ bool apple_coreaudio::AudioDevice::is_aggregate_device() const
 
 void apple_coreaudio::AudioDevice::select_stream(bool for_input, size_t selected_stream_index)
 {
-    if (selected_stream_index >= get_num_streams(for_input))
+    if (selected_stream_index >= num_streams(for_input))
     {
         return;
     }
@@ -488,11 +499,12 @@ void apple_coreaudio::AudioDevice::select_stream(bool for_input, size_t selected
     for_input ? _selected_input_stream_index = selected_stream_index : _selected_output_stream_index = selected_stream_index;
 }
 
-const apple_coreaudio::AudioDevice* apple_coreaudio::get_device_for_uid(const std::vector<AudioDevice>& audio_devices, const std::string& uid)
+const apple_coreaudio::AudioDevice* apple_coreaudio::device_for_uid(const std::vector<AudioDevice>& audio_devices,
+                                                                        const std::string& uid)
 {
     for (auto& device : audio_devices)
     {
-        if (device.get_uid() == uid)
+        if (device.uid() == uid)
         {
             return &device;
         }

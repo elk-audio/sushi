@@ -41,7 +41,7 @@ public:
     {
     }
 
-    ~AudioObject();
+    virtual ~AudioObject();
 
     SUSHI_DECLARE_NON_COPYABLE(AudioObject)
 

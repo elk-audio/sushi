@@ -73,7 +73,7 @@ public:
     AudioDevice() : AudioObject(0) {}
     explicit AudioDevice(AudioObjectID audio_object_id) : AudioObject(audio_object_id) {}
 
-    virtual ~AudioDevice();
+    ~AudioDevice() override;
 
     SUSHI_DECLARE_NON_COPYABLE(AudioDevice)
 
@@ -99,7 +99,7 @@ public:
     /**
      * @return The name of the device.
      */
-    [[nodiscard]] std::string get_name() const;
+    [[nodiscard]] std::string name() const;
 
     /**
      * Gets the name of the device. When the device is an aggregate there will be different names
@@ -107,27 +107,27 @@ public:
      * @param scope The scope for which to get the name for.
      * @return The name of the device.
      */
-    [[nodiscard]] virtual std::string get_name(Scope scope) const;
+    [[nodiscard]] virtual std::string name(Scope scope) const;
 
     /**
      * Returns the UID of this device. The UID is persistent across system boots and cannot be shared with other systems.
      * For more information, read the documentation of kAudioDevicePropertyDeviceUID inside AudioHardware.h
      * @return The UID of the device.
      */
-    [[nodiscard]] std::string get_uid() const;
+    [[nodiscard]] std::string uid() const;
 
     /**
      * @param for_input When true the amount of channels for the input will be returned, when false the amount
      * of channels for the output will be returned.
      * @return The amount of channels for the input or output.
      */
-    [[nodiscard]] virtual int get_num_channels(bool for_input) const;
+    [[nodiscard]] virtual int num_channels(bool for_input) const;
 
     /**
      * @param for_input True to get the number of input streams, or false to get the number of output streams.
      * @return The number of streams, or -1 if an error occurred.
      */
-    [[nodiscard]] size_t get_num_streams(bool for_input) const;
+    [[nodiscard]] size_t num_streams(bool for_input) const;
 
     /**
      * @param buffer_frame_size The number of frames in the io buffers.
@@ -146,39 +146,39 @@ public:
      * Gets the nominal sample rate of this device.
      * @return The nominal sample rate, or 0.0 if an error occurred.
      */
-    [[nodiscard]] double get_nominal_sample_rate() const;
+    [[nodiscard]] double nominal_sample_rate() const;
 
     /**
      * @param for_input True for input or false for output.
      * @return The device latency in samples. Note that stream latency must be added to this number in order to get the total latency.
      */
-    [[nodiscard]] UInt32 get_device_latency(bool for_input) const;
+    [[nodiscard]] UInt32 device_latency(bool for_input) const;
 
     /**
      *
      * @param for_input True to get the latency for the selected input stream, or false to get the latency for the selected output stream.
      * @return The latency of the selected stream in samples, or 0 if the stream for index does not exist.
      */
-    [[nodiscard]] UInt32 get_selected_stream_latency(bool for_input) const;
+    [[nodiscard]] UInt32 selected_stream_latency(bool for_input) const;
 
     /**
      * @param stream_index The index of the stream to get the latency for.
      * @return The latency of the stream for given index in samples, or 0 if the stream for index does not exist.
      */
-    [[nodiscard]] UInt32 get_stream_latency(UInt32 stream_index, bool for_input) const;
+    [[nodiscard]] UInt32 stream_latency(UInt32 stream_index, bool for_input) const;
 
     /**
      * @return An UInt32 whose value indicates to which clock domain this device belongs.
      * All devices with the same value belong to the same clock domain.
      * A value of 0 means no information about the clock domain is given.
      */
-    [[nodiscard]] UInt32 get_clock_domain_id() const;
+    [[nodiscard]] UInt32 clock_domain_id() const;
 
     /**
      * @return A list of AudioObjectIDs of devices which are related to this device.
      * AudioDevices are related if they share the same IOAudioDevice object.
      */
-    [[nodiscard]] std::vector<UInt32> get_related_devices() const;
+    [[nodiscard]] std::vector<UInt32> related_devices() const;
 
     /**
      * Creates an aggregate device from given input- and output device.
@@ -202,7 +202,7 @@ protected:
 
     /**
      * Selects an input or output stream.
-     * Note: when this device is an aggregate device the number of streams will be the total of all streams of all devices.
+     * Note: when this is an aggregate device the number of streams will be the total of all streams of all devices.
      * @param for_input True to select an input stream, or false to select an output stream.
      * @param selected_stream_index The index of the stream to select.
      */
@@ -225,7 +225,7 @@ private:
      * @param for_input True to get input streams, or false to get output streams.
      * @return An array with AudioObjectIDs of streams for given input.
      */
-    [[nodiscard]] std::vector<UInt32> _get_stream_ids(bool for_input) const;
+    [[nodiscard]] std::vector<UInt32> _stream_ids(bool for_input) const;
 
     /// Holds the identifier for the io proc audio callbacks.
     AudioDeviceIOProcID _io_proc_id{nullptr};
@@ -241,7 +241,7 @@ private:
  * @param uid The UID of the device to find.
  * @return Pointer to the found device, or nullptr if no device with given UID was found.
  */
-const AudioDevice* get_device_for_uid(const std::vector<AudioDevice>& audio_devices, const std::string& uid);
+const AudioDevice* device_for_uid(const std::vector<AudioDevice>& audio_devices, const std::string& uid);
 
 } // namespace apple_coreaudio
 

@@ -596,10 +596,10 @@ TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_name)
 
     expect_calls_to_get_cf_string_property(5, {kAudioObjectPropertyName, kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMain},
                                            device_name);
-    EXPECT_EQ(audio_device.get_name(), "device_name");
+    EXPECT_EQ(audio_device.name(), "device_name");
 
     apple_coreaudio::AudioDevice invalid_audio_device(0);
-    EXPECT_EQ(invalid_audio_device.get_name(), "");
+    EXPECT_EQ(invalid_audio_device.name(), "");
 }
 
 TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_uid)
@@ -610,23 +610,23 @@ TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_uid)
 
     expect_calls_to_get_cf_string_property(5, {kAudioDevicePropertyDeviceUID, kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMain},
                                            device_uid);
-    EXPECT_EQ(audio_device.get_uid(), "device_uid");
+    EXPECT_EQ(audio_device.uid(), "device_uid");
 
     apple_coreaudio::AudioDevice invalid_audio_device(0);
-    EXPECT_EQ(invalid_audio_device.get_uid(), "");
+    EXPECT_EQ(invalid_audio_device.uid(), "");
 }
 
 TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_num_channels)
 {
     apple_coreaudio::AudioDevice invalid_audio_device(0);
-    EXPECT_EQ(invalid_audio_device.get_num_channels(true), -1);
+    EXPECT_EQ(invalid_audio_device.num_channels(true), -1);
 
     // Return -1 when the object has no stream configuration property.
     apple_coreaudio::AudioDevice audio_device(5);
     EXPECT_CALL(_mock, AudioObjectHasProperty)
             .WillOnce(Return(false));
 
-    EXPECT_EQ(audio_device.get_num_channels(true), -1);
+    EXPECT_EQ(audio_device.num_channels(true), -1);
 
     EXPECT_CALL(_mock, AudioObjectHasProperty)
             .WillOnce(Return(true))
@@ -660,8 +660,8 @@ TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_num_channels)
             });
 
     // By default, an audio device selects the first stream only, so while there are multiple streams (buffers) available we expect a channel count of 1.
-    EXPECT_EQ(audio_device.get_num_channels(true), 1);
-    EXPECT_EQ(audio_device.get_num_channels(true), 0);
+    EXPECT_EQ(audio_device.num_channels(true), 1);
+    EXPECT_EQ(audio_device.num_channels(true), 0);
 }
 
 TEST_F(TestAppleCoreAudioFrontend, AudioDevice_set_buffer_frame_size)
@@ -695,35 +695,35 @@ TEST_F(TestAppleCoreAudioFrontend, AudioDevice_set_nominal_sample_rate)
 TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_nominal_sample_rate)
 {
     apple_coreaudio::AudioDevice invalid_audio_device(0);
-    EXPECT_EQ(invalid_audio_device.get_nominal_sample_rate(), 0.0);
+    EXPECT_EQ(invalid_audio_device.nominal_sample_rate(), 0.0);
 
     apple_coreaudio::AudioDevice audio_device(5);
 
     expect_calls_to_get_property<double>(5, {kAudioDevicePropertyNominalSampleRate, kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMain}, 48000.0);
 
-    EXPECT_EQ(audio_device.get_nominal_sample_rate(), 48000.0);
+    EXPECT_EQ(audio_device.nominal_sample_rate(), 48000.0);
 }
 
 TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_device_latency)
 {
     apple_coreaudio::AudioDevice invalid_audio_device(0);
-    EXPECT_EQ(invalid_audio_device.get_device_latency(true), 0);
+    EXPECT_EQ(invalid_audio_device.device_latency(true), 0);
 
     apple_coreaudio::AudioDevice audio_device(5);
 
     expect_calls_to_get_property<UInt32>(5, {kAudioDevicePropertyLatency, kAudioObjectPropertyScopeInput, kAudioObjectPropertyElementMain}, 320);
 
-    EXPECT_EQ(audio_device.get_device_latency(true), 320);
+    EXPECT_EQ(audio_device.device_latency(true), 320);
 
     expect_calls_to_get_property<UInt32>(5, {kAudioDevicePropertyLatency, kAudioObjectPropertyScopeOutput, kAudioObjectPropertyElementMain}, 330);
 
-    EXPECT_EQ(audio_device.get_device_latency(false), 330);
+    EXPECT_EQ(audio_device.device_latency(false), 330);
 }
 
 TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_stream_latency)
 {
     apple_coreaudio::AudioDevice invalid_audio_device(0);
-    EXPECT_EQ(invalid_audio_device.get_stream_latency(0, true), 0);
+    EXPECT_EQ(invalid_audio_device.stream_latency(0, true), 0);
 
     EXPECT_CALL(_mock, AudioObjectHasProperty).WillRepeatedly(Return(true));
     EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize).WillRepeatedly([](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* out_data_size) {
@@ -757,10 +757,10 @@ TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_stream_latency)
 
     apple_coreaudio::AudioDevice audio_device(1);
 
-    EXPECT_EQ(audio_device.get_stream_latency(0, true), 16);
+    EXPECT_EQ(audio_device.stream_latency(0, true), 16);
 
     // Test out of bounds stream
-    EXPECT_EQ(audio_device.get_stream_latency(1, true), 0);
+    EXPECT_EQ(audio_device.stream_latency(1, true), 0);
 }
 
 TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_selected_stream_latency)
@@ -793,18 +793,18 @@ TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_selected_stream_latency)
             });
 
     apple_coreaudio::AudioDevice audio_device(1);
-    EXPECT_EQ(audio_device.get_selected_stream_latency(true), 16);
-    EXPECT_EQ(audio_device.get_selected_stream_latency(false), 16);
+    EXPECT_EQ(audio_device.selected_stream_latency(true), 16);
+    EXPECT_EQ(audio_device.selected_stream_latency(false), 16);
 }
 
 TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_clock_domain_id)
 {
     apple_coreaudio::AudioDevice invalid_audio_device(0);
-    EXPECT_EQ(invalid_audio_device.get_clock_domain_id(), 0);
+    EXPECT_EQ(invalid_audio_device.clock_domain_id(), 0);
 
     apple_coreaudio::AudioDevice audio_device(1);
     expect_calls_to_get_property(1, {kAudioDevicePropertyClockDomain, kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMain}, 5);
-    EXPECT_EQ(audio_device.get_clock_domain_id(), 5);
+    EXPECT_EQ(audio_device.clock_domain_id(), 5);
 }
 
 TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_related_devices)
@@ -829,7 +829,7 @@ TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_related_devices)
             });
 
     apple_coreaudio::AudioDevice audio_device(1);
-    auto devices = audio_device.get_related_devices();
+    auto devices = audio_device.related_devices();
     EXPECT_EQ(devices.at(0), 1);
     EXPECT_EQ(devices.at(1), 2);
     EXPECT_EQ(devices.at(2), 3);
@@ -869,8 +869,8 @@ TEST_F(TestAppleCoreAudioFrontend, AudioDevice_get_num_streams)
             });
 
     apple_coreaudio::AudioDevice audio_device(1);
-    EXPECT_EQ(audio_device.get_num_streams(true), 3);
-    EXPECT_EQ(audio_device.get_num_streams(false), 3);
+    EXPECT_EQ(audio_device.num_streams(true), 3);
+    EXPECT_EQ(audio_device.num_streams(false), 3);
 }
 
 TEST_F(TestAppleCoreAudioFrontend, AudioDevice_is_aggregate_device)
