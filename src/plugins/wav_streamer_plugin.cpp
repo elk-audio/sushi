@@ -592,13 +592,13 @@ void WavStreamerPlugin::_handle_fades(ChunkSampleBuffer& buffer)
         {
             start = _exp_gain_smoother.value();
             end = _exp_gain_smoother.next_value();
-            SUSHI_DISCARD_RESULT(_gain_smoother.next_value());
+            _gain_smoother.next_value();
         }
         else
         {
             start = _gain_smoother.value();
             end = _gain_smoother.next_value();
-            SUSHI_DISCARD_RESULT(_exp_gain_smoother.next_value());
+            _exp_gain_smoother.next_value();
         }
         buffer.ramp(start, end);
     }

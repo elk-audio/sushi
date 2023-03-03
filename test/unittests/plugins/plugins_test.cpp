@@ -596,10 +596,10 @@ protected:
                 _module_under_test->_ch2_left_gain_smoother.stationary() &&
                 _module_under_test->_ch2_right_gain_smoother.stationary()) == false)
         {
-            SUSHI_DISCARD_RESULT(_module_under_test->_ch1_left_gain_smoother.next_value());
-            SUSHI_DISCARD_RESULT(_module_under_test->_ch1_right_gain_smoother.next_value());
-            SUSHI_DISCARD_RESULT(_module_under_test->_ch2_left_gain_smoother.next_value());
-            SUSHI_DISCARD_RESULT(_module_under_test->_ch2_right_gain_smoother.next_value());
+            _module_under_test->_ch1_left_gain_smoother.next_value();
+            _module_under_test->_ch1_right_gain_smoother.next_value();
+            _module_under_test->_ch2_left_gain_smoother.next_value();
+            _module_under_test->_ch2_right_gain_smoother.next_value();
         }
     }
 

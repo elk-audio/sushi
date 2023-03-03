@@ -120,7 +120,7 @@ public:
      * @brief Advance the smoother one sample point and return the new current value
      * @return The current smoothed value
      */
-    [[nodiscard]] T next_value()
+    T next_value()
     {
         if constexpr (mode == Mode::RAMP || mode == Mode::EXP_RAMP)
         {
