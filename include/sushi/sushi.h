@@ -82,10 +82,12 @@ enum class Status
     FAILED_OSC_FRONTEND_INITIALIZATION,
     FAILED_AUDIO_FRONTEND_MISSING,
     FAILED_AUDIO_FRONTEND_INITIALIZATION,
-    FAILED_MIDI_FRONTEND_INITIALIZATION
+    FAILED_MIDI_FRONTEND_INITIALIZATION,
+
+    FAILED_TO_START_RPC_SERVER
 };
 
-std::string to_string(Status init_status);
+std::string to_string(Status status);
 
 /**
  * Collects all options for instantiating Sushi in one place.
@@ -144,7 +146,7 @@ public:
     Sushi() = default;
     virtual ~Sushi() = default;
 
-    virtual void start() = 0;
+    [[nodiscard]] virtual Status start() = 0;
 
     virtual void exit() = 0;
 

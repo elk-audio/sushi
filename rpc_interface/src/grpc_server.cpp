@@ -70,8 +70,10 @@ void GrpcServer::AsyncRpcLoop()
     }
 }
 
-void GrpcServer::start()
+bool GrpcServer::start()
 {
+    _server_builder->AddChannelArgument(GRPC_ARG_ALLOW_REUSEPORT, 0);
+
     _server_builder->AddListeningPort(_listen_address, grpc::InsecureServerCredentials());
 
     _server_builder->RegisterService(_system_control_service.get());
@@ -89,8 +91,16 @@ void GrpcServer::start()
 
     _async_rpc_queue = _server_builder->AddCompletionQueue();
     _server = _server_builder->BuildAndStart();
+
+    if (_server == nullptr)
+    {
+        return false;
+    }
+
     _running.store(true);
     _worker = std::thread(&GrpcServer::AsyncRpcLoop, this);
+
+    return true;
 }
 
 void GrpcServer::stop()

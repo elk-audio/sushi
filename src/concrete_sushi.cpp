@@ -51,40 +51,42 @@ void init_logger([[maybe_unused]] const SushiOptions& options)
     }
 }
 
-std::string to_string(Status init_status)
+std::string to_string(Status status)
 {
-    switch (init_status)
+    switch (status)
     {
         case Status::FAILED_LOAD_HOST_CONFIG:
-            return "Failed to load host configuration from config file";
+            return "Failed to load host configuration from config file.";
         case Status::FAILED_INVALID_CONFIGURATION_FILE:
             return "Error reading host config, check logs for details.";
         case Status::FAILED_LOAD_TRACKS:
-            return "Failed to load tracks from Json config file";
+            return "Failed to load tracks from the Json config file.";
         case Status::FAILED_LOAD_MIDI_MAPPING:
-            return "Failed to load MIDI mapping from Json config file";
+            return "Failed to load MIDI mapping from the Json config file.";
         case Status::FAILED_LOAD_CV_GATE:
-            return "Failed to load CV and Gate configuration";
+            return "Failed to load CV and Gate configuration.";
         case Status::FAILED_LOAD_PROCESSOR_STATES:
-            return "Failed to load initial processor states";
+            return "Failed to load the initial processor states.";
         case Status::FAILED_LOAD_EVENT_LIST:
-            return "Failed to load Event list from Json config file";
+            return "Failed to load Event list from the Json config file.";
         case Status::FAILED_LOAD_EVENTS:
-            return "Failed to load Events from Json config file";
+            return "Failed to load Events from the Json config file.";
         case Status::FAILED_LOAD_OSC:
-            return "Failed to load OSC echo specification from Json config file";
+            return "Failed to load OSC echo specification from the Json config file.";
         case Status::FAILED_OSC_FRONTEND_INITIALIZATION:
-            return "Failed to setup OSC frontend";
+            return "Failed to setup the OSC frontend.";
         case Status::FAILED_INVALID_FILE_PATH:
             return "Error reading config file, invalid file path: ";
         case Status::FAILED_XENOMAI_INITIALIZATION:
-            return "Failed to initialize Xenomai process, err. code: ";
+            return "Failed to initialize the Xenomai process, err. code: ";
         case Status::FAILED_AUDIO_FRONTEND_MISSING:
-            return "No audio frontend selected";
+            return "No audio frontend is selected.";
         case Status::FAILED_AUDIO_FRONTEND_INITIALIZATION:
             return "Error initializing frontend, check logs for details.";
         case Status::FAILED_MIDI_FRONTEND_INITIALIZATION:
-            return "Failed to setup Midi frontend";
+            return "Failed to setup the Midi frontend.";
+        case Status::FAILED_TO_START_RPC_SERVER:
+            return "Failed to start the RPC server.";
         case Status::OK:
             return "Ok";
         default:
@@ -100,12 +102,8 @@ std::string to_string(Status init_status)
 ConcreteSushi::ConcreteSushi() = default;
 ConcreteSushi::~ConcreteSushi() = default;
 
-void ConcreteSushi::start()
+Status ConcreteSushi::start()
 {
-    _audio_frontend->run();
-    _engine->event_dispatcher()->run();
-    _midi_frontend->run();
-
     if (_osc_frontend != nullptr)
     {
         _osc_frontend->run();
@@ -114,9 +112,19 @@ void ConcreteSushi::start()
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     if (_rpc_server != nullptr)
     {
-        _rpc_server->start();
+        bool rpc_server_status = _rpc_server->start();
+        if (!rpc_server_status)
+        {
+            return Status::FAILED_TO_START_RPC_SERVER;
+        }
     }
 #endif
+
+    _audio_frontend->run();
+    _engine->event_dispatcher()->run();
+    _midi_frontend->run();
+
+    return Status::OK;
 }
 
 void ConcreteSushi::exit()

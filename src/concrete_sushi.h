@@ -85,7 +85,7 @@ public:
     /**
      * Given Sushi is initialized successfully, call this before the audio callback is first invoked.
      */
-    void start() override;
+    Status start() override;
 
     /**
      * Stops the Sushi instance from running.

@@ -64,7 +64,13 @@ public:
 
     ~GrpcServer();
 
-    void start();
+    /**
+     * Attempts to instantiate and start the gRPC server.
+     * On failure, this GrpcServer class is in an undefined state and may be un-salvageable.
+     * Delete it retry with a different listenAddress.
+     * @return bool, reflecting the status of the resulting server.
+     */
+    [[nodiscard]] bool start();
 
     void stop();
 
