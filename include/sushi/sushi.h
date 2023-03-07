@@ -123,6 +123,8 @@ struct SushiOptions
     std::string sentry_crash_handler_path = SUSHI_SENTRY_CRASH_HANDLER_PATH_DEFAULT;
     std::string sentry_dsn = SUSHI_SENTRY_DSN_DEFAULT;
 
+    int retries_on_port_failures = SUSHI_RETRIES_ON_PORT_FAILURES_DEFAULT;
+
     std::string grpc_listening_address = SUSHI_GRPC_LISTENING_PORT_DEFAULT;
     FrontendType frontend_type = FrontendType::NONE;
     bool connect_ports = false;
@@ -132,6 +134,21 @@ struct SushiOptions
     bool enable_flush_interval = false;
     bool enable_parameter_dump = false;
     std::chrono::seconds log_flush_interval = std::chrono::seconds(0);
+
+    /**
+     * Extracts the address string and port number from the grpc_listening_address string.
+     * @return A pair with address and port on success - nullopt on failure.
+     */
+    std::optional<std::pair<std::string, int>> grpc_address_and_port();
+
+    /**
+     * If sushi is to be started with gRPC, initialising it requires a valid gRPC port number.
+     * Using this method, it is possible to incrementally increase the number passed,
+     * to retry connecting.
+     * @param options the SushiOptions structure containing the gRPC address field.
+     * @return true if incrementing the value succeeded.
+     */
+    bool increment_grpc_port_number();
 };
 
 /**

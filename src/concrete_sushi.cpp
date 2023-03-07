@@ -51,6 +51,47 @@ void init_logger([[maybe_unused]] const SushiOptions& options)
     }
 }
 
+std::optional<std::pair<std::string, int>> SushiOptions::grpc_address_and_port()
+{
+    auto last_colon_index = grpc_listening_address.find_last_of(':');
+    if (last_colon_index == std::string::npos)
+    {
+        return std::nullopt;
+    }
+
+    last_colon_index++; // to include the last ':' in the address part.
+
+    auto address_part = grpc_listening_address.substr(0, last_colon_index);
+
+    int port = -1;
+    try
+    {
+        port = std::stoi(grpc_listening_address.substr(last_colon_index));
+    }
+    catch (...)
+    {
+        return std::nullopt;
+    }
+
+    return std::tie(address_part, port);
+}
+
+bool SushiOptions::increment_grpc_port_number()
+{
+    auto address_and_port = grpc_address_and_port();
+
+    if (address_and_port.has_value())
+    {
+        grpc_listening_address = address_and_port->first +
+                                 std::to_string(address_and_port->second + 1);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 std::string to_string(Status status)
 {
     switch (status)
@@ -115,6 +156,10 @@ Status ConcreteSushi::start()
         bool rpc_server_status = _rpc_server->start();
         if (!rpc_server_status)
         {
+            if (_osc_frontend != nullptr)
+            {
+                _osc_frontend->stop();
+            }
             return Status::FAILED_TO_START_RPC_SERVER;
         }
     }

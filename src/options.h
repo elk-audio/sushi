@@ -36,6 +36,7 @@
 #define SUSHI_OSC_SEND_PORT_DEFAULT 24023
 #define SUSHI_OSC_SEND_IP_DEFAULT "127.0.0.1"
 #define SUSHI_GRPC_LISTENING_PORT_DEFAULT "[::]:51051"
+#define SUSHI_RETRIES_ON_PORT_FAILURES_DEFAULT 10
 #define SUSHI_PORTAUDIO_INPUT_LATENCY_DEFAULT 0.0f
 #define SUSHI_PORTAUDIO_OUTPUT_LATENCY_DEFAULT 0.0f
 #define SUSHI_SENTRY_CRASH_HANDLER_PATH_DEFAULT "./crashpad_handler"
@@ -140,6 +141,7 @@ enum OptionIndex
     OPT_IDX_GRPC_LISTEN_ADDRESS,
     OPT_IDX_NO_OSC,
     OPT_IDX_NO_GRPC,
+    OPT_IDX_RETRIES_ON_PORT_FAILURES,
     OPT_IDX_BASE_PLUGIN_PATH,
     OPT_IDX_SENTRY_CRASH_HANDLER,
     OPT_IDX_SENTRY_DSN
@@ -414,6 +416,14 @@ const optionparser::Descriptor usage[] =
         "disable-grpc",
         SushiArg::Optional,
         "\t\t--no-grpc \tDisable gRPC Control completely"
+    },
+    {
+        OPT_IDX_RETRIES_ON_PORT_FAILURES,
+        OPT_TYPE_UNUSED,
+        "",
+        "retries-on-port-failures",
+        SushiArg::NonEmpty,
+        "\t\t--retries-on-port-failures \tRetry n times to instantiate gRPC / OSC frontends if ports are taken"
     },
     {
         OPT_IDX_BASE_PLUGIN_PATH,

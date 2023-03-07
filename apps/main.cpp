@@ -40,6 +40,8 @@ using namespace sushi;
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("main");
 
+constexpr int MALFORMED_GRPC_ADDRESS_EXIT_CODE = 2;
+
 bool exit_flag = false;
 
 bool exit_condition()
@@ -58,8 +60,15 @@ void signal_handler([[maybe_unused]] int sig)
 void error_exit(const std::string& message)
 {
     std::cerr << message << std::endl;
-    std::exit(1);
+    std::exit(EXIT_FAILURE);
 }
+
+/**
+ * Tries to start Sushi
+ * @param options a SushiOptions structure
+ * @return a Sushi instance, if successful - if not, the unique_ptr is empty.
+ */
+std::unique_ptr<Sushi> start_sushi(SushiOptions options);
 
 int main(int argc, char* argv[])
 {
@@ -94,57 +103,18 @@ int main(int argc, char* argv[])
     {
 #ifdef SUSHI_BUILD_WITH_PORTAUDIO
         std::cout << sushi::audio_frontend::generate_portaudio_devices_info_document() << std::endl;
-        std::exit(0);
+        return 0;
 #else
         std::cerr << "SUSHI not built with Portaudio support, cannot dump devices." << std::endl;
 #endif
     }
 
-    std::unique_ptr<BaseFactory> factory;
+    auto sushi = start_sushi(options);
 
-    if (options.frontend_type == FrontendType::DUMMY ||
-        options.frontend_type == FrontendType::PASSIVE)
+    if (sushi == nullptr)
     {
-        factory = std::make_unique<OfflineFactory>();
+        return -1;
     }
-    else if (options.frontend_type == FrontendType::JACK ||
-             options.frontend_type == FrontendType::XENOMAI_RASPA ||
-             options.frontend_type == FrontendType::PORTAUDIO)
-    {
-        factory = std::make_unique<StandaloneFactory>();
-    }
-    else
-    {
-        // Invalid frontend configuration.
-        // Passive, or None, are not supported when standalone.
-        return 3;
-    }
-
-    auto [sushi, init_status] = factory->new_instance(options);
-
-    if (init_status != InitStatus::OK)
-    {
-        auto message = to_string(init_status);
-        if (init_status == InitStatus::FAILED_INVALID_FILE_PATH)
-        {
-            message.append(options.config_filename);
-        }
-
-        error_exit(message);
-    }
-
-    if (options.enable_parameter_dump)
-    {
-        std::cout << sushi::generate_processor_parameter_document(sushi->controller());
-        std::cout << "Parameter dump completed - exiting." << std::endl;
-        std::exit(0);
-    }
-    else
-    {
-        print_sushi_headline();
-    }
-
-    sushi->start();
 
     if (options.frontend_type != FrontendType::OFFLINE)
     {
@@ -158,4 +128,100 @@ int main(int argc, char* argv[])
     SUSHI_LOG_INFO("Sushi exiting normally!");
 
     return 0;
+}
+
+std::unique_ptr<Sushi> start_sushi(SushiOptions options)
+{
+    int iterations = options.retries_on_port_failures + 1; // Try at least once.
+    for (int i = 0; i < iterations; i++)
+    {
+        std::unique_ptr<BaseFactory> factory;
+
+        if (options.frontend_type == FrontendType::DUMMY
+            || options.frontend_type == FrontendType::PASSIVE)
+        {
+            factory = std::make_unique<OfflineFactory>();
+        }
+        else if (options.frontend_type == FrontendType::JACK
+                 || options.frontend_type == FrontendType::XENOMAI_RASPA
+                 || options.frontend_type == FrontendType::PORTAUDIO)
+        {
+            factory = std::make_unique<StandaloneFactory>();
+        }
+        else
+        {
+            error_exit("Invalid frontend configuration. Passive, or None, are not supported when standalone.");
+        }
+
+        // Initialising:
+
+        auto [sushi, status] = factory->new_instance(options);
+
+        if (status == Status::FAILED_OSC_FRONTEND_INITIALIZATION)
+        {
+            std::cout << "Instantiating OSC server on port " << std::to_string(options.osc_server_port)
+                      << " failed." << std::endl;
+
+            options.osc_server_port++;
+
+            std::cout << "Retrying with port " << std::to_string(options.osc_server_port) << std::endl;
+
+            continue;
+        }
+        else if (status != Status::OK)
+        {
+            auto message = to_string(status);
+            if (status == Status::FAILED_INVALID_FILE_PATH)
+            {
+                message.append(options.config_filename);
+            }
+
+            error_exit(message);
+        }
+
+        if (options.enable_parameter_dump)
+        {
+            std::cout << sushi::generate_processor_parameter_document(sushi->controller());
+            std::cout << "Parameter dump completed - exiting." << std::endl;
+            std::exit(EXIT_SUCCESS);
+        }
+        else
+        {
+            print_sushi_headline();
+        }
+
+        // ...and starting:
+
+        auto start_status = sushi->start();
+
+        if (start_status == Status::OK)
+        {
+            return std::move(sushi);
+        }
+        else if (start_status == Status::FAILED_TO_START_RPC_SERVER)
+        {
+            sushi.reset();
+
+            std::cout << "Starting gRPC server on address " << options.grpc_listening_address
+                      << " failed." << std::endl;
+
+            bool increment_status = options.increment_grpc_port_number();
+            if (!increment_status)
+            {
+                std::cerr << "Initialising Sushi failed: gRPC address is malformed." << std::endl;
+                std::exit(MALFORMED_GRPC_ADDRESS_EXIT_CODE);
+            }
+
+            std::cout << "Retrying on address " << options.grpc_listening_address << std::endl;
+
+            continue;
+        }
+        else
+        {
+            std::cerr << "Starting Sushi failed: " << sushi::to_string(start_status) << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+    }
+
+    return nullptr;
 }

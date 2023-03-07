@@ -48,7 +48,7 @@ std::pair<std::unique_ptr<Sushi>, Status> OfflineFactory::new_instance(SushiOpti
 }
 
 Status OfflineFactory::_setup_audio_frontend(const SushiOptions& options,
-                                                 const jsonconfig::ControlConfig& config)
+                                             const jsonconfig::ControlConfig& config)
 {
     int cv_inputs = config.cv_inputs.value_or(0);
     int cv_outputs = config.cv_outputs.value_or(0);
@@ -77,7 +77,7 @@ Status OfflineFactory::_setup_audio_frontend(const SushiOptions& options,
 }
 
 Status OfflineFactory::_set_up_midi([[maybe_unused]] const SushiOptions& options,
-                                        const jsonconfig::ControlConfig& config)
+                                    const jsonconfig::ControlConfig& config)
 {
     int midi_inputs = config.midi_inputs.value_or(1);
     int midi_outputs = config.midi_outputs.value_or(1);
@@ -105,7 +105,7 @@ Status OfflineFactory::_set_up_control([[maybe_unused]] const SushiOptions& opti
 }
 
 Status OfflineFactory::_load_json_events([[maybe_unused]] const SushiOptions& options,
-                                             jsonconfig::JsonConfigurator* configurator)
+                                         jsonconfig::JsonConfigurator* configurator)
 {
     auto [status, events] = configurator->load_event_list();
 
