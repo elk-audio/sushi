@@ -38,7 +38,7 @@ OfflineFactory::OfflineFactory() = default;
 
 OfflineFactory::~OfflineFactory() = default;
 
-std::pair<std::unique_ptr<Sushi>, InitStatus> OfflineFactory::new_instance(SushiOptions& options)
+std::pair<std::unique_ptr<Sushi>, Status> OfflineFactory::new_instance(SushiOptions& options)
 {
     init_logger(options);
 
@@ -47,7 +47,7 @@ std::pair<std::unique_ptr<Sushi>, InitStatus> OfflineFactory::new_instance(Sushi
     return {_make_sushi(), _status};
 }
 
-InitStatus OfflineFactory::_setup_audio_frontend(const SushiOptions& options,
+Status OfflineFactory::_setup_audio_frontend(const SushiOptions& options,
                                                  const jsonconfig::ControlConfig& config)
 {
     int cv_inputs = config.cv_inputs.value_or(0);
@@ -73,10 +73,10 @@ InitStatus OfflineFactory::_setup_audio_frontend(const SushiOptions& options,
 
     _audio_frontend = std::make_unique<audio_frontend::OfflineFrontend>(_engine.get());
 
-    return InitStatus::OK;
+    return Status::OK;
 }
 
-InitStatus OfflineFactory::_set_up_midi([[maybe_unused]] const SushiOptions& options,
+Status OfflineFactory::_set_up_midi([[maybe_unused]] const SushiOptions& options,
                                         const jsonconfig::ControlConfig& config)
 {
     int midi_inputs = config.midi_inputs.value_or(1);
@@ -86,11 +86,11 @@ InitStatus OfflineFactory::_set_up_midi([[maybe_unused]] const SushiOptions& opt
 
     _midi_frontend = std::make_unique<midi_frontend::NullMidiFrontend>(_midi_dispatcher.get());
 
-    return InitStatus::OK;
+    return Status::OK;
 }
 
-InitStatus OfflineFactory::_set_up_control([[maybe_unused]] const SushiOptions& options,
-                                           [[maybe_unused]] jsonconfig::JsonConfigurator* configurator)
+Status OfflineFactory::_set_up_control([[maybe_unused]] const SushiOptions& options,
+                                       [[maybe_unused]] jsonconfig::JsonConfigurator* configurator)
 {
     _engine_controller = std::make_unique<engine::Controller>(_engine.get(),
                                                               _midi_dispatcher.get(),
@@ -101,10 +101,10 @@ InitStatus OfflineFactory::_set_up_control([[maybe_unused]] const SushiOptions& 
     SUSHI_LOG_INFO("Instantiating gRPC server with address: {}", options.grpc_listening_address);
 #endif
 
-    return InitStatus::OK;
+    return Status::OK;
 }
 
-InitStatus OfflineFactory::_load_json_events([[maybe_unused]] const SushiOptions& options,
+Status OfflineFactory::_load_json_events([[maybe_unused]] const SushiOptions& options,
                                              jsonconfig::JsonConfigurator* configurator)
 {
     auto [status, events] = configurator->load_event_list();
@@ -115,10 +115,10 @@ InitStatus OfflineFactory::_load_json_events([[maybe_unused]] const SushiOptions
     }
     else if (status != jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
     {
-        return InitStatus::FAILED_LOAD_EVENT_LIST;
+        return Status::FAILED_LOAD_EVENT_LIST;
     }
 
-    return InitStatus::OK;
+    return Status::OK;
 }
 
 } // namespace sushi

@@ -51,41 +51,41 @@ void init_logger([[maybe_unused]] const SushiOptions& options)
     }
 }
 
-std::string to_string(InitStatus init_status)
+std::string to_string(Status init_status)
 {
     switch (init_status)
     {
-        case InitStatus::FAILED_LOAD_HOST_CONFIG:
+        case Status::FAILED_LOAD_HOST_CONFIG:
             return "Failed to load host configuration from config file";
-        case InitStatus::FAILED_INVALID_CONFIGURATION_FILE:
+        case Status::FAILED_INVALID_CONFIGURATION_FILE:
             return "Error reading host config, check logs for details.";
-        case InitStatus::FAILED_LOAD_TRACKS:
+        case Status::FAILED_LOAD_TRACKS:
             return "Failed to load tracks from Json config file";
-        case InitStatus::FAILED_LOAD_MIDI_MAPPING:
+        case Status::FAILED_LOAD_MIDI_MAPPING:
             return "Failed to load MIDI mapping from Json config file";
-        case InitStatus::FAILED_LOAD_CV_GATE:
+        case Status::FAILED_LOAD_CV_GATE:
             return "Failed to load CV and Gate configuration";
-        case InitStatus::FAILED_LOAD_PROCESSOR_STATES:
+        case Status::FAILED_LOAD_PROCESSOR_STATES:
             return "Failed to load initial processor states";
-        case InitStatus::FAILED_LOAD_EVENT_LIST:
+        case Status::FAILED_LOAD_EVENT_LIST:
             return "Failed to load Event list from Json config file";
-        case InitStatus::FAILED_LOAD_EVENTS:
+        case Status::FAILED_LOAD_EVENTS:
             return "Failed to load Events from Json config file";
-        case InitStatus::FAILED_LOAD_OSC:
+        case Status::FAILED_LOAD_OSC:
             return "Failed to load OSC echo specification from Json config file";
-        case InitStatus::FAILED_OSC_FRONTEND_INITIALIZATION:
+        case Status::FAILED_OSC_FRONTEND_INITIALIZATION:
             return "Failed to setup OSC frontend";
-        case InitStatus::FAILED_INVALID_FILE_PATH:
+        case Status::FAILED_INVALID_FILE_PATH:
             return "Error reading config file, invalid file path: ";
-        case InitStatus::FAILED_XENOMAI_INITIALIZATION:
+        case Status::FAILED_XENOMAI_INITIALIZATION:
             return "Failed to initialize Xenomai process, err. code: ";
-        case InitStatus::FAILED_AUDIO_FRONTEND_MISSING:
+        case Status::FAILED_AUDIO_FRONTEND_MISSING:
             return "No audio frontend selected";
-        case InitStatus::FAILED_AUDIO_FRONTEND_INITIALIZATION:
+        case Status::FAILED_AUDIO_FRONTEND_INITIALIZATION:
             return "Error initializing frontend, check logs for details.";
-        case InitStatus::FAILED_MIDI_FRONTEND_INITIALIZATION:
+        case Status::FAILED_MIDI_FRONTEND_INITIALIZATION:
             return "Failed to setup Midi frontend";
-        case InitStatus::OK:
+        case Status::OK:
             return "Ok";
         default:
             assert(false);

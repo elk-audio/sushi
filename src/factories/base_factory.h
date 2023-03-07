@@ -80,21 +80,21 @@ public:
      * @return A pair with: unique_ptr with the constructed instance if successful, of empty if not.
      *         And, the status of the Initialization carried out by run().
      */
-    virtual std::pair<std::unique_ptr<Sushi>, InitStatus> new_instance(SushiOptions& options) = 0;
+    virtual std::pair<std::unique_ptr<Sushi>, Status> new_instance(SushiOptions& options) = 0;
 
 protected:
     std::unique_ptr<Sushi> _make_sushi();
 
     void _instantiate_subsystems(SushiOptions& options);
 
-    InitStatus _configure_from_file(SushiOptions& options);
-    InitStatus _configure_with_defaults(SushiOptions& options);
+    Status _configure_from_file(SushiOptions& options);
+    Status _configure_with_defaults(SushiOptions& options);
 
-    InitStatus _configure_engine(SushiOptions& options,
+    Status _configure_engine(SushiOptions& options,
                                  const jsonconfig::ControlConfig& control_config,
                                  jsonconfig::JsonConfigurator* configurator);
 
-    static InitStatus _load_json_configuration(jsonconfig::JsonConfigurator* configurator);
+    static Status _load_json_configuration(jsonconfig::JsonConfigurator* configurator);
 
     /**
      * @brief Inherit and populate this to instantiate and configure the audio frontend.
@@ -102,14 +102,14 @@ protected:
      * @param config
      * @return
      */
-    virtual InitStatus _setup_audio_frontend(const SushiOptions& options, const jsonconfig::ControlConfig& config) = 0;
+    virtual Status _setup_audio_frontend(const SushiOptions& options, const jsonconfig::ControlConfig& config) = 0;
 
     /**
      * @brief Inherit and populate this to instantiate and configure the midi frontend.
      * @param options A populated SushiOptions structure.
      * @return
      */
-    virtual InitStatus _set_up_midi(const SushiOptions& options, const jsonconfig::ControlConfig& config) = 0;
+    virtual Status _set_up_midi(const SushiOptions& options, const jsonconfig::ControlConfig& config) = 0;
 
     /**
      * @brief Inherit and populate this to instantiate and configure sgRPC, OSC, and eventual other control.
@@ -117,7 +117,7 @@ protected:
      * @param configurator
      * @return
      */
-    virtual InitStatus _set_up_control(const SushiOptions& options, jsonconfig::JsonConfigurator* configurator) = 0;
+    virtual Status _set_up_control(const SushiOptions& options, jsonconfig::JsonConfigurator* configurator) = 0;
 
     /**
      * @brief Handle sequenced events from configuration file here.
@@ -125,10 +125,10 @@ protected:
      * @param configurator
      * @return
      */
-    virtual InitStatus _load_json_events(const SushiOptions& options,
+    virtual Status _load_json_events(const SushiOptions& options,
                                          jsonconfig::JsonConfigurator* configurator) = 0;
 
-    InitStatus _status {InitStatus::OK};
+    Status _status { Status::OK};
 
     std::unique_ptr<engine::AudioEngine> _engine {nullptr};
     std::unique_ptr<midi_dispatcher::MidiDispatcher> _midi_dispatcher {nullptr};

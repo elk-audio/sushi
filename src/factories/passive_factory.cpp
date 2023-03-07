@@ -40,7 +40,7 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("passive-factory");
 PassiveFactory::PassiveFactory() = default;
 PassiveFactory::~PassiveFactory() = default;
 
-std::pair<std::unique_ptr<Sushi>, InitStatus> PassiveFactory::new_instance(SushiOptions& options)
+std::pair<std::unique_ptr<Sushi>, Status> PassiveFactory::new_instance(SushiOptions& options)
 {
     init_logger(options); // This can only be called once.
 
@@ -62,8 +62,8 @@ std::unique_ptr<RtController> PassiveFactory::rt_controller()
     return std::move(_real_time_controller);
 }
 
-InitStatus PassiveFactory::_setup_audio_frontend([[maybe_unused]] const SushiOptions& options,
-                                                 const jsonconfig::ControlConfig& config)
+Status PassiveFactory::_setup_audio_frontend([[maybe_unused]] const SushiOptions& options,
+                                             const jsonconfig::ControlConfig& config)
 {
     int cv_inputs = config.cv_inputs.value_or(0);
     int cv_outputs = config.cv_outputs.value_or(0);
@@ -73,11 +73,11 @@ InitStatus PassiveFactory::_setup_audio_frontend([[maybe_unused]] const SushiOpt
 
     _audio_frontend = std::make_unique<audio_frontend::PassiveFrontend>(_engine.get());
 
-    return InitStatus::OK;
+    return Status::OK;
 }
 
-InitStatus PassiveFactory::_set_up_midi([[maybe_unused]] const SushiOptions& options,
-                                        const jsonconfig::ControlConfig& config)
+Status PassiveFactory::_set_up_midi([[maybe_unused]] const SushiOptions& options,
+                                    const jsonconfig::ControlConfig& config)
 {
     // Will always be 1 & 1 for passive.
     int midi_inputs = config.midi_inputs.value_or(1);
@@ -87,11 +87,11 @@ InitStatus PassiveFactory::_set_up_midi([[maybe_unused]] const SushiOptions& opt
 
     _midi_frontend = std::make_unique<midi_frontend::PassiveMidiFrontend>(_midi_dispatcher.get());
 
-    return InitStatus::OK;
+    return Status::OK;
 }
 
-InitStatus PassiveFactory::_set_up_control([[maybe_unused]] const SushiOptions& options,
-                                           [[maybe_unused]] jsonconfig::JsonConfigurator* configurator)
+Status PassiveFactory::_set_up_control([[maybe_unused]] const SushiOptions& options,
+                                       [[maybe_unused]] jsonconfig::JsonConfigurator* configurator)
 {
     _engine_controller = std::make_unique<engine::Controller>(_engine.get(),
                                                               _midi_dispatcher.get(),
@@ -112,7 +112,7 @@ InitStatus PassiveFactory::_set_up_control([[maybe_unused]] const SushiOptions& 
         auto osc_status = _osc_frontend->init();
         if (osc_status != control_frontend::ControlFrontendStatus::OK)
         {
-            return InitStatus::FAILED_OSC_FRONTEND_INITIALIZATION;
+            return Status::FAILED_OSC_FRONTEND_INITIALIZATION;
         }
 
         if (configurator)
@@ -123,7 +123,7 @@ InitStatus PassiveFactory::_set_up_control([[maybe_unused]] const SushiOptions& 
             if (status != jsonconfig::JsonConfigReturnStatus::OK &&
                 status != jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
             {
-                return InitStatus::FAILED_LOAD_OSC;
+                return Status::FAILED_LOAD_OSC;
             }
         }
     }
@@ -133,21 +133,21 @@ InitStatus PassiveFactory::_set_up_control([[maybe_unused]] const SushiOptions& 
     SUSHI_LOG_INFO("Instantiating gRPC server with address: {}", options.grpc_listening_address);
 #endif
 
-    return InitStatus::OK;
+    return Status::OK;
 }
 
-InitStatus PassiveFactory::_load_json_events([[maybe_unused]] const SushiOptions& options,
-                                             jsonconfig::JsonConfigurator* configurator)
+Status PassiveFactory::_load_json_events([[maybe_unused]] const SushiOptions& options,
+                                         jsonconfig::JsonConfigurator* configurator)
 {
     auto status = configurator->load_events();
 
     if (status != jsonconfig::JsonConfigReturnStatus::OK &&
         status != jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
     {
-        return InitStatus::FAILED_LOAD_EVENTS;
+        return Status::FAILED_LOAD_EVENTS;
     }
 
-    return InitStatus::OK;
+    return Status::OK;
 }
 
 } // namespace sushi

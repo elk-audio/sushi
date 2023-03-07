@@ -48,7 +48,7 @@ StandaloneFactory::StandaloneFactory() = default;
 
 StandaloneFactory::~StandaloneFactory() = default;
 
-std::pair<std::unique_ptr<Sushi>, InitStatus> StandaloneFactory::new_instance(SushiOptions& options)
+std::pair<std::unique_ptr<Sushi>, Status> StandaloneFactory::new_instance(SushiOptions& options)
 {
     init_logger(options);
 
@@ -73,7 +73,7 @@ std::pair<std::unique_ptr<Sushi>, InitStatus> StandaloneFactory::new_instance(Su
     return {_make_sushi(), _status};
 }
 
-InitStatus StandaloneFactory::_setup_audio_frontend(const SushiOptions& options,
+Status StandaloneFactory::_setup_audio_frontend(const SushiOptions& options,
                                                     const jsonconfig::ControlConfig& config)
 {
     int cv_inputs = config.cv_inputs.value_or(0);
@@ -130,14 +130,14 @@ InitStatus StandaloneFactory::_setup_audio_frontend(const SushiOptions& options,
 
         default:
         {
-            return InitStatus::FAILED_AUDIO_FRONTEND_MISSING;
+            return Status::FAILED_AUDIO_FRONTEND_MISSING;
         }
     }
 
-    return InitStatus::OK;
+    return Status::OK;
 }
 
-InitStatus StandaloneFactory::_set_up_midi([[maybe_unused]] const SushiOptions& options, const jsonconfig::ControlConfig& config)
+Status StandaloneFactory::_set_up_midi([[maybe_unused]] const SushiOptions& options, const jsonconfig::ControlConfig& config)
 {
     int midi_inputs = config.midi_inputs.value_or(1);
     int midi_outputs = config.midi_outputs.value_or(1);
@@ -163,10 +163,10 @@ InitStatus StandaloneFactory::_set_up_midi([[maybe_unused]] const SushiOptions& 
                                                                        _midi_dispatcher.get());
 #endif
 
-    return InitStatus::OK;
+    return Status::OK;
 }
 
-InitStatus StandaloneFactory::_set_up_control(const SushiOptions& options, jsonconfig::JsonConfigurator* configurator)
+Status StandaloneFactory::_set_up_control(const SushiOptions& options, jsonconfig::JsonConfigurator* configurator)
 {
     _engine_controller = std::make_unique<engine::Controller>(_engine.get(),
                                                               _midi_dispatcher.get(),
@@ -187,7 +187,7 @@ InitStatus StandaloneFactory::_set_up_control(const SushiOptions& options, jsonc
         auto osc_status = _osc_frontend->init();
         if (osc_status != control_frontend::ControlFrontendStatus::OK)
         {
-            return InitStatus::FAILED_OSC_FRONTEND_INITIALIZATION;
+            return Status::FAILED_OSC_FRONTEND_INITIALIZATION;
         }
 
         if (configurator)
@@ -198,7 +198,7 @@ InitStatus StandaloneFactory::_set_up_control(const SushiOptions& options, jsonc
             if (status != jsonconfig::JsonConfigReturnStatus::OK &&
                 status != jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
             {
-                return InitStatus::FAILED_LOAD_OSC;
+                return Status::FAILED_LOAD_OSC;
             }
         }
     }
@@ -211,20 +211,20 @@ InitStatus StandaloneFactory::_set_up_control(const SushiOptions& options, jsonc
     }
 #endif
 
-    return InitStatus::OK;
+    return Status::OK;
 }
 
-InitStatus StandaloneFactory::_load_json_events([[maybe_unused]] const SushiOptions& options, jsonconfig::JsonConfigurator* configurator)
+Status StandaloneFactory::_load_json_events([[maybe_unused]] const SushiOptions& options, jsonconfig::JsonConfigurator* configurator)
 {
     auto status = configurator->load_events();
 
     if (status != jsonconfig::JsonConfigReturnStatus::OK &&
         status != jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
     {
-        return InitStatus::FAILED_LOAD_EVENTS;
+        return Status::FAILED_LOAD_EVENTS;
     }
 
-    return InitStatus::OK;
+    return Status::OK;
 }
 
 } // namespace sushi

@@ -29,7 +29,7 @@ BaseFactory::~BaseFactory() = default;
 
 std::unique_ptr<Sushi> BaseFactory::_make_sushi()
 {
-    if (_status == InitStatus::OK)
+    if (_status == Status::OK)
     {
         // It's clearer to have FactoryBase as friend of Sushi.
         auto sushi = std::unique_ptr<ConcreteSushi>(new ConcreteSushi());
@@ -81,7 +81,7 @@ void BaseFactory::_instantiate_subsystems(SushiOptions& options)
     }
 }
 
-InitStatus BaseFactory::_configure_from_file(SushiOptions& options)
+Status BaseFactory::_configure_from_file(SushiOptions& options)
 {
     auto configurator = std::make_unique<jsonconfig::JsonConfigurator>(_engine.get(),
                                                                        _midi_dispatcher.get(),
@@ -93,34 +93,34 @@ InitStatus BaseFactory::_configure_from_file(SushiOptions& options)
     {
         if (control_config_status == jsonconfig::JsonConfigReturnStatus::INVALID_FILE)
         {
-            return InitStatus::FAILED_INVALID_FILE_PATH;
+            return Status::FAILED_INVALID_FILE_PATH;
         }
 
-        return InitStatus::FAILED_INVALID_CONFIGURATION_FILE;
+        return Status::FAILED_INVALID_CONFIGURATION_FILE;
     }
 
     auto engine_status = _configure_engine(options, control_config, configurator.get());
-    if (engine_status != InitStatus::OK)
+    if (engine_status != Status::OK)
     {
         return engine_status;
     }
 
     auto configuration_status = _load_json_configuration(configurator.get());
-    if (configuration_status != InitStatus::OK)
+    if (configuration_status != Status::OK)
     {
         return configuration_status;
     }
 
     auto event_status = _load_json_events(options, configurator.get());
-    if (event_status != InitStatus::OK)
+    if (event_status != Status::OK)
     {
         return event_status;
     }
 
-    return InitStatus::OK;
+    return Status::OK;
 }
 
-InitStatus BaseFactory::_configure_with_defaults(SushiOptions& options)
+Status BaseFactory::_configure_with_defaults(SushiOptions& options)
 {
     jsonconfig::ControlConfig control_config;
     control_config.midi_inputs = 1;
@@ -131,7 +131,7 @@ InitStatus BaseFactory::_configure_with_defaults(SushiOptions& options)
     return _configure_engine(options, control_config, nullptr); // nullptr for configurator
 }
 
-InitStatus BaseFactory::_configure_engine(SushiOptions& options,
+Status BaseFactory::_configure_engine(SushiOptions& options,
                                           const jsonconfig::ControlConfig& control_config,
                                           jsonconfig::JsonConfigurator* configurator)
 {
@@ -140,10 +140,10 @@ InitStatus BaseFactory::_configure_engine(SushiOptions& options,
     auto audio_frontend_status = _audio_frontend->init(_frontend_config.get());
     if (audio_frontend_status != audio_frontend::AudioFrontendStatus::OK)
     {
-        return InitStatus::FAILED_AUDIO_FRONTEND_INITIALIZATION;
+        return Status::FAILED_AUDIO_FRONTEND_INITIALIZATION;
     }
 
-    if (status != InitStatus::OK)
+    if (status != Status::OK)
     {
         return status;
     }
@@ -153,61 +153,61 @@ InitStatus BaseFactory::_configure_engine(SushiOptions& options,
     auto midi_ok = _midi_frontend->init();
     if (!midi_ok)
     {
-        return InitStatus::FAILED_MIDI_FRONTEND_INITIALIZATION;
+        return Status::FAILED_MIDI_FRONTEND_INITIALIZATION;
     }
 
     _midi_dispatcher->set_frontend(_midi_frontend.get());
 
-    if (status != InitStatus::OK)
+    if (status != Status::OK)
     {
         return status;
     }
 
     status = _set_up_control(options, configurator);
-    if (status != InitStatus::OK)
+    if (status != Status::OK)
     {
         return status;
     }
 
-    return InitStatus::OK;
+    return Status::OK;
 }
 
-InitStatus BaseFactory::_load_json_configuration(jsonconfig::JsonConfigurator* configurator)
+Status BaseFactory::_load_json_configuration(jsonconfig::JsonConfigurator* configurator)
 {
     auto status = configurator->load_host_config();
     if (status != jsonconfig::JsonConfigReturnStatus::OK)
     {
-        return InitStatus::FAILED_LOAD_HOST_CONFIG;
+        return Status::FAILED_LOAD_HOST_CONFIG;
     }
 
     status = configurator->load_tracks();
     if (status != jsonconfig::JsonConfigReturnStatus::OK)
     {
-        return InitStatus::FAILED_LOAD_TRACKS;
+        return Status::FAILED_LOAD_TRACKS;
     }
 
     status = configurator->load_midi();
     if (status != jsonconfig::JsonConfigReturnStatus::OK &&
         status != jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
     {
-        return InitStatus::FAILED_LOAD_MIDI_MAPPING;
+        return Status::FAILED_LOAD_MIDI_MAPPING;
     }
 
     status = configurator->load_cv_gate();
     if (status != jsonconfig::JsonConfigReturnStatus::OK &&
         status != jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
     {
-        return InitStatus::FAILED_LOAD_CV_GATE;
+        return Status::FAILED_LOAD_CV_GATE;
     }
 
     status = configurator->load_initial_state();
     if (status != jsonconfig::JsonConfigReturnStatus::OK &&
         status != jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
     {
-        return InitStatus::FAILED_LOAD_PROCESSOR_STATES;
+        return Status::FAILED_LOAD_PROCESSOR_STATES;
     }
 
-    return InitStatus::OK;
+    return Status::OK;
 }
 
 } // namespace sushi

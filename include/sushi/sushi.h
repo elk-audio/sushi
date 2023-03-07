@@ -62,7 +62,7 @@ enum class FrontendType
     NONE
 };
 
-enum class InitStatus
+enum class Status
 {
     OK,
 
@@ -85,7 +85,7 @@ enum class InitStatus
     FAILED_MIDI_FRONTEND_INITIALIZATION
 };
 
-std::string to_string(InitStatus init_status);
+std::string to_string(Status init_status);
 
 /**
  * Collects all options for instantiating Sushi in one place.

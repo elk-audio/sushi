@@ -35,19 +35,19 @@ public:
     StandaloneFactory();
     ~StandaloneFactory() override;
 
-    std::pair<std::unique_ptr<Sushi>, InitStatus> new_instance(SushiOptions& options) override;
+    std::pair<std::unique_ptr<Sushi>, Status> new_instance(SushiOptions& options) override;
 
 protected:
-    InitStatus _setup_audio_frontend(const SushiOptions& options,
+    Status _setup_audio_frontend(const SushiOptions& options,
                                      const jsonconfig::ControlConfig& config) override;
 
-    InitStatus _set_up_midi([[maybe_unused]] const SushiOptions& options,
+    Status _set_up_midi([[maybe_unused]] const SushiOptions& options,
                             const jsonconfig::ControlConfig& config) override;
 
-    InitStatus _set_up_control(const SushiOptions& options,
+    Status _set_up_control(const SushiOptions& options,
                                jsonconfig::JsonConfigurator* configurator) override;
 
-    InitStatus _load_json_events([[maybe_unused]] const SushiOptions& options,
+    Status _load_json_events([[maybe_unused]] const SushiOptions& options,
                                  jsonconfig::JsonConfigurator* configurator) override;
 };
 
