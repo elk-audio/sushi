@@ -53,7 +53,7 @@ public:
         _input_device = AudioDevice(sub_devices[0]);
         _output_device = AudioDevice(sub_devices[1]);
 
-        select_stream(true, 0);                                     // Select the first input stream of the input device.
+        select_stream(true, 0);                                 // Select the first input stream of the input device.
         select_stream(false, _input_device.num_streams(false)); // Select the first output stream of the output device.
     }
 
@@ -287,6 +287,13 @@ std::vector<double> apple_coreaudio::AudioDevice::available_nominal_sample_rates
     }
 
     return available_sample_rates;
+}
+
+AudioValueRange apple_coreaudio::AudioDevice::available_buffer_sizes() const
+{
+    return get_property<AudioValueRange>({kAudioDevicePropertyBufferFrameSizeRange,
+                                          kAudioObjectPropertyScopeGlobal,
+                                          kAudioObjectPropertyElementMain});
 }
 
 UInt32 apple_coreaudio::AudioDevice::device_latency(bool for_input) const
@@ -523,7 +530,7 @@ void apple_coreaudio::AudioDevice::select_stream(bool for_input, size_t selected
 }
 
 const apple_coreaudio::AudioDevice* apple_coreaudio::device_for_uid(const std::vector<AudioDevice>& audio_devices,
-                                                                        const std::string& uid)
+                                                                    const std::string& uid)
 {
     for (auto& device : audio_devices)
     {

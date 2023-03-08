@@ -154,6 +154,11 @@ public:
     [[nodiscard]] std::vector<double> available_nominal_sample_rates() const;
 
     /**
+     * @return Returns the available buffer sizes for this device as a AudioValueRange with a minimum and maximum value.
+     */
+    [[nodiscard]] AudioValueRange available_buffer_sizes() const;
+
+    /**
      * @param for_input True for input or false for output.
      * @return The device latency in samples. Note that stream latency must be added to this number in order to get the total latency.
      */

@@ -45,7 +45,7 @@ std::optional<std::string> get_coreaudio_output_device_name(std::optional<std::s
     }
     else
     {
-         id = apple_coreaudio::AudioSystemObject::get_default_device_id(false); // false: for output.
+        id = apple_coreaudio::AudioSystemObject::get_default_device_id(false); // false: for output.
     }
 
     for (auto& device : audio_devices)
@@ -231,6 +231,7 @@ rapidjson::Document AppleCoreAudioFrontend::generate_devices_info_document()
         device_obj.AddMember(rapidjson::Value("outputs", allocator).Move(),
                              rapidjson::Value(device.num_channels(false)).Move(), allocator);
 
+        // Add available sample rates as array
         rapidjson::Value sample_rates(rapidjson::kArrayType);
         for (auto& rate : device.available_nominal_sample_rates())
         {
@@ -238,6 +239,15 @@ rapidjson::Document AppleCoreAudioFrontend::generate_devices_info_document()
         }
 
         device_obj.AddMember(rapidjson::Value("available_sample_rates", allocator).Move(), sample_rates, allocator);
+
+        // Add available buffer sizes as object with min and max values
+        rapidjson::Value buffer_frame_size_range(rapidjson::kObjectType);
+
+        auto buffer_sizes = device.available_buffer_sizes();
+        buffer_frame_size_range.AddMember(rapidjson::Value("min", allocator).Move(), buffer_sizes.mMinimum, allocator);
+        buffer_frame_size_range.AddMember(rapidjson::Value("max", allocator).Move(), buffer_sizes.mMaximum, allocator);
+
+        device_obj.AddMember(rapidjson::Value("buffer_frame_size_range", allocator).Move(), buffer_frame_size_range.Move(), allocator);
 
         devices.PushBack(device_obj.Move(), allocator);
     }

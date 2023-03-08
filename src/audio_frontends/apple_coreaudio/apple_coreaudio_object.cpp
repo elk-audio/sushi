@@ -268,5 +268,6 @@ T AudioObject::get_property(AudioObjectID audio_object_id, const AudioObjectProp
 // Force implementations for these types to be generated, so we can log from this function (which is not possible in the header file).
 template double AudioObject::get_property<double>(AudioObjectID, const AudioObjectPropertyAddress&);
 template UInt32 AudioObject::get_property<UInt32>(AudioObjectID, const AudioObjectPropertyAddress&);
+template AudioValueRange AudioObject::get_property<AudioValueRange>(AudioObjectID, const AudioObjectPropertyAddress&);
 
 } // namespace apple_coreaudio
