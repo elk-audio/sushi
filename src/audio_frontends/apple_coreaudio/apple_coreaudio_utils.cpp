@@ -49,7 +49,6 @@ std::string cf_string_to_std_string(const CFStringRef& cf_string_ref)
     // Remove all null-termination characters from output
     output.erase(std::find(output.begin(), output.end(), '\0'), output.end());
 
-
     return output;
 }
 
