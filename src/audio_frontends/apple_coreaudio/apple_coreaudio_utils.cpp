@@ -37,16 +37,28 @@ std::string cf_string_to_std_string(const CFStringRef& cf_string_ref)
 
     // If the above didn't return anything we have to fall back and use CFStringGetCString.
     CFIndex length = CFStringGetLength(cf_string_ref);
-    CFIndex max_size = CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8);
+    CFIndex max_size = CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8) + 1; // Include room for \0 termination
 
-    std::string output(max_size + 1, 0); // Not sure if max_size includes space for null-termination.
-    auto result = CFStringGetCString(cf_string_ref, output.data(), max_size, kCFStringEncodingUTF8);
-    if (result == 0)
+    std::string output(max_size, 0);
+    if (!CFStringGetCString(cf_string_ref, output.data(), max_size, kCFStringEncodingUTF8))
     {
         return {};
     }
 
-    return output;
+    // Trim zeroes at the end
+    for (auto it = output.end();;)
+    {
+        if (it == output.begin())
+            return {};
+
+        --it;
+
+        if (*it != 0)
+        {
+            output.erase(it + 1, output.end());
+            return output;
+        }
+    }
 }
 
 TimeConversions::TimeConversions()
