@@ -38,19 +38,21 @@ std::optional<std::string> get_coreaudio_output_device_name(std::optional<std::s
         return std::nullopt;
     }
 
-    std::string id;
+    std::string uid;
     if (coreaudio_output_device_uid.has_value())
     {
-        id = coreaudio_output_device_uid.value();
+        uid = coreaudio_output_device_uid.value();
     }
     else
     {
-        id = apple_coreaudio::AudioSystemObject::get_default_device_id(false); // false: for output.
+        auto default_audio_output_device_id = apple_coreaudio::AudioSystemObject::get_default_device_id(false); // false to get the output device id
+        apple_coreaudio::AudioDevice default_audio_output_device(default_audio_output_device_id);
+        uid = default_audio_output_device.uid();
     }
 
     for (auto& device : audio_devices)
     {
-        if (device.uid() == id)
+        if (device.uid() == uid)
         {
             return device.name();
         }
@@ -63,7 +65,7 @@ std::optional<std::string> get_coreaudio_output_device_name(std::optional<std::s
     }
     else
     {
-        SUSHI_LOG_ERROR("Could not retrieve device name for default coreaudio device, uid: {}", id);
+        SUSHI_LOG_ERROR("Could not retrieve device name for default coreaudio device, uid: {}", uid);
     }
 
     return std::nullopt;
