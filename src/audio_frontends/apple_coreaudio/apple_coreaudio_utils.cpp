@@ -29,6 +29,7 @@ std::string cf_string_to_std_string(const CFStringRef& cf_string_ref)
     // because we're going to allocate a new string anyway, however in this case I prefer
     // to use the 'best practice' here to educate myself properly in the future.
     const auto* c_string = CFStringGetCStringPtr(cf_string_ref, kCFStringEncodingUTF8);
+    // The memory pointed to by c_string is owned by cf_string_ref.
 
     if (c_string != nullptr)
     {
