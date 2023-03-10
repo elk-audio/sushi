@@ -46,20 +46,10 @@ std::string cf_string_to_std_string(const CFStringRef& cf_string_ref)
         return {};
     }
 
-    // Trim zeroes at the end
-    for (auto it = output.end();;)
-    {
-        if (it == output.begin())
-            return {};
+    // Remove trailing zeroes from output
+    output.erase(output.find_last_not_of('\0') + 1, std::string::npos);
 
-        --it;
-
-        if (*it != 0)
-        {
-            output.erase(it + 1, output.end());
-            return output;
-        }
-    }
+    return output;
 }
 
 TimeConversions::TimeConversions()
