@@ -46,8 +46,9 @@ std::string cf_string_to_std_string(const CFStringRef& cf_string_ref)
         return {};
     }
 
-    // Remove trailing zeroes from output
-    output.erase(output.find_last_not_of('\0') + 1, std::string::npos);
+    // Remove all null-termination characters from output
+    output.erase(std::find(output.begin(), output.end(), '\0'), output.end());
+
 
     return output;
 }
