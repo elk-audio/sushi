@@ -210,10 +210,6 @@ ParseStatus parse_options(int argc, char* argv[], sushi::SushiOptions& options)
                 options.grpc_listening_address = opt.arg;
                 break;
 
-            case OPT_IDX_RETRIES_ON_PORT_FAILURES:
-                options.retries_on_port_failures = atoi(opt.arg);
-                break;
-
             case OPT_IDX_NO_OSC:
                 options.use_osc = false;
                 break;
