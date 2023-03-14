@@ -33,8 +33,8 @@ namespace audio_frontend {
 /**
  * Ensure version compatibility with raspa library
  */
-constexpr int REQUIRED_RASPA_VER_MAJ = 0;
-constexpr int REQUIRED_RASPA_VER_MIN = 2;
+constexpr int REQUIRED_RASPA_VER_MAJ = 1;
+constexpr int REQUIRED_RASPA_VER_MIN = 0;
 static_assert(REQUIRED_RASPA_VER_MAJ == RASPA_VERSION_MAJ, "Raspa major version mismatch");
 static_assert(REQUIRED_RASPA_VER_MIN == RASPA_VERSION_MIN, "Raspa minor version mismatch");
 
