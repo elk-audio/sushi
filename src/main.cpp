@@ -23,6 +23,7 @@
 #include <csignal>
 #include <optional>
 #include <condition_variable>
+#include <filesystem>
 
 #include "twine/src/twine_internal.h"
 
@@ -32,6 +33,7 @@
 #include "audio_frontends/jack_frontend.h"
 #include "audio_frontends/xenomai_raspa_frontend.h"
 #include "audio_frontends/portaudio_frontend.h"
+#include "audio_frontends/portaudio_devices_dump.h"
 #include "engine/json_configurator.h"
 #include "control_frontends/osc_frontend.h"
 #include "control_frontends/oscpack_osc_messenger.h"
@@ -159,6 +161,7 @@ int main(int argc, char* argv[])
     std::optional<int> portaudio_output_device_id = std::nullopt;
     float portaudio_suggested_input_latency = SUSHI_PORTAUDIO_INPUT_LATENCY_DEFAULT;
     float portaudio_suggested_output_latency = SUSHI_PORTAUDIO_OUTPUT_LATENCY_DEFAULT;
+    bool enable_portaudio_devs_dump = false;
     std::string grpc_listening_address = SUSHI_GRPC_LISTENING_PORT_DEFAULT;
     FrontendType frontend_type = FrontendType::NONE;
     bool connect_ports = false;
@@ -170,6 +173,7 @@ int main(int argc, char* argv[])
     bool use_osc = true;
     bool use_grpc = true;
     std::chrono::seconds log_flush_interval = std::chrono::seconds(0);
+    std::string base_plugin_path = std::filesystem::current_path();
 
     for (int i = 0; i<cl_parser.optionsCount(); i++)
     {
@@ -246,6 +250,10 @@ int main(int argc, char* argv[])
             portaudio_suggested_output_latency = atof(opt.arg);
             break;
 
+        case OPT_IDX_DUMP_PORTAUDIO:
+            enable_portaudio_devs_dump = true;
+            break;
+
         case OPT_IDX_USE_JACK:
             frontend_type = FrontendType::JACK;
             break;
@@ -298,8 +306,12 @@ int main(int argc, char* argv[])
             use_osc = false;
             break;
 
-            case OPT_IDX_NO_GRPC:
+        case OPT_IDX_NO_GRPC:
             use_grpc = false;
+            break;
+
+        case OPT_IDX_BASE_PLUGIN_PATH:
+            base_plugin_path = std::string(opt.arg);
             break;
 
         default:
@@ -308,7 +320,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (enable_parameter_dump == false)
+    if (! (enable_parameter_dump || enable_portaudio_devs_dump) )
     {
         print_sushi_headline();
     }
@@ -336,9 +348,17 @@ int main(int argc, char* argv[])
     ////////////////////////////////////////////////////////////////////////////////
     // Main body //
     ////////////////////////////////////////////////////////////////////////////////
-#ifdef SUSHI_BUILD_WITH_EVL
-    evl_init();
+
+    if (enable_portaudio_devs_dump)
+    {
+#ifdef SUSHI_BUILD_WITH_PORTAUDIO
+        std::cout << sushi::audio_frontend::generate_portaudio_devices_info_document() << std::endl;
+        std::exit(0);
+#else
+        std::cerr << "SUSHI not built with Portaudio support, cannot dump devices." << std::endl;
 #endif
+    }
+
     if (frontend_type == FrontendType::XENOMAI_RASPA)
     {
         twine::init_xenomai(); // must be called before setting up any worker pools
@@ -348,6 +368,10 @@ int main(int argc, char* argv[])
                                                                rt_cpu_cores,
                                                                debug_mode_switches,
                                                                nullptr);
+    if (! base_plugin_path.empty())
+    {
+        engine->set_base_plugin_path(base_plugin_path);
+    }
     auto event_dispatcher = engine->event_dispatcher();
     auto midi_dispatcher = std::make_unique<sushi::midi_dispatcher::MidiDispatcher>(engine->event_dispatcher());
     auto configurator = std::make_unique<sushi::jsonconfig::JsonConfigurator>(engine.get(),
@@ -365,7 +389,7 @@ int main(int argc, char* argv[])
     {
         if (audio_config_status == sushi::jsonconfig::JsonConfigReturnStatus::INVALID_FILE)
         {
-            error_exit("Error reading config file, invalid file: " + config_filename);
+            error_exit("Error reading config file, invalid file path: " + config_filename);
         }
         error_exit("Error reading host config, check logs for details.");
     }
@@ -517,7 +541,7 @@ int main(int argc, char* argv[])
     if (enable_parameter_dump)
     {
         std::cout << sushi::generate_processor_parameter_document(controller.get());
-        error_exit("");
+        std::exit(0);
     }
 
     if (frontend_type == FrontendType::JACK

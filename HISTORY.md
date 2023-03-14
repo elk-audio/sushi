@@ -1,3 +1,47 @@
+## 1.0.0
+
+New features:
+  * clang 13+ support
+  * gcc 10+ support
+  * macOS support
+  * VST2 & VST3 bundle support for macOS
+  * Portaudio frontend
+  * RtMIDI frontend
+  * MIDI clock output
+  * Processor state save & reload
+  * Plugin binary state setting
+  * Session state save & reload
+  * Refactor track modes w.r.t. channel configuration
+  * "pre" and "post" tracks to process engine channels before/after dispatching them to tracks
+  * Audio frontends pause/restart
+  * Switch from liblo to oscpack for OSC
+  * Option to set target OSC IP
+  * Channel specification in send&return internal plugins
+  * Extended parameter notifications, now multiple controllers can be updated easily at the same time
+  * LV2 parameter output support
+  * Command-line switches to disable OSC and gRPC
+  * Use vcpkg to manage most of third-party dependencies
+  * Refactored CMake configuration, now using SUSHI_ for options prefix
+  * Ableton Link updated to v3.0.5
+  * TWINE updated to v0.3.2
+  * VST3 SDK updated to v3.7.6
+
+Fixes:
+  * Workaround for delayed ALSA MIDI event output
+  * Crash in MIDI dispatcher when deleting track connections
+  * Various JSON parsing fixes
+  * Memory leak in VST3 wrapper
+  * Issue with setting different samplerate from JSON and audio frontend
+  * Slow response to large numbers of VST3 parameter changes
+  * Peakmeter formatted level parameter scaling
+
+Breaking changes:
+  * All build options renamed to SUSHI_XXX_YYY from XXX_YYY
+  * Vcpgk initalization step required at first build. See README.md
+  * Track channel config has been simplified. The json "mode" member has been replaced with an integer "channels" member. To create a multibus track, an additional member "multibus" must be set to true and the number of buses specified with the "buses" member.
+  * Tracks now only report number of channels (and buses in the multibus case) and input and output channels and busses are assumed to be the same.
+  * All instances of "busses" in json config and grpc api has been corrected to "buses"
+
 ## 0.12.0
 
 New Features:

@@ -2,10 +2,8 @@
 #  CMake packages  #
 ####################
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+find_package(gRPC REQUIRED)
 
-find_package(Protobuf REQUIRED)
-find_package(GRPC REQUIRED)
 
 ################################
 #  gRPC / Protobuf generation  #
@@ -13,16 +11,28 @@ find_package(GRPC REQUIRED)
 
 set(PROTOS protos/sushi_rpc.proto)
 
-set(PROTO_SRC_DIR ${CMAKE_CURRENT_BINARY_DIR}/proto-src)
-file(MAKE_DIRECTORY ${PROTO_SRC_DIR})
+# In yocto environments, CMAKE_CROSSCOMPILING is set. This if condition is needed
+# as yocto grpc does not include gRPCPluginTargets.cmake when find_package(gRPC REQUIRED)
+# is called. 
+if(CMAKE_CROSSCOMPILING)
+    find_program(_gRPC_CPP_PLUGIN grpc_cpp_plugin)
+else()
+    set(_gRPC_CPP_PLUGIN $<TARGET_FILE:grpc_cpp_plugin>)
+endif()
 
-protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_SRC_DIR} ${PROTOS})
-grpc_generate_cpp(GRPC_SRCS GRPC_HDRS ${PROTO_SRC_DIR} ${PROTOS})
-
-# Supress warnings in auto-generated files
-foreach(ITEM ${PROTO_SRCS} ${GRPC_SRCS})
-    set_source_files_properties(${ITEM} PROPERTIES COMPILE_FLAGS -Wno-unused-parameter)
-endforeach()
+# Intermediate library target with the generated protobuf objects
+add_library(protos-lib OBJECT)
+target_sources(protos-lib PRIVATE ${PROTOS})
+target_link_libraries(protos-lib PUBLIC gRPC::grpc++)
+target_include_directories(protos-lib PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+protobuf_generate(TARGET protos-lib LANGUAGE cpp)
+protobuf_generate(
+    TARGET protos-lib
+    LANGUAGE grpc
+    GENERATE_EXTENSIONS .grpc.pb.h .grpc.pb.cc
+    PLUGIN
+    "protoc-gen-grpc=${_gRPC_CPP_PLUGIN}"
+)
 
 ######################
 #  Library target    #
@@ -32,27 +42,16 @@ set(SUSHI_GRPC_SOURCES src/grpc_server.cpp
                        src/control_service.cpp
                        src/async_service_call_data.cpp )
 
-set(SUSHI_RPC_INCLUDE_DIRS ${PROTO_SRC_DIR}
+set(SUSHI_RPC_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/protos
                            ${CMAKE_CURRENT_SOURCE_DIR}
                            ${PROJECT_SOURCE_DIR}/include
                            ${PROJECT_SOURCE_DIR}/src )
 
-add_library(sushi_rpc STATIC ${SUSHI_GRPC_SOURCES}
-                             ${PROTO_SRCS}
-                             ${GRPC_SRCS} )
-
-find_library(GPR_LIB NAMES gpr)
+add_library(sushi_rpc STATIC ${SUSHI_GRPC_SOURCES})
 
 target_include_directories(sushi_rpc PUBLIC include)
-target_link_libraries(sushi_rpc gRPC::grpc++_reflection protobuf::libprotobuf ${GPR_LIB})
+target_include_directories(sushi_rpc PRIVATE ${SUSHI_RPC_INCLUDE_DIRS})
+target_link_libraries(sushi_rpc PUBLIC gRPC::grpc++ protos-lib)
 target_compile_features(sushi_rpc PRIVATE cxx_std_17)
 target_compile_options(sushi_rpc PRIVATE -Wall -Wextra )
 
-target_include_directories(sushi_rpc PRIVATE ${SUSHI_RPC_INCLUDE_DIRS})
-target_include_directories(sushi_rpc PUBLIC include)
-
-##################
-#  Install step  #
-##################
-
-install(FILES ${PROTOS} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/sushi)

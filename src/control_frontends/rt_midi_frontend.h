@@ -14,8 +14,8 @@
  */
 
  /**
- * @brief Alsa midi frontend, provides a frontend for getting midi messages into the engine
- * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @brief RT midi frontend, provides a frontend for getting midi messages into the engine
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  *
  * This module provides a frontend for getting midi messages into the engine
  */
@@ -25,7 +25,7 @@
 
 #include <map>
 
-#include "RtMidi.h"
+#include <rtmidi/RtMidi.h>
 
 #include "base_midi_frontend.h"
 

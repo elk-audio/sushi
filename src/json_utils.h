@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -14,21 +14,18 @@
  */
 
 /**
- * @brief Utility functions for writing parameter names to a file.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @brief Utility functions around rapidjson library
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#ifndef SUSHI_PARAMETER_DUMP_H
-#define SUSHI_PARAMETER_DUMP_H
+#ifndef SUSHI_JSON_UTILS_H
+#define SUSHI_JSON_UTILS_H
 
-#include "engine/controller/controller.h"
-#include "json_utils.h"
+#include <iostream>
 
-namespace sushi {
+#include "rapidjson/document.h"
 
-rapidjson::Document generate_processor_parameter_document(sushi::ext::SushiControl* engine_controller);
+std::ostream& operator<<(std::ostream& out, const rapidjson::Document& document);
 
-} // end namespace sushi
+#endif // SUSHI_JSON_UTILS_H
 
-
-#endif //SUSHI_PARAMETER_DUMP_H

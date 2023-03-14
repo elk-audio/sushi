@@ -27,6 +27,7 @@
 #include <utility>
 #include <bitset>
 #include <limits>
+#include <string>
 
 #include "library/constants.h"
 #include "base_event_dispatcher.h"
@@ -256,6 +257,8 @@ public:
     virtual void set_transport_mode(PlayingMode /*mode*/) = 0;
 
     virtual void set_tempo_sync_mode(SyncMode /*mode*/) = 0;
+
+    virtual void set_base_plugin_path(const std::string& /*path*/) = 0;
 
     virtual EngineReturnStatus send_rt_event(const RtEvent& /*event*/) = 0;
 

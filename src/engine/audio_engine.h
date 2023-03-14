@@ -35,6 +35,7 @@
 #include "engine/receiver.h"
 #include "engine/transport.h"
 #include "engine/host_control.h"
+#include "engine/plugin_library.h"
 #include "engine/controller/controller.h"
 #include "engine/audio_graph.h"
 #include "engine/connection_storage.h"
@@ -341,6 +342,16 @@ public:
     void set_tempo_sync_mode(SyncMode mode) override;
 
     /**
+     * @brief Set an absolute path to be the base for plugin paths
+     *
+     * @param path Absolute path of the base plugin folder
+     */
+    virtual void set_base_plugin_path(const std::string& path) override
+    {
+        _plugin_library.set_base_plugin_path(path);
+    }
+
+    /**
      * @brief Send an RtEvent directly to the realtime thread, should normally only be used
      *        from an rt thread or in a context where the engine is not running in realtime mode
      * @param event The event to process
@@ -623,9 +634,10 @@ private:
     RtEventFifo<> _prepost_event_outputs;
     receiver::AsynchronousEventReceiver _event_receiver{&_control_queue_out};
     Transport _transport;
+    PluginLibrary _plugin_library;
 
     std::unique_ptr<dispatcher::BaseEventDispatcher> _event_dispatcher;
-    HostControl _host_control{nullptr, &_transport};
+    HostControl _host_control{nullptr, &_transport, &_plugin_library};
 
     performance::PerformanceTimer _process_timer;
     int  _log_timing_print_counter{0};

@@ -1,3 +1,5 @@
+#include <filesystem>
+
 #include "gtest/gtest.h"
 
 #include "test_utils/host_control_mockup.h"
@@ -35,7 +37,8 @@ protected:
 
 TEST_F(TestVst2xPluginLoading, TestPluginRegistryVst2xLoading)
 {
-    char* full_again_path = realpath(VST2_TEST_PLUGIN_PATH, NULL);
+    auto full_path = std::filesystem::path(VST2_TEST_PLUGIN_PATH);
+    auto full_again_path = std::string(std::filesystem::absolute(full_path));
 
     PluginInfo plugin_info;
     plugin_info.uid = "";
@@ -48,17 +51,16 @@ TEST_F(TestVst2xPluginLoading, TestPluginRegistryVst2xLoading)
                                                                        SAMPLE_RATE);
 
     ASSERT_EQ(processor_status, ProcessorReturnCode::OK);
-
-    free(full_again_path);
 }
 
 TEST_F(TestVst2xPluginLoading, TestLoadPlugin)
 {
     // dlopen on Linux requires absolute paths if library is not on system paths already
-    char* full_again_path = realpath(VST2_TEST_PLUGIN_PATH, NULL);
+    auto full_path = std::filesystem::path(VST2_TEST_PLUGIN_PATH);
+    auto full_again_path = std::string(std::filesystem::absolute(full_path));
+
     auto library_handle = vst2::PluginLoader::get_library_handle_for_plugin(full_again_path);
     ASSERT_NE(nullptr, library_handle);
-    free(full_again_path);
     auto plugin = vst2::PluginLoader::load_plugin(library_handle);
 
     // Check magic number

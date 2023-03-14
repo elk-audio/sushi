@@ -1,0 +1,92 @@
+{
+    "host_config" : {
+        "samplerate" : 48000
+    },
+    "tracks" : [
+        {
+            "name" : "guitar",
+            "channels" : 2,
+            "inputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "path" : "mda-vst3.vst3",
+                    "uid" : "mda Combo",
+                    "name" : "mda Combo",
+                    "type" : "vst3x"
+                },
+                {
+                    "path" : "mda-vst3.vst3",
+                    "uid" : "mda Bandisto",
+                    "name" : "mda Bandisto",
+                    "type" : "vst3x"
+                }
+            ]
+        },
+        {
+            "name" : "synth",
+            "channels" : 2,
+            "inputs" : [
+            ],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "path" : "mda-vst3.vst3",
+                    "uid" : "mda EPiano",
+                    "name" : "mda EPiano",
+                    "type" : "vst3x"
+                },
+                {
+                    "path" : "mda-vst3.vst3",
+                    "uid" : "mda RezFilter",
+                    "name" : "mda RezFilter",
+                    "type" : "vst3x"
+                },
+                {
+                    "path" : "mda-vst3.vst3",
+                    "uid" : "mda Ambience",
+                    "name" : "mda Ambience",
+                    "type" : "vst3x"
+                },
+                {
+                    "path" : "mda-vst3.vst3",
+                    "uid" : "mda Delay",
+                    "name" : "mda Delay",
+                    "type" : "vst3x"
+                }
+            ]
+        }
+    ],
+    "midi" : {
+        "track_connections" : [
+            {
+                "port" : 0,
+                "channel" : "all",
+                "track" : "synth",
+		        "raw_midi" : true
+            }
+        ],
+        "program_change_connections" : [
+            {
+                "port" : 0,
+                "channel" : "all",
+                "plugin" : "synth"
+            }
+        ]
+    }
+}

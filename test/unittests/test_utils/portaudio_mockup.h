@@ -5,6 +5,7 @@ class MockPortAudio
 {
 public:
     MOCK_METHOD(PaError, Pa_Initialize, ());
+    MOCK_METHOD(PaError, Pa_Terminate, ());
     MOCK_METHOD(const char*, Pa_GetErrorText, (PaError));
     MOCK_METHOD(int, Pa_GetDeviceCount, ());
     MOCK_METHOD(int, Pa_GetDefaultInputDevice, ());
@@ -33,6 +34,11 @@ MockPortAudio* mockPortAudio;
 PaError Pa_Initialize()
 {
     return mockPortAudio->Pa_Initialize();
+}
+
+PaError Pa_Terminate()
+{
+    return mockPortAudio->Pa_Terminate();
 }
 
 const char* Pa_GetErrorText(PaError error)

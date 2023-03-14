@@ -35,22 +35,22 @@
                 {
                     "uid" : "sushi.testing.gain",
                     "name" : "gain",
-                    "type"   : "internal"
+                    "type" : "internal"
                 }
             ]
         }
     ],
 
     "midi" : {
-        "track_connections": [
+        "track_connections" : [
             {
-                "port": 0,
-                "channel": "all",
-                "track": "main",
-                "raw_midi": false
+                "port" : 0,
+                "channel" : "all",
+                "track" : "main",
+                "raw_midi" : false
             }
         ],
-        "cc_mappings": [
+        "cc_mappings" : [
         ]
     }
 }

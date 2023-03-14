@@ -1,3 +1,5 @@
+#include <filesystem>
+
 #include "gtest/gtest.h"
 
 #define private public
@@ -52,9 +54,10 @@ protected:
 
     void SetUp(const std::string& plugin_path)
     {
-        char* full_plugin_path = realpath(plugin_path.c_str(), nullptr);
+        auto full_path = std::filesystem::path(plugin_path.c_str());
+        auto full_plugin_path = std::string(std::filesystem::absolute(full_path));
+
         _module_under_test = std::make_unique<Vst2xWrapper>(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE), full_plugin_path);
-        free(full_plugin_path);
 
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
         ASSERT_EQ(ProcessorReturnCode::OK, ret);

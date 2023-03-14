@@ -53,7 +53,7 @@ ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
     _sample_rate = sample_rate;
 
     // Load shared library and VsT struct
-    _library_handle = PluginLoader::get_library_handle_for_plugin(_plugin_path);
+    _library_handle = PluginLoader::get_library_handle_for_plugin(_host_control.to_absolute_path(_plugin_path));
     if (_library_handle == nullptr)
     {
         _cleanup();

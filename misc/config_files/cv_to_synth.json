@@ -2,7 +2,7 @@
     "host_config" : {
         "samplerate" : 48000,
         "cv_inputs" : 2,
-        "cv_outputs" :0
+        "cv_outputs" : 0
     },
     "tracks" : [
         {
@@ -22,9 +22,10 @@
                     "type" : "internal"
                 },
                 {
-                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaJX10.so",
-                    "name" : "synth",
-                    "type" : "vst2x"
+                    "path" : "mda-vst3.vst3",
+                    "name" : "mda JX10",
+                    "type" : "vst3x",
+                    "uid" : "mda JX10"
                 }
             ]
         }
@@ -41,7 +42,7 @@
             },
             {
                 "cv": 1,
-                "processor" : "synth",
+                "processor" : "mda JX10",
                 "parameter" : "VCF Freq"
             }
         ],

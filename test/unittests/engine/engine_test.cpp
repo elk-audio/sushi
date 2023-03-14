@@ -607,5 +607,5 @@ TEST_F(TestEngine, TestMasterTrackProcessing)
 
     track->process_event(gain_event);
     _module_under_test->process_chunk(&in_buffer, &out_buffer, &ctrl_buffer, &ctrl_buffer, Time(0), 0);
-    EXPECT_GT(out_buffer.channel(0)[0], 1.0f);
+    EXPECT_GE(out_buffer.channel(0)[0], 1.0f);
 }

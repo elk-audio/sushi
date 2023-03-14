@@ -28,7 +28,7 @@
         }
     ],
     "midi" : {
-        "cc_mappings": [
+        "cc_mappings" : [
         ]
     }
 }

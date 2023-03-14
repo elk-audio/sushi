@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -14,18 +14,11 @@
  */
 
 /**
- * @brief Utility functions for writing parameter names to a file.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @brief Utility functions for dumping plugins' parameter info
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include <iostream>
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wtype-limits"
-#include "rapidjson/ostreamwrapper.h"
-#include "rapidjson/prettywriter.h"
-#include "rapidjson/document.h"
-#pragma GCC diagnostic pop
+#include "json_utils.h"
 #include "library/parameter_dump.h"
 #include "control_frontends/osc_utils.h"
 
@@ -36,7 +29,6 @@ rapidjson::Document generate_processor_parameter_document(sushi::ext::SushiContr
     rapidjson::Document document;
     document.SetObject();
     rapidjson::Document::AllocatorType& allocator = document.GetAllocator();
-    rapidjson::Value processor_list(rapidjson::kObjectType);
     rapidjson::Value processors(rapidjson::kArrayType);
     auto graph_controller = engine_controller->audio_graph_controller();
     auto param_controller = engine_controller->parameter_controller();
@@ -46,20 +38,20 @@ rapidjson::Document generate_processor_parameter_document(sushi::ext::SushiContr
         for(auto& processor : graph_controller->get_track_processors(track.id).second)
         {
             rapidjson::Value processor_obj(rapidjson::kObjectType);
-            processor_obj.AddMember(rapidjson::Value("name", allocator).Move(), 
+            processor_obj.AddMember(rapidjson::Value("name", allocator).Move(),
                                     rapidjson::Value(processor.name.c_str(), allocator).Move(), allocator);
 
-            processor_obj.AddMember(rapidjson::Value("label", allocator).Move(), 
+            processor_obj.AddMember(rapidjson::Value("label", allocator).Move(),
                                     rapidjson::Value(processor.label.c_str(), allocator).Move(), allocator);
 
-            processor_obj.AddMember(rapidjson::Value("processor_id", allocator).Move(), 
+            processor_obj.AddMember(rapidjson::Value("processor_id", allocator).Move(),
                                     rapidjson::Value(processor.id).Move(), allocator);
 
             processor_obj.AddMember(rapidjson::Value("parent_track_id", allocator).Move(),
                                     rapidjson::Value(track.id).Move(), allocator);
 
             rapidjson::Value parameters(rapidjson::kArrayType);
-            
+
             for(auto& parameter : param_controller->get_processor_parameters(processor.id).second)
             {
                 rapidjson::Value parameter_obj(rapidjson::kObjectType);
@@ -91,10 +83,3 @@ rapidjson::Document generate_processor_parameter_document(sushi::ext::SushiContr
 
 } // end namespace sushi
 
-std::ostream& operator<<(std::ostream& out, const rapidjson::Document& document)
-{
-    rapidjson::OStreamWrapper osw(out);
-    rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(osw);
-    document.Accept(writer);
-    return out;
-}

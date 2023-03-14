@@ -1,0 +1,54 @@
+{
+    "host_config" : {
+        "samplerate" : 48000
+    },
+    "osc" : {
+        "enable_all_processor_outputs" : true
+    },
+    "pre_track" : {
+        "name" : "pre",
+        "plugins" : [
+            {
+                "uid" : "sushi.testing.gain",
+                "name" : "pregain",
+                "type" : "internal"
+            }
+        ]
+    },
+    "tracks" : [
+        {
+            "name" : "main",
+            "channels" : 2,
+            "inputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "outputs" : [
+                {
+                    "track_bus" : 0,
+                    "engine_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "uid" : "sushi.testing.equalizer",
+                    "name" : "eq",
+                    "type" : "internal"
+                }
+            ]
+        }
+    ],
+    "post_track" : {
+        "name" : "post",
+        "plugins" : [
+            {
+                "uid" : "sushi.testing.peakmeter",
+                "name" : "peakmeter",
+                "type" : "internal"
+            }
+        ]
+    }
+}
+

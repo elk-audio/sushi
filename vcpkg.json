@@ -1,0 +1,20 @@
+{
+  "name": "sushi",
+  "version-string": "1.0.0",
+  "homepage" : "https://github.com/elk-audio/sushi",
+  "description" : "Headless plugin host for Elk Audio OS",
+  "dependencies": [
+    {
+      "name": "grpc",
+      "features": [
+        "codegen"
+      ]
+    },
+    {
+      "name": "libsndfile",
+      "default-features": false
+    },
+    "portaudio",
+    "rtmidi"
+  ]
+}

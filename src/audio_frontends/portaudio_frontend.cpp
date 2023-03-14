@@ -39,11 +39,10 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
         return ret_code;
     }
 
-    PaError err = Pa_Initialize();
-    if (err != paNoError)
+    ret_code = _initialize_portaudio();
+    if (ret_code != AudioFrontendStatus::OK)
     {
-        SUSHI_LOG_ERROR("Error initializing PortAudio: {}", Pa_GetErrorText(err));
-        return AudioFrontendStatus::AUDIO_HW_ERROR;
+        return ret_code;
     }
 
     // Setup devices
@@ -118,18 +117,22 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
     // Open the stream
     // In case there is no input device available we only want to use output
     auto input_param_ptr = (_audio_input_channels + _cv_input_channels) > 0 ? &input_parameters : NULL;
-    err = Pa_OpenStream(&_stream,
-                        input_param_ptr,
-                        &output_parameters,
-                        samplerate,
-                        AUDIO_CHUNK_SIZE,
-                        paNoFlag,
-                        &rt_process_callback,
-                        static_cast<void*>(this));
+    PaError err = Pa_OpenStream(&_stream,
+                                input_param_ptr,
+                                &output_parameters,
+                                samplerate,
+                                AUDIO_CHUNK_SIZE,
+                                paNoFlag,
+                                &rt_process_callback,
+                                static_cast<void*>(this));
     if (err != paNoError)
     {
         SUSHI_LOG_ERROR("Failed to open stream: {}", Pa_GetErrorText(err));
         return AudioFrontendStatus::AUDIO_HW_ERROR;
+    }
+    else
+    {
+        _stream_initialized = true;
     }
     auto stream_info = Pa_GetStreamInfo(_stream);
     Time latency = std::chrono::microseconds(static_cast<int>(stream_info->outputLatency * 1'000'000));
@@ -164,16 +167,30 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
 
 void PortAudioFrontend::cleanup()
 {
-    _engine->enable_realtime(false);
-    PaError result = Pa_IsStreamActive(_stream);
-    if (result == 1)
+    PaError result;
+    if (_engine != nullptr)
     {
-        SUSHI_LOG_INFO("Closing PortAudio stream");
-        Pa_StopStream(_stream);
+        _engine->enable_realtime(false);
     }
-    else if (result != paNoError)
+
+    if (_stream_initialized)
     {
-        SUSHI_LOG_WARNING("Error while checking for active stream: {}", Pa_GetErrorText(result));
+        result = Pa_IsStreamActive(_stream);
+        if (result == 1)
+        {
+            SUSHI_LOG_INFO("Closing PortAudio stream");
+            Pa_StopStream(_stream);
+        }
+        else if ((result != paNoError) && (_engine != nullptr))
+        {
+            SUSHI_LOG_WARNING("Error while checking for active stream: {}", Pa_GetErrorText(result));
+        }
+    }
+
+    result = Pa_Terminate();
+    if (result != paNoError)
+    {
+        SUSHI_LOG_WARNING("Error while terminating Portaudio: {}", Pa_GetErrorText(result));
     }
 }
 
@@ -181,6 +198,95 @@ void PortAudioFrontend::run()
 {
     _engine->enable_realtime(true);
     Pa_StartStream(_stream);
+}
+
+std::optional<int> PortAudioFrontend::devices_count()
+{
+    if (! (_initialize_portaudio() == AudioFrontendStatus::OK))
+    {
+        return std::nullopt;
+    }
+
+    int devices = Pa_GetDeviceCount();
+    if (devices < 0)
+    {
+        SUSHI_LOG_ERROR("Error querying portaudio devices: {}", devices);
+        return std::nullopt;
+    }
+
+    return devices;
+}
+
+std::optional<PortaudioDeviceInfo> PortAudioFrontend::device_info(int device_idx)
+{
+    if (! (_initialize_portaudio() == AudioFrontendStatus::OK))
+    {
+        return std::nullopt;
+    }
+
+    const PaDeviceInfo* pa_devinfo = Pa_GetDeviceInfo(device_idx);
+    if (pa_devinfo == nullptr)
+    {
+        SUSHI_LOG_ERROR("Error querying portaudio devices {}", device_idx);
+        return std::nullopt;
+    }
+
+    PortaudioDeviceInfo devinfo;
+    devinfo.name = pa_devinfo->name;
+    devinfo.inputs = pa_devinfo->maxInputChannels;
+    devinfo.outputs = pa_devinfo->maxOutputChannels;
+
+    return devinfo;
+}
+
+std::optional<int> PortAudioFrontend::default_input_device()
+{
+    if (! (_initialize_portaudio() == AudioFrontendStatus::OK))
+    {
+        return std::nullopt;
+    }
+
+    int default_input = Pa_GetDefaultInputDevice();
+    if (default_input == paNoDevice)
+    {
+        SUSHI_LOG_WARNING("Could not retrieve default input device");
+        return std::nullopt;
+    }
+
+    return default_input;
+}
+
+std::optional<int> PortAudioFrontend::default_output_device()
+{
+    if (! (_initialize_portaudio() == AudioFrontendStatus::OK))
+    {
+        return std::nullopt;
+    }
+
+    int default_output = Pa_GetDefaultOutputDevice();
+    if (default_output == paNoDevice)
+    {
+        SUSHI_LOG_WARNING("Could not retrieve default output device");
+        return std::nullopt;
+    }
+
+    return default_output;
+}
+
+AudioFrontendStatus PortAudioFrontend::_initialize_portaudio()
+{
+    if (_pa_initialized)
+    {
+        return AudioFrontendStatus::OK;
+    }
+
+    PaError err = Pa_Initialize();
+    if (err != paNoError)
+    {
+        SUSHI_LOG_ERROR("Error initializing PortAudio: {}", Pa_GetErrorText(err));
+        return AudioFrontendStatus::AUDIO_HW_ERROR;
+    }
+    return AudioFrontendStatus::OK;
 }
 
 AudioFrontendStatus PortAudioFrontend::_configure_audio_channels(const PortAudioFrontendConfiguration* config)
@@ -202,12 +308,12 @@ AudioFrontendStatus PortAudioFrontend::_configure_audio_channels(const PortAudio
     _cv_output_channels = config->cv_outputs;
     if (_cv_input_channels > _num_total_input_channels)
     {
-        SUSHI_LOG_ERROR("Requested more CV channels then available input channels");
+        SUSHI_LOG_ERROR("Requested more CV channels than available input channels");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     if (_cv_output_channels > _num_total_output_channels)
     {
-        SUSHI_LOG_ERROR("Requested more CV channels then available output channels");
+        SUSHI_LOG_ERROR("Requested more CV channels than available output channels");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 

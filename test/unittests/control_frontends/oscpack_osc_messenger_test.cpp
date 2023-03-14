@@ -44,7 +44,6 @@ using namespace sushi;
 using namespace sushi::control_frontend;
 using namespace sushi::osc;
 
-constexpr float TEST_SAMPLE_RATE = 44100;
 constexpr int OSC_TEST_SERVER_PORT = 24024;
 constexpr int OSC_TEST_SEND_PORT = 24023;
 constexpr auto OSC_TEST_SEND_ADDRESS = "127.0.0.1";

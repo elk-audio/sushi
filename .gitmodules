@@ -17,12 +17,12 @@
 [submodule "third-party/vst3sdk"]
 	path = third-party/vst3sdk
 	url = https://github.com/steinbergmedia/vst3sdk.git
-[submodule "third-party/rtmidi"]
-	path = third-party/rtmidi
-	url = https://github.com/thestk/rtmidi.git
 [submodule "third-party/oscpack"]
 	path = third-party/oscpack
 	url = https://github.com/ENTTEC/oscpack.git
-[submodule "third-party/portaudio"]
-	path = third-party/portaudio
-	url = https://github.com/PortAudio/portaudio.git
+[submodule "third-party/vcpkg"]
+	path = third-party/vcpkg
+	url = https://github.com/Microsoft/vcpkg.git
+[submodule "rpc_interface/protos"]
+	path = rpc_interface/protos
+	url = ../sushi-grpc-api

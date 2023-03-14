@@ -169,7 +169,7 @@ public:
     AudioFrontendStatus init(BaseAudioFrontendConfiguration*) override;
     void cleanup() override {}
     void run() override {}
-    void pause([[maybe_unused]] bool enabled) {}
+    void pause([[maybe_unused]] bool enabled) override {}
 };
 }; // end namespace jack_frontend
 }; // end namespace sushi
