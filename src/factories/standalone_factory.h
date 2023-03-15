@@ -18,7 +18,7 @@
 
 #include "include/sushi/sushi.h"
 
-#include "src/factories/base_factory.h"
+#include "sushi/base_factory.h"
 
 namespace sushi_rpc {
 class GrpcServer;

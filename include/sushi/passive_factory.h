@@ -19,7 +19,7 @@
 #include "rt_controller.h"
 #include "sushi.h"
 
-#include "factories/base_factory.h"
+#include "base_factory.h"
 
 namespace sushi_rpc {
 class GrpcServer;

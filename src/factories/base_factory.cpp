@@ -13,7 +13,7 @@
 * SUSHI. If not, see http://www.gnu.org/licenses/
 */
 
-#include "base_factory.h"
+#include "sushi/base_factory.h"
 
 #include "engine/audio_engine.h"
 #include "engine/json_configurator.h"

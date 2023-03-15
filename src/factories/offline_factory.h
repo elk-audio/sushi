@@ -17,7 +17,7 @@
 #define SUSHI_OFFLINE_FACTORY_H
 
 #include "include/sushi/sushi.h"
-#include "src/factories/base_factory.h"
+#include "sushi/base_factory.h"
 
 namespace sushi {
 
