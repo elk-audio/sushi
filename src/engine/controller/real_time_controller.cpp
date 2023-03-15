@@ -56,8 +56,7 @@ void RealTimeController::set_time_signature(ext::TimeSignature time_signature)
 
     if (_time_signature != internal_time_signature)
     {
-        _transport->set_time_signature(internal_time_signature,
-                                       false); // update_via_event
+        _transport->set_time_signature(internal_time_signature, false); // update_via_event
 
         _time_signature = internal_time_signature;
     }

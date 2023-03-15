@@ -28,7 +28,7 @@
 // For AUDIO_CHUNK_SIZE.
 #include "library/constants.h"
 
-#include "options.h"
+#include "include/sushi/options.h"
 
 struct CompileTimeSettings
 {

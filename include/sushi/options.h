@@ -97,7 +97,6 @@ struct SushiArg : public optionparser::Arg
         }
         return optionparser::ARG_ILLEGAL;
     }
-
 };
 
 ////////////////////////////////////////////////////////////////////////////////
