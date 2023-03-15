@@ -39,6 +39,19 @@
 namespace sushi {
 namespace audio_frontend {
 
+
+#ifdef SUSHI_BUILD_WITH_PORTAUDIO
+
+/**
+ * @brief Given an optional portaudio output device ID, this attempts to fetch the corresponding name.
+ *        If no id is passed (the optional argument has no value), the default output device is used.
+ * @param portaudio_output_device_id an optional int device id.
+ * @return An optional std::string, if a value can be resolved.
+ */
+[[nodiscard]] std::optional<std::string> get_portaudio_output_device_name(std::optional<int> portaudio_output_device_id);
+
+#endif
+
 struct PortaudioDeviceInfo
 {
     std::string name;

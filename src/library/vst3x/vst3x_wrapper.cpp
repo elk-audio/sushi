@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Wrapper for VST 3.x plugins.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include <string>
@@ -146,9 +146,11 @@ void Vst3xWrapper::_cleanup()
     {
         set_enabled(false);
     }
-    if (_state_parameter_changes)
+
+    Vst3xRtState* state;
+    while (_state_change_queue.pop(state))
     {
-        delete _state_parameter_changes;
+        delete state;
     }
 }
 
@@ -174,13 +176,7 @@ ProcessorReturnCode Vst3xWrapper::init(float sample_rate)
     {
         return ProcessorReturnCode::PLUGIN_INIT_ERROR;
     }
-    auto res = _instance.component()->setActive(Steinberg::TBool(true));
-    if (res != Steinberg::kResultOk)
-    {
-        SUSHI_LOG_ERROR("Failed to activate component with error code: {}", res);
-        return ProcessorReturnCode::PLUGIN_INIT_ERROR;
-    }
-    res = _instance.controller()->setComponentHandler(&_component_handler);
+    auto res = _instance.controller()->setComponentHandler(&_component_handler);
     if (res != Steinberg::kResultOk)
     {
         SUSHI_LOG_ERROR("Failed to set component handler with error code: {}", res);
@@ -302,6 +298,8 @@ void Vst3xWrapper::process_event(const RtEvent& event)
 
 void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
+    Vst3xRtState* state_update = nullptr;
+
     if (_bypass_parameter.supported == false && _bypass_manager.should_process() == false)
     {
         bypass_process(in_buffer, out_buffer);
@@ -309,9 +307,10 @@ void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
     else
     {
         _fill_processing_context();
-        if (_state_parameter_changes)
+
+        if (_state_change_queue.pop(state_update))
         {
-            _process_data.inputParameterChanges = _state_parameter_changes;
+            _process_data.inputParameterChanges = state_update;
         }
         _process_data.assign_buffers(in_buffer, out_buffer, _current_input_channels, _current_output_channels);
         _instance.processor()->process(_process_data);
@@ -329,11 +328,11 @@ void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
         _notify_parameter_change = false;
     }
 
-    if (_state_parameter_changes)
+    if (state_update)
     {
         _process_data.inputParameterChanges = &_in_parameter_changes;
-        async_delete(_state_parameter_changes);
-        _state_parameter_changes = nullptr;
+        async_delete(state_update);
+        notify_state_change_rt();
     }
     _process_data.clear();
 }
@@ -1129,13 +1128,13 @@ void Vst3xWrapper::_set_binary_state(std::vector<std::byte>& state)
 
 void Vst3xWrapper::_set_state_rt(Vst3xRtState* state)
 {
-    if (_state_parameter_changes)
+    if (_state_change_queue.push(state) == false)
     {
-        // If a parameter batch is already queued, just throw it away and use the new one.
-        async_delete(_state_parameter_changes);
+        /* If the queue of parameter batches is full, ignore it and make sure the object doesn't leak.
+         * This should most likely never happen, even the case of 2 state changes in the same process
+         * call should be a very rare occasion */
+        async_delete(state);
     }
-    _state_parameter_changes = state;
-    notify_state_change_rt();
 }
 
 Steinberg::Vst::SpeakerArrangement speaker_arr_from_channels(int channels)

@@ -48,8 +48,7 @@
 #include "library/performance_timer.h"
 #include "library/plugin_registry.h"
 
-namespace sushi {
-namespace engine {
+namespace sushi::engine {
 
 class ClipDetector
 {
@@ -73,7 +72,6 @@ public:
     void detect_clipped_samples(const ChunkSampleBuffer& buffer, RtSafeRtEventFifo& queue, bool audio_input);
 
 private:
-
     unsigned int _interval{0};
     std::vector<unsigned int> _input_clip_count;
     std::vector<unsigned int> _output_clip_count;
@@ -92,7 +90,8 @@ public:
      * @param rt_cpu_cores The maximum number of cpu cores to use for audio processing. Default
      *                     is 1 and means that audio processing is done only in the rt callback
      *                     of the audio frontend.
-     *                     With values >1 tracks will be processed in parallel threads.
+     *                     With values > 1 tracks will be processed in parallel threads.
+     * @param device_name The audio device name - only used on Apple for fetching the audio thread workgroup, and will be unused on other platforms.
      * @param debug_mode_sw Enable xenomai specific thread debugging for all audio threads in
      *                      multicore mode.
      * @param event_dispatcher A pointer to a BaseEventDispatcher instance, which AudioEngine takes over ownership of.
@@ -100,6 +99,7 @@ public:
      */
     explicit AudioEngine(float sample_rate,
                          int rt_cpu_cores = 1,
+                         std::optional<std::string> device_name = std::nullopt,
                          bool debug_mode_sw = false,
                          dispatcher::BaseEventDispatcher* event_dispatcher = nullptr);
 
@@ -393,8 +393,8 @@ public:
      * @param processor_name
      * @return
      */
-    std::pair <EngineReturnStatus, ObjectId> create_processor(const PluginInfo& plugin_info,
-                                                              const std::string& processor_name) override;
+    std::pair<EngineReturnStatus, ObjectId> create_processor(const PluginInfo& plugin_info,
+                                                             const std::string& processor_name) override;
 
     /**
      * @brief Add a plugin to a track. The plugin must not currently be active on any track.
@@ -657,6 +657,6 @@ private:
  */
 RealtimeState update_state(RealtimeState current_state);
 
-} // namespace engine
-} // namespace sushi
+} // namespace sushi::engine
+
 #endif //SUSHI_ENGINE_H

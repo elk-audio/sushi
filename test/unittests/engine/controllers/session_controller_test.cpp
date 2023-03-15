@@ -27,7 +27,7 @@ protected:
     SessionControllerTest() {}
     void SetUp()
     {
-        _audio_engine = std::make_unique<AudioEngine>(TEST_SAMPLE_RATE, 1, false, new EventDispatcherMockup());
+        _audio_engine = std::make_unique<AudioEngine>(TEST_SAMPLE_RATE, 1, "", false, new EventDispatcherMockup());
         _mock_osc_interface = new MockOscInterface(0, 0, "");
 
         _osc_frontend = std::make_unique<OSCFrontend>(_audio_engine.get(), &_mock_controller, _mock_osc_interface);

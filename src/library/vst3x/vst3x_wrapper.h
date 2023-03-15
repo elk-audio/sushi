@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Wrapper for VST 3.x plugins.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_VST3X_WRAPPER_H
@@ -38,6 +38,10 @@ namespace sushi {
 namespace vst3 {
 
 constexpr int VST_WRAPPER_NOTE_EVENT_QUEUE_SIZE = 256;
+// Maximum number of rt parameter changes passed on to the EditController
+constexpr int PARAMETER_UPDATE_QUEUE_SIZE = 100;
+// Maximum number of cached state changes, as only 1 can be processes per audio process call
+constexpr int STATE_CHANGE_QUEUE_SIZE = 10;
 
 /**
  * @brief internal wrapper class for loading VST plugins and make them accessible as Processor to the Engine.
@@ -218,7 +222,6 @@ private:
     Steinberg::Vst::EventList _out_event_list{VST_WRAPPER_NOTE_EVENT_QUEUE_SIZE};
     Steinberg::Vst::ParameterChanges _in_parameter_changes;
     Steinberg::Vst::ParameterChanges _out_parameter_changes;
-    Vst3xRtState* _state_parameter_changes{nullptr};
 
     SushiProcessData _process_data{&_in_event_list,
                                    &_out_event_list,
@@ -231,8 +234,10 @@ private:
     SpecialParameter _mod_wheel_parameter;
     SpecialParameter _aftertouch_parameter;
 
-    memory_relaxed_aquire_release::CircularFifo<ParameterUpdate, 100> _parameter_update_queue;
+    memory_relaxed_aquire_release::CircularFifo<Vst3xRtState*, STATE_CHANGE_QUEUE_SIZE> _state_change_queue;
+    memory_relaxed_aquire_release::CircularFifo<ParameterUpdate, PARAMETER_UPDATE_QUEUE_SIZE> _parameter_update_queue;
     std::map<Steinberg::Vst::ParamID, const ParameterDescriptor*> _parameters_by_vst3_id;
+
     friend class ComponentHandler;
 };
 

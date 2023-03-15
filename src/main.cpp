@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -7,26 +7,27 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
  * @brief Main entry point to Sushi
- * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Elk Audio AB, Stockholm
  */
 
 #include <vector>
 #include <iostream>
 #include <csignal>
 #include <optional>
-#include <condition_variable>
+
 #include <filesystem>
 
 #include "twine/src/twine_internal.h"
 
+#include "exit_control.h"
 #include "logging.h"
 #include "engine/audio_engine.h"
 #include "audio_frontends/offline_frontend.h"
@@ -34,6 +35,7 @@
 #include "audio_frontends/xenomai_raspa_frontend.h"
 #include "audio_frontends/portaudio_frontend.h"
 #include "audio_frontends/portaudio_devices_dump.h"
+#include "audio_frontends/apple_coreaudio_frontend.h"
 #include "engine/json_configurator.h"
 #include "control_frontends/osc_frontend.h"
 #include "control_frontends/oscpack_osc_messenger.h"
@@ -59,30 +61,15 @@ enum class FrontendType
     DUMMY,
     JACK,
     PORTAUDIO,
+    APPLE_COREAUDIO,
     XENOMAI_RASPA,
     NONE
 };
-
-bool                    exit_flag = false;
-bool                    exit_condition() {return exit_flag;}
-std::condition_variable exit_notifier;
-
-void signal_handler([[maybe_unused]] int sig)
-{
-    exit_flag = true;
-    exit_notifier.notify_one();
-}
 
 void print_sushi_headline()
 {
     std::cout << "SUSHI - Copyright 2017-2022 Elk, Stockholm" << std::endl;
     std::cout << "SUSHI is licensed under the Affero GPL 3.0. Source code is available at github.com/elk-audio" << std::endl;
-}
-
-void error_exit(const std::string& message)
-{
-    std::cerr << message << std::endl;
-    std::exit(1);
 }
 
 void print_version_and_build_info()
@@ -105,6 +92,11 @@ void print_version_and_build_info()
     std::cout << "Built on: " << CompileTimeSettings::build_timestamp << std::endl;
 }
 
+void pipe_signal_handler([[maybe_unused]] int sig)
+{
+    std::cout << "Pipe signal received and ignored: " << sig << std::endl;
+}
+
 int main(int argc, char* argv[])
 {
 #ifdef SUSHI_BUILD_WITH_RASPA
@@ -115,8 +107,9 @@ int main(int argc, char* argv[])
     }
 #endif
 
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
+    signal(SIGINT, exit_on_signal);
+    signal(SIGTERM, exit_on_signal);
+    signal(SIGPIPE, pipe_signal_handler);
 
     ////////////////////////////////////////////////////////////////////////////////
     // Command Line arguments parsing
@@ -139,6 +132,7 @@ int main(int argc, char* argv[])
     {
         return 1;
     }
+
     if (cl_parser.optionsCount() == 0 || cl_options[OPT_IDX_HELP])
     {
         optionparser::printUsage(fwrite, stdout, usage);
@@ -159,9 +153,11 @@ int main(int argc, char* argv[])
 
     std::optional<int> portaudio_input_device_id = std::nullopt;
     std::optional<int> portaudio_output_device_id = std::nullopt;
+    std::optional<std::string> apple_coreaudio_input_device_uid = std::nullopt;
+    std::optional<std::string> apple_coreaudio_output_device_uid = std::nullopt;
     float portaudio_suggested_input_latency = SUSHI_PORTAUDIO_INPUT_LATENCY_DEFAULT;
     float portaudio_suggested_output_latency = SUSHI_PORTAUDIO_OUTPUT_LATENCY_DEFAULT;
-    bool enable_portaudio_devs_dump = false;
+    bool enable_audio_devices_dump = false;
     std::string grpc_listening_address = SUSHI_GRPC_LISTENING_PORT_DEFAULT;
     FrontendType frontend_type = FrontendType::NONE;
     bool connect_ports = false;
@@ -174,11 +170,13 @@ int main(int argc, char* argv[])
     bool use_grpc = true;
     std::chrono::seconds log_flush_interval = std::chrono::seconds(0);
     std::string base_plugin_path = std::filesystem::current_path();
+    std::string sentry_crash_handler_path = SUSHI_SENTRY_CRASH_HANDLER_PATH_DEFAULT;
+    std::string sentry_dsn = SUSHI_SENTRY_DSN_DEFAULT;
 
-    for (int i = 0; i<cl_parser.optionsCount(); i++)
+    for (int i = 0; i < cl_parser.optionsCount(); i++)
     {
         optionparser::Option& opt = cl_buffer[i];
-        switch(opt.index())
+        switch (opt.index())
         {
         case OPT_IDX_HELP:
         case OPT_IDX_UNKNOWN:
@@ -234,12 +232,24 @@ int main(int argc, char* argv[])
             frontend_type = FrontendType::PORTAUDIO;
             break;
 
+        case OPT_IDX_USE_APPLE_COREAUDIO:
+            frontend_type = FrontendType::APPLE_COREAUDIO;
+            break;
+
         case OPT_IDX_AUDIO_INPUT_DEVICE:
             portaudio_input_device_id = atoi(opt.arg);
             break;
 
         case OPT_IDX_AUDIO_OUTPUT_DEVICE:
             portaudio_output_device_id = atoi(opt.arg);
+            break;
+
+        case OPT_IDX_AUDIO_INPUT_DEVICE_UID:
+            apple_coreaudio_input_device_uid = opt.arg;
+            break;
+
+        case OPT_IDX_AUDIO_OUTPUT_DEVICE_UID:
+            apple_coreaudio_output_device_uid = opt.arg;
             break;
 
         case OPT_IDX_PA_SUGGESTED_INPUT_LATENCY:
@@ -250,8 +260,8 @@ int main(int argc, char* argv[])
             portaudio_suggested_output_latency = atof(opt.arg);
             break;
 
-        case OPT_IDX_DUMP_PORTAUDIO:
-            enable_portaudio_devs_dump = true;
+        case OPT_IDX_DUMP_DEVICES:
+            enable_audio_devices_dump = true;
             break;
 
         case OPT_IDX_USE_JACK:
@@ -314,19 +324,23 @@ int main(int argc, char* argv[])
             base_plugin_path = std::string(opt.arg);
             break;
 
+        case OPT_IDX_SENTRY_CRASH_HANDLER:
+            sentry_crash_handler_path = opt.arg;
+            break;
+
+        case OPT_IDX_SENTRY_DSN:
+            sentry_dsn = opt.arg;
+            break;
+
         default:
             SushiArg::print_error("Unhandled option '", opt, "' \n");
             break;
         }
     }
 
-    if (! (enable_parameter_dump || enable_portaudio_devs_dump) )
+    if (! (enable_parameter_dump || enable_audio_devices_dump) )
     {
         print_sushi_headline();
-    }
-    else
-    {
-        frontend_type = FrontendType::DUMMY;
     }
 
     if (output_filename.empty() && !input_filename.empty())
@@ -337,7 +351,12 @@ int main(int argc, char* argv[])
     ////////////////////////////////////////////////////////////////////////////////
     // Logger configuration
     ////////////////////////////////////////////////////////////////////////////////
-    auto ret_code = SUSHI_INITIALIZE_LOGGER(log_filename, "Logger", log_level, enable_flush_interval, log_flush_interval);
+    auto ret_code = SUSHI_INITIALIZE_LOGGER(log_filename,
+                                            "Logger",
+                                            log_level,
+                                            enable_flush_interval,
+                                            log_flush_interval,
+                                            sentry_crash_handler_path, sentry_dsn);
     if (ret_code != SUSHI_LOG_ERROR_CODE_OK)
     {
         std::cerr << SUSHI_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;
@@ -346,17 +365,34 @@ int main(int argc, char* argv[])
     SUSHI_GET_LOGGER_WITH_MODULE_NAME("main");
 
     ////////////////////////////////////////////////////////////////////////////////
-    // Main body //
+    // Dump audio devices //
     ////////////////////////////////////////////////////////////////////////////////
 
-    if (enable_portaudio_devs_dump)
+    if (enable_audio_devices_dump)
     {
+        if (frontend_type == FrontendType::PORTAUDIO)
+        {
 #ifdef SUSHI_BUILD_WITH_PORTAUDIO
-        std::cout << sushi::audio_frontend::generate_portaudio_devices_info_document() << std::endl;
-        std::exit(0);
+            std::cout << sushi::audio_frontend::generate_portaudio_devices_info_document() << std::endl;
 #else
-        std::cerr << "SUSHI not built with Portaudio support, cannot dump devices." << std::endl;
+            std::cerr << "SUSHI not built with Portaudio support, cannot dump devices." << std::endl;
 #endif
+            std::exit(0);
+        }
+        else if (frontend_type == FrontendType::APPLE_COREAUDIO)
+        {
+#ifdef SUSHI_BUILD_WITH_APPLE_COREAUDIO
+            std::cout << sushi::audio_frontend::AppleCoreAudioFrontend::generate_devices_info_document() << std::endl;
+#else
+            std::cerr << "SUSHI not built with Apple CoreAudio support, cannot dump devices." << std::endl;
+#endif
+            std::exit(0);
+        }
+        else
+        {
+            std::cout << "No frontend specified or specified frontend not supported (please specify ." << std::endl;
+            std::exit(1);
+        }
     }
 
     if (frontend_type == FrontendType::XENOMAI_RASPA)
@@ -364,14 +400,43 @@ int main(int argc, char* argv[])
         twine::init_xenomai(); // must be called before setting up any worker pools
     }
 
+    std::optional<std::string> device_name = std::nullopt;
+#ifdef SUSHI_APPLE_THREADING
+    switch (frontend_type)
+    {
+#ifdef SUSHI_BUILD_WITH_PORTAUDIO
+        case FrontendType::PORTAUDIO:
+        {
+            device_name = sushi::audio_frontend::get_portaudio_output_device_name(portaudio_output_device_id);
+            break;
+        }
+#endif
+
+#ifdef SUSHI_BUILD_WITH_APPLE_COREAUDIO
+        case FrontendType::APPLE_COREAUDIO:
+        {
+            device_name = sushi::audio_frontend::get_coreaudio_output_device_name(apple_coreaudio_output_device_uid);
+            break;
+        }
+#endif
+        default:
+        {
+            device_name = std::nullopt;
+        }
+    }
+#endif
+
     auto engine = std::make_unique<sushi::engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT,
                                                                rt_cpu_cores,
+                                                               device_name,
                                                                debug_mode_switches,
                                                                nullptr);
-    if (! base_plugin_path.empty())
+
+    if (!base_plugin_path.empty())
     {
         engine->set_base_plugin_path(base_plugin_path);
     }
+
     auto event_dispatcher = engine->event_dispatcher();
     auto midi_dispatcher = std::make_unique<sushi::midi_dispatcher::MidiDispatcher>(engine->event_dispatcher());
     auto configurator = std::make_unique<sushi::jsonconfig::JsonConfigurator>(engine.get(),
@@ -440,6 +505,18 @@ int main(int argc, char* argv[])
                                                                                                       cv_inputs,
                                                                                                       cv_outputs);
             audio_frontend = std::make_unique<sushi::audio_frontend::PortAudioFrontend>(engine.get());
+            break;
+        }
+
+        case FrontendType::APPLE_COREAUDIO:
+        {
+            SUSHI_LOG_INFO("Setting up Apple CoreAudio frontend");
+
+            frontend_config = std::make_unique<sushi::audio_frontend::AppleCoreAudioFrontendConfiguration>(apple_coreaudio_input_device_uid,
+                                                                                                           apple_coreaudio_output_device_uid,
+                                                                                                           cv_inputs,
+                                                                                                           cv_outputs);
+            audio_frontend = std::make_unique<sushi::audio_frontend::AppleCoreAudioFrontend>(engine.get());
             break;
         }
 
@@ -546,6 +623,7 @@ int main(int argc, char* argv[])
 
     if (frontend_type == FrontendType::JACK
         || frontend_type == FrontendType::XENOMAI_RASPA
+        || frontend_type == FrontendType::APPLE_COREAUDIO
         || frontend_type == FrontendType::PORTAUDIO)
     {
 #ifdef SUSHI_BUILD_WITH_ALSA_MIDI
@@ -618,9 +696,7 @@ int main(int argc, char* argv[])
     event_dispatcher->run();
     midi_frontend->run();
 
-    if (use_osc && (frontend_type == FrontendType::JACK
-                 || frontend_type == FrontendType::XENOMAI_RASPA
-                 || frontend_type == FrontendType::PORTAUDIO))
+    if (osc_frontend)
     {
         osc_frontend->run();
     }
@@ -647,11 +723,13 @@ int main(int argc, char* argv[])
     audio_frontend->cleanup();
     event_dispatcher->stop();
 
-    if (osc_frontend && (frontend_type == FrontendType::JACK
-                      || frontend_type == FrontendType::XENOMAI_RASPA
-                      || frontend_type == FrontendType::PORTAUDIO))
+    if (osc_frontend)
     {
         osc_frontend->stop();
+    }
+
+    if (midi_frontend)
+    {
         midi_frontend->stop();
     }
 
@@ -661,7 +739,6 @@ int main(int argc, char* argv[])
         rpc_server->stop();
     }
 #endif
-
     SUSHI_LOG_INFO("Sushi exiting normally!");
     return 0;
 }

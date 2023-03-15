@@ -19,6 +19,7 @@
 #ifdef SUSHI_BUILD_WITH_LV2
 
 #include "fifo/circularfifo_memory_relaxed_aquire_release.h"
+
 #include "lv2/worker/worker.h"
 #include "lv2_model.h"
 

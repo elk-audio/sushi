@@ -144,6 +144,7 @@ if (${SUSHI_WITH_VST2})
     set(TEST_COMPILE_DEFINITIONS ${TEST_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_VST2)
     if (APPLE)
         set(TEST_COMPILE_DEFINITIONS ${TEST_COMPILE_DEFINITIONS} -DVST2_TEST_PLUGIN_PATH="$<TARGET_BUNDLE_DIR:vst2_test_plugin>")
+        set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} "-framework CoreFoundation")
     else()
         set(TEST_COMPILE_DEFINITIONS ${TEST_COMPILE_DEFINITIONS} -DVST2_TEST_PLUGIN_PATH="$<TARGET_FILE:vst2_test_plugin>")
     endif()
@@ -158,6 +159,17 @@ endif()
 if (${SUSHI_WITH_PORTAUDIO})
     set(TEST_FILES ${TEST_FILES} unittests/audio_frontends/portaudio_frontend_test.cpp)
     set(TEST_COMPILE_DEFINITIONS ${TEST_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_PORTAUDIO)
+endif()
+
+if (${SUSHI_WITH_APPLE_COREAUDIO})
+    set(TEST_FILES ${TEST_FILES}
+            unittests/audio_frontends/apple_coreaudio_frontend_test.cpp
+            unittests/test_utils/apple_coreaudio_mockup.cpp
+            ../src/audio_frontends/apple_coreaudio/apple_coreaudio_object.cpp
+            ../src/audio_frontends/apple_coreaudio/apple_coreaudio_device.mm
+            ../src/audio_frontends/apple_coreaudio/apple_coreaudio_utils.cpp)
+    set(TEST_COMPILE_DEFINITIONS ${TEST_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_APPLE_COREAUDIO)
+    set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} "-framework CoreAudio -framework Foundation")
 endif()
 
 if (${SUSHI_WITH_VST3})
@@ -196,6 +208,11 @@ add_dependencies(unit_tests ${TEST_DEPENDENCIES})
 
 # Disable Link in tests as this slows down the testing a lot due to network activity etc
 remove_definitions(-DSUSHI_BUILD_WITH_ABLETON_LINK)
+
+
+if(${SUSHI_DISABLE_MULTICORE_UNIT_TESTS})
+    target_compile_definitions(unit_tests PRIVATE -DDISABLE_MULTICORE_UNIT_TESTS)
+endif()
 
 add_test(unit_tests unit_tests)
 

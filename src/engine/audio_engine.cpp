@@ -93,6 +93,7 @@ void ClipDetector::detect_clipped_samples(const ChunkSampleBuffer& buffer, RtSaf
 
 AudioEngine::AudioEngine(float sample_rate,
                          int rt_cpu_cores,
+                         std::optional<std::string> device_name,
                          bool debug_mode_sw,
                          dispatcher::BaseEventDispatcher* event_dispatcher) : BaseEngine::BaseEngine(sample_rate),
                                                           _audio_graph(rt_cpu_cores, MAX_TRACKS, debug_mode_sw),
@@ -722,9 +723,9 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
         return EngineReturnStatus::ERROR;
     }
 
-    plugin->set_enabled(true);
     plugin->set_input_channels(std::min(plugin->max_input_channels(), track->input_channels()));
     plugin->set_output_channels(std::min(plugin->max_output_channels(), track->input_channels()));
+    plugin->set_enabled(true);
 
     if (this->realtime())
     {

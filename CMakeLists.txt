@@ -53,6 +53,9 @@ set(SUSHI_WITH_LINK_DEFAULT ON)
 set(SUSHI_WITH_RPC_INTERFACE_DEFAULT ON)
 set(SUSHI_TWINE_STATIC_DEFAULT OFF)
 set(SUSHI_AUDIO_BUFFER_SIZE_DEFAULT 64)
+set(SUSHI_WITH_SENTRY_DEFAULT OFF)
+set(SUSHI_SENTRY_DSN_DEFAULT "--Sentry default DSN is undefined--")
+set(SUSHI_DISABLE_MULTICORE_UNIT_TESTS_DEFAULT OFF)
 
 set(SUSHI_RASPA_FLAVOR_DEFAULT "evl")
 set(TWINE_WITH_XENOMAI_DEFAULT OFF)
@@ -60,9 +63,9 @@ set(TWINE_WITH_EVL_DEFAULT OFF)
 
 if (APPLE)
     # macOS defaults
-    message("Setting Apple defaults")
     set(SUSHI_WITH_RASPA_DEFAULT OFF)
-    set(SUSHI_WITH_PORTAUDIO_DEFAULT ON)
+    set(SUSHI_WITH_PORTAUDIO_DEFAULT OFF)
+    set(SUSHI_WITH_APPLE_COREAUDIO_DEFAULT ON)
     set(SUSHI_WITH_ALSA_MIDI_DEFAULT OFF)
     set(SUSHI_WITH_RT_MIDI_DEFAULT ON)
     set(SUSHI_WITH_VST2_DEFAULT OFF)
@@ -70,11 +73,12 @@ if (APPLE)
     set(SUSHI_WITH_LV2_MDA_TESTS_DEFAULT OFF)
     set(SUSHI_WITH_UNIT_TESTS_DEFAULT ON)
     set(SUSHI_BUILD_TWINE_DEFAULT ON)
-elseif(CMAKE_CROSSCOMPILING)
+    set(SUSHI_DISABLE_MULTICORE_UNIT_TESTS_DEFAULT ON)
+elseif (CMAKE_CROSSCOMPILING)
     # Yocto cross-compilation defaults
-    message("Setting cross compiling defaults")
     set(SUSHI_WITH_RASPA_DEFAULT ON)
     set(SUSHI_WITH_PORTAUDIO_DEFAULT OFF)
+    set(SUSHI_WITH_APPLE_COREAUDIO_DEFAULT OFF)
     set(SUSHI_WITH_ALSA_MIDI_DEFAULT ON)
     set(SUSHI_WITH_RT_MIDI_DEFAULT OFF)
     set(SUSHI_WITH_LV2_DEFAULT ON)
@@ -86,6 +90,7 @@ else()
     set(SUSHI_WITH_JACK_DEFAULT ON)
     set(SUSHI_WITH_RASPA_DEFAULT OFF)
     set(SUSHI_WITH_PORTAUDIO_DEFAULT OFF)
+    set(SUSHI_WITH_APPLE_COREAUDIO_DEFAULT OFF)
     set(SUSHI_WITH_ALSA_MIDI_DEFAULT ON)
     set(SUSHI_WITH_RT_MIDI_DEFAULT OFF)
     set(SUSHI_WITH_LV2_DEFAULT ON)
@@ -97,6 +102,7 @@ endif()
 option(SUSHI_WITH_RASPA "Enable Raspa (xenomai) support" ${SUSHI_WITH_RASPA_DEFAULT})
 option(SUSHI_WITH_JACK "Enable Jack support" ${SUSHI_WITH_JACK_DEFAULT})
 option(SUSHI_WITH_PORTAUDIO "Enable PortAudio support" ${SUSHI_WITH_PORTAUDIO_DEFAULT})
+option(SUSHI_WITH_APPLE_COREAUDIO "Enable Apple CoreAudio support" ${SUSHI_WITH_APPLE_COREAUDIO_DEFAULT})
 option(SUSHI_WITH_ALSA_MIDI "Enable alsa midi support" ${SUSHI_WITH_ALSA_MIDI_DEFAULT})
 option(SUSHI_WITH_RT_MIDI "Enable RtMidi support" ${SUSHI_WITH_RT_MIDI_DEFAULT})
 option(SUSHI_WITH_VST2 "Enable Vst 2 support" ${SUSHI_WITH_VST2_DEFAULT})
@@ -108,6 +114,9 @@ option(SUSHI_WITH_LINK "Enable Ableton Link support" ${SUSHI_WITH_LINK_DEFAULT})
 option(SUSHI_WITH_RPC_INTERFACE "Enable RPC control support" ${SUSHI_WITH_RPC_INTERFACE_DEFAULT})
 option(SUSHI_BUILD_TWINE "Build included Twine library" ${SUSHI_BUILD_TWINE_DEFAULT})
 option(SUSHI_TWINE_STATIC "Link against static version of TWINE library" ${SUSHI_TWINE_STATIC_DEFAULT})
+option(SUSHI_WITH_SENTRY "Enable sentry.io support" ${SUSHI_WITH_SENTRY_DEFAULT})
+option(SUSHI_SENTRY_DSN "Required Sentry DSN Path" ${SUSHI_SENTRY_DSN_DEFAULT})
+option(SUSHI_DISABLE_MULTICORE_UNIT_TESTS "Disable unit-tests dependent on multi-core processing." ${SUSHI_DISABLE_MULTICORE_UNIT_TESTS_DEFAULT})
 
 set(SUSHI_AUDIO_BUFFER_SIZE ${SUSHI_AUDIO_BUFFER_SIZE_DEFAULT} CACHE STRING "Set internal audio buffer size in frames")
 set(SUSHI_RASPA_FLAVOR ${SUSHI_RASPA_FLAVOR_DEFAULT} CACHE STRING "Set raspa flavor. Options are xenomai or evl")
@@ -231,6 +240,28 @@ if (${SUSHI_WITH_PORTAUDIO})
 
     # Compile definitions
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_PORTAUDIO)
+endif()
+
+if (APPLE)
+    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_APPLE_THREADING)
+
+    ###################
+    # CoreAudio setup #
+    ###################
+
+    if (${SUSHI_WITH_APPLE_COREAUDIO})
+        message("Building with Apple CoreAudio support.")
+
+        # Compile definitions
+        set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_APPLE_COREAUDIO)
+
+        set(ADDITIONAL_APPLE_COREAUDIO_SOURCES  src/audio_frontends/apple_coreaudio/apple_coreaudio_utils.cpp
+                                                src/audio_frontends/apple_coreaudio/apple_coreaudio_object.cpp
+                                                src/audio_frontends/apple_coreaudio/apple_coreaudio_device.mm)
+
+        set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} "-framework CoreAudio -framework Foundation")
+    endif()
+
 endif()
 
 ###################
@@ -443,18 +474,40 @@ endif()
 
 message("Configured audio buffer size: " ${SUSHI_AUDIO_BUFFER_SIZE} " samples")
 
+###################
+# sentry.io setup #
+###################
+
+if (${SUSHI_WITH_SENTRY})
+    find_package(Threads)
+    find_package(sentry CONFIG REQUIRED)
+
+    message("Building with sentry.io support.")
+
+    if (NOT SUSHI_SENTRY_DSN)
+        set(SUSHI_SENTRY_DSN ${SUSHI_SENTRY_DSN_DEFAULT} CACHE STRING "The DSN to upload the sentry logs and crash reports to, from Sushi" FORCE)
+    endif()
+
+    set(SENTRY_CRASHPAD_HANDLER_PATH "${VCPKG_INSTALLED_DIR}/osx-custom/tools/sentry-native/crashpad_handler")
+
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} sentry::sentry)
+    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_SENTRY -DSUSHI_SENTRY_DSN="${SUSHI_SENTRY_DSN}")
+endif()
+
 ####################
 #  Main Target     #
 ####################
 
 set(SOURCE_FILES
     src/main.cpp
+    src/exit_control.cpp
     src/logging.cpp
     src/json_utils.cpp
     src/audio_frontends/base_audio_frontend.cpp
     src/audio_frontends/offline_frontend.cpp
     src/audio_frontends/jack_frontend.cpp
     src/audio_frontends/portaudio_frontend.cpp
+    src/audio_frontends/apple_coreaudio_frontend.cpp
     src/audio_frontends/portaudio_devices_dump.cpp
     src/audio_frontends/xenomai_raspa_frontend.cpp
     src/control_frontends/base_control_frontend.cpp
@@ -518,14 +571,14 @@ set(SOURCE_FILES
     src/plugins/wav_writer_plugin.cpp
     src/plugins/mono_summing_plugin.cpp
     src/plugins/stereo_mixer_plugin.cpp
-    src/audio_frontends/offline_frontend.cpp
-)
+    src/audio_frontends/offline_frontend.cpp)
 
 add_executable(sushi MACOSX_BUNDLE
     "${SOURCE_FILES}"
     "${ADDITIONAL_VST2_SOURCES}"
     "${ADDITIONAL_VST3_SOURCES}"
     "${ADDITIONAL_LV2_SOURCES}"
+    "${ADDITIONAL_APPLE_COREAUDIO_SOURCES}"
     "${MIDI_SOURCES}"
 )
 
@@ -598,7 +651,7 @@ if (APPLE)
 endif()
 
 install(TARGETS sushi RUNTIME DESTINATION bin BUNDLE DESTINATION Applications)
-foreach(ITEM ${DOC_FILES_INSTALL})
+foreach (ITEM ${DOC_FILES_INSTALL})
     install(FILES ${ITEM} DESTINATION share/sushi/doc)
 endforeach()
 
