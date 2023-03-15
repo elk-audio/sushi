@@ -16,7 +16,8 @@
 #ifndef REAL_TIME_CONTROLLER_H
 #define REAL_TIME_CONTROLLER_H
 
-#include "control_interface.h"
+#include "include/control_interface.h"
+
 #include "library/sample_buffer.h"
 #include "library/time.h"
 #include "library/types.h"

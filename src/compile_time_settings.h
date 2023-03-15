@@ -23,12 +23,13 @@
 
 #include <string>
 #include <array>
+
+#include <include/options.h>
+
 #include "generated/version.h"
 
 // For AUDIO_CHUNK_SIZE.
 #include "library/constants.h"
-
-#include "include/sushi/options.h"
 
 struct CompileTimeSettings
 {
