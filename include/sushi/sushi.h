@@ -28,7 +28,6 @@
 #include <filesystem>
 
 #include "compile_time_settings.h"
-#include "engine/base_engine.h"
 
 namespace sushi {
 

@@ -23,7 +23,7 @@
 
 #include <vector>
 
-#include "concrete_sushi.h"
+#include "sushi.h"
 
 namespace sushi {
 
