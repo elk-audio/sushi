@@ -40,8 +40,6 @@ using namespace sushi;
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("main");
 
-constexpr int MALFORMED_GRPC_ADDRESS_EXIT_CODE = 2;
-
 bool exit_flag = false;
 
 bool exit_condition()
