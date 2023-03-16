@@ -27,7 +27,7 @@
 #include <optional>
 #include <filesystem>
 
-#include "compile_time_settings.h"
+#include "include/compile_time_settings.h"
 
 namespace sushi {
 
