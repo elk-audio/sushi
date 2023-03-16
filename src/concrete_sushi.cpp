@@ -53,11 +53,6 @@ void init_logger([[maybe_unused]] const SushiOptions& options)
     }
 }
 
-std::unique_ptr<FactoryInterface> create_passive_factory()
-{
-    return std::make_unique<PassiveFactoryImplementation>();
-}
-
 std::optional<std::pair<std::string, int>> SushiOptions::grpc_address_and_port()
 {
     auto last_colon_index = grpc_listening_address.find_last_of(':');

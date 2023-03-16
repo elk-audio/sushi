@@ -16,7 +16,7 @@
 #ifndef SUSHI_FACTORY_BASE_H
 #define SUSHI_FACTORY_BASE_H
 
-#include "factory_interface.h"
+#include "include/sushi/sushi.h"
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
 #include "sushi_rpc/grpc_server.h"
@@ -66,11 +66,13 @@ struct ControlConfig;
  *
  *        Each factory instance is meant to be run only once and discarded.
  */
-class BaseFactory : public FactoryInterface
+class BaseFactory
 {
 public:
     BaseFactory();
-    ~BaseFactory() override;
+    virtual ~BaseFactory();
+
+    virtual std::pair<std::unique_ptr<Sushi>, Status> new_instance(SushiOptions& options) = 0;
 
 protected:
     std::unique_ptr<Sushi> _make_sushi();
