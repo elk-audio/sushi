@@ -18,7 +18,7 @@
 
 #include "include/sushi/sushi.h"
 
-#include "sushi/base_factory.h"
+#include "base_factory.h"
 
 namespace sushi_rpc {
 class GrpcServer;
@@ -39,16 +39,16 @@ public:
 
 protected:
     Status _setup_audio_frontend(const SushiOptions& options,
-                                     const jsonconfig::ControlConfig& config) override;
+                                 const jsonconfig::ControlConfig& config) override;
 
     Status _set_up_midi([[maybe_unused]] const SushiOptions& options,
-                            const jsonconfig::ControlConfig& config) override;
+                        const jsonconfig::ControlConfig& config) override;
 
     Status _set_up_control(const SushiOptions& options,
-                               jsonconfig::JsonConfigurator* configurator) override;
+                           jsonconfig::JsonConfigurator* configurator) override;
 
     Status _load_json_events([[maybe_unused]] const SushiOptions& options,
-                                 jsonconfig::JsonConfigurator* configurator) override;
+                             jsonconfig::JsonConfigurator* configurator) override;
 };
 
 } // namespace sushi

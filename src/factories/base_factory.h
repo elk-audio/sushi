@@ -81,8 +81,8 @@ protected:
     Status _configure_with_defaults(SushiOptions& options);
 
     Status _configure_engine(SushiOptions& options,
-                                 const jsonconfig::ControlConfig& control_config,
-                                 jsonconfig::JsonConfigurator* configurator);
+                             const jsonconfig::ControlConfig& control_config,
+                             jsonconfig::JsonConfigurator* configurator);
 
     static Status _load_json_configuration(jsonconfig::JsonConfigurator* configurator);
 
@@ -92,14 +92,16 @@ protected:
      * @param config
      * @return
      */
-    virtual Status _setup_audio_frontend(const SushiOptions& options, const jsonconfig::ControlConfig& config) = 0;
+    virtual Status _setup_audio_frontend(const SushiOptions& options,
+                                         const jsonconfig::ControlConfig& config) = 0;
 
     /**
      * @brief Inherit and populate this to instantiate and configure the midi frontend.
      * @param options A populated SushiOptions structure.
      * @return
      */
-    virtual Status _set_up_midi(const SushiOptions& options, const jsonconfig::ControlConfig& config) = 0;
+    virtual Status _set_up_midi(const SushiOptions& options,
+                                const jsonconfig::ControlConfig& config) = 0;
 
     /**
      * @brief Inherit and populate this to instantiate and configure sgRPC, OSC, and eventual other control.
@@ -107,7 +109,8 @@ protected:
      * @param configurator
      * @return
      */
-    virtual Status _set_up_control(const SushiOptions& options, jsonconfig::JsonConfigurator* configurator) = 0;
+    virtual Status _set_up_control(const SushiOptions& options,
+                                   jsonconfig::JsonConfigurator* configurator) = 0;
 
     /**
      * @brief Handle sequenced events from configuration file here.
@@ -116,7 +119,7 @@ protected:
      * @return
      */
     virtual Status _load_json_events(const SushiOptions& options,
-                                         jsonconfig::JsonConfigurator* configurator) = 0;
+                                     jsonconfig::JsonConfigurator* configurator) = 0;
 
     Status _status { Status::OK};
 

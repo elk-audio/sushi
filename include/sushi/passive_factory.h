@@ -16,68 +16,33 @@
 #ifndef PASSIVE_FACTORY_H
 #define PASSIVE_FACTORY_H
 
-#include "rt_controller.h"
 #include "sushi.h"
+#include "rt_controller.h"
 
-#include "base_factory.h"
+namespace sushi
+{
 
-namespace sushi_rpc {
-class GrpcServer;
-}
+class PassiveFactoryImplementation;
 
-namespace sushi {
-
-class ConcreteSushi;
-
-namespace audio_frontend {
-class PassiveFrontend;
-}
-
-namespace midi_frontend {
-class PassiveMidiFrontend;
-}
-
-namespace engine {
-class Transport;
-}
-
-/**
- * @brief Factory for when Sushi will be embedded into another audio host or into a plugin,
- *        and will only use Passive frontends for audio and MIDI.
- */
-class PassiveFactory : public BaseFactory
+class PassiveFactory
 {
 public:
     PassiveFactory();
-    ~PassiveFactory() override;
+    ~PassiveFactory();
 
-    std::pair<std::unique_ptr<Sushi>, Status> new_instance(SushiOptions& options) override;
+    [[nodiscard]] std::pair<std::unique_ptr<Sushi>, Status> new_instance (SushiOptions& options);
 
     /**
-     * @brief Returns an instance of a RealTimeController, if run() completed successfully.
+     * @brief Returns an instance of a RealTimeController, if new_instance(...) completed successfully.
      *        If not, it returns an empty unique_ptr.
      * @return A unique_ptr with a RtController sub-class, or not, depending on InitStatus.
      */
-    std::unique_ptr<RtController> rt_controller();
-
-protected:
-    Status _setup_audio_frontend([[maybe_unused]] const SushiOptions& options,
-                                 const jsonconfig::ControlConfig& config) override;
-
-    Status _set_up_midi([[maybe_unused]] const SushiOptions& options,
-                        const jsonconfig::ControlConfig& config) override;
-
-    Status _set_up_control([[maybe_unused]] const SushiOptions& options,
-                           [[maybe_unused]] jsonconfig::JsonConfigurator* configurator) override;
-
-    Status _load_json_events([[maybe_unused]] const SushiOptions& options,
-                             jsonconfig::JsonConfigurator* configurator) override;
+    [[nodiscard]] std::unique_ptr<RtController> rt_controller();
 
 private:
-    std::unique_ptr<RtController> _real_time_controller {nullptr};
+    std::unique_ptr<PassiveFactoryImplementation> _implementation;
 };
 
 } // namespace sushi
-
 
 #endif // PASSIVE_FACTORY_H

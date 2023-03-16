@@ -1,7 +1,7 @@
 #ifndef SUSHI_FACTORY_INTERFACE_H
 #define SUSHI_FACTORY_INTERFACE_H
 
-#include "sushi.h"
+#include "include/sushi/sushi.h"
 
 namespace sushi {
 

@@ -21,8 +21,9 @@
 #ifndef SUSHI_VST3X_HOST_CONTEXT_H
 #define SUSHI_VST3X_HOST_CONTEXT_H
 
+#include "constants.h"
+
 #include "library/id_generator.h"
-#include "library/constants.h"
 
 #include "pluginterfaces/vst/ivsteditcontroller.h"
 #include "pluginterfaces/vst/ivstunits.h"

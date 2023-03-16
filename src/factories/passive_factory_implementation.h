@@ -1,5 +1,5 @@
 /*
-* Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+* Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
 *
 * SUSHI is free software: you can redistribute it and/or modify it under the terms of
 * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -13,40 +13,71 @@
 * SUSHI. If not, see http://www.gnu.org/licenses/
 */
 
-#ifndef SUSHI_OFFLINE_FACTORY_H
-#define SUSHI_OFFLINE_FACTORY_H
+#ifndef PASSIVE_FACTORY_IMPLEMENTATION_H
+#define PASSIVE_FACTORY_IMPLEMENTATION_H
 
+#include "include/sushi/rt_controller.h"
 #include "include/sushi/sushi.h"
 
 #include "base_factory.h"
 
+namespace sushi_rpc {
+class GrpcServer;
+}
+
 namespace sushi {
 
+class ConcreteSushi;
+
+namespace audio_frontend {
+class PassiveFrontend;
+}
+
+namespace midi_frontend {
+class PassiveMidiFrontend;
+}
+
+namespace engine {
+class Transport;
+}
+
 /**
- * @brief Factory for when Sushi is running in offline / dummy mode.
+ * @brief Factory for when Sushi will be embedded into another audio host or into a plugin,
+ *        and will only use Passive frontends for audio and MIDI.
  */
-class OfflineFactory : public BaseFactory
+class PassiveFactoryImplementation : public BaseFactory
 {
 public:
-    OfflineFactory();
-    ~OfflineFactory() override;
+    PassiveFactoryImplementation();
+    ~PassiveFactoryImplementation() override;
 
     std::pair<std::unique_ptr<Sushi>, Status> new_instance(SushiOptions& options) override;
 
+    /**
+     * @brief Returns an instance of a RealTimeController, if new_instance(...) completed successfully.
+     *        If not, it returns an empty unique_ptr.
+     * @return A unique_ptr with a RtController sub-class, or not, depending on InitStatus.
+     */
+    std::unique_ptr<RtController> rt_controller();
+
 protected:
-    Status _setup_audio_frontend(const SushiOptions& options,
+    Status _setup_audio_frontend([[maybe_unused]] const SushiOptions& options,
                                  const jsonconfig::ControlConfig& config) override;
 
     Status _set_up_midi([[maybe_unused]] const SushiOptions& options,
                         const jsonconfig::ControlConfig& config) override;
 
-    Status _set_up_control(const SushiOptions& options,
+    Status _set_up_control([[maybe_unused]] const SushiOptions& options,
                            [[maybe_unused]] jsonconfig::JsonConfigurator* configurator) override;
 
     Status _load_json_events([[maybe_unused]] const SushiOptions& options,
                              jsonconfig::JsonConfigurator* configurator) override;
+
+private:
+    std::unique_ptr<RtController> _real_time_controller {nullptr};
 };
 
 } // namespace sushi
 
-#endif //SUSHI_OFFLINE_FACTORY_H
+
+#endif // PASSIVE_FACTORY_IMPLEMENTATION_H

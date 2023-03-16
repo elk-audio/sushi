@@ -31,6 +31,8 @@
 
 namespace sushi {
 
+class FactoryInterface;
+
 namespace ext {
 class SushiControl;
 }

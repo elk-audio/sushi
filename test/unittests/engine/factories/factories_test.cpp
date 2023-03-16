@@ -48,8 +48,8 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration*)
 
 #include "concrete_sushi.cpp"
 #include "factories/base_factory.cpp"
-#include "factories/passive_factory.cpp"
 #include "factories/offline_factory.cpp"
+#include "factories/passive_factory_implementation.cpp"
 
 #include "factories/standalone_factory.cpp"
 
@@ -82,7 +82,7 @@ protected:
 
     SushiOptions options;
 
-    PassiveFactory _passive_factory;
+    PassiveFactoryImplementation _passive_factory;
 
     std::string _path;
 };
@@ -100,9 +100,7 @@ TEST_F(PassiveFactoryTest, TestPassiveFactoryWithDefaultConfig)
 
     ASSERT_NE(sushi_cast, nullptr);
 
-    // TODO: OSC Frontend instantiation is not implemented yet for the passive factory.
-    EXPECT_EQ(sushi_cast->_osc_frontend.get(), nullptr);
-
+    EXPECT_NE(sushi_cast->_osc_frontend.get(), nullptr);
     EXPECT_NE(sushi_cast->_engine.get(), nullptr);
     EXPECT_NE(sushi_cast->_midi_dispatcher.get(), nullptr);
     EXPECT_NE(sushi_cast->_midi_frontend.get(), nullptr);
@@ -136,9 +134,7 @@ TEST_F(PassiveFactoryTest, TestPassiveFactoryWithConfigFile)
 
     ASSERT_NE(sushi_cast, nullptr);
 
-    // TODO: OSC Frontend instantiation is not implemented yet for the passive factory.
-    EXPECT_EQ(sushi_cast->_osc_frontend.get(), nullptr);
-
+    EXPECT_NE(sushi_cast->_osc_frontend.get(), nullptr);
     EXPECT_NE(sushi_cast->_engine.get(), nullptr);
     EXPECT_NE(sushi_cast->_midi_dispatcher.get(), nullptr);
     EXPECT_NE(sushi_cast->_midi_frontend.get(), nullptr);

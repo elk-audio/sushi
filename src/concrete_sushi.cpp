@@ -20,15 +20,17 @@
 
 #include <iostream>
 
+#include "factories/passive_factory_implementation.h"
+
 #include "concrete_sushi.h"
 
 #include "engine/audio_engine.h"
 
+#include "logging.h"
+
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
 #include "sushi_rpc/grpc_server.h"
 #endif
-
-#include "logging.h"
 
 namespace sushi
 {
@@ -49,6 +51,11 @@ void init_logger([[maybe_unused]] const SushiOptions& options)
     {
         std::cerr << SUSHI_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;
     }
+}
+
+std::unique_ptr<FactoryInterface> create_passive_factory()
+{
+    return std::make_unique<PassiveFactoryImplementation>();
 }
 
 std::optional<std::pair<std::string, int>> SushiOptions::grpc_address_and_port()

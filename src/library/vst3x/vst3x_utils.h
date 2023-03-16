@@ -23,6 +23,9 @@
 
 #include <cassert>
 
+#include "constants.h"
+#include "sushi/sample_buffer.h"
+
 #include "pluginterfaces/base/ipluginbase.h"
 #include "pluginterfaces/vst/ivstaudioprocessor.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
@@ -30,10 +33,7 @@
 #include "public.sdk/source/vst/hosting/eventlist.h"
 #include "public.sdk/source/vst/hosting/parameterchanges.h"
 
-#include "sushi/sample_buffer.h"
-
 #include "library/rt_event.h"
-#include "library/constants.h"
 #include "library/processor_state.h"
 
 namespace sushi {
