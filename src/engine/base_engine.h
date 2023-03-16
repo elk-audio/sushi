@@ -29,16 +29,17 @@
 #include <limits>
 #include <string>
 
+#include "constants.h"
 #include "base_event_dispatcher.h"
 #include "base_processor_container.h"
 #include "control_interface.h"
+#include "track.h"
+
 #include "library/base_performance_timer.h"
 #include "library/connection_types.h"
-#include "library/constants.h"
 #include "library/time.h"
 #include "library/types.h"
 #include "sushi/sample_buffer.h"
-#include "track.h"
 
 namespace sushi {
 namespace engine {

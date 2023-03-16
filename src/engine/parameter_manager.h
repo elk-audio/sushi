@@ -24,8 +24,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include "constants.h"
+
 #include "library/types.h"
-#include "library/constants.h"
 #include "library/plugin_parameters.h"
 #include "library/event_interface.h"
 #include "library/event.h"

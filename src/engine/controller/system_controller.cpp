@@ -18,7 +18,8 @@
  * @copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include <library/constants.h>
+#include "constants.h"
+
 #include "system_controller.h"
 
 namespace sushi {

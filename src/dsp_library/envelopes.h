@@ -21,7 +21,7 @@
 #ifndef SUSHI_ENVELOPES_H
 #define SUSHI_ENVELOPES_H
 
-#include "library/constants.h"
+#include "constants.h"
 
 // VST3SDK defines RELEASE globally, which leaks into all including code
 // And conflict with the RELEASE phase of the Adsr enum.

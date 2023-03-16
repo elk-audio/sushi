@@ -31,8 +31,9 @@
 
 #include "twine/twine.h"
 
+#include "constants.h"
+
 #include "library/rt_event.h"
-#include "library/constants.h"
 #include "transport.h"
 #include "logging.h"
 

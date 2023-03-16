@@ -24,7 +24,8 @@
 #include <optional>
 #include <vector>
 
-#include "library/constants.h"
+#include "constants.h"
+
 #include "library/types.h"
 #include "library/id_generator.h"
 #include "engine/host_control.h"

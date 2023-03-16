@@ -23,8 +23,9 @@
 
 #include <map>
 
+#include "constants.h"
+
 #include "library/processor.h"
-#include "library/constants.h"
 #include "vst2x_plugin_loader.h"
 #include "vst2x_midi_event_fifo.h"
 #include "engine/base_event_dispatcher.h"

@@ -27,7 +27,6 @@
 
 #include "library/processor.h"
 #include "library/plugin_parameters.h"
-#include "library/constants.h"
 
 namespace sushi {
 

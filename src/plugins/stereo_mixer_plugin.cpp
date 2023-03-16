@@ -19,7 +19,7 @@
  */
 
 #include "stereo_mixer_plugin.h"
-#include "library/constants.h"
+#include "constants.h"
 
 namespace sushi {
 namespace stereo_mixer_plugin {

@@ -22,8 +22,9 @@
 #include <cmath>
 #include <cassert>
 
+#include "constants.h"
+
 #include "event_timer.h"
-#include "library/constants.h"
 
 namespace sushi {
 namespace event_timer {

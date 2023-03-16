@@ -26,7 +26,8 @@
 #include <array>
 #include <vector>
 
-#include "library/constants.h"
+#include "constants.h"
+
 #include "library/internal_plugin.h"
 #include "library/performance_timer.h"
 #include "library/rt_event_fifo.h"

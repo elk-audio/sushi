@@ -26,7 +26,8 @@
 #include <string>
 #include <cassert>
 
-#include "library/constants.h"
+#include "constants.h"
+
 #include "library/id_generator.h"
 #include "library/types.h"
 

@@ -22,7 +22,7 @@
 
 #include "spdlog/fmt/bundled/chrono.h"
 
-#include "library/constants.h"
+#include "constants.h"
 #include "compile_time_settings.h"
 #include "session_controller.h"
 #include "controller_common.h"

@@ -20,10 +20,11 @@
 
 #include <string>
 
+#include "constants.h"
+
 #include "logging.h"
 #include "send_plugin.h"
 #include "return_plugin.h"
-#include "library/constants.h"
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("send_plugin");
 

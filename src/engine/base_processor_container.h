@@ -24,7 +24,8 @@
 #include <memory>
 #include <vector>
 
-#include "library/constants.h"
+#include "constants.h"
+
 #include "library/processor.h"
 #include "engine/track.h"
 

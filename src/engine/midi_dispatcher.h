@@ -27,7 +27,8 @@
 #include <vector>
 #include <mutex>
 
-#include "library/constants.h"
+#include "constants.h"
+
 #include "library/types.h"
 #include "library/midi_decoder.h"
 #include "library/event.h"

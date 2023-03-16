@@ -25,8 +25,9 @@
 #include <array>
 #include <vector>
 
+#include "constants.h"
+
 #include "library/internal_plugin.h"
-#include "library/constants.h"
 #include "library/rt_event_fifo.h"
 
 namespace sushi {

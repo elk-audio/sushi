@@ -25,7 +25,7 @@
 #include <cassert>
 #include <cmath>
 
-#include "library/constants.h"
+#include "include/constants.h"
 
 namespace sushi {
 

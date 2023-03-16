@@ -21,7 +21,6 @@
 #include <cassert>
 
 #include "track.h"
-#include "library/constants.h"
 
 namespace sushi {
 namespace engine {
