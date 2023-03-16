@@ -26,10 +26,10 @@
 #include <cassert>
 
 #include "constants.h"
+#include "sushi/types.h"
+#include "sushi/time.h"
 
 #include "library/event_interface.h"
-#include "library/time.h"
-#include "library/types.h"
 #include "library/rt_event.h"
 #include "library/rt_event_pipe.h"
 #include "engine/base_event_dispatcher.h"

@@ -26,7 +26,8 @@
 
 #include "constants.h"
 
-#include "library/types.h"
+#include "sushi/types.h"
+
 #include "library/id_generator.h"
 #include "engine/host_control.h"
 

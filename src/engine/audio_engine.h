@@ -27,6 +27,11 @@
 
 #include "twine/twine.h"
 
+#include "sushi/time.h"
+#include "sushi/types.h"
+#include "sushi/sample_buffer.h"
+
+
 #include "dsp_library/master_limiter.h"
 #include "engine/audio_graph.h"
 #include "engine/base_engine.h"
@@ -44,9 +49,6 @@
 #include "library/performance_timer.h"
 #include "library/plugin_registry.h"
 #include "library/rt_event_fifo.h"
-#include "library/time.h"
-#include "library/types.h"
-#include "sushi/sample_buffer.h"
 
 namespace sushi {
 namespace engine {

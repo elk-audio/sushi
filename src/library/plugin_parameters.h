@@ -27,9 +27,9 @@
 #include <cassert>
 
 #include "constants.h"
+#include "sushi/types.h"
 
 #include "library/id_generator.h"
-#include "library/types.h"
 
 namespace sushi {
 

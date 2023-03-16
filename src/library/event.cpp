@@ -22,9 +22,10 @@
 
 #include "twine/twine.h"
 
+#include "sushi/types.h"
+
 #include "library/event.h"
 #include "engine/base_engine.h"
-#include "types.h"
 
 /* GCC does not seem to get when a switch case handles all cases */
 #pragma GCC diagnostic push

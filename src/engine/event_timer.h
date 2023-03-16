@@ -24,7 +24,7 @@
 #include <atomic>
 #include <tuple>
 
-#include "library/time.h"
+#include "sushi/time.h"
 
 namespace sushi {
 namespace event_timer {

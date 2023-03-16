@@ -25,9 +25,10 @@
 #include <cassert>
 #include <optional>
 
+#include "sushi/types.h"
+#include "sushi/time.h"
+
 #include "id_generator.h"
-#include "library/types.h"
-#include "library/time.h"
 #include "library/connection_types.h"
 
 namespace sushi {

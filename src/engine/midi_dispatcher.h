@@ -28,8 +28,8 @@
 #include <mutex>
 
 #include "constants.h"
+#include "sushi/types.h"
 
-#include "library/types.h"
 #include "library/midi_decoder.h"
 #include "library/event.h"
 #include "library/processor.h"

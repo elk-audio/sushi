@@ -22,9 +22,10 @@
 #include <tuple>
 
 #include "rt_midi_frontend.h"
-#include "library/midi_decoder.h"
-#include "library/time.h"
+#include "sushi/time.h"
 #include "logging.h"
+
+#include "library/midi_decoder.h"
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("rtmidi");
 

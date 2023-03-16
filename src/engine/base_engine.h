@@ -30,6 +30,10 @@
 #include <string>
 
 #include "constants.h"
+#include "sushi/types.h"
+#include "sushi/time.h"
+#include "sushi/sample_buffer.h"
+
 #include "base_event_dispatcher.h"
 #include "base_processor_container.h"
 #include "control_interface.h"
@@ -37,9 +41,6 @@
 
 #include "library/base_performance_timer.h"
 #include "library/connection_types.h"
-#include "library/time.h"
-#include "library/types.h"
-#include "sushi/sample_buffer.h"
 
 namespace sushi {
 namespace engine {

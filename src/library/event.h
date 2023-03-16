@@ -24,11 +24,11 @@
 #include <string>
 #include <memory>
 
-#include "types.h"
+#include "sushi/time.h"
+#include "sushi/types.h"
+
 #include "id_generator.h"
 #include "library/rt_event.h"
-#include "library/time.h"
-#include "library/types.h"
 #include "base_performance_timer.h"
 
 namespace sushi {

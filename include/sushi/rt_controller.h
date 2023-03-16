@@ -18,8 +18,8 @@
 
 #include "include/control_interface.h"
 
-#include "library/time.h"
-#include "library/types.h"
+#include "time.h"
+#include "types.h"
 #include "sample_buffer.h"
 
 namespace sushi
