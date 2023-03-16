@@ -30,7 +30,8 @@
 #include "public.sdk/source/vst/hosting/eventlist.h"
 #include "public.sdk/source/vst/hosting/parameterchanges.h"
 
-#include "library/sample_buffer.h"
+#include "sushi/sample_buffer.h"
+
 #include "library/rt_event.h"
 #include "library/constants.h"
 #include "library/processor_state.h"

@@ -18,9 +18,9 @@
 
 #include "include/control_interface.h"
 
-#include "library/sample_buffer.h"
 #include "library/time.h"
 #include "library/types.h"
+#include "sample_buffer.h"
 
 namespace sushi
 {
