@@ -44,12 +44,12 @@ class AudioEngine;
 namespace audio_frontend {
 struct BaseAudioFrontendConfiguration;
 class BaseAudioFrontend;
-class PassiveFrontend;
+class ReactiveFrontend;
 }
 
 namespace midi_frontend {
 class BaseMidiFrontend;
-class PassiveMidiFrontend;
+class ReactiveMidiFrontend;
 }
 
 enum class FrontendType
@@ -59,7 +59,7 @@ enum class FrontendType
     JACK,
     PORTAUDIO,
     XENOMAI_RASPA,
-    PASSIVE,
+    REACTIVE,
     NONE
 };
 

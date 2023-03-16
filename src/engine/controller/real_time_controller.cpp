@@ -15,8 +15,8 @@
 
 #include "real_time_controller.h"
 
-#include "control_frontends/passive_midi_frontend.h"
-#include "audio_frontends/passive_frontend.h"
+#include "audio_frontends/reactive_frontend.h"
+#include "control_frontends/reactive_midi_frontend.h"
 
 #include "engine/audio_engine.h"
 #include "engine/controller/controller_common.h"
@@ -25,11 +25,11 @@
 namespace sushi
 {
 
-RealTimeController::RealTimeController(audio_frontend::PassiveFrontend* audio_frontend,
-                                     midi_frontend::PassiveMidiFrontend* midi_frontend,
-                                     sushi::engine::Transport* transport) : _audio_frontend(audio_frontend),
-                                                                            _midi_frontend(midi_frontend),
-                                                                            _transport(transport)
+RealTimeController::RealTimeController(audio_frontend::ReactiveFrontend* audio_frontend,
+                                       midi_frontend::ReactiveMidiFrontend* midi_frontend,
+                                       sushi::engine::Transport* transport) : _audio_frontend(audio_frontend),
+                                                                              _midi_frontend(midi_frontend),
+                                                                              _transport(transport)
 {
 }
 
@@ -39,13 +39,9 @@ RealTimeController::~RealTimeController()
 
 void RealTimeController::set_tempo(float tempo)
 {
-    // TODO: This works, but, it triggers the non-rt-safe Ableton Link event code.
-    //  We want Ableton Link to be disabled anyway when Sushi is passive!
-    //  So that work is a separate story (ELM-278).
     if (_tempo != tempo)
     {
-        _transport->set_tempo(tempo,
-                              false); // update_via_event
+        _transport->set_tempo(tempo, false); // update_via_event
         _tempo = tempo;
     }
 }
@@ -128,7 +124,7 @@ void RealTimeController::receive_midi(int input, MidiDataByte data, Time timesta
     _midi_frontend->receive_midi(input, data, timestamp);
 }
 
-void RealTimeController::set_midi_callback(PassiveMidiCallback&& callback)
+void RealTimeController::set_midi_callback(ReactiveMidiCallback&& callback)
 {
     _midi_frontend->set_callback(std::move(callback));
 }

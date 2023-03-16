@@ -21,14 +21,14 @@
 #include <iostream>
 
 #include "logging.h"
-#include "passive_frontend.h"
+#include "reactive_frontend.h"
 
 namespace sushi {
 namespace audio_frontend {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("passive audio frontend");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("Reactive audio frontend");
 
-AudioFrontendStatus PassiveFrontend::init(BaseAudioFrontendConfiguration* config)
+AudioFrontendStatus ReactiveFrontend::init(BaseAudioFrontendConfiguration* config)
 {
     auto ret_code = BaseAudioFrontend::init(config);
     if (ret_code != AudioFrontendStatus::OK)
@@ -36,13 +36,13 @@ AudioFrontendStatus PassiveFrontend::init(BaseAudioFrontendConfiguration* config
         return ret_code;
     }
 
-    auto frontend_config = static_cast<PassiveFrontendConfiguration*>(_config);
+    auto frontend_config = static_cast<ReactiveFrontendConfiguration*>(_config);
 
-    _in_buffer = ChunkSampleBuffer(PASSIVE_FRONTEND_CHANNELS);
-    _out_buffer = ChunkSampleBuffer(PASSIVE_FRONTEND_CHANNELS);
+    _in_buffer = ChunkSampleBuffer(REACTIVE_FRONTEND_CHANNELS);
+    _out_buffer = ChunkSampleBuffer(REACTIVE_FRONTEND_CHANNELS);
 
-    _engine->set_audio_input_channels(PASSIVE_FRONTEND_CHANNELS);
-    _engine->set_audio_output_channels(PASSIVE_FRONTEND_CHANNELS);
+    _engine->set_audio_input_channels(REACTIVE_FRONTEND_CHANNELS);
+    _engine->set_audio_output_channels(REACTIVE_FRONTEND_CHANNELS);
 
     auto status = _engine->set_cv_input_channels(frontend_config->cv_inputs);
     if (status != engine::EngineReturnStatus::OK)
@@ -63,12 +63,12 @@ AudioFrontendStatus PassiveFrontend::init(BaseAudioFrontendConfiguration* config
     return ret_code;
 }
 
-void PassiveFrontend::cleanup()
+void ReactiveFrontend::cleanup()
 {
     _engine->enable_realtime(false);
 }
 
-void PassiveFrontend::run()
+void ReactiveFrontend::run()
 {
     _engine->enable_realtime(true);
 }
@@ -76,16 +76,16 @@ void PassiveFrontend::run()
 // TODO: While in JUCE plugins channel count can change, in sushi it's set on init.
 //  In JUCE, the buffer size is always the same for in and out, with some unused,
 //  if they differ.
-void PassiveFrontend::process_audio(int channel_count,
-                                    int total_sample_count,
-                                    Time timestamp)
+void ReactiveFrontend::process_audio(int channel_count,
+                                     int total_sample_count,
+                                     Time timestamp)
 {
     // TODO: Do we need to concern ourselves with multiple buses?
 
-    if (channel_count != PASSIVE_FRONTEND_CHANNELS)
+    if (channel_count != REACTIVE_FRONTEND_CHANNELS)
     {
         assert(false);
-        std::cout << "Channel count passed is different to PASSIVE_FRONTEND_CHANNELS, in passive frontend." << std::endl;
+        std::cout << "Channel count passed is different to REACTIVE_FRONTEND_CHANNELS, in passive frontend." << std::endl;
         return;
     }
 
@@ -119,12 +119,12 @@ void PassiveFrontend::process_audio(int channel_count,
     }
 }
 
-ChunkSampleBuffer& PassiveFrontend::in_buffer()
+ChunkSampleBuffer& ReactiveFrontend::in_buffer()
 {
     return _in_buffer;
 }
 
-ChunkSampleBuffer& PassiveFrontend::out_buffer()
+ChunkSampleBuffer& ReactiveFrontend::out_buffer()
 {
     return _out_buffer;
 }

@@ -51,12 +51,12 @@ class XenomaiRaspaFrontend;
 class PortAudioFrontend;
 class OfflineFrontend;
 class JackFrontend;
-class PassiveFrontend;
+class ReactiveFrontend;
 }
 
 namespace midi_frontend {
 class BaseMidiFrontend;
-class PassiveMidiFrontend;
+class ReactiveMidiFrontend;
 }
 
 namespace midi_dispatcher {

@@ -19,8 +19,7 @@
 #include "sushi.h"
 #include "rt_controller.h"
 
-namespace sushi
-{
+namespace sushi {
 
 class ReactiveFactoryImplementation;
 

@@ -37,7 +37,7 @@ SET(TEST_FILES
     unittests/engine/controllers/osc_controller_test.cpp
     unittests/engine/controllers/midi_controller_test.cpp
     unittests/engine/controllers/session_controller_test.cpp
-    unittests/engine/controllers/passive_controller_test.cpp
+    unittests/engine/controllers/reactive_controller_test.cpp
     unittests/engine/factories/factories_test.cpp
     unittests/audio_frontends/offline_frontend_test.cpp
     unittests/control_frontends/osc_frontend_test.cpp

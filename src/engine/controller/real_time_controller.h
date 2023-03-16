@@ -13,8 +13,8 @@
 * SUSHI. If not, see http://www.gnu.org/licenses/
 */
 
-#ifndef PASSIVE_CONTROLLER_H
-#define PASSIVE_CONTROLLER_H
+#ifndef REACTIVE_CONTROLLER_H
+#define REACTIVE_CONTROLLER_H
 
 #include "include/sushi/rt_controller.h"
 #include "include/sushi/sushi.h"
@@ -26,12 +26,12 @@ class ConcreteSushi;
 
 namespace audio_frontend
 {
-class PassiveFrontend;
+class ReactiveFrontend;
 }
 
 namespace midi_frontend
 {
-class PassiveMidiFrontend;
+class ReactiveMidiFrontend;
 }
 
 namespace engine
@@ -46,8 +46,8 @@ class Transport;
 class RealTimeController : public RtController
 {
 public:
-    RealTimeController(audio_frontend::PassiveFrontend* audio_frontend,
-                       midi_frontend::PassiveMidiFrontend* midi_frontend,
+    RealTimeController(audio_frontend::ReactiveFrontend* audio_frontend,
+                       midi_frontend::ReactiveMidiFrontend* midi_frontend,
                        sushi::engine::Transport* transport);
 
     ~RealTimeController() override;
@@ -79,14 +79,14 @@ public:
     /////////////////////////////////////////////////////////////
 
     void receive_midi(int input, MidiDataByte data, Time timestamp) override;
-    void set_midi_callback(PassiveMidiCallback&& callback) override;
+    void set_midi_callback(ReactiveMidiCallback&& callback) override;
 
     sushi::Time calculate_timestamp_from_start(float sample_rate) const override;
     void increment_samples_since_start(uint64_t sample_count, Time timestamp) override;
 
 private:
-    audio_frontend::PassiveFrontend* _audio_frontend {nullptr};
-    midi_frontend::PassiveMidiFrontend* _midi_frontend {nullptr};
+    audio_frontend::ReactiveFrontend* _audio_frontend {nullptr};
+    midi_frontend::ReactiveMidiFrontend* _midi_frontend {nullptr};
     sushi::engine::Transport* _transport {nullptr};
     uint64_t _samples_since_start {0};
 
@@ -98,4 +98,4 @@ private:
 } // namespace sushi
 
 
-#endif // PASSIVE_CONTROLLER_H
+#endif // REACTIVE_CONTROLLER_H

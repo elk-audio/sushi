@@ -457,14 +457,14 @@ set(SOURCE_FILES
     src/audio_frontends/base_audio_frontend.cpp
     src/concrete_sushi.cpp
     src/audio_frontends/offline_frontend.cpp
-    src/audio_frontends/passive_frontend.cpp
+    src/audio_frontends/reactive_frontend.cpp
     src/audio_frontends/jack_frontend.cpp
     src/audio_frontends/portaudio_frontend.cpp
     src/audio_frontends/portaudio_devices_dump.cpp
     src/audio_frontends/xenomai_raspa_frontend.cpp
     src/control_frontends/base_control_frontend.cpp
     src/control_frontends/oscpack_osc_messenger.cpp
-    src/control_frontends/passive_midi_frontend.cpp
+    src/control_frontends/reactive_midi_frontend.cpp
     src/control_frontends/osc_frontend.cpp
     src/dsp_library/biquad_filter.cpp
     src/engine/audio_engine.cpp
@@ -531,7 +531,7 @@ set(SOURCE_FILES
     src/plugins/mono_summing_plugin.cpp
     src/plugins/stereo_mixer_plugin.cpp
     src/audio_frontends/offline_frontend.cpp
-    src/audio_frontends/passive_frontend.cpp
+    src/audio_frontends/reactive_frontend.cpp
 )
 
 # TODO: MACOSX_BUNDLE ? I think not.

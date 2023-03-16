@@ -25,10 +25,7 @@ namespace sushi
     _implementation = std::make_unique<ReactiveFactoryImplementation>();
 }
 
-ReactiveFactory::~ReactiveFactory()
-{
-
-}
+ReactiveFactory::~ReactiveFactory() = default;
 
 std::pair<std::unique_ptr<Sushi>, Status> ReactiveFactory::new_instance(SushiOptions& options)
 {

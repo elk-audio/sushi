@@ -62,13 +62,13 @@ using ::testing::_;
 using namespace sushi;
 
 //////////////////////////////////////////////////////
-// PassiveFactory
+// ReactiveFactory
 //////////////////////////////////////////////////////
 
-class PassiveFactoryTest : public ::testing::Test
+class ReactiveFactoryTest : public ::testing::Test
 {
 protected:
-    PassiveFactoryTest() {}
+    ReactiveFactoryTest() {}
 
     void SetUp()
     {
@@ -82,17 +82,17 @@ protected:
 
     SushiOptions options;
 
-    PassiveFactoryImplementation _passive_factory;
+    ReactiveFactoryImplementation _reactive_factory;
 
     std::string _path;
 };
 
-TEST_F(PassiveFactoryTest, TestPassiveFactoryWithDefaultConfig)
+TEST_F(ReactiveFactoryTest, TestReactiveFactoryWithDefaultConfig)
 {
     options.config_filename = "NONE";
     options.use_input_config_file = false;
 
-    auto [sushi, status] = _passive_factory.new_instance(options);
+    auto [sushi, status] = _reactive_factory.new_instance(options);
 
     ASSERT_NE(sushi.get(), nullptr);
 
@@ -112,12 +112,12 @@ TEST_F(PassiveFactoryTest, TestPassiveFactoryWithDefaultConfig)
     EXPECT_NE(sushi_cast->_rpc_server.get(), nullptr);
 #endif
 
-    auto rt_controller = _passive_factory.rt_controller();
+    auto rt_controller = _reactive_factory.rt_controller();
 
     EXPECT_NE(rt_controller.get(), nullptr);
 }
 
-TEST_F(PassiveFactoryTest, TestPassiveFactoryWithConfigFile)
+TEST_F(ReactiveFactoryTest, TestPassiveFactoryWithConfigFile)
 {
     // Currently, the Passive frontend supports only stereo I/O, so a simpler config is used.
     // JsonConfigurator is already extensively tested elsewhere anyway.
@@ -126,7 +126,7 @@ TEST_F(PassiveFactoryTest, TestPassiveFactoryWithConfigFile)
     options.config_filename = _path;
     options.use_input_config_file = true;
 
-    auto [sushi, status] = _passive_factory.new_instance(options);
+    auto [sushi, status] = _reactive_factory.new_instance(options);
 
     ASSERT_NE(sushi.get(), nullptr);
 
@@ -146,7 +146,7 @@ TEST_F(PassiveFactoryTest, TestPassiveFactoryWithConfigFile)
     EXPECT_NE(sushi_cast->_rpc_server.get(), nullptr);
 #endif
 
-    auto rt_controller = _passive_factory.rt_controller();
+    auto rt_controller = _reactive_factory.rt_controller();
 
     EXPECT_NE(rt_controller.get(), nullptr);
 }

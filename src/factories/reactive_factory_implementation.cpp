@@ -17,9 +17,9 @@
 
 #include "logging.h"
 
+#include "audio_frontends/reactive_frontend.h"
+#include "control_frontends/reactive_midi_frontend.h"
 #include "engine/audio_engine.h"
-#include "control_frontends/passive_midi_frontend.h"
-#include "audio_frontends/passive_frontend.h"
 
 #include "src/concrete_sushi.h"
 
@@ -40,19 +40,18 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("reactive-factory");
 ReactiveFactoryImplementation::ReactiveFactoryImplementation() = default;
 ReactiveFactoryImplementation::~ReactiveFactoryImplementation() = default;
 
-std::pair<std::unique_ptr<Sushi>, Status>
-    ReactiveFactoryImplementation::new_instance(SushiOptions& options)
+std::pair<std::unique_ptr<Sushi>, Status> ReactiveFactoryImplementation::new_instance(SushiOptions& options)
 {
     init_logger(options); // This can only be called once.
 
     // Overriding whatever frontend choice may or may not have been set.
-    options.frontend_type = FrontendType::PASSIVE;
+    options.frontend_type = FrontendType::REACTIVE;
 
     _instantiate_subsystems(options);
 
     _real_time_controller = std::make_unique<RealTimeController>(
-        static_cast<audio_frontend::PassiveFrontend*>(_audio_frontend.get()),
-        static_cast<midi_frontend::PassiveMidiFrontend*>(_midi_frontend.get()),
+        static_cast<audio_frontend::ReactiveFrontend*>(_audio_frontend.get()),
+        static_cast<midi_frontend::ReactiveMidiFrontend*>(_midi_frontend.get()),
         _engine->transport());
 
     return {_make_sushi(), _status};
@@ -69,10 +68,10 @@ Status ReactiveFactoryImplementation::_setup_audio_frontend([[maybe_unused]] con
     int cv_inputs = config.cv_inputs.value_or(0);
     int cv_outputs = config.cv_outputs.value_or(0);
 
-    SUSHI_LOG_INFO("Setting up passive frontend");
-    _frontend_config = std::make_unique<audio_frontend::PassiveFrontendConfiguration>(cv_inputs, cv_outputs);
+    SUSHI_LOG_INFO("Setting up reactive frontend");
+    _frontend_config = std::make_unique<audio_frontend::ReactiveFrontendConfiguration>(cv_inputs, cv_outputs);
 
-    _audio_frontend = std::make_unique<audio_frontend::PassiveFrontend>(_engine.get());
+    _audio_frontend = std::make_unique<audio_frontend::ReactiveFrontend>(_engine.get());
 
     return Status::OK;
 }
@@ -80,13 +79,13 @@ Status ReactiveFactoryImplementation::_setup_audio_frontend([[maybe_unused]] con
 Status ReactiveFactoryImplementation::_set_up_midi([[maybe_unused]] const SushiOptions& options,
                                                    const jsonconfig::ControlConfig& config)
 {
-    // Will always be 1 & 1 for passive.
+    // Will always be 1 & 1 for reactive frontend.
     int midi_inputs = config.midi_inputs.value_or(1);
     int midi_outputs = config.midi_outputs.value_or(1);
     _midi_dispatcher->set_midi_inputs(midi_inputs);
     _midi_dispatcher->set_midi_outputs(midi_outputs);
 
-    _midi_frontend = std::make_unique<midi_frontend::PassiveMidiFrontend>(_midi_dispatcher.get());
+    _midi_frontend = std::make_unique<midi_frontend::ReactiveMidiFrontend>(_midi_dispatcher.get());
 
     return Status::OK;
 }

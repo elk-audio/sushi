@@ -14,12 +14,12 @@
  */
 
  /**
- * @brief Passive frontend to process audio from a callback through a host application.
+ * @brief Reactive frontend to process audio from a callback through a host application.
  * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#ifndef SUSHI_PASSIVE_FRONTEND_H
-#define SUSHI_PASSIVE_FRONTEND_H
+#ifndef SUSHI_REACTIVE_FRONTEND_H
+#define SUSHI_REACTIVE_FRONTEND_H
 
 #include <string>
 #include <vector>
@@ -37,24 +37,24 @@ namespace audio_frontend {
 
 // TODO:
 //   Hard-coding the number of channels for now.
-constexpr int PASSIVE_FRONTEND_CHANNELS = 2;
+constexpr int REACTIVE_FRONTEND_CHANNELS = 2;
 
-struct PassiveFrontendConfiguration : public BaseAudioFrontendConfiguration
+struct ReactiveFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
-    PassiveFrontendConfiguration(int cv_inputs,
-                                 int cv_outputs) :
+    ReactiveFrontendConfiguration(int cv_inputs,
+                                  int cv_outputs) :
             BaseAudioFrontendConfiguration(cv_inputs, cv_outputs)
     {}
 
-    virtual ~PassiveFrontendConfiguration() = default;
+    ~ReactiveFrontendConfiguration() override = default;
 };
 
-class PassiveFrontend : public BaseAudioFrontend
+class ReactiveFrontend : public BaseAudioFrontend
 {
 public:
-    PassiveFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
+    ReactiveFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
 
-    virtual ~PassiveFrontend()
+    virtual ~ReactiveFrontend()
     {
         cleanup();
     }
@@ -87,8 +87,8 @@ public:
      * @param timestamp
      */
      void process_audio(int channel_count,
-                       int total_sample_count,
-                       Time timestamp);
+                        int total_sample_count,
+                        Time timestamp);
 
      ChunkSampleBuffer& in_buffer();
      ChunkSampleBuffer& out_buffer();
@@ -107,4 +107,4 @@ private:
 
 } // end namespace sushi
 
-#endif //SUSHI_PASSIVE_FRONTEND_H
+#endif //SUSHI_REACTIVE_FRONTEND_H

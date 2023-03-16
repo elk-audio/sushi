@@ -14,12 +14,12 @@
  */
 
  /**
- * @brief Passive midi frontend, provides a frontend for getting midi messages into the engine
+ * @brief Reactive MIDI frontend, provides a frontend for getting midi messages into the engine
  * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#ifndef SUSHI_PASSIVE_MIDI_FRONTEND_H
-#define SUSHI_PASSIVE_MIDI_FRONTEND_H
+#ifndef SUSHI_REACTIVE_MIDI_FRONTEND_H
+#define SUSHI_REACTIVE_MIDI_FRONTEND_H
 
 #include <functional>
 
@@ -33,7 +33,7 @@ namespace midi_frontend {
 /**
  * @brief Callback signature for method to invoke to notify host of any new MIDI message received.
  */
-using PassiveMidiCallback = std::function<void(int output, MidiDataByte data, Time timestamp)>;
+using ReactiveMidiCallback = std::function<void(int output, MidiDataByte data, Time timestamp)>;
 
 /**
  * @brief A frontend for MIDI messaging which is to be used when Sushi is included in a hosting audio app/plugin,
@@ -43,12 +43,12 @@ using PassiveMidiCallback = std::function<void(int output, MidiDataByte data, Ti
  * multiple inputs and/or outputs is omitted.
  *
  */
-class PassiveMidiFrontend : public BaseMidiFrontend
+class ReactiveMidiFrontend : public BaseMidiFrontend
 {
 public:
-    PassiveMidiFrontend(midi_receiver::MidiReceiver* dispatcher);
+    ReactiveMidiFrontend(midi_receiver::MidiReceiver* dispatcher);
 
-    ~PassiveMidiFrontend() override;
+    ~ReactiveMidiFrontend() override;
 
     bool init() override;
 
@@ -69,16 +69,16 @@ public:
     void receive_midi(int input, MidiDataByte data, Time timestamp);
 
     /**
-     * For passing a callback of type PassiveMidiCallback to the frontend.
+     * For passing a callback of type ReactiveMidiCallback to the frontend.
      * @param callback
      */
-    void set_callback(PassiveMidiCallback&& callback);
+    void set_callback(ReactiveMidiCallback&& callback);
 
 private:
-    PassiveMidiCallback _callback;
+    ReactiveMidiCallback _callback;
 };
 
 } // end namespace midi_frontend
 } // end namespace sushi
 
-#endif //SUSHI_PASSIVE_MIDI_FRONTEND_H_H
+#endif //SUSHI_REACTIVE_MIDI_FRONTEND_H_H

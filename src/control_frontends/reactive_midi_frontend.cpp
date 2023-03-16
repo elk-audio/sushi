@@ -14,47 +14,47 @@
  */
 
 /**
- * @brief Passive midi frontend
+ * @brief Reactive MIDI frontend
  * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include <chrono>
 
-#include "passive_midi_frontend.h"
 #include "library/midi_decoder.h"
+#include "reactive_midi_frontend.h"
 
 #include "logging.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("passive midi");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("reactive midi frontend");
 
 namespace sushi {
 namespace midi_frontend {
 
-PassiveMidiFrontend::PassiveMidiFrontend(midi_receiver::MidiReceiver* dispatcher)
+    ReactiveMidiFrontend::ReactiveMidiFrontend(midi_receiver::MidiReceiver* dispatcher)
         : BaseMidiFrontend(dispatcher)
 {}
 
-PassiveMidiFrontend::~PassiveMidiFrontend()
+ReactiveMidiFrontend::~ReactiveMidiFrontend()
 {
     stop();
 }
 
-bool PassiveMidiFrontend::init()
+bool ReactiveMidiFrontend::init()
 {
     return true;
 }
 
-void PassiveMidiFrontend::run()
+void ReactiveMidiFrontend::run()
 {
 
 }
 
-void PassiveMidiFrontend::stop()
+void ReactiveMidiFrontend::stop()
 {
 
 }
 
-void PassiveMidiFrontend::receive_midi(int input, MidiDataByte data, Time timestamp)
+void ReactiveMidiFrontend::receive_midi(int input, MidiDataByte data, Time timestamp)
 {
     _receiver->send_midi(input, data, timestamp);
 
@@ -62,7 +62,7 @@ void PassiveMidiFrontend::receive_midi(int input, MidiDataByte data, Time timest
                     data[0], data[1], data[2], data[3], input, timestamp.count());
 }
 
-void PassiveMidiFrontend::send_midi(int output, MidiDataByte data, Time timestamp)
+void ReactiveMidiFrontend::send_midi(int output, MidiDataByte data, Time timestamp)
 {
     if (_callback)
     {
@@ -70,12 +70,13 @@ void PassiveMidiFrontend::send_midi(int output, MidiDataByte data, Time timestam
     }
     else
     {
-        SUSHI_LOG_DEBUG("PassiveMidiFrontend::send_midi was invoked on a frontend instance which has no sending _callback. "
-                        "First pass one using set_callback.");
+        SUSHI_LOG_DEBUG("ReactiveMidiFrontend::send_midi was invoked on a frontend instance,"
+                        " which has no sending _callback. "
+                        "First pass one to the frontend using set_callback(...).");
     }
 }
 
-void PassiveMidiFrontend::set_callback(PassiveMidiCallback&& callback)
+void ReactiveMidiFrontend::set_callback(ReactiveMidiCallback&& callback)
 {
     _callback = std::move(callback);
 }

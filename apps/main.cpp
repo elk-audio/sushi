@@ -148,7 +148,7 @@ std::unique_ptr<Sushi> start_sushi(SushiOptions options)
     }
     else
     {
-        error_exit("Invalid frontend configuration. Passive, or None, are not supported when standalone.",
+        error_exit("Invalid frontend configuration. Reactive, or None, are not supported when standalone.",
                    Status::FRONTEND_IS_INCOMPATIBLE_WITH_STANDALONE);
     }
 

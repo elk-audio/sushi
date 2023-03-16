@@ -22,8 +22,7 @@
 #include "types.h"
 #include "sample_buffer.h"
 
-namespace sushi
-{
+namespace sushi {
 
 enum class TransportPositionSource
 {
@@ -31,7 +30,7 @@ enum class TransportPositionSource
     CALCULATED
 };
 
-using PassiveMidiCallback = std::function<void(int output, MidiDataByte data, Time timestamp)>;
+using ReactiveMidiCallback = std::function<void(int output, MidiDataByte data, Time timestamp)>;
 
 /**
  * @brief The API for the methods which can safely be called from a real-time context to interact with Sushi as a library.
@@ -97,8 +96,7 @@ public:
      * @param channel_count
      * @param timestamp
      */
-    virtual void process_audio(int channel_count,
-                               Time timestamp) = 0;
+    virtual void process_audio(int channel_count, Time timestamp) = 0;
 
     virtual ChunkSampleBuffer& in_buffer() = 0;
     virtual ChunkSampleBuffer& out_buffer() = 0;
@@ -119,7 +117,7 @@ public:
      *        (Not safe to call from a real-time context, and should only really be called once).
      * @param callback
      */
-    virtual void set_midi_callback(PassiveMidiCallback&& callback) = 0;
+    virtual void set_midi_callback(ReactiveMidiCallback&& callback) = 0;
 
     /**
      * @brief If the host doesn't provide a timestamp, this method can be used to calculate it,

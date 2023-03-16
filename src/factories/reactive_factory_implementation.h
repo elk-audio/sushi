@@ -30,11 +30,11 @@ namespace sushi {
 class ConcreteSushi;
 
 namespace audio_frontend {
-class PassiveFrontend;
+class ReactiveFrontend;
 }
 
 namespace midi_frontend {
-class PassiveMidiFrontend;
+class ReactiveMidiFrontend;
 }
 
 namespace engine {
@@ -43,7 +43,7 @@ class Transport;
 
 /**
  * @brief Factory for when Sushi will be embedded into another audio host or into a plugin,
- *        and will only use Passive frontends for audio and MIDI.
+ *        and will only use Reactive frontends for audio and MIDI.
  */
 class ReactiveFactoryImplementation : public BaseFactory
 {
