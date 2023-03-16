@@ -13,8 +13,8 @@
 * SUSHI. If not, see http://www.gnu.org/licenses/
 */
 
-#ifndef PASSIVE_FACTORY_H
-#define PASSIVE_FACTORY_H
+#ifndef REACTIVE_FACTORY_H
+#define REACTIVE_FACTORY_H
 
 #include "sushi.h"
 #include "rt_controller.h"
@@ -22,13 +22,13 @@
 namespace sushi
 {
 
-class PassiveFactoryImplementation;
+class ReactiveFactoryImplementation;
 
-class PassiveFactory
+class ReactiveFactory
 {
 public:
-    PassiveFactory();
-    ~PassiveFactory();
+    ReactiveFactory();
+    ~ReactiveFactory();
 
     [[nodiscard]] std::pair<std::unique_ptr<Sushi>, Status> new_instance (SushiOptions& options);
 
@@ -40,9 +40,9 @@ public:
     [[nodiscard]] std::unique_ptr<RtController> rt_controller();
 
 private:
-    std::unique_ptr<PassiveFactoryImplementation> _implementation;
+    std::unique_ptr<ReactiveFactoryImplementation> _implementation;
 };
 
 } // namespace sushi
 
-#endif // PASSIVE_FACTORY_H
+#endif // REACTIVE_FACTORY_H

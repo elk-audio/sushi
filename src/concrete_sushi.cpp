@@ -20,7 +20,7 @@
 
 #include <iostream>
 
-#include "factories/passive_factory_implementation.h"
+#include "factories/reactive_factory_implementation.h"
 
 #include "concrete_sushi.h"
 

@@ -13,8 +13,8 @@
 * SUSHI. If not, see http://www.gnu.org/licenses/
 */
 
-#ifndef PASSIVE_FACTORY_IMPLEMENTATION_H
-#define PASSIVE_FACTORY_IMPLEMENTATION_H
+#ifndef REACTIVE_FACTORY_IMPLEMENTATION_H
+#define REACTIVE_FACTORY_IMPLEMENTATION_H
 
 #include "include/sushi/rt_controller.h"
 #include "include/sushi/sushi.h"
@@ -45,11 +45,11 @@ class Transport;
  * @brief Factory for when Sushi will be embedded into another audio host or into a plugin,
  *        and will only use Passive frontends for audio and MIDI.
  */
-class PassiveFactoryImplementation : public BaseFactory
+class ReactiveFactoryImplementation : public BaseFactory
 {
 public:
-    PassiveFactoryImplementation();
-    ~PassiveFactoryImplementation() override;
+    ReactiveFactoryImplementation();
+    ~ReactiveFactoryImplementation() override;
 
     std::pair<std::unique_ptr<Sushi>, Status> new_instance(SushiOptions& options) override;
 
@@ -80,4 +80,4 @@ private:
 } // namespace sushi
 
 
-#endif // PASSIVE_FACTORY_IMPLEMENTATION_H
+#endif // REACTIVE_FACTORY_IMPLEMENTATION_H

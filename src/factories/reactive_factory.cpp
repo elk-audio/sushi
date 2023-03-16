@@ -13,29 +13,29 @@
 * SUSHI. If not, see http://www.gnu.org/licenses/
 */
 
-#include "include/sushi/passive_factory.h"
+#include "include/sushi/reactive_factory.h"
 
-#include "passive_factory_implementation.h"
+#include "reactive_factory_implementation.h"
 
 namespace sushi
 {
 
-PassiveFactory::PassiveFactory()
+    ReactiveFactory::ReactiveFactory()
 {
-    _implementation = std::make_unique<PassiveFactoryImplementation>();
+    _implementation = std::make_unique<ReactiveFactoryImplementation>();
 }
 
-PassiveFactory::~PassiveFactory()
+ReactiveFactory::~ReactiveFactory()
 {
 
 }
 
-std::pair<std::unique_ptr<Sushi>, Status> PassiveFactory::new_instance(SushiOptions& options)
+std::pair<std::unique_ptr<Sushi>, Status> ReactiveFactory::new_instance(SushiOptions& options)
 {
     return _implementation->new_instance(options);
 }
 
-std::unique_ptr<RtController> PassiveFactory::rt_controller()
+std::unique_ptr<RtController> ReactiveFactory::rt_controller()
 {
     return _implementation->rt_controller();
 }

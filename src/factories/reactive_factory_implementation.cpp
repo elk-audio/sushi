@@ -13,7 +13,7 @@
 * SUSHI. If not, see http://www.gnu.org/licenses/
 */
 
-#include "passive_factory_implementation.h"
+#include "reactive_factory_implementation.h"
 
 #include "logging.h"
 
@@ -35,13 +35,13 @@
 namespace sushi
 {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("passive-factory");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("reactive-factory");
 
-PassiveFactoryImplementation::PassiveFactoryImplementation() = default;
-PassiveFactoryImplementation::~PassiveFactoryImplementation() = default;
+ReactiveFactoryImplementation::ReactiveFactoryImplementation() = default;
+ReactiveFactoryImplementation::~ReactiveFactoryImplementation() = default;
 
 std::pair<std::unique_ptr<Sushi>, Status>
-    PassiveFactoryImplementation::new_instance(SushiOptions& options)
+    ReactiveFactoryImplementation::new_instance(SushiOptions& options)
 {
     init_logger(options); // This can only be called once.
 
@@ -58,13 +58,13 @@ std::pair<std::unique_ptr<Sushi>, Status>
     return {_make_sushi(), _status};
 }
 
-std::unique_ptr<RtController> PassiveFactoryImplementation::rt_controller()
+std::unique_ptr<RtController> ReactiveFactoryImplementation::rt_controller()
 {
     return std::move(_real_time_controller);
 }
 
-Status PassiveFactoryImplementation::_setup_audio_frontend([[maybe_unused]] const SushiOptions& options,
-                                             const jsonconfig::ControlConfig& config)
+Status ReactiveFactoryImplementation::_setup_audio_frontend([[maybe_unused]] const SushiOptions& options,
+                                                            const jsonconfig::ControlConfig& config)
 {
     int cv_inputs = config.cv_inputs.value_or(0);
     int cv_outputs = config.cv_outputs.value_or(0);
@@ -77,8 +77,8 @@ Status PassiveFactoryImplementation::_setup_audio_frontend([[maybe_unused]] cons
     return Status::OK;
 }
 
-Status PassiveFactoryImplementation::_set_up_midi([[maybe_unused]] const SushiOptions& options,
-                                    const jsonconfig::ControlConfig& config)
+Status ReactiveFactoryImplementation::_set_up_midi([[maybe_unused]] const SushiOptions& options,
+                                                   const jsonconfig::ControlConfig& config)
 {
     // Will always be 1 & 1 for passive.
     int midi_inputs = config.midi_inputs.value_or(1);
@@ -91,8 +91,8 @@ Status PassiveFactoryImplementation::_set_up_midi([[maybe_unused]] const SushiOp
     return Status::OK;
 }
 
-Status PassiveFactoryImplementation::_set_up_control([[maybe_unused]] const SushiOptions& options,
-                                       [[maybe_unused]] jsonconfig::JsonConfigurator* configurator)
+Status ReactiveFactoryImplementation::_set_up_control([[maybe_unused]] const SushiOptions& options,
+                                                      [[maybe_unused]] jsonconfig::JsonConfigurator* configurator)
 {
     _engine_controller = std::make_unique<engine::Controller>(_engine.get(),
                                                               _midi_dispatcher.get(),
@@ -138,8 +138,8 @@ Status PassiveFactoryImplementation::_set_up_control([[maybe_unused]] const Sush
 }
 
 Status
-    PassiveFactoryImplementation::_load_json_events([[maybe_unused]] const SushiOptions& options,
-                                         jsonconfig::JsonConfigurator* configurator)
+    ReactiveFactoryImplementation::_load_json_events([[maybe_unused]] const SushiOptions& options,
+                                                     jsonconfig::JsonConfigurator* configurator)
 {
     auto status = configurator->load_events();
 

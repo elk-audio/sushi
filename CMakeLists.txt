@@ -494,8 +494,8 @@ set(SOURCE_FILES
     src/engine/controller/session_controller.cpp
     src/engine/controller/real_time_controller.cpp
     src/factories/base_factory.cpp
-    src/factories/passive_factory.cpp
-    src/factories/passive_factory_implementation.cpp
+    src/factories/reactive_factory.cpp
+    src/factories/reactive_factory_implementation.cpp
     src/factories/standalone_factory.cpp
     src/factories/offline_factory.cpp
     src/library/event.cpp
