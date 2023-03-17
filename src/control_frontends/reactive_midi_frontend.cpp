@@ -30,7 +30,7 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("reactive midi frontend");
 namespace sushi {
 namespace midi_frontend {
 
-    ReactiveMidiFrontend::ReactiveMidiFrontend(midi_receiver::MidiReceiver* dispatcher)
+ReactiveMidiFrontend::ReactiveMidiFrontend(midi_receiver::MidiReceiver* dispatcher)
         : BaseMidiFrontend(dispatcher)
 {}
 
