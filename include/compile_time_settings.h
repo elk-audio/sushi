@@ -31,6 +31,8 @@
 // For AUDIO_CHUNK_SIZE.
 #include "include/constants.h"
 
+namespace sushi {
+
 struct CompileTimeSettings
 {
     static constexpr auto sushi_version = SUSHI_STRINGIZE(SUSHI__VERSION_MAJ) "." SUSHI_STRINGIZE(SUSHI__VERSION_MIN) "." SUSHI_STRINGIZE(SUSHI__VERSION_REV);
@@ -69,4 +71,6 @@ struct CompileTimeSettings
     };
 };
 
-#endif //SUSHI_COMPILE_TIME_SETTINGS_H
+}
+
+#endif // SUSHI_COMPILE_TIME_SETTINGS_H

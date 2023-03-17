@@ -45,6 +45,8 @@
     #define SUSHI_SENTRY_DSN_DEFAULT ""
 #endif
 
+namespace sushi {
+
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers for optionparse
 ////////////////////////////////////////////////////////////////////////////////
@@ -440,3 +442,5 @@ const optionparser::Descriptor usage[] =
     // Don't touch this one (sets default values for optionparser library)
     { 0, 0, 0, 0, 0, 0}
 };
+
+} // namespace sushi

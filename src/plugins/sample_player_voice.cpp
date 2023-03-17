@@ -23,6 +23,7 @@
 
 #include "plugins/sample_player_voice.h"
 
+namespace sushi {
 namespace sample_player_voice {
 
 /* Using a method inspired by a vst example to track notes. The voice
@@ -115,4 +116,5 @@ void Voice::render(sushi::SampleBuffer<AUDIO_CHUNK_SIZE>& output_buffer)
 
 }
 
-}// namespace sample_player_voice
+} // namespace sushi
+} // namespace sample_player_voice

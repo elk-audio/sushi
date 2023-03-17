@@ -181,7 +181,7 @@ ext::ControlStatus SessionController::restore_session(const ext::SessionState& s
 ext::SushiBuildInfo SessionController::_save_build_info() const
 {
     ext::SushiBuildInfo info;
-    for(auto& option : ::CompileTimeSettings::enabled_build_options)
+    for(auto& option : sushi::CompileTimeSettings::enabled_build_options)
     {
         info.build_options.emplace_back(option);
     }

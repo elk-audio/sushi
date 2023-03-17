@@ -25,6 +25,7 @@
 #include "dsp_library/sample_wrapper.h"
 #include "sushi/sample_buffer.h"
 
+namespace sushi {
 namespace sample_player_voice {
 
 // TODO eventually make this configurable
@@ -38,13 +39,11 @@ enum class SamplePlayMode
     STOPPING
 };
 
-
-
 class Voice
 {
     SUSHI_DECLARE_NON_COPYABLE(Voice);
 public:
-    Voice() {};
+    Voice() = default;
 
     Voice(float samplerate, dsp::Sample* sample) : _samplerate(samplerate), _sample(sample) {}
 
@@ -118,7 +117,6 @@ public:
     void render(sushi::SampleBuffer<AUDIO_CHUNK_SIZE>& output_buffer);
 
 private:
-
     float _samplerate{44100};
     dsp::Sample* _sample;
     SamplePlayMode _state{SamplePlayMode::STOPPED};
@@ -131,5 +129,6 @@ private:
     int _stop_offset{0};
 };
 
-} // end namespace sample_player_voice
+} // namespace sushi
+} // namespace sample_player_voice
 #endif //SUSHI_SAMPLE_VOICE_H
