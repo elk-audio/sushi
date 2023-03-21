@@ -105,21 +105,24 @@ bool GrpcServer::start()
 
 void GrpcServer::stop()
 {
-    auto now = std::chrono::system_clock::now();
-    _running.store(false);
-    _server->Shutdown(now + SERVER_SHUTDOWN_DEADLINE);
-    _async_rpc_queue->Shutdown();
-    if (_worker.joinable())
+    if (_running == true)
     {
-        _worker.join();
+        auto now = std::chrono::system_clock::now();
+        _running.store(false);
+        _server->Shutdown(now + SERVER_SHUTDOWN_DEADLINE);
+        _async_rpc_queue->Shutdown();
+        if (_worker.joinable())
+        {
+            _worker.join();
+        }
+
+        void* tag;
+        bool ok;
+
+        // Empty completion queue
+        while (_async_rpc_queue->Next (&tag, &ok));
+        _notification_control_service->delete_all_subscribers();
     }
-
-    void* tag;
-    bool ok;
-
-    // Empty completion queue
-    while(_async_rpc_queue->Next(&tag, &ok));
-    _notification_control_service->delete_all_subscribers();
 }
 
 void GrpcServer::waitForCompletion()
