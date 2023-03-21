@@ -133,7 +133,7 @@ std::shared_ptr<spdlog::logger> Logger::setup_logging()
 //  was created runs.
 //  That was never a problem in Sushi, but in Nikkei it is.
 //  For now, this is "just" committed to the the Sushi as library branch. But we'll need to make a better solution before merging.
-         std::cerr << "spdlog already has a logger with that name!" << std::endl;
+         std::cout << "spdlog already has a logger with that name!" << std::endl;
 
          logger_instance.reset();
 

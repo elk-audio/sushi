@@ -141,7 +141,11 @@ std::string to_string(Status status)
 ///////////////////////////////////////////
 
 ConcreteSushi::ConcreteSushi() = default;
-ConcreteSushi::~ConcreteSushi() = default;
+
+ConcreteSushi::~ConcreteSushi()
+{
+    exit();
+};
 
 Status ConcreteSushi::start()
 {
@@ -176,18 +180,35 @@ void ConcreteSushi::exit()
 {
     SUSHI_LOG_INFO("Exiting Sushi.");
 
-    _audio_frontend->cleanup();
-    _engine->event_dispatcher()->stop();
+    if (_audio_frontend != nullptr)
+    {
+        _audio_frontend->cleanup();
+        _audio_frontend.reset();
+    }
+
+    if (_engine != nullptr)
+    {
+        _engine->event_dispatcher()->stop();
+    }
 
     if (_osc_frontend != nullptr)
     {
         _osc_frontend->stop();
+        _osc_frontend.reset();
     }
 
-    _midi_frontend->stop();
+    if (_midi_frontend != nullptr)
+    {
+        _midi_frontend->stop();
+        _midi_frontend.reset();
+    }
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
-    _rpc_server->stop();
+    if (_rpc_server != nullptr)
+    {
+        _rpc_server->stop();
+        _rpc_server.reset();
+    }
 #endif
 }
 
