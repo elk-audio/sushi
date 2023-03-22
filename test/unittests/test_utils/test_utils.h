@@ -50,6 +50,20 @@ inline void assert_buffer_value(float value, const SampleBuffer<size>& buffer, f
     }
 }
 
+template <int size>
+inline void assert_buffer_non_null(const SampleBuffer <size> &buffer)
+{
+    for (int ch = 0; ch < buffer.channel_count(); ++ch)
+    {
+        float sum = 0;
+        for (int i = 0; i < size; ++i)
+        {
+            sum += std::abs(buffer.channel(ch)[i]);
+        }
+        ASSERT_GT(sum, 0.00001);
+    }
+}
+
 inline std::string get_data_dir_path()
 {
     char const* test_data_dir = GetEnv("SUSHI_TEST_DATA_DIR");

@@ -19,6 +19,7 @@ SET(TEST_FILES
     unittests/plugins/sample_player_plugin_test.cpp
     unittests/plugins/send_return_test.cpp
     unittests/plugins/step_sequencer_test.cpp
+    unittests/plugins/wav_streamer_plugin_test.cpp
     unittests/engine/audio_graph_test.cpp
     unittests/engine/track_test.cpp
     unittests/engine/engine_test.cpp

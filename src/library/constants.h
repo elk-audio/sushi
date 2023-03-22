@@ -57,5 +57,4 @@ constexpr int SUSHI_PPQN_TICK = 24;
 #define SUSHI_DECLARE_NON_COPYABLE(type) type(const type& other) = delete; \
                                          type& operator=(const type&) = delete;
 
-
 #endif //SUSHI_CONSTANTS_H

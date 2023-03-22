@@ -27,6 +27,7 @@
 #include "plugins/cv_to_control_plugin.h"
 #include "plugins/control_to_cv_plugin.h"
 #include "plugins/wav_writer_plugin.h"
+#include "plugins/wav_streamer_plugin.h"
 #include "plugins/mono_summing_plugin.h"
 #include "plugins/send_return_factory.h"
 #include "plugins/sample_delay_plugin.h"
@@ -76,6 +77,7 @@ InternalProcessorFactory::InternalProcessorFactory() : _send_return_factory(std:
     _add(std::make_unique<InternalFactory<cv_to_control_plugin::CvToControlPlugin>>());
     _add(std::make_unique<InternalFactory<control_to_cv_plugin::ControlToCvPlugin>>());
     _add(std::make_unique<InternalFactory<wav_writer_plugin::WavWriterPlugin>>());
+    _add(std::make_unique<InternalFactory<wav_streamer_plugin::WavStreamerPlugin>>());
     _add(std::make_unique<InternalFactory<mono_summing_plugin::MonoSummingPlugin>>());
     _add(std::make_unique<InternalFactory<sample_delay_plugin::SampleDelayPlugin>>());
     _add(std::make_unique<InternalFactory<stereo_mixer_plugin::StereoMixerPlugin>>());

@@ -29,13 +29,15 @@ namespace sushi {
 
 /**
  * @brief Class that implements smoothing of a value over a set time period using either
- *        linear ramping or filtering through a 1 pole lowpass filter. The time set
- *        with set_lag_time() represents the actual ramping time in the linear ramp
- *        case, and the 90% rise time in the filter case.
+ *        linear ramping, filtering through a 1 pole lowpass filter or an exponential ramp
+ *        that is specifically made for with long audio fades as it has an exponential
+ *        curve when fading in or out.
+ *        The time set with set_lag_time() represents the actual ramping time in the linear ramp
+ *        and volume case, and the 90% rise time in the filter case.
  *        The base template is not intended to be used directly but through one of the
  *        aliases ValueSmootherFilter or ValueSmootherRamp.
  * @tparam T The type used for the stored value.
- * @tparam mode The mode of filtering used. Should be either RAMP or FILTER
+ * @tparam mode The mode of filtering used. Should be either RAMP, FILTER or EXP_RAMP
  */
 template <typename T, int mode>
 class ValueSmoother
@@ -44,6 +46,7 @@ public:
     enum Mode : int
     {
         RAMP = 0,
+        EXP_RAMP,
         FILTER
     };
     ValueSmoother() : _current_value(0), _target_value(0) {}
@@ -68,11 +71,20 @@ public:
      */
     void set(T value)
     {
-        _target_value = value;
-        if constexpr (mode == RAMP)
+        if (value != _target_value)
         {
-            _spec.step = (_target_value - _current_value) / _spec.steps;
-            _spec.count = _spec.steps;
+            _target_value = value;
+            if constexpr (mode == Mode::RAMP)
+            {
+                _spec.step = std::min(1.0f, (_target_value - _current_value) / _spec.steps);
+                _spec.count = _spec.steps;
+            }
+            else if constexpr (mode == Mode::EXP_RAMP)
+            {
+                _spec.count = _spec.steps;
+                _spec.step = std::exp((std::log(std::max(STATIONARY_LIMIT, value)) -
+                                       std::log(std::max(STATIONARY_LIMIT, _current_value))) / _spec.steps);
+            }
         }
     };
 
@@ -83,8 +95,16 @@ public:
     void set_direct(T target_value)
     {
         _target_value = target_value;
-        _current_value = target_value;
-        if constexpr (mode == RAMP)
+        if constexpr (mode == Mode::EXP_RAMP)
+        {
+            _current_value = std::max(STATIONARY_LIMIT, target_value);
+        }
+        else
+        {
+            _current_value = target_value;
+        }
+
+        if constexpr (mode == Mode::RAMP)
         {
             _spec.count = 0;
         }
@@ -94,7 +114,7 @@ public:
      * @brief Read the current value without updating the object
      * @return The current smoothed value
      */
-    T value() const  {return _current_value;}
+    [[nodiscard]] T value() const  {return _current_value;}
 
     /**
      * @brief Advance the smoother one sample point and return the new current value
@@ -102,13 +122,20 @@ public:
      */
     T next_value()
     {
-        if constexpr (mode == Mode::RAMP)
+        if constexpr (mode == Mode::RAMP || mode == Mode::EXP_RAMP)
         {
             assert(_spec.steps >= 0);
             if (_spec.count > 0)
             {
                 _spec.count--;
-                return _current_value += _spec.step;
+                if constexpr (mode == Mode::RAMP)
+                {
+                    return _current_value += _spec.step;
+                }
+                else
+                {
+                    return _current_value *= _spec.step;
+                }
             }
             return _target_value;
         }
@@ -125,7 +152,7 @@ public:
      */
     bool stationary() const
     {
-        if constexpr (mode == Mode::RAMP)
+        if constexpr (mode == Mode::RAMP || mode == Mode::EXP_RAMP)
         {
             return _spec.count == 0;
         }
@@ -150,7 +177,7 @@ private:
     {
         T   step{0};
         int count{0};
-        int steps{-1};
+        int steps{0};
     };
     struct FilterSpecific
     {
@@ -158,8 +185,8 @@ private:
     };
 
     static constexpr T TIMECONSTANTS_RISE_TIME = 2.19;
-    static constexpr T STATIONARY_LIMIT = 0.001;
-    static_assert(mode == Mode::RAMP || mode == Mode::FILTER);
+    static constexpr T STATIONARY_LIMIT = 0.0001; // -80dB
+    static_assert(mode == Mode::RAMP || mode == Mode::FILTER || mode == Mode::EXP_RAMP);
 
     void _update_internals(std::chrono::duration<float, std::ratio<1,1>> lag_time, float sample_rate)
     {
@@ -169,13 +196,17 @@ private:
         }
         else
         {
-            _spec.steps = static_cast<int>(std::round(lag_time.count() * sample_rate));
+            if constexpr (mode == Mode::EXP_RAMP)
+            {
+                _current_value = std::max(_current_value, STATIONARY_LIMIT);
+            }
+            _spec.steps = std::max(1, static_cast<int>(std::round(lag_time.count() * sample_rate)));
         }
     }
 
     T _current_value;
     T _target_value;
-    std::conditional_t<mode == Mode::RAMP, LinearSpecific, FilterSpecific> _spec;
+    std::conditional_t<mode == Mode::RAMP || mode == Mode::EXP_RAMP, LinearSpecific, FilterSpecific> _spec;
 };
 
 /* ValueSmoother should be declared through one of the aliases below */
@@ -184,6 +215,9 @@ using ValueSmootherRamp = ValueSmoother<FloatType, ValueSmoother<FloatType,0>::M
 
 template <typename FloatType>
 using ValueSmootherFilter = ValueSmoother<FloatType, ValueSmoother<FloatType,0>::Mode::FILTER>;
+
+template <typename FloatType>
+using ValueSmootherExpRamp = ValueSmoother<FloatType, ValueSmoother<FloatType,0>::Mode::EXP_RAMP>;
 
 }  // namespace sushi
 
