@@ -29,7 +29,7 @@ public:
     ReactiveFactory();
     ~ReactiveFactory();
 
-    [[nodiscard]] std::pair<std::unique_ptr<Sushi>, Status> new_instance (SushiOptions& options);
+    [[nodiscard]] std::pair<std::unique_ptr<Sushi>, Status> new_instance(SushiOptions& options);
 
     /**
      * @brief Returns an instance of a RealTimeController, if new_instance(...) completed successfully.

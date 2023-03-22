@@ -20,21 +20,16 @@
 
 #include <iostream>
 #include <csignal>
-
 #include <condition_variable>
 
-#include "concrete_sushi.h"
-
+#include "include/sushi/sushi.h"
 #include "include/sushi/terminal_utilities.h"
+#include "include/sushi/standalone_factory.h"
+#include "include/sushi/offline_factory.h"
 
-#include "library/parameter_dump.h"
-#include "compile_time_settings.h"
-
-#include "factories/standalone_factory.h"
-#include "factories/offline_factory.h"
-
-#include "logging.h"
 #include "audio_frontends/portaudio_devices_dump.h"
+#include "library/parameter_dump.h"
+#include "logging.h"
 
 using namespace sushi;
 
@@ -131,7 +126,7 @@ int main(int argc, char* argv[])
 
 std::unique_ptr<Sushi> start_sushi(SushiOptions options)
 {
-    std::unique_ptr<BaseFactory> factory;
+    std::unique_ptr<ActiveFactoryInterface> factory;
 
     if (options.frontend_type == FrontendType::DUMMY
         || options.frontend_type == FrontendType::OFFLINE)

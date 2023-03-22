@@ -1,5 +1,5 @@
 /*
-* Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+* Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
 *
 * SUSHI is free software: you can redistribute it and/or modify it under the terms of
 * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -13,22 +13,28 @@
 * SUSHI. If not, see http://www.gnu.org/licenses/
 */
 
-#include "include/sushi/offline_factory.h"
+#ifndef STANDALONE_FACTORY_H
+#define STANDALONE_FACTORY_H
 
-#include "offline_factory_implementation.h"
+#include "sushi.h"
+#include "active_factory_interface.h"
 
 namespace sushi {
 
-    OfflineFactory::OfflineFactory()
+class StandaloneFactoryImplementation;
+
+class StandaloneFactory : public ActiveFactoryInterface
 {
-    _implementation = std::make_unique<OfflineFactoryImplementation>();
-}
+public:
+    StandaloneFactory();
+    ~StandaloneFactory();
 
-OfflineFactory::~OfflineFactory() = default;
+    [[nodiscard]] std::pair<std::unique_ptr<Sushi>, Status> new_instance(SushiOptions& options) override;
 
-std::pair<std::unique_ptr<Sushi>, Status> OfflineFactory::new_instance(SushiOptions& options)
-{
-    return _implementation->new_instance(options);
-}
+private:
+    std::unique_ptr<StandaloneFactoryImplementation> _implementation;
+};
 
-}
+} // namespace sushi
+
+#endif // STANDALONE_FACTORY_H

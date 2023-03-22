@@ -497,7 +497,9 @@ set(SOURCE_FILES
     src/factories/reactive_factory.cpp
     src/factories/reactive_factory_implementation.cpp
     src/factories/standalone_factory.cpp
+    src/factories/standalone_factory_implementation.cpp
     src/factories/offline_factory.cpp
+    src/factories/offline_factory_implementation.cpp
     src/library/event.cpp
     src/library/midi_decoder.cpp
     src/library/midi_encoder.cpp

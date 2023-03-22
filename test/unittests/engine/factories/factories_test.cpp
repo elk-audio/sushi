@@ -48,10 +48,9 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration*)
 
 #include "concrete_sushi.cpp"
 #include "factories/base_factory.cpp"
-#include "factories/offline_factory.cpp"
+#include "factories/offline_factory_implementation.cpp"
 #include "factories/reactive_factory_implementation.cpp"
-
-#include "factories/standalone_factory.cpp"
+#include "factories/standalone_factory_implementation.cpp"
 
 using namespace std::chrono_literals;
 
