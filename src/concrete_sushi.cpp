@@ -144,8 +144,8 @@ ConcreteSushi::ConcreteSushi() = default;
 
 ConcreteSushi::~ConcreteSushi()
 {
-    exit();
-};
+    stop();
+}
 
 Status ConcreteSushi::start()
 {
@@ -176,9 +176,9 @@ Status ConcreteSushi::start()
     return Status::OK;
 }
 
-void ConcreteSushi::exit()
+void ConcreteSushi::stop()
 {
-    SUSHI_LOG_INFO("Exiting Sushi.");
+    SUSHI_LOG_INFO("Stopping Sushi.");
 
     if (_audio_frontend != nullptr)
     {

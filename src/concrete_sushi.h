@@ -90,7 +90,7 @@ public:
     /**
      * Stops the Sushi instance from running.
      */
-    void exit() override;
+    void stop() override;
 
     /**
      * @return an instance of the Sushi controller - assuming Sushi has first been initialized.

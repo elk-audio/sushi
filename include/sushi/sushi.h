@@ -168,7 +168,7 @@ public:
 
     [[nodiscard]] virtual Status start() = 0;
 
-    virtual void exit() = 0;
+    virtual void stop() = 0;
 
     virtual ext::SushiControl* controller() = 0;
 

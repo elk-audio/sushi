@@ -124,7 +124,7 @@ int main(int argc, char* argv[])
         exit_notifier.wait(lock, exit_condition);
     }
 
-    sushi->exit();
+    sushi->stop();
 
     SUSHI_LOG_INFO("Sushi exiting normally!");
 
