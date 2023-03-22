@@ -38,6 +38,9 @@ AudioFrontendStatus PassiveFrontend::init(BaseAudioFrontendConfiguration* config
 
     auto frontend_config = static_cast<PassiveFrontendConfiguration*>(_config);
 
+    _in_buffer = ChunkSampleBuffer(PASSIVE_FRONTEND_CHANNELS);
+    _out_buffer = ChunkSampleBuffer(PASSIVE_FRONTEND_CHANNELS);
+
     _engine->set_audio_input_channels(PASSIVE_FRONTEND_CHANNELS);
     _engine->set_audio_output_channels(PASSIVE_FRONTEND_CHANNELS);
 

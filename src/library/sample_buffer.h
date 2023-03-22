@@ -193,7 +193,6 @@ public:
         return create_non_owning_buffer(source, 0, source.channel_count());
     }
 
-
     /**
      * @brief Create a Samplebuffer by wrapping a raw data pointer.
      *

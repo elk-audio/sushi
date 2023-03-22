@@ -97,8 +97,8 @@ private:
     engine::ControlBuffer _in_controls;
     engine::ControlBuffer _out_controls;
 
-    ChunkSampleBuffer _in_buffer {MAX_FRONTEND_CHANNELS};
-    ChunkSampleBuffer _out_buffer {MAX_FRONTEND_CHANNELS};
+    ChunkSampleBuffer _in_buffer;
+    ChunkSampleBuffer _out_buffer;
 
     Time _start_time;
 };
