@@ -28,7 +28,7 @@
 #include <mutex>
 
 #include "constants.h"
-#include "sushi/types.h"
+#include "types.h"
 
 #include "library/midi_decoder.h"
 #include "library/event.h"
@@ -46,8 +46,8 @@ namespace midi_dispatcher {
 struct InputConnection
 {
     // TODO: This can be track_id, if the InputConnection is member of KbdInputConnection.
-    // It can also be processor_id, if the InputConnection is member of CCInputConnection.
-    // Disambiguating would be safer.
+    //   It can also be processor_id, if the InputConnection is member of CCInputConnection.
+    //   Disambiguating would be safer.
     ObjectId target;
     ObjectId parameter;
     float min_range;

@@ -13,7 +13,7 @@
 * SUSHI. If not, see http://www.gnu.org/licenses/
 */
 
-#include "include/sushi/standalone_factory.h"
+#include "standalone_factory.h"
 
 #include "standalone_factory_implementation.h"
 

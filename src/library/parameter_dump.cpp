@@ -19,7 +19,8 @@
  */
 
 #include "json_utils.h"
-#include "library/parameter_dump.h"
+#include "parameter_dump.h"
+
 #include "control_frontends/osc_utils.h"
 
 namespace sushi {

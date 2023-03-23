@@ -23,7 +23,7 @@
 
 #include <functional>
 
-#include "sushi/time.h"
+#include "sushi_time.h"
 
 #include "base_midi_frontend.h"
 

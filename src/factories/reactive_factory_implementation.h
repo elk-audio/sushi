@@ -16,8 +16,8 @@
 #ifndef REACTIVE_FACTORY_IMPLEMENTATION_H
 #define REACTIVE_FACTORY_IMPLEMENTATION_H
 
-#include "include/sushi/rt_controller.h"
-#include "include/sushi/sushi.h"
+#include "rt_controller.h"
+#include "sushi.h"
 
 #include "base_factory.h"
 

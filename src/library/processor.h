@@ -32,7 +32,7 @@
 #include "library/rt_event.h"
 #include "library/rt_event_pipe.h"
 #include "processor_state.h"
-#include "sushi/sample_buffer.h"
+#include "sample_buffer.h"
 
 namespace sushi {
 

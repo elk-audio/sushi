@@ -13,14 +13,14 @@
 * SUSHI. If not, see http://www.gnu.org/licenses/
 */
 
-#include "include/sushi/reactive_factory.h"
+#include "reactive_factory.h"
 
 #include "reactive_factory_implementation.h"
 
 namespace sushi
 {
 
-    ReactiveFactory::ReactiveFactory()
+ReactiveFactory::ReactiveFactory()
 {
     _implementation = std::make_unique<ReactiveFactoryImplementation>();
 }

@@ -25,7 +25,7 @@
 #include <vector>
 
 #include "constants.h"
-#include "sushi/types.h"
+#include "types.h"
 
 #include "library/plugin_parameters.h"
 #include "library/event_interface.h"

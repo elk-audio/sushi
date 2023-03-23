@@ -27,9 +27,9 @@
 
 #include "twine/twine.h"
 
-#include "sushi/time.h"
-#include "sushi/types.h"
-#include "sushi/sample_buffer.h"
+#include "sushi_time.h"
+#include "types.h"
+#include "sample_buffer.h"
 
 
 #include "dsp_library/master_limiter.h"

@@ -30,9 +30,9 @@
 #include <string>
 
 #include "constants.h"
-#include "sushi/types.h"
-#include "sushi/time.h"
-#include "sushi/sample_buffer.h"
+#include "types.h"
+#include "sushi_time.h"
+#include "sample_buffer.h"
 
 #include "base_event_dispatcher.h"
 #include "base_processor_container.h"

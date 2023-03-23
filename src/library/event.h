@@ -24,8 +24,8 @@
 #include <string>
 #include <memory>
 
-#include "sushi/time.h"
-#include "sushi/types.h"
+#include "sushi_time.h"
+#include "types.h"
 
 #include "id_generator.h"
 #include "library/rt_event.h"

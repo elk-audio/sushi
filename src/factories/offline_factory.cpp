@@ -13,7 +13,7 @@
 * SUSHI. If not, see http://www.gnu.org/licenses/
 */
 
-#include "include/sushi/offline_factory.h"
+#include "offline_factory.h"
 
 #include "offline_factory_implementation.h"
 

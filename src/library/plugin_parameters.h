@@ -27,7 +27,7 @@
 #include <cassert>
 
 #include "constants.h"
-#include "sushi/types.h"
+#include "types.h"
 
 #include "library/id_generator.h"
 

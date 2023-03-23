@@ -26,7 +26,7 @@
 #include <chrono>
 #include <optional>
 
-#include "include/sushi/sushi.h"
+#include "sushi.h"
 
 #include "compile_time_settings.h"
 

@@ -21,7 +21,7 @@
 #ifndef SUSHI_MIDI_ENCODER_H
 #define SUSHI_MIDI_ENCODER_H
 
-#include "sushi/types.h"
+#include "types.h"
 
 namespace sushi {
 namespace midi {

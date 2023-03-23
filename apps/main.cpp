@@ -22,14 +22,14 @@
 #include <csignal>
 #include <condition_variable>
 
-#include "include/sushi/sushi.h"
-#include "include/sushi/terminal_utilities.h"
-#include "include/sushi/standalone_factory.h"
-#include "include/sushi/offline_factory.h"
-
-#include "audio_frontends/portaudio_devices_dump.h"
-#include "library/parameter_dump.h"
 #include "logging.h"
+#include "parameter_dump.h"
+#include "portaudio_devices_dump.h"
+
+#include "sushi.h"
+#include "terminal_utilities.h"
+#include "standalone_factory.h"
+#include "offline_factory.h"
 
 using namespace sushi;
 

@@ -16,7 +16,7 @@
 #ifndef SUSHI_OFFLINE_FACTORY_H
 #define SUSHI_OFFLINE_FACTORY_H
 
-#include "include/sushi/sushi.h"
+#include "sushi.h"
 
 #include "base_factory.h"
 

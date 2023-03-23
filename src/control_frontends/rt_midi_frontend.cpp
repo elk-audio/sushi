@@ -22,7 +22,7 @@
 #include <tuple>
 
 #include "rt_midi_frontend.h"
-#include "sushi/time.h"
+#include "sushi_time.h"
 #include "logging.h"
 
 #include "library/midi_decoder.h"

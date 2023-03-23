@@ -21,7 +21,7 @@
 #ifndef SUSHI_MIDI_RECEIVER_H
 #define SUSHI_MIDI_RECEIVER_H
 
-#include "sushi/time.h"
+#include "sushi_time.h"
 
 namespace sushi {
 namespace midi_receiver {

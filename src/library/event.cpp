@@ -22,7 +22,7 @@
 
 #include "twine/twine.h"
 
-#include "sushi/types.h"
+#include "types.h"
 
 #include "library/event.h"
 #include "engine/base_engine.h"
