@@ -38,8 +38,7 @@ OfflineFactoryImplementation::OfflineFactoryImplementation() = default;
 
 OfflineFactoryImplementation::~OfflineFactoryImplementation() = default;
 
-std::pair<std::unique_ptr<Sushi>, Status>
-    OfflineFactoryImplementation::new_instance(SushiOptions& options)
+std::pair<std::unique_ptr<Sushi>, Status> OfflineFactoryImplementation::new_instance(SushiOptions& options)
 {
     init_logger(options);
 
@@ -49,7 +48,7 @@ std::pair<std::unique_ptr<Sushi>, Status>
 }
 
 Status OfflineFactoryImplementation::_setup_audio_frontend(const SushiOptions& options,
-                                             const jsonconfig::ControlConfig& config)
+                                                           const jsonconfig::ControlConfig& config)
 {
     int cv_inputs = config.cv_inputs.value_or(0);
     int cv_outputs = config.cv_outputs.value_or(0);
@@ -78,7 +77,7 @@ Status OfflineFactoryImplementation::_setup_audio_frontend(const SushiOptions& o
 }
 
 Status OfflineFactoryImplementation::_set_up_midi([[maybe_unused]] const SushiOptions& options,
-                                    const jsonconfig::ControlConfig& config)
+                                                  const jsonconfig::ControlConfig& config)
 {
     int midi_inputs = config.midi_inputs.value_or(1);
     int midi_outputs = config.midi_outputs.value_or(1);
@@ -91,7 +90,7 @@ Status OfflineFactoryImplementation::_set_up_midi([[maybe_unused]] const SushiOp
 }
 
 Status OfflineFactoryImplementation::_set_up_control([[maybe_unused]] const SushiOptions& options,
-                                       [[maybe_unused]] jsonconfig::JsonConfigurator* configurator)
+                                                     [[maybe_unused]] jsonconfig::JsonConfigurator* configurator)
 {
     _engine_controller = std::make_unique<engine::Controller>(_engine.get(),
                                                               _midi_dispatcher.get(),
@@ -107,7 +106,7 @@ Status OfflineFactoryImplementation::_set_up_control([[maybe_unused]] const Sush
 
 Status
     OfflineFactoryImplementation::_load_json_events([[maybe_unused]] const SushiOptions& options,
-                                         jsonconfig::JsonConfigurator* configurator)
+                                                    jsonconfig::JsonConfigurator* configurator)
 {
     auto [status, events] = configurator->load_event_list();
 

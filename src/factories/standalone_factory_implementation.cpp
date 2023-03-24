@@ -48,8 +48,7 @@ StandaloneFactoryImplementation::StandaloneFactoryImplementation() = default;
 
 StandaloneFactoryImplementation::~StandaloneFactoryImplementation() = default;
 
-std::pair<std::unique_ptr<Sushi>, Status>
-    StandaloneFactoryImplementation::new_instance(SushiOptions& options)
+std::pair<std::unique_ptr<Sushi>, Status> StandaloneFactoryImplementation::new_instance(SushiOptions& options)
 {
     init_logger(options);
 
