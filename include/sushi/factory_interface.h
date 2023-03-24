@@ -13,22 +13,22 @@
 * SUSHI. If not, see http://www.gnu.org/licenses/
 */
 
-#ifndef ACTIVE_FACTORY_INTERFACE_H
-#define ACTIVE_FACTORY_INTERFACE_H
+#ifndef FACTORY_INTERFACE_H
+#define FACTORY_INTERFACE_H
 
 #include "sushi.h"
 
 namespace sushi {
 
-class ActiveFactoryInterface
+class FactoryInterface
 {
 public:
-    ActiveFactoryInterface() = default;
-    virtual ~ActiveFactoryInterface() = default;
+    FactoryInterface() = default;
+    virtual ~FactoryInterface() = default;
 
     [[nodiscard]] virtual std::pair<std::unique_ptr<Sushi>, Status> new_instance(SushiOptions& options) = 0;
 };
 
 } // namespace sushi
 
-#endif // ACTIVE_FACTORY_INTERFACE_H
+#endif // FACTORY_INTERFACE_H

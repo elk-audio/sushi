@@ -125,7 +125,7 @@ int main(int argc, char* argv[])
 
 std::unique_ptr<Sushi> start_sushi(SushiOptions options)
 {
-    std::unique_ptr<ActiveFactoryInterface> factory;
+    std::unique_ptr<FactoryInterface> factory;
 
     if (options.frontend_type == FrontendType::DUMMY
         || options.frontend_type == FrontendType::OFFLINE)

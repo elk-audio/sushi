@@ -16,18 +16,18 @@
 #ifndef STANDALONE_FACTORY_H
 #define STANDALONE_FACTORY_H
 
+#include "factory_interface.h"
 #include "sushi.h"
-#include "active_factory_interface.h"
 
 namespace sushi {
 
 class StandaloneFactoryImplementation;
 
-class StandaloneFactory : public ActiveFactoryInterface
+class StandaloneFactory : public FactoryInterface
 {
 public:
     StandaloneFactory();
-    ~StandaloneFactory();
+    ~StandaloneFactory() override;
 
     [[nodiscard]] std::pair<std::unique_ptr<Sushi>, Status> new_instance(SushiOptions& options) override;
 

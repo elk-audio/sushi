@@ -16,18 +16,19 @@
 #ifndef REACTIVE_FACTORY_H
 #define REACTIVE_FACTORY_H
 
+#include "factory_interface.h"
 #include "sushi.h"
-#include "rt_controller.h"
 
 namespace sushi {
 
 class ReactiveFactoryImplementation;
+class RtController;
 
-class ReactiveFactory
+class ReactiveFactory : public FactoryInterface
 {
 public:
     ReactiveFactory();
-    ~ReactiveFactory();
+    ~ReactiveFactory() override;
 
     [[nodiscard]] std::pair<std::unique_ptr<Sushi>, Status> new_instance(SushiOptions& options);
 

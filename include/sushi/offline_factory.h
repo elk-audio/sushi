@@ -16,18 +16,18 @@
 #ifndef OFFLINE_FACTORY_H
 #define OFFLINE_FACTORY_H
 
+#include "factory_interface.h"
 #include "sushi.h"
-#include "active_factory_interface.h"
 
 namespace sushi {
 
 class OfflineFactoryImplementation;
 
-class OfflineFactory : public ActiveFactoryInterface
+class OfflineFactory : public FactoryInterface
 {
 public:
     OfflineFactory();
-    ~OfflineFactory();
+    ~OfflineFactory() override;
 
     [[nodiscard]] std::pair<std::unique_ptr<Sushi>, Status> new_instance(SushiOptions& options) override;
 

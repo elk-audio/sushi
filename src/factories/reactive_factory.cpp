@@ -14,6 +14,7 @@
 */
 
 #include "sushi/reactive_factory.h"
+#include "sushi/rt_controller.h"
 
 #include "reactive_factory_implementation.h"
 
