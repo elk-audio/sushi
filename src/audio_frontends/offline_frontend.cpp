@@ -22,8 +22,10 @@
 #include <cstring>
 #include <random>
 
-#include "logging.h"
 #include "offline_frontend.h"
+
+#include "sushi/logging.h"
+
 #include "audio_frontend_internals.h"
 
 namespace sushi {

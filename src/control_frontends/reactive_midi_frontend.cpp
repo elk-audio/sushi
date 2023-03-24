@@ -20,10 +20,11 @@
 
 #include <chrono>
 
-#include "library/midi_decoder.h"
 #include "reactive_midi_frontend.h"
 
-#include "logging.h"
+#include "library/midi_decoder.h"
+
+#include "sushi/logging.h"
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("reactive midi frontend");
 

@@ -19,7 +19,8 @@
  */
 
 #include "processor_container.h"
-#include "logging.h"
+
+#include "sushi/logging.h"
 
 namespace sushi {
 namespace engine {

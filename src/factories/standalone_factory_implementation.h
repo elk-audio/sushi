@@ -16,7 +16,7 @@
 #ifndef SUSHI_STANDALONE_FACTORY_IMPLEMENTATION_H
 #define SUSHI_STANDALONE_FACTORY_IMPLEMENTATION_H
 
-#include "sushi.h"
+#include "sushi/sushi.h"
 
 #include "base_factory.h"
 

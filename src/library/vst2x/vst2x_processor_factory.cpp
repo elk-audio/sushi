@@ -19,7 +19,8 @@
  */
 
 #include "vst2x_processor_factory.h"
-#include "logging.h"
+
+#include "sushi/logging.h"
 
 #ifdef SUSHI_BUILD_WITH_VST2
 #include "library/vst2x/vst2x_wrapper.h"

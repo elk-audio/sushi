@@ -23,7 +23,7 @@
 
 #include <map>
 
-#include "constants.h"
+#include "sushi/constants.h"
 
 #include "library/processor.h"
 #include "vst2x_plugin_loader.h"

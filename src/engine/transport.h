@@ -25,9 +25,9 @@
 #include <atomic>
 #include <cassert>
 
-#include "constants.h"
-#include "types.h"
-#include "sushi_time.h"
+#include "sushi/constants.h"
+#include "sushi/types.h"
+#include "sushi/sushi_time.h"
 
 #include "library/event_interface.h"
 #include "library/rt_event.h"

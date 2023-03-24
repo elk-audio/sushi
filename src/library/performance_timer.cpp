@@ -21,7 +21,8 @@
 #include <vector>
 
 #include "performance_timer.h"
-#include "logging.h"
+
+#include "sushi/logging.h"
 
 
 namespace sushi {

@@ -18,7 +18,8 @@
  */
 
 #include "lv2_processor_factory.h"
-#include "logging.h"
+
+#include "sushi/logging.h"
 
 #ifdef SUSHI_BUILD_WITH_LV2
 #include "lv2_wrapper.h"

@@ -21,7 +21,7 @@
 #ifndef SUSHI_CONTROLLER_COMMON_H
 #define SUSHI_CONTROLLER_COMMON_H
 
-#include "control_interface.h"
+#include "sushi/control_interface.h"
 
 #include "library/base_performance_timer.h"
 

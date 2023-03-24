@@ -23,9 +23,9 @@
 #include <functional>
 
 #include "twine/src/twine_internal.h"
+#include "sushi/logging.h"
 
 #include "audio_engine.h"
-#include "logging.h"
 
 
 namespace sushi {

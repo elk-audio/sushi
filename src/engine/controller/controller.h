@@ -18,8 +18,9 @@
  * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include <control_notifications.h>
-#include "control_interface.h"
+#include "sushi/control_notifications.h"
+#include "sushi/control_interface.h"
+
 #include "engine/base_event_dispatcher.h"
 #include "engine/transport.h"
 #include "library/base_performance_timer.h"

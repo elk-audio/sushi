@@ -19,8 +19,10 @@
  */
 
 #include "transport_controller.h"
+
+#include "sushi/logging.h"
+
 #include "controller_common.h"
-#include "logging.h"
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
 

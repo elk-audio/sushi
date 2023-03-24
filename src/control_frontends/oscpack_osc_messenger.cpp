@@ -15,7 +15,8 @@
 
 #include <sstream>
 
-#include "logging.h"
+#include "sushi/logging.h"
+
 #include "osc_utils.h"
 #include "oscpack_osc_messenger.h"
 

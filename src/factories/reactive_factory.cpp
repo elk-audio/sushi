@@ -13,7 +13,7 @@
 * SUSHI. If not, see http://www.gnu.org/licenses/
 */
 
-#include "reactive_factory.h"
+#include "sushi/reactive_factory.h"
 
 #include "reactive_factory_implementation.h"
 

@@ -23,9 +23,7 @@
 #include <sstream>
 #include <iostream>
 
-#include "osc_frontend.h"
-#include "logging.h"
-#include "osc_utils.h"
+#include "sushi/logging.h"
 
 #include "third-party/oscpack/osc/OscReceivedElements.h"
 #include "third-party/oscpack/osc/OscOutboundPacketStream.h"
@@ -34,6 +32,9 @@
 #include "third-party/oscpack/osc/OscPacketListener.h"
 #include "third-party/oscpack/ip/UdpSocket.h"
 #endif
+
+#include "osc_frontend.h"
+#include "osc_utils.h"
 
 namespace oscpack = ::osc;
 

@@ -18,11 +18,12 @@
  * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include "twine/twine.h"
-
 #include "vst2x_wrapper.h"
+
+#include "twine/twine.h"
+#include "sushi/logging.h"
+
 #include "library/midi_decoder.h"
-#include "logging.h"
 
 namespace {
 

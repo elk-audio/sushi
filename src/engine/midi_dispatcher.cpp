@@ -20,11 +20,13 @@
 
 #include <algorithm>
 
-#include "base_event_dispatcher.h"
 #include "engine/midi_dispatcher.h"
+
+#include "sushi/logging.h"
+
+#include "base_event_dispatcher.h"
 #include "base_engine.h"
 #include "library/midi_encoder.h"
-#include "logging.h"
 
 namespace sushi {
 namespace midi_dispatcher {

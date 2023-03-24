@@ -21,7 +21,7 @@
 #ifndef SUSHI_SAMPLE_VOICE_H
 #define SUSHI_SAMPLE_VOICE_H
 
-#include "sample_buffer.h"
+#include "sushi/sample_buffer.h"
 
 #include "dsp_library/envelopes.h"
 #include "dsp_library/sample_wrapper.h"

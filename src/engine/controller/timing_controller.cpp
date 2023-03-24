@@ -19,7 +19,7 @@
  */
 
 #include "timing_controller.h"
-#include "logging.h"
+#include "sushi/logging.h"
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
 

@@ -28,7 +28,8 @@
 #include <vector>
 #include <map>
 
-#include "control_interface.h"
+#include "sushi/control_interface.h"
+
 #include "base_control_frontend.h"
 
 namespace sushi {

@@ -22,7 +22,7 @@
 #include <cmath>
 #include <cassert>
 
-#include "constants.h"
+#include "sushi/constants.h"
 
 #include "event_timer.h"
 

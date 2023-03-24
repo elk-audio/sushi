@@ -21,8 +21,11 @@
 #define SUSHI_OSC_UTILS_H
 
 #include <sstream>
+
+#include "sushi/logging.h"
+
 #include "osc_frontend.h"
-#include "logging.h"
+
 
 namespace sushi {
 namespace osc

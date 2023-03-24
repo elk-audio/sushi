@@ -25,8 +25,8 @@
 #include <cassert>
 #include <optional>
 
-#include "types.h"
-#include "sushi_time.h"
+#include "sushi/types.h"
+#include "sushi/sushi_time.h"
 
 #include "id_generator.h"
 #include "library/connection_types.h"

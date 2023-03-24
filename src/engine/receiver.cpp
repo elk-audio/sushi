@@ -20,7 +20,8 @@
 
 #include <thread>
 
-#include "logging.h"
+#include "sushi/logging.h"
+
 #include "engine/receiver.h"
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("event_receiver");

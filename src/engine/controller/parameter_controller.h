@@ -21,7 +21,8 @@
 #ifndef SUSHI_PARAMETER_CONTROLLER_H
 #define SUSHI_PARAMETER_CONTROLLER_H
 
-#include "control_interface.h"
+#include "sushi/control_interface.h"
+
 #include "engine/base_event_dispatcher.h"
 #include "engine/base_processor_container.h"
 

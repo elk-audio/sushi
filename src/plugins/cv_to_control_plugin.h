@@ -25,7 +25,7 @@
 #include <array>
 #include <vector>
 
-#include "constants.h"
+#include "sushi/constants.h"
 
 #include "library/internal_plugin.h"
 #include "library/rt_event_fifo.h"

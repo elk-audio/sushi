@@ -22,7 +22,8 @@
 #include <sndfile.h>
 
 #include "sample_player_plugin.h"
-#include "logging.h"
+
+#include "sushi/logging.h"
 
 namespace sushi {
 namespace sample_player_plugin {

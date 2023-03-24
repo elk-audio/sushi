@@ -28,7 +28,8 @@
 #include "rapidjson/schema.h"
 #pragma GCC diagnostic pop
 
-#include "logging.h"
+#include "sushi/logging.h"
+
 #include "json_configurator.h"
 
 namespace sushi {

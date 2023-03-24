@@ -54,7 +54,7 @@
 #include "vst2x_plugin_loader.h"
 #include "vst2x_host_callback.h"
 
-#include "logging.h"
+#include "sushi/logging.h"
 
 namespace sushi {
 namespace vst2 {

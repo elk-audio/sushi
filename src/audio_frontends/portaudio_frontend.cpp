@@ -20,8 +20,10 @@
 
 #ifdef SUSHI_BUILD_WITH_PORTAUDIO
 
-#include "logging.h"
 #include "portaudio_frontend.h"
+
+#include "sushi/logging.h"
+
 #include "audio_frontend_internals.h"
 
 namespace sushi {

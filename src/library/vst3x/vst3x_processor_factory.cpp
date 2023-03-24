@@ -19,7 +19,8 @@
  */
 
 #include "vst3x_processor_factory.h"
-#include "logging.h"
+
+#include "sushi/logging.h"
 
 #ifdef SUSHI_BUILD_WITH_VST3
 #include "vst3x_host_app.h"

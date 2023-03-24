@@ -21,8 +21,9 @@
 #ifndef SUSHI_OSC_CONTROLLER_H
 #define SUSHI_OSC_CONTROLLER_H
 
+#include "sushi/control_interface.h"
+
 #include "control_frontends/osc_frontend.h"
-#include "control_interface.h"
 #include "engine/base_engine.h"
 #include "engine/base_processor_container.h"
 

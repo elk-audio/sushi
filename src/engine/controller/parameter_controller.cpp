@@ -19,8 +19,10 @@
  */
 
 #include "parameter_controller.h"
+
+#include "sushi/logging.h"
+
 #include "engine/base_engine.h"
-#include "logging.h"
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
 

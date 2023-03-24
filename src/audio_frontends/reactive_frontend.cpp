@@ -20,8 +20,9 @@
 
 #include <iostream>
 
-#include "logging.h"
 #include "reactive_frontend.h"
+
+#include "sushi/logging.h"
 
 namespace sushi {
 namespace audio_frontend {

@@ -37,7 +37,7 @@
 #include "aeffectx.h"
 #pragma GCC diagnostic pop
 
-#include "constants.h"
+#include "sushi/constants.h"
 
 #include "library/rt_event.h"
 #include "library/midi_decoder.h"

@@ -21,8 +21,8 @@
 #ifndef SUSHI_SYSTEM_CONTROLLER_H
 #define SUSHI_SYSTEM_CONTROLLER_H
 
-#include <compile_time_settings.h>
-#include "control_interface.h"
+#include "sushi/compile_time_settings.h"
+#include "sushi/control_interface.h"
 
 namespace sushi {
 namespace engine {

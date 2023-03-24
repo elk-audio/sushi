@@ -24,9 +24,8 @@
 #include <optional>
 #include <vector>
 
-#include "constants.h"
-
-#include "types.h"
+#include "sushi/constants.h"
+#include "sushi/types.h"
 
 #include "library/id_generator.h"
 #include "engine/host_control.h"

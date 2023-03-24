@@ -18,9 +18,10 @@
  * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include "logging.h"
-
 #include "send_return_factory.h"
+
+#include "sushi/logging.h"
+
 #include "send_plugin.h"
 #include "return_plugin.h"
 

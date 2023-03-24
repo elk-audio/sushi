@@ -23,7 +23,7 @@
 #include <algorithm>
 #include <iostream>
 
-#include "logging.h"
+#include "sushi/logging.h"
 
 #ifndef SUSHI_DISABLE_LOGGING
 #include "spdlog/sinks/rotating_file_sink.h"

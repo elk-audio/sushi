@@ -19,11 +19,11 @@
  */
 
 #include <algorithm>
-#include <sstream>
+
+#include "sushi/logging.h"
 
 #include "osc_utils.h"
 #include "osc_frontend.h"
-#include "logging.h"
 
 namespace sushi {
 namespace control_frontend {

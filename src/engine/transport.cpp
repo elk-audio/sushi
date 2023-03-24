@@ -31,11 +31,11 @@
 
 #include "twine/twine.h"
 
-#include "constants.h"
+#include "sushi/constants.h"
+#include "sushi/logging.h"
 
 #include "library/rt_event.h"
 #include "transport.h"
-#include "logging.h"
 
 namespace sushi {
 namespace engine {

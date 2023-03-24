@@ -21,11 +21,13 @@
 #ifndef SUSHI_PORTAUDIO_DEVICES_DUMP_H
 #define SUSHI_PORTAUDIO_DEVICES_DUMP_H
 
-#include "portaudio_devices_dump.h"
+#include "sushi/portaudio_devices_dump.h"
+
+#include "sushi/logging.h"
+
 #include "portaudio_frontend.h"
 #include "rapidjson/rapidjson.h"
 
-#include "logging.h"
 
 namespace sushi {
 namespace audio_frontend {

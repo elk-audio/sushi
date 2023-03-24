@@ -18,11 +18,12 @@
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include "twine/twine.h"
-
 #include "vst2x_host_callback.h"
+
+#include "twine/twine.h"
+#include "sushi/logging.h"
+
 #include "vst2x_wrapper.h"
-#include "logging.h"
 
 namespace sushi {
 namespace vst2 {

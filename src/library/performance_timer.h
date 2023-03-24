@@ -31,8 +31,9 @@
 #include "fifo/circularfifo_memory_relaxed_aquire_release.h"
 #include "twine/twine.h"
 
+#include "sushi/constants.h"
+
 #include "base_performance_timer.h"
-#include "constants.h"
 #include "spinlock.h"
 
 namespace sushi {

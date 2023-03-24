@@ -19,7 +19,8 @@
  */
 
 #include "json_utils.h"
-#include "parameter_dump.h"
+
+#include "sushi/parameter_dump.h"
 
 #include "control_frontends/osc_utils.h"
 

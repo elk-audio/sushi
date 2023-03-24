@@ -16,8 +16,8 @@
 #ifndef REACTIVE_CONTROLLER_H
 #define REACTIVE_CONTROLLER_H
 
-#include "rt_controller.h"
-#include "sushi.h"
+#include "sushi/rt_controller.h"
+#include "sushi/sushi.h"
 
 namespace sushi
 {

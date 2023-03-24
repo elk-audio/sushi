@@ -29,7 +29,7 @@
 #include "generated/version.h"
 
 // For AUDIO_CHUNK_SIZE.
-#include "include/constants.h"
+#include "constants.h"
 
 namespace sushi {
 

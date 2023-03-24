@@ -19,7 +19,8 @@
  */
 
 #include "control_service.h"
-#include "control_notifications.h"
+
+#include "sushi/control_notifications.h"
 
 #include "async_service_call_data.h"
 

@@ -26,8 +26,8 @@
 #include <array>
 #include <vector>
 
-#include "constants.h"
-#include "sample_buffer.h"
+#include "sushi/constants.h"
+#include "sushi/sample_buffer.h"
 
 #include "library/internal_plugin.h"
 #include "library/performance_timer.h"

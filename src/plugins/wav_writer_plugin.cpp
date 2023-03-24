@@ -18,8 +18,9 @@
  * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
+#include "sushi/logging.h"
+
 #include "plugins/wav_writer_plugin.h"
-#include "logging.h"
 
 namespace sushi {
 namespace wav_writer_plugin {

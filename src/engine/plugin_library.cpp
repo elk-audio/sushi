@@ -14,7 +14,8 @@
  */
 
 #include "plugin_library.h"
-#include "logging.h"
+
+#include "sushi/logging.h"
 
 #include <filesystem>
 

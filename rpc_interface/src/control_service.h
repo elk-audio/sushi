@@ -29,7 +29,7 @@
 #include "sushi_rpc.grpc.pb.h"
 #pragma GCC diagnostic pop
 
-#include "control_interface.h"
+#include "sushi/control_interface.h"
 
 namespace sushi_rpc {
 

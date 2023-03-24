@@ -16,7 +16,7 @@
 #ifndef SUSHI_FACTORY_BASE_H
 #define SUSHI_FACTORY_BASE_H
 
-#include "sushi.h"
+#include "sushi/sushi.h"
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
 #include "sushi_rpc/grpc_server.h"

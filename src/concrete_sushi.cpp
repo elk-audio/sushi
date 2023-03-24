@@ -24,9 +24,9 @@
 
 #include "concrete_sushi.h"
 
-#include "engine/audio_engine.h"
+#include "sushi/logging.h"
 
-#include "logging.h"
+#include "engine/audio_engine.h"
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
 #include "sushi_rpc/grpc_server.h"

@@ -26,9 +26,8 @@
 #include <chrono>
 #include <optional>
 
-#include "sushi.h"
-
-#include "compile_time_settings.h"
+#include "sushi/sushi.h"
+#include "sushi/compile_time_settings.h"
 
 namespace sushi_rpc {
 class GrpcServer;

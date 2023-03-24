@@ -28,7 +28,7 @@
 
 #include <cassert>
 
-#include "types.h"
+#include "sushi/types.h"
 
 namespace sushi {
 namespace midi {

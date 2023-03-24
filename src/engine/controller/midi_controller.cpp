@@ -19,9 +19,10 @@
  */
 
 #include "midi_controller.h"
-#include "controller_common.h"
 
-#include "logging.h"
+#include "sushi/logging.h"
+
+#include "controller_common.h"
 
 namespace sushi {
 namespace engine {

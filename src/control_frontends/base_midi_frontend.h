@@ -23,7 +23,8 @@
 #ifndef SUSHI_BASE_MIDI_FRONTEND_H
 #define SUSHI_BASE_MIDI_FRONTEND_H
 
-#include "types.h"
+#include "sushi/types.h"
+
 #include "engine/midi_receiver.h"
 
 namespace sushi {

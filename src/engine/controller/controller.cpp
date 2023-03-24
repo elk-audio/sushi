@@ -19,10 +19,11 @@
  */
 
 #include "controller.h"
-#include "engine/base_engine.h"
 
-#include "logging.h"
-#include "control_notifications.h"
+#include "sushi/logging.h"
+#include "sushi/control_notifications.h"
+
+#include "engine/base_engine.h"
 #include "controller_common.h"
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");

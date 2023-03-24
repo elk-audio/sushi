@@ -15,7 +15,7 @@
 
 #include "offline_factory_implementation.h"
 
-#include "logging.h"
+#include "sushi/logging.h"
 
 #include "engine/audio_engine.h"
 #include "src/concrete_sushi.h"

@@ -21,7 +21,8 @@
 #ifndef SUSHI_MIDI_CONTROLLER_H
 #define SUSHI_MIDI_CONTROLLER_H
 
-#include "control_interface.h"
+#include "sushi/control_interface.h"
+
 #include "engine/base_engine.h"
 #include "engine/base_event_dispatcher.h"
 #include "engine/midi_dispatcher.h"

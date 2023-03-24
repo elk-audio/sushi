@@ -29,14 +29,14 @@
 #include <limits>
 #include <string>
 
-#include "constants.h"
-#include "types.h"
-#include "sushi_time.h"
-#include "sample_buffer.h"
+#include "sushi/constants.h"
+#include "sushi/types.h"
+#include "sushi/sushi_time.h"
+#include "sushi/sample_buffer.h"
+#include "sushi/control_interface.h"
 
 #include "base_event_dispatcher.h"
 #include "base_processor_container.h"
-#include "control_interface.h"
 #include "track.h"
 
 #include "library/base_performance_timer.h"

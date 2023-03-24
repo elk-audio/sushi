@@ -15,7 +15,7 @@
 
 #include "reactive_factory_implementation.h"
 
-#include "logging.h"
+#include "sushi/logging.h"
 
 #include "audio_frontends/reactive_frontend.h"
 #include "control_frontends/reactive_midi_frontend.h"

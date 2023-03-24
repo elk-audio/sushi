@@ -380,8 +380,10 @@ void inline JackFrontend::process_audio(jack_nframes_t start_frame, jack_nframes
 } // end namespace sushi
 #endif
 #ifndef SUSHI_BUILD_WITH_JACK
+#include "sushi/logging.h"
+
 #include "audio_frontends/jack_frontend.h"
-#include "logging.h"
+
 namespace sushi {
 namespace audio_frontend {
 SUSHI_GET_LOGGER;

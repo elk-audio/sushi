@@ -1,7 +1,9 @@
 #include <algorithm>
 
-#include "logging.h"
 #include "processor.h"
+
+#include "sushi/logging.h"
+
 #include "library/midi_decoder.h"
 
 namespace sushi {
