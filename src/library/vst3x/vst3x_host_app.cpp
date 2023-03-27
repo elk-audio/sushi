@@ -22,9 +22,10 @@
 #include "public.sdk/source/vst/utility/stringconvert.h"
 #include "base/source/fobject.h"
 
+#include "sushi/logging.h"
+
 #include "vst3x_host_app.h"
 #include "vst3x_wrapper.h"
-#include "logging.h"
 
 namespace sushi {
 namespace vst3 {

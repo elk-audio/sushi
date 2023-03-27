@@ -25,7 +25,7 @@
 
 #include <twine/twine.h>
 
-#include "logging.h"
+#include "sushi/logging.h"
 
 #include "lv2_port.h"
 #include "lv2_state.h"

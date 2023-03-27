@@ -27,7 +27,7 @@
 
 #include <lilv-0/lilv/lilv.h>
 
-#include "library/constants.h"
+#include "sushi/constants.h"
 
 #include "lv2_host/lv2_evbuf.h"
 

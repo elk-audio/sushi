@@ -20,12 +20,14 @@
 
 #ifdef SUSHI_BUILD_WITH_LV2
 
+#include "sushi/logging.h"
+
 #include "lv2_model.h"
 #include "lv2_features.h"
 #include "lv2_worker.h"
 #include "lv2_wrapper.h"
 #include "lv2_state.h"
-#include "logging.h"
+
 
 namespace {
 /** These features have no data */

@@ -17,7 +17,7 @@
 
 #include <lilv-0/lilv/lilv.h>
 
-#include "logging.h"
+#include "sushi/logging.h"
 
 #include "lv2_model.h"
 #include "lv2_port.h"

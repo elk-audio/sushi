@@ -15,7 +15,7 @@
 
 #include "lv2_control.h"
 
-#include "logging.h"
+#include "sushi/logging.h"
 
 namespace sushi {
 namespace lv2 {

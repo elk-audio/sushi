@@ -30,9 +30,10 @@
 
 #include <twine/twine.h>
 
+#include "sushi/logging.h"
+
 #include "vst3x_wrapper.h"
 #include "library/event.h"
-#include "logging.h"
 
 namespace sushi {
 namespace vst3 {

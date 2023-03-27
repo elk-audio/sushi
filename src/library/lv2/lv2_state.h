@@ -24,8 +24,10 @@
 #include <vector>
 
 #include "lv2/lv2plug.in/ns/ext/state/state.h"
-#include "library/constants.h"
 #include "lv2/state/state.h"
+
+#include "sushi/constants.h"
+
 #include "lv2_model.h"
 #include "lv2_features.h"
 

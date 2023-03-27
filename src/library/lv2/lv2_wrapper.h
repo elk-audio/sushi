@@ -41,12 +41,14 @@
 
 #include <map>
 
+#include "sushi/constants.h"
+
 #include "engine/base_event_dispatcher.h"
 #include "library/processor.h"
 #include "library/rt_event_fifo.h"
 #include "library/midi_encoder.h"
 #include "library/midi_decoder.h"
-#include "library/constants.h"
+
 
 #include "lv2_model.h"
 

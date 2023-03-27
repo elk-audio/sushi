@@ -22,7 +22,7 @@
 
 #include "lv2_features.h"
 
-#include "logging.h"
+#include "sushi/logging.h"
 
 namespace sushi {
 namespace lv2 {

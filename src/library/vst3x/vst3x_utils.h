@@ -23,7 +23,7 @@
 
 #include <cassert>
 
-#include "constants.h"
+#include "sushi/constants.h"
 #include "sushi/sample_buffer.h"
 
 #include "pluginterfaces/base/ipluginbase.h"
