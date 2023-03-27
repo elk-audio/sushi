@@ -23,6 +23,7 @@
 #include <condition_variable>
 
 #include "sushi/logging.h"
+#include "sushi/json_utils.h"
 #include "sushi/parameter_dump.h"
 #include "sushi/portaudio_devices_dump.h"
 #include "sushi/sushi.h"

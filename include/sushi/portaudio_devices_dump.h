@@ -18,7 +18,7 @@
  * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include "json_utils.h"
+#include "rapidjson/document.h"
 
 namespace sushi {
 namespace audio_frontend {

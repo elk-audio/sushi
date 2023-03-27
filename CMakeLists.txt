@@ -551,13 +551,13 @@ set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
 set(INCLUDE_DIRS ${INCLUDE_DIRS}
                  "${PROJECT_SOURCE_DIR}/src"
-                 "${PROJECT_SOURCE_DIR}/include"
-                 "${CMAKE_BINARY_DIR}" # for generated version.h
                  "${PROJECT_SOURCE_DIR}"
-                 "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
-                 "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"
                  "${PROJECT_SOURCE_DIR}/third-party/vst3sdk"
                  "${PROJECT_SOURCE_DIR}/third-party/link/include")
+
+set(PUBLIC_INCLUDE_DIRS "${CMAKE_BINARY_DIR}" # for generated version.h
+                        "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
+                        "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include")
 
 #################################
 #  Linked libraries             #
@@ -579,9 +579,14 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND ${CMAKE_CXX_COMPILER_ID} STREQUAL 
     set(COMMON_LIBRARIES ${COMMON_LIBRARIES} atomic)
 endif()
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIRS})
-
-target_include_directories(${PROJECT_NAME} PUBLIC include)
+target_include_directories(${PROJECT_NAME}
+        PRIVATE
+            ${INCLUDE_DIRS}
+        PUBLIC
+            ${PUBLIC_INCLUDE_DIRS}
+            # where top-level project will look for the library's public headers
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES})
 

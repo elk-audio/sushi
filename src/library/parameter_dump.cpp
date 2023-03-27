@@ -18,10 +18,11 @@
  * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include "json_utils.h"
+#include "sushi/json_utils.h"
 
 #include "sushi/parameter_dump.h"
 
+#include "engine/controller/controller.h"
 #include "control_frontends/osc_utils.h"
 
 namespace sushi {
