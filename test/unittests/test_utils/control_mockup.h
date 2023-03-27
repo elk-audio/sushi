@@ -7,7 +7,7 @@
 
 #include <unordered_map>
 
-#include "control_interface.h"
+#include "sushi/control_interface.h"
 
 namespace sushi {
 namespace ext {

@@ -81,6 +81,7 @@ set(TEST_LINK_LIBRARIES
     gtest_main
     gmock
     gmock_main
+    sushi_library
 )
 
 set(TEST_COMPILE_DEFINITIONS
@@ -193,7 +194,13 @@ add_executable(unit_tests ${TEST_FILES} ${TEST_HELPER_FILES})
 
 target_compile_definitions(unit_tests PRIVATE ${TEST_COMPILE_DEFINITIONS})
 target_compile_options(unit_tests PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
-target_include_directories(unit_tests PRIVATE ${INCLUDE_DIRS})
+
+target_include_directories(unit_tests
+        PRIVATE
+            ${INCLUDE_DIRS}
+        PUBLIC
+            ${PUBLIC_INCLUDE_DIRS})
+
 target_link_libraries(unit_tests "${TEST_LINK_LIBRARIES}")
 add_dependencies(unit_tests ${TEST_DEPENDENCIES})
 

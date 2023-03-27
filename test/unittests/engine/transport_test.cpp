@@ -1,8 +1,9 @@
 #include "gtest/gtest.h"
 
+#include "engine/transport.cpp"
+
 #define private public
 
-#include "engine/transport.cpp"
 #include "library/rt_event_fifo.h"
 
 using namespace sushi;
@@ -21,7 +22,7 @@ protected:
     {}
 
     void TearDown()
-    { }
+    {}
     RtEventFifo<10> _rt_event_output;
     Transport _module_under_test{TEST_SAMPLERATE, &_rt_event_output};
 };
@@ -65,7 +66,7 @@ TEST_F(TestTransport, TestBasicQuerying)
     EXPECT_EQ(PositionSource::EXTERNAL, _module_under_test.position_source());
 
     _module_under_test.set_current_beats(1.5);
-    EXPECT_DOUBLE_EQ(1.5, _module_under_test._beat_count);
+    EXPECT_DOUBLE_EQ(1.5, _module_under_test.current_beats());
 }
 
 TEST_F(TestTransport, TestTimeline44Time)

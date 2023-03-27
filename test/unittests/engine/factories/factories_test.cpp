@@ -16,6 +16,9 @@
 #include <gmock/gmock.h>
 #include <gmock/gmock-actions.h>
 
+#include "sushi/offline_factory.h"
+#include "sushi/standalone_factory.h"
+
 #include "test_utils/test_utils.h"
 #include "test_utils/portaudio_mockup.h"
 
