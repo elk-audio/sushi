@@ -81,7 +81,6 @@ set(TEST_LINK_LIBRARIES
     gtest_main
     gmock
     gmock_main
-    sushi_library
 )
 
 set(TEST_COMPILE_DEFINITIONS
@@ -196,9 +195,9 @@ target_compile_definitions(unit_tests PRIVATE ${TEST_COMPILE_DEFINITIONS})
 target_compile_options(unit_tests PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
 
 target_include_directories(unit_tests
-        PRIVATE
-            ${INCLUDE_DIRS}
         PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+            ${INCLUDE_DIRS}
             ${PUBLIC_INCLUDE_DIRS})
 
 target_link_libraries(unit_tests "${TEST_LINK_LIBRARIES}")

@@ -136,7 +136,7 @@ sushi::Time RealTimeController::calculate_timestamp_from_start(float sample_rate
     return timestamp;
 }
 
-void RealTimeController::increment_samples_since_start(uint64_t sample_count, Time timestamp)
+void RealTimeController::increment_samples_since_start(uint64_t sample_count, Time)
 {
     _samples_since_start += sample_count;
 }
