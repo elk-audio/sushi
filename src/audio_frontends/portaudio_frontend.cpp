@@ -20,9 +20,9 @@
 
 #ifdef SUSHI_BUILD_WITH_PORTAUDIO
 
-#include "portaudio_frontend.h"
-
 #include "sushi/logging.h"
+
+#include "portaudio_frontend.h"
 
 #include "audio_frontend_internals.h"
 
@@ -451,9 +451,12 @@ void PortAudioFrontend::_output_interleaved_audio(float* output)
 
 #endif
 #ifndef SUSHI_BUILD_WITH_PORTAUDIO
+
+#include "sushi/logging.h"
 #include "audio_frontends/portaudio_frontend.h"
-#include "logging.h"
+
 namespace sushi::internal::audio_frontend {
+
 SUSHI_GET_LOGGER;
 PortAudioFrontend::PortAudioFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine)
 {}
@@ -462,5 +465,7 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration*)
     /* The log print needs to be in a cpp file for initialisation order reasons */
     SUSHI_LOG_ERROR("Sushi was not built with PortAudio support!");
     return AudioFrontendStatus::AUDIO_HW_ERROR;
-}}
+}
+
+}
 #endif

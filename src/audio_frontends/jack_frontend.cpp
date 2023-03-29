@@ -21,7 +21,8 @@
 #ifdef SUSHI_BUILD_WITH_JACK
 #include <jack/midiport.h>
 
-#include "logging.h"
+#include "sushi/logging.h"
+
 #include "jack_frontend.h"
 #include "audio_frontend_internals.h"
 
