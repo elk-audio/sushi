@@ -27,7 +27,8 @@ constexpr int MOCK_CHANNEL_COUNT = 10;
 #ifndef SUSHI_BUILD_WITH_PORTAUDIO
 #include "audio_frontends/portaudio_frontend.h"
 // Needed for mocking the frontend.
-namespace sushi::audio_frontend {
+namespace sushi::internal::audio_frontend {
+
 PortAudioFrontend::PortAudioFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine)
 {
     _engine->set_audio_input_channels(MOCK_CHANNEL_COUNT);
@@ -38,6 +39,7 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration*)
 {
     return AudioFrontendStatus::OK;
 }
+
 }
 #endif
 
