@@ -22,8 +22,7 @@
 
 #include "library/base_processor_factory.h"
 
-namespace sushi {
-namespace lv2 {
+namespace sushi::internal::lv2 {
 
 class LilvWorldWrapper;
 
@@ -40,7 +39,6 @@ private:
     std::weak_ptr<LilvWorldWrapper> _world;
 };
 
-} // end namespace lv2
-} // end namespace sushi
+} // end namespace sushi::internal::lv2
 
-#endif //SUSHI_LV2_PROCESSOR_FACTORY_H
+#endif // SUSHI_LV2_PROCESSOR_FACTORY_H

@@ -27,7 +27,7 @@
 #include "ableton/Link.hpp"
 #else //SUSHI_BUILD_WITH_ABLETON_LINK
 #include "link_dummy.h"
-#endif //SUSHI_BUILD_WITH_ABLETON_LINK
+#endif // SUSHI_BUILD_WITH_ABLETON_LINK
 
 #include "twine/twine.h"
 
@@ -37,8 +37,7 @@
 #include "library/rt_event.h"
 #include "transport.h"
 
-namespace sushi {
-namespace engine {
+namespace sushi::internal::engine {
 
 constexpr float MIN_TEMPO = 20.0;
 constexpr float MAX_TEMPO = 1000.0;
@@ -445,8 +444,4 @@ void Transport::_set_link_tempo(float /*tempo*/) {}
 void Transport::_set_link_quantum(TimeSignature /*signature*/) {}
 #endif
 
-
-
-
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine

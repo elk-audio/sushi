@@ -32,7 +32,7 @@
 
 #include "base_control_frontend.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 namespace osc
 {
@@ -261,7 +261,7 @@ private:
     void* _reset_timing_statistics_ss_cb {nullptr};
 };
 
-} // namespace control_frontend
-} // namespace sushi
+} // end namespace control_frontend
+} // end namespace sushi::internal
 
-#endif //SUSHI_OSC_FRONTEND_H_H
+#endif // SUSHI_OSC_FRONTEND_H_H

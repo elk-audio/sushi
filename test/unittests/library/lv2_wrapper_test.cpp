@@ -18,7 +18,8 @@
 #include "library/lv2/lv2_control.cpp"
 
 using namespace sushi;
-using namespace sushi::lv2;
+using namespace sushi::internal;
+using namespace sushi::internal::lv2;
 
 constexpr float TEST_SAMPLE_RATE = 48000;
 constexpr int   TEST_CHANNEL_COUNT = 2;

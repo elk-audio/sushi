@@ -28,9 +28,10 @@ constexpr unsigned int SAMPLE_RATE = 44000;
 constexpr unsigned int ENGINE_CHANNELS = 8;
 
 using namespace sushi;
-using namespace sushi::engine;
-using namespace sushi::jsonconfig;
-using namespace sushi::control_frontend;
+using namespace sushi::internal;
+using namespace sushi::internal::engine;
+using namespace sushi::internal::jsonconfig;
+using namespace sushi::internal::control_frontend;
 
 class TestJsonConfigurator : public ::testing::Test
 {

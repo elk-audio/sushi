@@ -14,10 +14,11 @@
 #include "test_utils/control_mockup.h"
 
 using namespace sushi;
-using namespace sushi::control_frontend;
-using namespace sushi::midi_dispatcher;
-using namespace sushi::engine;
-using namespace sushi::engine::controller_impl;
+using namespace sushi::internal;
+using namespace sushi::internal::control_frontend;
+using namespace sushi::internal::midi_dispatcher;
+using namespace sushi::internal::engine;
+using namespace sushi::internal::engine::controller_impl;
 
 constexpr float TEST_SAMPLE_RATE = 44100;
 

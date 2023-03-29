@@ -29,8 +29,7 @@
 
 #include "base_midi_frontend.h"
 
-namespace sushi {
-namespace midi_frontend {
+namespace sushi::internal::midi_frontend {
 
 struct RtMidiCallbackData
 {
@@ -68,6 +67,6 @@ private:
     std::vector<RtMidiOut> _output_midi_ports;
 };
 
-} // end namespace midi_frontend
-} // end namespace sushi
-#endif //SUSHI_RT_MIDI_FRONTEND_H
+} // end namespace sushi::internal::midi_frontend
+
+#endif // SUSHI_RT_MIDI_FRONTEND_H

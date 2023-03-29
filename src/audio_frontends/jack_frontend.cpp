@@ -25,8 +25,7 @@
 #include "jack_frontend.h"
 #include "audio_frontend_internals.h"
 
-namespace sushi {
-namespace audio_frontend {
+namespace sushi::internal::audio_frontend {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("jack audio");
 
@@ -376,23 +375,29 @@ void inline JackFrontend::process_audio(jack_nframes_t start_frame, jack_nframes
     }
 }
 
-} // end namespace audio_frontend
-} // end namespace sushi
+} // end namespace sushi::internal::audio_frontend
+
 #endif
+
 #ifndef SUSHI_BUILD_WITH_JACK
+
 #include "sushi/logging.h"
 
 #include "audio_frontends/jack_frontend.h"
 
-namespace sushi {
-namespace audio_frontend {
+namespace sushi::internal::audio_frontend {
+
 SUSHI_GET_LOGGER;
-JackFrontend::JackFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine)
-{}
+
+JackFrontend::JackFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
+
 AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration*)
 {
     /* The log print needs to be in a cpp file for initialisation order reasons */
     SUSHI_LOG_ERROR("Sushi was not built with Jack support!");
     return AudioFrontendStatus::AUDIO_HW_ERROR;
-}}}
+}
+
+} // end namespace sushi::internal::audio_frontend
+
 #endif

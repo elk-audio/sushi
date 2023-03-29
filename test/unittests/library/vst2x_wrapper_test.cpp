@@ -10,7 +10,8 @@
 #include "library/vst2x/vst2x_wrapper.cpp"
 
 using namespace sushi;
-using namespace sushi::vst2;
+using namespace sushi::internal;
+using namespace sushi::internal::vst2;
 
 // Reference output signal from TestPlugin
 // in response to NoteON C4 (60), vel=127, default parameters

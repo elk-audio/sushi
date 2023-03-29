@@ -26,8 +26,7 @@
 #include "dsp_library/envelopes.h"
 #include "dsp_library/sample_wrapper.h"
 
-namespace sushi {
-namespace sample_player_voice {
+namespace sushi::internal::sample_player_voice {
 
 // TODO eventually make this configurable
 constexpr float SAMPLE_FILE_RATE = 44100.0f;
@@ -130,6 +129,6 @@ private:
     int _stop_offset{0};
 };
 
-} // namespace sushi
-} // namespace sample_player_voice
-#endif //SUSHI_SAMPLE_VOICE_H
+} // end namespace sushi::internal::sample_player_voice
+
+#endif // SUSHI_SAMPLE_VOICE_H

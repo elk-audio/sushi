@@ -11,8 +11,9 @@
 using ::testing::internal::posix::GetEnv;
 
 using namespace sushi;
-using namespace sushi::audio_frontend;
-using namespace sushi::midi_dispatcher;
+using namespace sushi::internal;
+using namespace sushi::internal::audio_frontend;
+using namespace sushi::internal::midi_dispatcher;
 
 constexpr float SAMPLE_RATE = 44000;
 constexpr int CV_CHANNELS = 0;
@@ -125,10 +126,10 @@ TEST_F(TestOfflineFrontend, TestAddSequencerEvents)
     // Initialize with a file containing 0.5 on both channels
     std::string test_config_file = test_utils::get_data_dir_path();
     test_config_file.append("config.json");
-    sushi::jsonconfig::JsonConfigurator configurator(&_engine,
-                                                     &_midi_dispatcher,
-                                                     _engine.processor_container(),
-                                                     test_config_file);
+    jsonconfig::JsonConfigurator configurator(&_engine,
+                                              &_midi_dispatcher,
+                                              _engine.processor_container(),
+                                              test_config_file);
     rapidjson::Document config;
     auto [status, events] = configurator.load_event_list();
     ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, status);
@@ -149,7 +150,6 @@ TEST_F(TestOfflineFrontend, TestAddSequencerEvents)
     {
         delete event;
     }
-
 }
 
 TEST_F(TestOfflineFrontend, TestNoiseGeneration)

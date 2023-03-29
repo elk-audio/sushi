@@ -28,7 +28,7 @@
 #include "library/processor.h"
 #include "library/plugin_parameters.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 constexpr int DEFAULT_CHANNELS = MAX_TRACK_CHANNELS;
 
@@ -221,5 +221,5 @@ private:
     std::unordered_map<ObjectId, std::string> _property_values;
 };
 
-} // end namespace sushi
-#endif //SUSHI_INTERNAL_PLUGIN_H
+} // end namespace sushi::internal
+#endif // SUSHI_INTERNAL_PLUGIN_H

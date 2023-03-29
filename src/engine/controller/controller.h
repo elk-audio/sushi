@@ -43,7 +43,7 @@
 #ifndef SUSHI_CONTROLLER_H
 #define SUSHI_CONTROLLER_H
 
-namespace sushi {
+namespace sushi::internal {
 
 namespace midi_dispatcher {
 class MidiDispatcher;
@@ -82,7 +82,6 @@ public:
     void set_osc_frontend(control_frontend::OSCFrontend* osc_frontend);
 
 private:
-
     void _completion_callback(Event* event, int status);
 
     void _handle_engine_notifications(const EngineNotificationEvent* event);
@@ -128,6 +127,7 @@ private:
     dispatcher::BaseEventDispatcher*        _event_dispatcher;
 };
 
-} //namespace engine
-} //namespace sushi
-#endif //SUSHI_CONTROLLER_H
+} // end namespace engine
+} // end namespace sushi::internal
+
+#endif // SUSHI_CONTROLLER_H

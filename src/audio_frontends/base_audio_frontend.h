@@ -22,9 +22,7 @@
 
 #include "engine/base_engine.h"
 
-namespace sushi {
-
-namespace audio_frontend {
+namespace sushi::internal::audio_frontend {
 
 constexpr int MAX_FRONTEND_CHANNELS = 8;
 
@@ -104,9 +102,6 @@ protected:
     std::atomic_bool _pause_notified{false};
 };
 
+} // end namespace sushi::internal
 
-} // end namespace audio_frontend
-
-} // end namespace sushi
-
-#endif //SUSHI_BASE_AUDIO_FRONTEND_H
+#endif // SUSHI_BASE_AUDIO_FRONTEND_H

@@ -20,7 +20,7 @@
 
 #include "base_factory.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 /**
  * @brief Factory for when Sushi is running in offline / dummy mode.
@@ -47,6 +47,6 @@ protected:
                              jsonconfig::JsonConfigurator* configurator) override;
 };
 
-} // namespace sushi
+} // end namespace sushi::internal
 
-#endif //SUSHI_OFFLINE_FACTORY_H
+#endif // SUSHI_OFFLINE_FACTORY_H

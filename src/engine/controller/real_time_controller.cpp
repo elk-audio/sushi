@@ -22,14 +22,14 @@
 #include "engine/controller/controller_common.h"
 #include "engine/event_timer.h"
 
-namespace sushi
+namespace sushi::internal
 {
 
 RealTimeController::RealTimeController(audio_frontend::ReactiveFrontend* audio_frontend,
                                        midi_frontend::ReactiveMidiFrontend* midi_frontend,
-                                       sushi::engine::Transport* transport) : _audio_frontend(audio_frontend),
-                                                                              _midi_frontend(midi_frontend),
-                                                                              _transport(transport)
+                                       engine::Transport* transport) : _audio_frontend(audio_frontend),
+                                                                       _midi_frontend(midi_frontend),
+                                                                       _transport(transport)
 {
 }
 
@@ -72,7 +72,7 @@ void RealTimeController::set_playing_mode(ext::PlayingMode mode)
 
 bool RealTimeController::set_current_beats(double beat_count)
 {
-    if (_transport->position_source() == sushi::PositionSource::EXTERNAL)
+    if (_transport->position_source() == PositionSource::EXTERNAL)
     {
         _transport->set_current_beats(beat_count);
         return true;
@@ -83,7 +83,7 @@ bool RealTimeController::set_current_beats(double beat_count)
 
 bool RealTimeController::set_current_bar_beats(double bar_beat_count)
 {
-    if (_transport->position_source() == sushi::PositionSource::EXTERNAL)
+    if (_transport->position_source() == PositionSource::EXTERNAL)
     {
         _transport->set_current_bar_beats(bar_beat_count);
         return true;
@@ -96,11 +96,11 @@ void RealTimeController::set_position_source(TransportPositionSource ps)
 {
     if (ps == sushi::TransportPositionSource::CALCULATED)
     {
-        _transport->set_position_source(sushi::PositionSource::CALCULATED);
+        _transport->set_position_source(PositionSource::CALCULATED);
     }
     else
     {
-        _transport->set_position_source(sushi::PositionSource::EXTERNAL);
+        _transport->set_position_source(PositionSource::EXTERNAL);
     }
 }
 
@@ -141,4 +141,4 @@ void RealTimeController::increment_samples_since_start(uint64_t sample_count, Ti
     _samples_since_start += sample_count;
 }
 
-} // namespace sushi
+} // end namespace sushi

@@ -20,7 +20,7 @@
 #include "osc_utils.h"
 #include "oscpack_osc_messenger.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("osc frontend");
 
@@ -519,5 +519,5 @@ void OscpackOscMessenger::_set_tempo_sync_mode(const oscpack::ReceivedMessage& m
     SUSHI_LOG_DEBUG("Got a set sync mode to {} request", mode_str);
 }
 
-} // namespace osc
-} // namespace sushi
+} // end namespace osc
+} // end namespace sushi::internal

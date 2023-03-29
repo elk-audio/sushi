@@ -11,7 +11,7 @@
 #include "engine/base_processor_container.h"
 
 using namespace sushi;
-using namespace sushi::engine;
+using namespace sushi::internal::engine;
 
 class MockProcessorContainer : public engine::BaseProcessorContainer
 {

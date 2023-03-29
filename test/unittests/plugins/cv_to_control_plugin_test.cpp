@@ -5,7 +5,8 @@
 #include "test_utils/host_control_mockup.h"
 
 using namespace sushi;
-using namespace sushi::cv_to_control_plugin;
+using namespace sushi::internal;
+using namespace sushi::internal::cv_to_control_plugin;
 
 constexpr float TEST_SAMPLE_RATE = 44100;
 

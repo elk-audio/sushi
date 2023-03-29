@@ -21,9 +21,7 @@
 #include "event_dispatcher.h"
 #include "engine/base_engine.h"
 
-namespace sushi {
-namespace dispatcher {
-
+namespace sushi::internal::dispatcher {
 
 constexpr int AUDIO_ENGINE_ID = 0;
 constexpr std::chrono::milliseconds THREAD_PERIODICITY = std::chrono::milliseconds(1);
@@ -302,7 +300,7 @@ void EventDispatcher::_publish_parameter_events(Event* event)
     }
 }
 
-void EventDispatcher::_publish_engine_notification_events(sushi::Event* event)
+void EventDispatcher::_publish_engine_notification_events(Event* event)
 {
     std::lock_guard<std::mutex> lock(_engine_listener_lock);
 
@@ -469,6 +467,4 @@ void Worker::_worker()
     while (_running);
 }
 
-
-} // end namespace dispatcher
-} // end namespace sushi
+} // end namespace sushi::internal::dispatcher

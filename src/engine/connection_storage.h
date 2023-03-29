@@ -31,7 +31,7 @@
 
 #include <library/rt_event_pipe.h>
 
-namespace sushi {
+namespace sushi::internal {
 
 template <typename T>
 class ConnectionStorage
@@ -155,5 +155,6 @@ private:
     mutable std::mutex  _non_rt_lock;
 };
 
-} // sushi
-#endif //SUSHI_CONNECTION_ROUTER_H
+} // end namespace sushi::internal
+
+#endif // SUSHI_CONNECTION_ROUTER_H

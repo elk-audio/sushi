@@ -22,7 +22,8 @@
 
 #include <chrono>
 
-namespace sushi::engine {
+namespace sushi::internal::engine {
+
 class SushiLink
 {
 public:
@@ -76,4 +77,4 @@ private:
 } // end namespace sushi::engine
 
 
-#endif //SUSHI_LINK_DUMMY_H
+#endif // SUSHI_LINK_DUMMY_H

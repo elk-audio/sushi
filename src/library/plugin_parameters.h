@@ -31,7 +31,7 @@
 
 #include "library/id_generator.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 enum class ParameterType
 {
@@ -473,6 +473,6 @@ private:
 /* We need this to be able to copy the ParameterValues by value into a container */
 static_assert(std::is_trivially_copyable<ParameterStorage>::value, "");
 
-}  // namespace sushi
+}  // end namespace sushi
 
-#endif //SUSHI_PLUGIN_PARAMETERS_H
+#endif // SUSHI_PLUGIN_PARAMETERS_H

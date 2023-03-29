@@ -19,8 +19,7 @@
 
 #include <filesystem>
 
-namespace sushi {
-namespace engine {
+namespace sushi::internal::engine {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("plugin_library");
 
@@ -45,5 +44,5 @@ std::string PluginLibrary::to_absolute_path(const std::string& path)
     return std::string(std::filesystem::absolute(full_path));
 }
 
-} // end namespace engine
-} // end namespace sushi
+} // end namespace sushi::internal::engine
+

@@ -36,8 +36,7 @@
 #include "engine/midi_dispatcher.h"
 #include "control_frontends/osc_frontend.h"
 
-namespace sushi {
-namespace jsonconfig {
+namespace sushi::internal::jsonconfig {
 
 enum class JsonConfigReturnStatus
 {
@@ -216,7 +215,6 @@ private:
     rapidjson::Document _json_data;
 };
 
-}/* namespace JSONCONFIG */
-}/* namespace SUSHI */
+} // end namespace sushi::internal::jsonconfig
 
-#endif //SUSHI_CONFIG_FROM_JSON_H
+#endif // SUSHI_CONFIG_FROM_JSON_H

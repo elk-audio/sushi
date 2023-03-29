@@ -31,8 +31,7 @@
 
 #include "lv2_host/lv2_evbuf.h"
 
-namespace sushi {
-namespace lv2 {
+namespace sushi::internal::lv2 {
 
 class Model;
 
@@ -107,9 +106,7 @@ private:
     bool _optional{true};
 };
 
-} // end namespace lv2
-} // end namespace sushi
-
+} // end namespace sushi::internal::lv2
 
 #endif // SUSHI_BUILD_WITH_LV2
 

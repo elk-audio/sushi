@@ -23,8 +23,7 @@
 #include "library/midi_encoder.h"
 #include "library/midi_decoder.h"
 
-namespace sushi {
-namespace midi {
+namespace sushi::internal::midi {
 
 // Channel messages
 constexpr uint8_t NOTE_OFF_PREFIX   = 0b10000000;
@@ -146,5 +145,4 @@ MidiDataByte encode_reset_message()
 }
 
 
-} // end namespace midi
-} // end namespace sushi
+} // end namespace sushi::internal::midi

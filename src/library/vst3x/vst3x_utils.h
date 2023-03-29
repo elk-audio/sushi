@@ -36,8 +36,7 @@
 #include "library/rt_event.h"
 #include "library/processor_state.h"
 
-namespace sushi {
-namespace vst3 {
+namespace sushi::internal::vst3 {
 
 constexpr int VST_WRAPPER_MAX_N_CHANNELS = MAX_TRACK_CHANNELS;
 
@@ -193,8 +192,6 @@ private:
     StateParamValue _transfer_value{0, 0.0f};
 };
 
-} // end namespace vst3
-} // end namespace sushi
+} // end namespace sushi::internal::vst3
 
-
-#endif //SUSHI_VST3X_UTILS_H
+#endif // SUSHI_VST3X_UTILS_H

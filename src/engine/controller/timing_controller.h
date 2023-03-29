@@ -26,9 +26,7 @@
 #include "engine/base_engine.h"
 #include "library/base_performance_timer.h"
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
 class TimingController : public ext::TimingController
 {
@@ -59,8 +57,6 @@ private:
     performance::BasePerformanceTimer*  _performance_timer;
 };
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl
 
-#endif //SUSHI_TIMING_CONTROLLER_H
+#endif // SUSHI_TIMING_CONTROLLER_H

@@ -26,8 +26,7 @@
 
 #include "audio_frontend_internals.h"
 
-namespace sushi {
-namespace audio_frontend {
+namespace sushi::internal::audio_frontend {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("portaudio");
 
@@ -448,14 +447,13 @@ void PortAudioFrontend::_output_interleaved_audio(float* output)
     }
 }
 
-} // end namespace audio_frontend
-} // end namespace sushi
+} // end namespace sushi::internal::audio_frontend
+
 #endif
 #ifndef SUSHI_BUILD_WITH_PORTAUDIO
 #include "audio_frontends/portaudio_frontend.h"
 #include "logging.h"
-namespace sushi {
-namespace audio_frontend {
+namespace sushi::internal::audio_frontend {
 SUSHI_GET_LOGGER;
 PortAudioFrontend::PortAudioFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine)
 {}
@@ -464,5 +462,5 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration*)
     /* The log print needs to be in a cpp file for initialisation order reasons */
     SUSHI_LOG_ERROR("Sushi was not built with PortAudio support!");
     return AudioFrontendStatus::AUDIO_HW_ERROR;
-}}}
+}}
 #endif

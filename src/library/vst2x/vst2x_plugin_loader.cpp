@@ -56,8 +56,7 @@
 
 #include "sushi/logging.h"
 
-namespace sushi {
-namespace vst2 {
+namespace sushi::internal::vst2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("vst2");
 
@@ -202,6 +201,5 @@ void PluginLoader::close_library_handle(LibraryHandle library_handle)
 }
 #endif
 
-} // namespace vst2
-} // namespace sushi
+} // end namespace sushi::internal::vst2
 

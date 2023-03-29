@@ -29,8 +29,7 @@
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("send_plugin");
 
-namespace sushi {
-namespace send_plugin {
+namespace sushi::internal::send_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.testing.send";
 constexpr auto DEFAULT_LABEL = "Send";
@@ -202,5 +201,4 @@ void SendPlugin::_change_return_destination(const std::string& dest_name)
     }
 }
 
-}// namespace send_plugin
-}// namespace sushi
+} // end namespace sushi::internal::send_plugin

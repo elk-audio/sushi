@@ -37,7 +37,8 @@
 #include "public.sdk/source/vst/hosting/hostclasses.h"
 #pragma GCC diagnostic pop
 
-namespace sushi {
+namespace sushi::internal {
+
 class HostControl;
 
 namespace vst3 {
@@ -121,7 +122,7 @@ Steinberg::Vst::IComponent* load_component(Steinberg::IPluginFactory* factory, c
 Steinberg::Vst::IAudioProcessor* load_processor(Steinberg::Vst::IComponent* component);
 Steinberg::Vst::IEditController* load_controller(Steinberg::IPluginFactory* factory, Steinberg::Vst::IComponent*);
 
-
 } // end namespace vst
-} // end namespace sushi
-#endif //SUSHI_VST3X_HOST_CONTEXT_H
+} // end namespace sushi::internal
+
+#endif // SUSHI_VST3X_HOST_CONTEXT_H

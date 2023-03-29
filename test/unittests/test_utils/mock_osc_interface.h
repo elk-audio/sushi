@@ -22,7 +22,7 @@
 #include "control_frontends/osc_utils.h"
 
 using namespace sushi;
-using namespace sushi::osc;
+using namespace sushi::internal::osc;
 
 class MockOscInterface: public BaseOscMessenger
 {

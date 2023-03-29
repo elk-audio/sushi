@@ -21,7 +21,6 @@
 #include "rapidjson/document.h"
 
 namespace sushi {
-namespace audio_frontend {
 
 /**
  * @brief Retrieve Portaudio's registered devices information.
@@ -31,6 +30,5 @@ namespace audio_frontend {
  */
 rapidjson::Document generate_portaudio_devices_info_document();
 
-} // end namespace audio_frontend
 } // end namespace sushi
 

@@ -25,9 +25,7 @@
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
 inline ext::ProcessorInfo to_external(const Processor* proc)
 {
@@ -175,7 +173,7 @@ std::pair<ext::ControlStatus, ext::ProcessorState> AudioGraphController::get_pro
         auto params = processor->all_parameters();
         for (const auto& param : params)
         {
-            if (param->type() == sushi::ParameterType::STRING)
+            if (param->type() == ParameterType::STRING)
             {
                 state.properties.push_back({static_cast<int>(param->id()), processor->property_value(param->id()).second});
             }
@@ -192,7 +190,7 @@ std::pair<ext::ControlStatus, ext::ProcessorState> AudioGraphController::get_pro
 ext::ControlStatus AudioGraphController::set_processor_state(int processor_id, const ext::ProcessorState& state)
 {
     SUSHI_LOG_DEBUG("set_processor_state called with processor id {}", processor_id);
-    auto internal_state = std::make_unique<sushi::ProcessorState>();
+    auto internal_state = std::make_unique<ProcessorState>();
     to_internal(internal_state.get(), &state);
 
     // Capture everything by copy, except internal_state which is captured by move.
@@ -445,7 +443,5 @@ std::vector<int> AudioGraphController::_get_processor_ids(int track_id) const
     return ids;
 }
 
+} // end namespace sushi::internal::engine::controller_impl
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi

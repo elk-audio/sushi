@@ -6,8 +6,9 @@
 #include "engine/controller/audio_graph_controller.cpp"
 
 using namespace sushi;
-using namespace sushi::engine;
-using namespace sushi::engine::controller_impl;
+using namespace sushi::internal;
+using namespace sushi::internal::engine;
+using namespace sushi::internal::engine::controller_impl;
 
 constexpr float TEST_SAMPLE_RATE = 44100;
 

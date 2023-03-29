@@ -28,7 +28,7 @@
 // since std::hardware_destructive_interference_size is not yet supported in GCC 7
 constexpr int ASSUMED_CACHE_LINE_SIZE = 64;
 
-namespace sushi {
+namespace sushi::internal {
 /**
  * @brief Simple rt-safe test-and-set spinlock
  */
@@ -60,5 +60,6 @@ private:
     alignas(ASSUMED_CACHE_LINE_SIZE) std::atomic_bool flag{false};
 };
 
-} // end namespace sushi
-#endif //SUSHI_SPINLOCK_H
+} // end namespace sushi::internal
+
+#endif // SUSHI_SPINLOCK_H

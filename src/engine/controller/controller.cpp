@@ -28,8 +28,7 @@
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
 
-namespace sushi {
-namespace engine {
+namespace sushi::internal::engine {
 
 using namespace controller_impl;
 
@@ -288,6 +287,4 @@ void Controller::_notify_timing_listeners(const EngineTimingNotificationEvent* e
     }
 }
 
-
-}// namespace engine
-}// namespace sushi
+} // end namespace sushi::internal::engine

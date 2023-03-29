@@ -22,7 +22,7 @@
 
 #include "library/base_processor_factory.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 class BaseProcessorFactory;
 class BaseInternalPlugFactory;
@@ -53,6 +53,6 @@ private:
     std::unordered_map<std::string_view, std::unique_ptr<BaseInternalPlugFactory>> _internal_plugin_factories;
 };
 
-} // end namespace sushi
+} // end namespace sushi::internal
 
-#endif //SUSHI_INTERNAL_PROCESSOR_FACTORY_H
+#endif // SUSHI_INTERNAL_PROCESSOR_FACTORY_H

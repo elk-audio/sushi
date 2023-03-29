@@ -25,8 +25,7 @@
 #include "sushi/logging.h"
 
 
-namespace sushi {
-namespace performance {
+namespace sushi::internal::performance {
 
 constexpr auto EVALUATION_INTERVAL = std::chrono::seconds(1);
 constexpr double SEC_TO_NANOSEC = 1'000'000'000.0;
@@ -164,5 +163,4 @@ void PerformanceTimer::clear_all_timings()
     }
 }
 
-} // namespace performance
-} // namespace sushi
+} // end namespace sushi::internal::performance

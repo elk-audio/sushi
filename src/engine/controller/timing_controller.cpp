@@ -23,14 +23,12 @@
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
-TimingController::TimingController(sushi::engine::BaseEngine* engine) : _performance_timer(engine->performance_timer())
+TimingController::TimingController(engine::BaseEngine* engine) : _performance_timer(engine->performance_timer())
 {}
 
-inline ext::CpuTimings to_external(sushi::performance::ProcessTimings& internal)
+inline ext::CpuTimings to_external(performance::ProcessTimings& internal)
 {
     return {internal.avg_case, internal.min_case, internal.max_case};
 }
@@ -100,6 +98,4 @@ std::pair<ext::ControlStatus, ext::CpuTimings> TimingController::_get_timings(in
     return {ext::ControlStatus::UNSUPPORTED_OPERATION, {0,0,0}};
 }
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl

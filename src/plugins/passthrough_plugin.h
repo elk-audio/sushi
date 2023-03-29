@@ -24,8 +24,7 @@
 #include "library/internal_plugin.h"
 #include "library/rt_event_fifo.h"
 
-namespace sushi {
-namespace passthrough_plugin {
+namespace sushi::internal::passthrough_plugin {
 
 class PassthroughPlugin : public InternalPlugin, public UidHelper<PassthroughPlugin>
 {
@@ -41,6 +40,7 @@ public:
 private:
 };
 
-}// namespace passthrough_plugin
-}// namespace sushi
-#endif //PASSTHROUGH_PLUGIN_H
+} // end namespace sushi::internal::passthrough_plugin
+
+#endif // PASSTHROUGH_PLUGIN_H
+

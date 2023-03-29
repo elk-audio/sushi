@@ -7,7 +7,8 @@
 #include "library/rt_event_fifo.h"
 
 using namespace sushi;
-using namespace sushi::engine;
+using namespace sushi::internal;
+using namespace sushi::internal::engine;
 
 constexpr float TEST_SAMPLERATE = 48000;
 

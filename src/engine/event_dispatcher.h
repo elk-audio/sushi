@@ -33,9 +33,11 @@
 #include "library/rt_event_fifo.h"
 #include "library/event_interface.h"
 
-namespace sushi {
-namespace engine {class BaseEngine;}
-namespace dispatcher {
+namespace sushi::internal::engine {
+    class BaseEngine;
+}
+
+namespace sushi::internal::dispatcher {
 
 class BaseEventDispatcher;
 
@@ -132,7 +134,6 @@ private:
     std::mutex _engine_listener_lock;
 };
 
-} // end namespace dispatcher
-} // end namespace sushi
+} // end namespace sushi::internal::dispatcher
 
-#endif //SUSHI_EVENT_DISPATCHER_H
+#endif // SUSHI_EVENT_DISPATCHER_H

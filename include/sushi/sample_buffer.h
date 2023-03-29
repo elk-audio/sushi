@@ -608,7 +608,8 @@ private:
 };
 
 typedef SampleBuffer<AUDIO_CHUNK_SIZE> ChunkSampleBuffer;
-} // namespace sushi
+
+} // end namespace sushi
 
 
 #endif //SUSHI_SAMPLEBUFFER_H

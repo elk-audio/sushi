@@ -134,6 +134,6 @@ public:
     virtual void increment_samples_since_start(uint64_t sample_count, Time timestamp) = 0;
 };
 
-} // namespace sushi
+} // end namespace sushi
 
 #endif //REAL_TIME_CONTROLLER_H

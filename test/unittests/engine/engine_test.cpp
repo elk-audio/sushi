@@ -17,7 +17,8 @@
 constexpr float SAMPLE_RATE = 44000;
 constexpr int TEST_CHANNEL_COUNT = 4;
 using namespace sushi;
-using namespace sushi::engine;
+using namespace sushi::internal;
+using namespace sushi::internal::engine;
 
 class TestClipDetector : public ::testing::Test
 {

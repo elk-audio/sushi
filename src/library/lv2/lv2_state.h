@@ -31,8 +31,7 @@
 #include "lv2_model.h"
 #include "lv2_features.h"
 
-namespace sushi {
-namespace lv2 {
+namespace sushi::internal::lv2 {
 
 class State
 {
@@ -87,7 +86,6 @@ private:
 const void* get_port_value(const char* port_symbol, void* user_data, uint32_t *size, uint32_t* type);
 void set_port_value(const char* port_symbol, void* user_data, const void* value, uint32_t size, uint32_t type);
 
-}
-}
+} // end namespace sushi::internal::lv2
 
 #endif

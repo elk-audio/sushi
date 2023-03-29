@@ -17,8 +17,7 @@
 
 #include "sushi/logging.h"
 
-namespace sushi {
-namespace lv2 {
+namespace sushi::internal::lv2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
@@ -147,5 +146,4 @@ ControlID ControlID::new_property_control(Model* model, const LilvNode* property
     return id;
 }
 
-}
-}
+} // end namespace sushi::internal::lv2

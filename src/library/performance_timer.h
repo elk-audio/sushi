@@ -36,8 +36,7 @@
 #include "base_performance_timer.h"
 #include "spinlock.h"
 
-namespace sushi {
-namespace performance {
+namespace sushi::internal::performance {
 
 using TimePoint = std::chrono::nanoseconds;
 constexpr int MAX_LOG_ENTRIES = 20000;
@@ -171,7 +170,6 @@ protected:
     alignas(ASSUMED_CACHE_LINE_SIZE) memory_relaxed_aquire_release::CircularFifo<TimingLogPoint, MAX_LOG_ENTRIES> _entry_queue;
 };
 
-} // namespace performance
-} // namespace sushi
+} // end namespace sushi::internal::performance
 
-#endif //SUSHI_PERFORMANCE_TIMER_H
+#endif // SUSHI_PERFORMANCE_TIMER_H

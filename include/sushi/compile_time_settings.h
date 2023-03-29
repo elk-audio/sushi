@@ -71,6 +71,6 @@ struct CompileTimeSettings
     };
 };
 
-}
+} // end namespace sushi
 
 #endif // SUSHI_COMPILE_TIME_SETTINGS_H

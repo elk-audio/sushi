@@ -9,8 +9,7 @@
 
 #include "sushi/control_interface.h"
 
-namespace sushi {
-namespace ext {
+namespace sushi::ext {
 
 const ParameterInfo parameter_1{0, ParameterType::INT, "param 1", "param 1", "unit", false, 0, 0};
 const ParameterInfo parameter_2{1, ParameterType::FLOAT, "param 2", "param 2", "unit", true, 1, 1};
@@ -977,7 +976,6 @@ private:
                                                   &_session_controller_mockup};
 };
 
-} // ext
-} // sushi
+} // end namespace sushi::ext
 
 #endif //SUSHI_CONTROL_MOCKUP_H

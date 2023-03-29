@@ -35,8 +35,7 @@
 
 #include "dsp_library/value_smoother.h"
 
-namespace sushi {
-namespace engine {
+namespace sushi::internal::engine {
 
 /* No real technical limit, just something arbitrarily high enough */
 constexpr int MAX_TRACK_BUSES = MAX_TRACK_CHANNELS / 2;
@@ -212,9 +211,6 @@ private:
     RtEventFifo<KEYBOARD_EVENT_QUEUE_SIZE> _kb_event_buffer;
 };
 
-} // namespace engine
-} // namespace sushi
-
-
+} // end namespace sushi::internal::engine
 
 #endif // SUSHI_TRACK_H

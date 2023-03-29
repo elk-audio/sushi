@@ -22,8 +22,7 @@
 
 #include "sushi/logging.h"
 
-namespace sushi {
-namespace engine {
+namespace sushi::internal::engine {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("engine");
 
@@ -254,5 +253,4 @@ std::vector<std::shared_ptr<const Track>> ProcessorContainer::all_tracks() const
     return tracks;
 }
 
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine

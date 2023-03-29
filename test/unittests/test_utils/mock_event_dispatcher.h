@@ -5,7 +5,8 @@
 #include "engine/base_event_dispatcher.h"
 
 using namespace sushi;
-using namespace sushi::dispatcher;
+using namespace sushi::internal;
+using namespace sushi::internal::dispatcher;
 
 class MockEventDispatcher : public dispatcher::BaseEventDispatcher
 {

@@ -25,8 +25,7 @@
 #include "dsp_library/value_smoother.h"
 
 
-namespace sushi {
-namespace stereo_mixer_plugin {
+namespace sushi::internal::stereo_mixer_plugin {
 
 class StereoMixerPlugin : public InternalPlugin, public UidHelper<StereoMixerPlugin>
 {
@@ -55,8 +54,6 @@ private:
     ValueSmootherFilter<float> _ch2_right_gain_smoother;
 };
 
-} // namespace stereo_mixer_plugin
-} // namespace sushi
-
+} // end namespace sushi::internal::stereo_mixer_plugin
 
 #endif // SUSHI_STEREO_MIXER_PLUGIN_H

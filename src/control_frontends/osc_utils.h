@@ -27,9 +27,7 @@
 #include "osc_frontend.h"
 
 
-namespace sushi {
-namespace osc
-{
+namespace sushi::internal::osc {
 
 enum class OscMethodType
 {
@@ -140,6 +138,6 @@ protected:
  */
 std::string make_safe_path(std::string name);
 
-} // namespace osc
-} // namespace sushi
-#endif //SUSHI_OSC_UTILS_H
+} // end namespace sushi::internal::osc
+
+#endif // SUSHI_OSC_UTILS_H

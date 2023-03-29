@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
     if (options.enable_portaudio_devs_dump)
     {
 #ifdef SUSHI_BUILD_WITH_PORTAUDIO
-        std::cout << sushi::audio_frontend::generate_portaudio_devices_info_document() << std::endl;
+        std::cout << sushi::generate_portaudio_devices_info_document() << std::endl;
         return 0;
 #else
         std::cerr << "SUSHI not built with Portaudio support, cannot dump devices." << std::endl;

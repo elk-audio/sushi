@@ -25,7 +25,20 @@
 #include "osc_utils.h"
 #include "osc_frontend.h"
 
-namespace sushi {
+namespace sushi::internal {
+
+std::string osc::make_safe_path(std::string name)
+{
+    // Based on which characters are invalid in the OSC Spec plus \ and "
+    constexpr std::string_view INVALID_CHARS = "#*./?[]{}\"\\";
+    for (char i : INVALID_CHARS)
+    {
+        name.erase(std::remove(name.begin(), name.end(), i), name.end());
+    }
+    std::replace(name.begin(), name.end(), ' ', '_');
+    return name;
+}
+
 namespace control_frontend {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("osc frontend");
@@ -632,18 +645,6 @@ void OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
     }
 }
 
-} // namespace control_frontend
+} // end namespace control_frontend
 
-std::string osc::make_safe_path(std::string name)
-{
-    // Based on which characters are invalid in the OSC Spec plus \ and "
-    constexpr std::string_view INVALID_CHARS = "#*./?[]{}\"\\";
-    for (char i : INVALID_CHARS)
-    {
-        name.erase(std::remove(name.begin(), name.end(), i), name.end());
-    }
-    std::replace(name.begin(), name.end(), ' ', '_');
-    return name;
-}
-
-} // namespace sushi
+} // end namespace sushi::internal

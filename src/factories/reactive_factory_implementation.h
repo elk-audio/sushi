@@ -25,7 +25,7 @@ namespace sushi_rpc {
 class GrpcServer;
 }
 
-namespace sushi {
+namespace sushi::internal {
 
 class ConcreteSushi;
 
@@ -77,7 +77,7 @@ private:
     std::unique_ptr<RtController> _real_time_controller {nullptr};
 };
 
-} // namespace sushi
+} // end namespace sushi::internal
 
 
 #endif // REACTIVE_FACTORY_IMPLEMENTATION_H

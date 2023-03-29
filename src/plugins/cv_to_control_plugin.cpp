@@ -24,8 +24,7 @@
 
 #include "plugins/cv_to_control_plugin.h"
 
-namespace sushi {
-namespace cv_to_control_plugin {
+namespace sushi::internal::cv_to_control_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.testing.cv_to_control";
 constexpr auto DEFAULT_LABEL = "Cv to control adapter";
@@ -210,5 +209,5 @@ std::pair<int, float> cv_to_pitch(float value)
     double fraction = modf(value * 120.0f , &int_note);
     return {static_cast<int>(int_note), static_cast<float>(fraction)};
 }
-}// namespace cv_to_control_plugin
-}// namespace sushi
+
+} // end namespace sushi::internal::cv_to_control_plugin

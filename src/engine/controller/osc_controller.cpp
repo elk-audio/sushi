@@ -20,9 +20,7 @@
 
 #include "osc_controller.h"
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
 OscController::OscController(BaseEngine* engine) : _event_dispatcher(engine->event_dispatcher()),
                                                    _processors(engine->processor_container()) {}
@@ -183,6 +181,4 @@ ext::ControlStatus OscController::disable_all_output()
     return ext::ControlStatus::OK;
 }
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl

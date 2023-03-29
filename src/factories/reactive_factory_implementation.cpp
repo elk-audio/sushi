@@ -32,8 +32,7 @@
 #include "engine/controller/real_time_controller.h"
 #include "control_frontends/oscpack_osc_messenger.h"
 
-namespace sushi
-{
+namespace sushi::internal {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("reactive-factory");
 
@@ -151,4 +150,4 @@ Status
     return Status::OK;
 }
 
-} // namespace sushi
+} // end namespace sushi::internal

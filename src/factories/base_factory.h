@@ -23,7 +23,7 @@
 #include "sushi_rpc/grpc_server.h"
 #endif
 
-namespace sushi {
+namespace sushi::internal {
 
 namespace engine {
 class JsonConfigurator;
@@ -139,6 +139,6 @@ protected:
 #endif
 };
 
-} // namespace sushi
+} // end namespace sushi::internal
 
-#endif //SUSHI_FACTORY_BASE_H
+#endif // SUSHI_FACTORY_BASE_H

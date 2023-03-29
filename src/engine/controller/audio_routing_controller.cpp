@@ -24,11 +24,9 @@
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
-inline ext::AudioConnection to_external(const sushi::AudioConnection& con)
+inline ext::AudioConnection to_external(const AudioConnection& con)
 {
     return ext::AudioConnection{.track_id = static_cast<int>(con.track),
                                 .track_channel = con.track_channel,
@@ -209,6 +207,4 @@ ext::ControlStatus AudioRoutingController::disconnect_all_outputs_from_track(int
     return ext::ControlStatus::OK;
 }
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::engine::controller_impl

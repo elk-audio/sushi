@@ -31,9 +31,7 @@
 #include "base_audio_frontend.h"
 #include "library/rt_event.h"
 
-namespace sushi {
-
-namespace audio_frontend {
+namespace sushi::internal::audio_frontend {
 
 // TODO:
 //   Hard-coding the number of channels for now.
@@ -103,8 +101,6 @@ private:
     Time _start_time;
 };
 
-} // end namespace audio_frontend
+} // end namespace sushi::internal::audio_frontend
 
-} // end namespace sushi
-
-#endif //SUSHI_REACTIVE_FRONTEND_H
+#endif // SUSHI_REACTIVE_FRONTEND_H

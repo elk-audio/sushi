@@ -24,8 +24,7 @@
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("audio_frontend");
 
-namespace sushi {
-namespace audio_frontend {
+namespace sushi::internal::audio_frontend {
 
 AudioFrontendStatus BaseAudioFrontend::init(BaseAudioFrontendConfiguration* config)
 {
@@ -63,5 +62,4 @@ void BaseAudioFrontend::pause(bool enabled)
     }
 }
 
-}; // end namespace audio_frontend
-}; // end namespace sushi
+} // end namespace sushi::internal::audio_frontend

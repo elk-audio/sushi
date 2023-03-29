@@ -26,8 +26,7 @@
 #include "library/internal_plugin.h"
 #include "library/rt_event_fifo.h"
 
-namespace sushi {
-namespace step_sequencer_plugin {
+namespace sushi::internal::step_sequencer_plugin {
 
 constexpr int SEQUENCER_STEPS = 8;
 constexpr int START_NOTE = 48;
@@ -70,7 +69,6 @@ private:
 float samples_per_qn(float tempo, float samplerate);
 int snap_to_scale(int note, const std::array<int, 12>& scale);
 
-}// namespace step_sequencer_plugin
-}// namespace sushi
+} // end namespace sushi::internal::step_sequencer_plugin
 
-#endif //SUSHI_STEP_SEQUENCER_PLUGIN_H
+#endif // SUSHI_STEP_SEQUENCER_PLUGIN_H

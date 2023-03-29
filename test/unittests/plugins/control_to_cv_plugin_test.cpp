@@ -7,7 +7,8 @@
 #include <iostream>
 
 using namespace sushi;
-using namespace sushi::control_to_cv_plugin;
+using namespace sushi::internal;
+using namespace sushi::internal::control_to_cv_plugin;
 
 constexpr float TEST_SAMPLE_RATE = 44100;
 

@@ -31,10 +31,10 @@
 #include "library/event_interface.h"
 #include "library/event.h"
 
-namespace sushi {
+namespace sushi::internal {
 
-namespace engine { class BaseProcessorContainer;}
-namespace dispatcher { class BaseEventDispatcher;}
+namespace engine {class BaseProcessorContainer;}
+namespace dispatcher {class BaseEventDispatcher;}
 
 class ParameterManager
 {
@@ -116,5 +116,7 @@ private:
     std::unordered_map<ObjectId, std::unordered_map<ObjectId, ParameterEntry>> _parameters;
 
 };
-} // namespace sushi
-#endif //SUSHI_PARAMETER_MANAGER_H
+
+} // end namespace sushi::internal
+
+#endif // SUSHI_PARAMETER_MANAGER_H

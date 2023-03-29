@@ -35,6 +35,14 @@ class GrpcServer;
 
 namespace sushi {
 
+/**
+ * This should be called only once in the lifetime of the embedding binary - or it will fail.
+ * @param options
+ */
+void init_logger([[maybe_unused]] const SushiOptions& options);
+
+namespace internal {
+
 class BaseFactory;
 
 namespace engine {
@@ -70,12 +78,6 @@ namespace jsonconfig {
 class JsonConfigurator;
 }
 
-/**
- * This should be called only once in the lifetime of the embedding binary - or it will fail.
- * @param options
- */
-void init_logger(const SushiOptions& options);
-
 class ConcreteSushi : public Sushi
 {
 public:
@@ -104,7 +106,7 @@ protected:
     /**
      * @brief To create a Sushi instance, call _make_sushi(...) from inside a class inheriting from FactoryBase.
      */
-ConcreteSushi();
+    ConcreteSushi();
 
     friend class BaseFactory;
 
@@ -123,6 +125,8 @@ ConcreteSushi();
 #endif
 };
 
-} // namespace Sushi
+} // end namespace internal
+
+} // end namespace sushi::internal
 
 #endif // SUSHI_SUSHI_H

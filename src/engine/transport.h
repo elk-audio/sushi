@@ -39,7 +39,7 @@
  * significantly otherwise. */
 namespace ableton {class Link;}
 
-namespace sushi {
+namespace sushi::internal {
 
 enum class PlayStateChange
 {
@@ -285,7 +285,8 @@ private:
     PositionSource _position_source {PositionSource::CALCULATED};
 };
 
-} // namespace engine
-} // namespace sushi
+} // end namespace engine
 
-#endif //SUSHI_TRANSPORT_H
+} // end namespace sushi::internal
+
+#endif // SUSHI_TRANSPORT_H

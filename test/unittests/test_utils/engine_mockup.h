@@ -9,9 +9,10 @@
 #include "engine/midi_dispatcher.h"
 
 using namespace sushi;
-using namespace midi;
-using namespace sushi::engine;
-using namespace sushi::midi_dispatcher;
+using namespace sushi::internal;
+using namespace sushi::internal::midi;
+using namespace sushi::internal::engine;
+using namespace sushi::internal::midi_dispatcher;
 
 // Dummy event dispatcher
 class EventDispatcherMockup : public dispatcher::BaseEventDispatcher
@@ -68,7 +69,7 @@ public:
      * @param engine reference for the events execute method.
      * @return The execution status of the event.
      */
-    int execute_engine_event(engine::BaseEngine* engine)
+    int execute_engine_event(BaseEngine* engine)
     {
         EventStatus::EventStatus status = EventStatus::NOT_HANDLED;
 
@@ -216,7 +217,7 @@ public:
     bool got_event{false};
     bool got_rt_event{false};
 
-    engine::Transport* transport() override
+    Transport* transport() override
     {
         return &_transport;
     }
@@ -231,7 +232,7 @@ private:
 
 // TODO: Should this really be here, or is it too specific for the engine_mockup scope,
 //   thus needing its own file?
-class DummyMidiFrontend : public midi_frontend::BaseMidiFrontend
+class DummyMidiFrontend : public sushi::internal::midi_frontend::BaseMidiFrontend
 {
 public:
     DummyMidiFrontend() : BaseMidiFrontend(nullptr) {}

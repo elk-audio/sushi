@@ -29,8 +29,7 @@
 #include "library/processor.h"
 #include "engine/track.h"
 
-namespace sushi {
-namespace engine {
+namespace sushi::internal::engine {
 
 class BaseProcessorContainer
 {
@@ -79,6 +78,6 @@ protected:
     BaseProcessorContainer() = default;
 };
 
-} // namespace engine
-} // namespace sushi
-#endif //SUSHI_BASE_PROCESSOR_CONTAINER_H
+} // end namespace sushi::internal::engine
+
+#endif // SUSHI_BASE_PROCESSOR_CONTAINER_H

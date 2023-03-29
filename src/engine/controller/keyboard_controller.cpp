@@ -24,9 +24,7 @@
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
 KeyboardController::KeyboardController(BaseEngine* engine) : _event_dispatcher(engine->event_dispatcher())
 {}
@@ -84,6 +82,4 @@ ext::ControlStatus KeyboardController::send_modulation(int track_id, int channel
     return ext::ControlStatus::OK;
 }
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl

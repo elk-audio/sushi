@@ -27,9 +27,7 @@
 #include "engine/base_event_dispatcher.h"
 #include "controller_common.h"
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
 class AudioGraphController : public ext::AudioGraphController
 {
@@ -93,8 +91,6 @@ private:
     const engine::BaseProcessorContainer*   _processors;
 };
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl
 
-#endif //SUSHI_AUDIO_GRAPH_CONTROLLER_H
+#endif // SUSHI_AUDIO_GRAPH_CONTROLLER_H

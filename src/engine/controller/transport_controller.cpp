@@ -26,13 +26,11 @@
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
-TransportController::TransportController(sushi::engine::BaseEngine* engine) : _engine(engine),
-                                                                              _transport(engine->transport()),
-                                                                              _event_dispatcher(engine->event_dispatcher())
+TransportController::TransportController(engine::BaseEngine* engine) : _engine(engine),
+                                                                       _transport(engine->transport()),
+                                                                       _event_dispatcher(engine->event_dispatcher())
 {}
 
 float TransportController::get_samplerate() const
@@ -95,6 +93,4 @@ ext::ControlStatus TransportController::set_time_signature(ext::TimeSignature si
     return ext::ControlStatus::OK;
 }
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl

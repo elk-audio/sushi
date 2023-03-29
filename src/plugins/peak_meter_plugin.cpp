@@ -24,8 +24,7 @@
 
 #include "peak_meter_plugin.h"
 
-namespace sushi {
-namespace peak_meter_plugin {
+namespace sushi::internal::peak_meter_plugin {
 
 constexpr float DEFAULT_REFRESH_RATE = 25;
 // The time for meters to drop ~10dB
@@ -232,5 +231,4 @@ std::string_view PeakMeterPlugin::static_uid()
     return PLUGIN_UID;
 }
 
-}// namespace gain_plugin
-}// namespace sushi
+} // end namespace sushi::internal::gain_plugin

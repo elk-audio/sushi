@@ -28,8 +28,7 @@
 
 #include "engine/track.h"
 
-namespace sushi {
-namespace engine {
+namespace sushi::internal::engine {
 
 class AudioGraph
 {
@@ -96,7 +95,6 @@ private:
     int _current_core;
 };
 
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine
 
-#endif //SUSHI_AUDIO_GRAPH_H
+#endif // SUSHI_AUDIO_GRAPH_H

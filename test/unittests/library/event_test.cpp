@@ -7,9 +7,10 @@
 #include "control_frontends/base_control_frontend.h"
 
 using namespace sushi;
-using namespace sushi::engine;
-using namespace sushi::control_frontend;
-using namespace sushi::midi_dispatcher;
+using namespace sushi::internal;
+using namespace sushi::internal::engine;
+using namespace sushi::internal::control_frontend;
+using namespace sushi::internal::midi_dispatcher;
 
 static int dummy_processor_callback(void* /*arg*/, EventId /*id*/)
 {

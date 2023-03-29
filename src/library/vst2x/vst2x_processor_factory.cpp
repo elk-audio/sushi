@@ -26,8 +26,7 @@
 #include "library/vst2x/vst2x_wrapper.h"
 #endif
 
-namespace sushi {
-namespace vst2 {
+namespace sushi::internal::vst2 {
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-const-variable"
@@ -58,5 +57,4 @@ std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> Vst2xProcessorFactory
 
 #endif // SUSHI_BUILD_WITH_VST2
 
-} // end namespace vst2
-} // end namespace sushi
+} // end namespace sushi::internal::vst2

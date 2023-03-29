@@ -36,6 +36,7 @@ using ::testing::NiceMock;
 using ::testing::_;
 
 using namespace sushi;
+using namespace sushi::internal;
 
 constexpr float TEST_SAMPLE_RATE = 44100;
 
@@ -58,7 +59,7 @@ protected:
 
     midi_dispatcher::MidiDispatcher _midi_dispatcher {_mock_engine.event_dispatcher()};
 
-    midi_frontend::ReactiveMidiFrontend _midi_frontend {&_midi_dispatcher};
+    sushi::internal::midi_frontend::ReactiveMidiFrontend _midi_frontend {&_midi_dispatcher};
 
     RtEventFifo<10> _rt_event_output;
     Transport _transport {TEST_SAMPLE_RATE, &_rt_event_output};
@@ -91,7 +92,7 @@ TEST_F(ReactiveControllerTestFrontend, TestRtControllerTransportCalls)
     // Time Signature:
     auto old_time_signature = _real_time_controller->_time_signature;
     ext::TimeSignature new_time_signature {5, 8};
-    auto new_internal_time_signature = engine::controller_impl::to_internal(new_time_signature);
+    auto new_internal_time_signature = controller_impl::to_internal(new_time_signature);
 
     _real_time_controller->set_time_signature(new_time_signature);
 
@@ -103,7 +104,7 @@ TEST_F(ReactiveControllerTestFrontend, TestRtControllerTransportCalls)
     // Playing Mode:
     auto old_playing_mode = _real_time_controller->_playing_mode;
     ext::PlayingMode new_playing_mode = ext::PlayingMode::PLAYING;
-    auto new_internal_playing_mode = engine::controller_impl::to_internal(new_playing_mode);
+    auto new_internal_playing_mode = controller_impl::to_internal(new_playing_mode);
 
     _real_time_controller->set_playing_mode(new_playing_mode);
 

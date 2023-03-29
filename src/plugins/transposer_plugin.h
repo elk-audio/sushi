@@ -25,8 +25,7 @@
 #include "library/internal_plugin.h"
 
 
-namespace sushi {
-namespace transposer_plugin {
+namespace sushi::internal::transposer_plugin {
 
 class TransposerPlugin : public InternalPlugin, public UidHelper<TransposerPlugin>
 {
@@ -51,8 +50,6 @@ private:
     FloatParameterValue* _transpose_parameter;
 };
 
-}// namespace transposer_plugin
-}// namespace sushi
+} // end namespace sushi::internal::transposer_plugin
 
-
-#endif //SUSHI_TRANSPOSER_PLUGIN_H
+#endif // SUSHI_TRANSPOSER_PLUGIN_H

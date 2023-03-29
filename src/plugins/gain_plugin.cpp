@@ -22,8 +22,7 @@
 
 #include "gain_plugin.h"
 
-namespace sushi {
-namespace gain_plugin {
+namespace sushi::internal::gain_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.testing.gain";
 constexpr auto DEFAULT_LABEL = "Gain";
@@ -59,6 +58,4 @@ std::string_view GainPlugin::static_uid()
     return PLUGIN_UID;
 }
 
-
-}// namespace gain_plugin
-}// namespace sushi
+} // end namespace sushi::internal::gain_plugin

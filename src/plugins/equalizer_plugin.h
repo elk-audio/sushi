@@ -24,8 +24,7 @@
 #include "library/internal_plugin.h"
 #include "dsp_library/biquad_filter.h"
 
-namespace sushi {
-namespace equalizer_plugin {
+namespace sushi::internal::equalizer_plugin {
 
 constexpr int MAX_CHANNELS_SUPPORTED = 2;
 
@@ -57,6 +56,6 @@ private:
     FloatParameterValue* _q;
 };
 
-}// namespace equalizer_plugin
-}// namespace sushi
+} // end namespace sushi::internal::equalizer_plugin
+
 #endif // EQUALIZER_PLUGIN_H

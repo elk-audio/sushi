@@ -27,9 +27,7 @@
 #include "engine/base_event_dispatcher.h"
 #include "engine/base_processor_container.h"
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
 class ProgramController : public ext::ProgramController
 {
@@ -53,8 +51,6 @@ private:
     const BaseProcessorContainer*       _processors;
 };
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl
 
-#endif //SUSHI_PROGRAM_CONTROLLER_H
+#endif // SUSHI_PROGRAM_CONTROLLER_H

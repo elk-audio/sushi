@@ -43,8 +43,7 @@
 #include "library/midi_decoder.h"
 #include "library/midi_encoder.h"
 
-namespace sushi {
-namespace vst2 {
+namespace sushi::internal::vst2 {
 
 template<int capacity>
 class Vst2xMidiEventFIFO
@@ -201,7 +200,6 @@ private:
     VstEventsExtended* _vst_events;
 };
 
-} // namespace vst2
-} // namespace sushi
+} // end namespace sushi::internal::vst2
 
-#endif //SUSHI_VST2X_MIDI_EVENT_FIFO_H
+#endif // SUSHI_VST2X_MIDI_EVENT_FIFO_H

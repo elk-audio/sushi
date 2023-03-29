@@ -30,7 +30,6 @@
 
 
 namespace sushi {
-namespace audio_frontend {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("portaudio");
 
@@ -42,7 +41,7 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("portaudio");
  */
 rapidjson::Document generate_portaudio_devices_info_document()
 {
-    PortAudioFrontend frontend{nullptr};
+    sushi::internal::audio_frontend::PortAudioFrontend frontend{nullptr};
 
     rapidjson::Document document;
     document.SetObject();
@@ -104,8 +103,7 @@ rapidjson::Document generate_portaudio_devices_info_document()
     return document;
 }
 
-} // end namespace audio_frontend
-} // end namespace sushi
+} // end namespace sushi::internal
 
 #endif // SUSHI_PORTAUDIO_DEVICES_DUMP_H
 

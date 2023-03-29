@@ -24,8 +24,7 @@
 #include "library/internal_plugin.h"
 #include "library/rt_event_fifo.h"
 
-namespace sushi {
-namespace mono_summing_plugin {
+namespace sushi::internal::mono_summing_plugin {
 
 class MonoSummingPlugin : public InternalPlugin, public UidHelper<MonoSummingPlugin>
 {
@@ -44,6 +43,6 @@ public:
     static std::string_view static_uid();
 };
 
-}// namespace mono_summing_plugin
-}// namespace sushi
-#endif //SUSHI_MONO_SUMMING_PLUGIN_H
+} // end namespace sushi::internal::mono_summing_plugin
+
+#endif // SUSHI_MONO_SUMMING_PLUGIN_H

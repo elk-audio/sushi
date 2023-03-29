@@ -52,8 +52,7 @@
 
 #include "lv2_model.h"
 
-namespace sushi {
-namespace lv2 {
+namespace sushi::internal::lv2 {
 
 // writing also LV2 Trace Log messages to file.
 // This is set to false by default as it will cause thousands of mode switches.
@@ -87,9 +86,8 @@ const char* unmap_uri(LV2_URID_Unmap_Handle handle, LV2_URID urid);
 
 void init_feature(LV2_Feature* const dest, const char* const URI, void* data);
 
-} // end namespace lv2
-} // end namespace sushi
+} // end namespace sushi::internal::lv2
 
-#endif //SUSHI_BUILD_WITH_LV2
+#endif // SUSHI_BUILD_WITH_LV2
 
-#endif //SUSHI_LV2_FEATURES_H
+#endif // SUSHI_LV2_FEATURES_H

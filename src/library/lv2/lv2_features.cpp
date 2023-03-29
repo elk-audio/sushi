@@ -24,8 +24,7 @@
 
 #include "sushi/logging.h"
 
-namespace sushi {
-namespace lv2 {
+namespace sushi::internal::lv2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
@@ -137,7 +136,6 @@ void init_feature(LV2_Feature* const dest, const char* const URI, void* data)
     dest->data = data;
 }
 
-}
-}
+} // end namespace sushi::internal::lv2
 
-#endif //SUSHI_BUILD_WITH_LV2
+#endif // SUSHI_BUILD_WITH_LV2

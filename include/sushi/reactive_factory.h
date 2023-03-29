@@ -21,7 +21,10 @@
 
 namespace sushi {
 
-class ReactiveFactoryImplementation;
+namespace internal {
+    class ReactiveFactoryImplementation;
+}
+
 class RtController;
 
 class ReactiveFactory : public FactoryInterface
@@ -40,9 +43,9 @@ public:
     [[nodiscard]] std::unique_ptr<RtController> rt_controller();
 
 private:
-    std::unique_ptr<ReactiveFactoryImplementation> _implementation;
+    std::unique_ptr<internal::ReactiveFactoryImplementation> _implementation;
 };
 
-} // namespace sushi
+} // end namespace sushi
 
 #endif // REACTIVE_FACTORY_H

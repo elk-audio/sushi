@@ -26,7 +26,7 @@
 #include "library/rt_event.h"
 #include "library/rt_event_pipe.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 constexpr int MAX_EVENTS_IN_QUEUE = 1024;
 
@@ -67,6 +67,6 @@ public:
     void send_event(const RtEvent &event) override {SimpleFifo<RtEvent, size>::push(event);}
 };
 
-} //end namespace sushi
+} //end namespace sushi::internal
 
-#endif //SUSHI_REALTIME_FIFO_H
+#endif // SUSHI_REALTIME_FIFO_H

@@ -70,4 +70,4 @@ private:
     std::condition_variable _notifier;
 };
 
-#endif //SUSHI_SYNCHRONISED_FIFO_H
+#endif // SUSHI_SYNCHRONISED_FIFO_H

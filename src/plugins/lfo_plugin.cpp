@@ -22,8 +22,7 @@
 
 #include "lfo_plugin.h"
 
-namespace sushi {
-namespace lfo_plugin {
+namespace sushi::internal::lfo_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.testing.lfo";
 constexpr auto DEFAULT_LABEL = "Lfo";
@@ -66,5 +65,4 @@ std::string_view LfoPlugin::static_uid()
     return PLUGIN_UID;
 }
 
-}// namespace lfo_plugin
-}// namespace sushi
+} // end namespace sushi::internal::lfo_plugin

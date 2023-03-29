@@ -35,8 +35,7 @@
 #include <lv2/worker/worker.h>
 #include <lv2/midi/midi.h>
 
-namespace sushi {
-namespace lv2 {
+namespace sushi::internal::lv2 {
 
 class HostNodes
 {
@@ -164,9 +163,8 @@ public:
     LilvNode* work_schedule;
 };
 
-#endif //SUSHI_BUILD_WITH_LV2
+#endif // SUSHI_BUILD_WITH_LV2
 
-} // end namespace lv2
-} // end namespace sushi
+} // end namespace sushi::internal::lv2
 
-#endif //SUSHI_LV2_HOST_NODES_H
+#endif // SUSHI_LV2_HOST_NODES_H

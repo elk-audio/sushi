@@ -33,8 +33,7 @@
 
 #include "lv2_worker.h"
 
-namespace sushi {
-namespace lv2 {
+namespace sushi::internal::lv2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
@@ -1054,5 +1053,4 @@ void LV2_Wrapper::_set_binary_state(ProcessorState* state)
     SUSHI_LOG_ERROR_IF(lilv_state == nullptr, "Failed to decode lilv state from binary state");
 }
 
-} // namespace lv2
-} // namespace sushi
+} // end namespace sushi::internal::lv2

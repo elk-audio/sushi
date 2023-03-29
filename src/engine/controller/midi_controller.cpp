@@ -24,9 +24,7 @@
 
 #include "controller_common.h"
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
 ext::MidiCCConnection populate_cc_connection(const midi_dispatcher::CCInputConnection& connection)
 {
@@ -465,6 +463,4 @@ ext::ControlStatus MidiController::disconnect_all_pc_from_processor(int processo
     return ext::ControlStatus::OK;
 }
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl

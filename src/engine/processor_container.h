@@ -31,8 +31,7 @@
 #include "track.h"
 #include "library/processor.h"
 
-namespace sushi {
-namespace engine {
+namespace sushi::internal::engine {
 
 class ProcessorContainer : public BaseProcessorContainer
 {
@@ -197,7 +196,6 @@ private:
     mutable std::mutex _processors_by_track_lock;
 };
 
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine
 
-#endif //SUSHI_PROCESSOR_CONTAINER_H
+#endif // SUSHI_PROCESSOR_CONTAINER_H

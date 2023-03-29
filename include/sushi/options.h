@@ -443,4 +443,4 @@ const optionparser::Descriptor usage[] =
     { 0, 0, 0, 0, 0, 0}
 };
 
-} // namespace sushi
+} // end namespace sushi

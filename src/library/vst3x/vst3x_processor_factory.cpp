@@ -31,8 +31,8 @@
 #pragma GCC diagnostic ignored "-Wunused-const-variable"
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("Vst3");
 #pragma GCC diagnostic pop
-namespace sushi {
-namespace vst3 {
+
+namespace sushi::internal::vst3 {
 
 Vst3xProcessorFactory::~Vst3xProcessorFactory() = default;
 
@@ -67,6 +67,6 @@ std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> Vst3xProcessorFactory
     return {ProcessorReturnCode::UNSUPPORTED_OPERATION, nullptr};
 }
 
-#endif //SUSHI_BUILD_WITH_VST3
-} // end namespace vst3
-} // end namespace sushi
+#endif // SUSHI_BUILD_WITH_VST3
+
+} // end namespace sushi::internal::vst3

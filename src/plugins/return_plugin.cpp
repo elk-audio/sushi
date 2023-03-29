@@ -23,8 +23,7 @@
 #include "return_plugin.h"
 #include "send_plugin.h"
 
-namespace sushi {
-namespace return_plugin {
+namespace sushi::internal::return_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.testing.return";
 constexpr auto DEFAULT_LABEL = "Return";
@@ -203,5 +202,4 @@ void ReturnPlugin::_channel_config(int channels)
     }
 }
 
-}// namespace return_plugin
-}// namespace sushi
+} // end namespace sushi::internal::return_plugin

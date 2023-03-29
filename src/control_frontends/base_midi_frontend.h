@@ -27,8 +27,7 @@
 
 #include "engine/midi_receiver.h"
 
-namespace sushi {
-namespace midi_frontend {
+namespace sushi::internal::midi_frontend {
 
 class BaseMidiFrontend
 {
@@ -68,6 +67,6 @@ public:
     void send_midi(int /*input*/, MidiDataByte /*data*/, Time /*timestamp*/) override {};
 };
 
-} // end namespace midi_frontend
-} // end namespace sushi
-#endif //SUSHI_BASE_MIDI_FRONTEND_H
+} // end namespace sushi::internal::midi_frontend
+
+#endif // SUSHI_BASE_MIDI_FRONTEND_H

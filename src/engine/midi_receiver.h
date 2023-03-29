@@ -23,8 +23,7 @@
 
 #include "sushi/sushi_time.h"
 
-namespace sushi {
-namespace midi_receiver {
+namespace sushi::internal::midi_receiver {
 
 class MidiReceiver
 {
@@ -33,8 +32,7 @@ public:
 };
 
 
-} // end namespace midi_dispatcher
-} // end namespace sushi
+} // end namespace sushi::internal::midi_dispatcher
 
-#endif //SUSHI_MIDI_RECEIVER_H
+#endif // SUSHI_MIDI_RECEIVER_H
 

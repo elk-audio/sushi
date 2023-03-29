@@ -8,7 +8,8 @@
 #include "plugins/arpeggiator_plugin.cpp"
 
 using namespace sushi;
-using namespace sushi::arpeggiator_plugin;
+using namespace sushi::internal;
+using namespace sushi::internal::arpeggiator_plugin;
 
 constexpr float TEST_SAMPLERATE = 48000;
 

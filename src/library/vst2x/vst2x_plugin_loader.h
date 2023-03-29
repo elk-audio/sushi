@@ -58,8 +58,7 @@
 
 #include <dlfcn.h>
 
-namespace sushi {
-namespace vst2 {
+namespace sushi::internal::vst2 {
 
 typedef void* LibraryHandle;
 
@@ -79,7 +78,6 @@ public:
     static void close_library_handle(LibraryHandle library_handle);
 };
 
-} // namespace vst2
-} // namespace sushi
+} // end namespace sushi::internal::vst2
 
-#endif //SUSHI_VST2X_PLUGIN_LOADER_H
+#endif // SUSHI_VST2X_PLUGIN_LOADER_H

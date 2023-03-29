@@ -20,7 +20,7 @@
 
 #include "processor_state.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 ProcessorState::~ProcessorState() = default;
 bool ProcessorState::has_binary_data() const
@@ -118,4 +118,5 @@ const std::vector<std::pair<ObjectId, float>>& RtState::parameters() const
 {
     return _parameter_changes;
 }
-}; // end namespace sushi
+
+} // end namespace sushi::internal

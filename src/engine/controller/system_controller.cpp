@@ -22,9 +22,7 @@
 
 #include "sushi/constants.h"
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
 SystemController::SystemController(int inputs, int outputs) : _audio_inputs{inputs}, _audio_outputs{outputs}
 {
@@ -60,6 +58,4 @@ int SystemController::get_output_audio_channel_count() const
     return _audio_outputs;
 }
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl

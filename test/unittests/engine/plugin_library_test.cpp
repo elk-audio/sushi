@@ -6,7 +6,7 @@
 #include "engine/plugin_library.cpp"
 
 using namespace sushi;
-
+using namespace sushi::internal;
 
 class TestPluginLibrary : public ::testing::Test
 {

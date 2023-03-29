@@ -25,8 +25,7 @@
 
 #include "sushi/logging.h"
 
-namespace sushi {
-namespace sample_player_plugin {
+namespace sushi::internal::sample_player_plugin {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("sampleplayer");
 
@@ -292,5 +291,4 @@ BlobData SamplePlayerPlugin::_load_sample_file(const std::string& file_name)
 
 }
 
-}// namespace sample_player_plugin
-}// namespace sushi
+} // end namespace sushi::internal::sample_player_plugin

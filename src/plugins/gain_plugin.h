@@ -23,8 +23,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace gain_plugin {
+namespace sushi::internal::gain_plugin {
 
 class GainPlugin : public InternalPlugin, public UidHelper<GainPlugin>
 {
@@ -41,6 +40,6 @@ private:
     FloatParameterValue* _gain_parameter;
 };
 
-}// namespace gain_plugin
-}// namespace sushi
+} // end namespace sushi::internal::gain_plugin
+
 #endif // GAIN_PLUGIN_H

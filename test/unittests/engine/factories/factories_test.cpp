@@ -65,6 +65,7 @@ using ::testing::NiceMock;
 using ::testing::_;
 
 using namespace sushi;
+using namespace sushi::internal;
 
 //////////////////////////////////////////////////////
 // ReactiveFactory

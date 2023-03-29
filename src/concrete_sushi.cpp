@@ -32,26 +32,7 @@
 #include "sushi_rpc/grpc_server.h"
 #endif
 
-namespace sushi
-{
-
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("concrete_sushi");
-
-void init_logger([[maybe_unused]] const SushiOptions& options)
-{
-    auto ret_code = SUSHI_INITIALIZE_LOGGER(options.log_filename,
-                                            "Logger",
-                                            options.log_level,
-                                            options.enable_flush_interval,
-                                            options.log_flush_interval,
-                                            options.sentry_crash_handler_path,
-                                            options.sentry_dsn);
-
-    if (ret_code != SUSHI_LOG_ERROR_CODE_OK)
-    {
-        std::cerr << SUSHI_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;
-    }
-}
+namespace sushi {
 
 std::optional<std::pair<std::string, int>> SushiOptions::grpc_address_and_port()
 {
@@ -137,6 +118,26 @@ std::string to_string(Status status)
             return "";
     }
 }
+
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("concrete_sushi");
+
+void init_logger([[maybe_unused]] const SushiOptions& options)
+{
+    auto ret_code = SUSHI_INITIALIZE_LOGGER(options.log_filename,
+                                             "Logger",
+                                             options.log_level,
+                                             options.enable_flush_interval,
+                                             options.log_flush_interval,
+                                             options.sentry_crash_handler_path,
+                                             options.sentry_dsn);
+
+    if (ret_code != SUSHI_LOG_ERROR_CODE_OK)
+    {
+        std::cerr << SUSHI_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;
+    }
+}
+
+namespace internal {
 
 ///////////////////////////////////////////
 // Sushi methods                         //
@@ -229,4 +230,6 @@ float ConcreteSushi::sample_rate() const
     return _engine->sample_rate();
 }
 
-} // namespace Sushi
+} // end namespace internal
+
+} // end namespace sushi::internal

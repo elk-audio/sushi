@@ -25,7 +25,7 @@
 #include <cmath>
 #include <cassert>
 
-namespace sushi {
+namespace sushi::internal {
 
 /**
  * @brief Class that implements smoothing of a value over a set time period using either
@@ -185,7 +185,7 @@ using ValueSmootherRamp = ValueSmoother<FloatType, ValueSmoother<FloatType,0>::M
 template <typename FloatType>
 using ValueSmootherFilter = ValueSmoother<FloatType, ValueSmoother<FloatType,0>::Mode::FILTER>;
 
-}  // namespace sushi
+}  // end namespace sushi::internal
 
-#endif //SUSHI_VALUE_SMOOTHER_H
+#endif // SUSHI_VALUE_SMOOTHER_H
 

@@ -25,12 +25,11 @@
 
 #include "alsa_midi_frontend.h"
 #include "library/midi_decoder.h"
-#include "logging.h"
+#include "sushi/logging.h"
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("alsamidi");
 
-namespace sushi {
-namespace midi_frontend {
+namespace sushi::internal::midi_frontend {
 
 constexpr auto ALSA_POLL_TIMEOUT = std::chrono::milliseconds(200);
 constexpr auto CLIENT_NAME = "Sushi";
@@ -304,6 +303,5 @@ snd_seq_real_time_t AlsaMidiFrontend::_to_alsa_time(Time timestamp)
     return alsa_time;
 }
 
-} // end namespace midi_frontend
-} // end namespace sushi
+} // end namespace sushi::internal::midi_frontend
 

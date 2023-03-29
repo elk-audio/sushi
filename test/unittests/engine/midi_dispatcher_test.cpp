@@ -11,8 +11,9 @@ using ::testing::_;
 
 using namespace midi;
 using namespace sushi;
-using namespace sushi::engine;
-using namespace sushi::midi_dispatcher;
+using namespace sushi::internal;
+using namespace sushi::internal::engine;
+using namespace sushi::internal::midi_dispatcher;
 
 const MidiDataByte TEST_NOTE_ON_CH2   = {0x91, 62, 55, 0}; /* Channel 2 */
 const MidiDataByte TEST_NOTE_OFF_CH3  = {0x82, 60, 45, 0}; /* Channel 3 */

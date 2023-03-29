@@ -23,8 +23,7 @@
 
 #include "library/base_processor_factory.h"
 
-namespace sushi {
-namespace vst2 {
+namespace sushi::internal::vst2 {
 
 class Vst2xProcessorFactory : public BaseProcessorFactory
 {
@@ -34,7 +33,6 @@ public:
                                                                             float sample_rate) override;
 };
 
-} // end namespace vst2
-} // end namespace sushi
+} // end namespace sushi::internal::vst2
 
-#endif //SUSHI_VST2X_PROCESSOR_FACTORY_H
+#endif // SUSHI_VST2X_PROCESSOR_FACTORY_H

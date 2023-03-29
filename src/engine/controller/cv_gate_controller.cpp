@@ -21,9 +21,7 @@
 #include "cv_gate_controller.h"
 
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
 // TODO - Remove when stubs have been properly implemented
 #pragma GCC diagnostic push
@@ -145,6 +143,4 @@ ext::ControlStatus CvGateController::disconnect_all_gate_outputs_from_processor(
 
 #pragma GCC diagnostic pop
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl

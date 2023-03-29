@@ -39,9 +39,7 @@ const LV2_Feature static_features[] = {
 
 } // anonymous namespace
 
-
-namespace sushi {
-namespace lv2 {
+namespace sushi::internal::lv2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
@@ -726,7 +724,6 @@ LV2_Wrapper* Model::wrapper()
     return _wrapper;
 }
 
-}
-}
+} // end namespace sushi::internal::lv2
 
-#endif //SUSHI_BUILD_WITH_LV2
+#endif // SUSHI_BUILD_WITH_LV2

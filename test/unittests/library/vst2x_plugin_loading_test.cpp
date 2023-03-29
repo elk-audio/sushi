@@ -31,7 +31,7 @@ protected:
     }
 
     HostControlMockup _hc;
-    sushi::HostControl _host_control;
+    HostControl _host_control;
     PluginRegistry _plugin_registry;
 };
 

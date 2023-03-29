@@ -27,9 +27,7 @@
 #include "engine/base_event_dispatcher.h"
 #include "engine/midi_dispatcher.h"
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
 class MidiController : public ext::MidiController
 {
@@ -95,8 +93,6 @@ private:
     midi_dispatcher::MidiDispatcher* _midi_dispatcher;
 };
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl
 
-#endif //SUSHI_MIDI_CONTROLLER_H
+#endif // SUSHI_MIDI_CONTROLLER_H

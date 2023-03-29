@@ -30,8 +30,7 @@
 #include "vst2x_midi_event_fifo.h"
 #include "engine/base_event_dispatcher.h"
 
-namespace sushi {
-namespace vst2 {
+namespace sushi::internal::vst2 {
 
 /* Should match the maximum reasonable number of channels of a vst */
 constexpr int VST_WRAPPER_MAX_N_CHANNELS = MAX_TRACK_CHANNELS;
@@ -193,7 +192,6 @@ private:
 
 VstSpeakerArrangementType arrangement_from_channels(int channels);
 
-} // end namespace vst2
-} // end namespace sushi
+} // end namespace sushi::internal::vst2
 
-#endif //SUSHI_VST2X_PLUGIN_H
+#endif // SUSHI_VST2X_PLUGIN_H

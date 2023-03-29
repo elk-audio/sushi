@@ -27,8 +27,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace sample_delay_plugin {
+namespace sushi::internal::sample_delay_plugin {
 
 constexpr int MAX_DELAY = 48000;
 
@@ -63,8 +62,6 @@ private:
     std::vector<std::array<float, MAX_DELAY>> _delaylines;
 };
 
-} // namespace sample_delay_plugin
-} // namespace sushi
-
+} // end namespace sushi::internal::sample_delay_plugin
 
 #endif // !SUSHI_SAMPLE_DELAY_PLUGIN_H

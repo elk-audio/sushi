@@ -2,8 +2,8 @@
 
 #include "library/vst2x/vst2x_midi_event_fifo.h"
 
-using namespace sushi;
-using namespace sushi::vst2;
+using namespace sushi::internal;
+using namespace sushi::internal::vst2;
 
 namespace {
     constexpr int TEST_FIFO_CAPACITY = 128;

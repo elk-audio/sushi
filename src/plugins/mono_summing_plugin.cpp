@@ -20,8 +20,7 @@
 
 #include "mono_summing_plugin.h"
 
-namespace sushi {
-namespace mono_summing_plugin {
+namespace sushi::internal::mono_summing_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.testing.mono_summing";
 constexpr auto DEFAULT_LABEL = "Mono summing";
@@ -60,6 +59,5 @@ std::string_view MonoSummingPlugin::static_uid()
     return PLUGIN_UID;
 }
 
+} // end namespace sushi::internal::mono_summing_plugin
 
-}// namespace mono_summing_plugin
-}// namespace sushi

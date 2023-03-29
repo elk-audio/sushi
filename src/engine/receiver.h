@@ -27,8 +27,7 @@
 #include "library/id_generator.h"
 #include "library/rt_event_fifo.h"
 
-namespace sushi {
-namespace receiver {
+namespace sushi::internal::receiver {
 
 class AsynchronousEventReceiver
 {
@@ -53,8 +52,6 @@ private:
     RtSafeRtEventFifo* _queue;
 };
 
+} // end namespace sushi::internal::receiver
 
-} // end namespace receiver
-} // end namespace sushi
-
-#endif //SUSHI_ASYNCHRONOUS_RECEIVER_H
+#endif // SUSHI_ASYNCHRONOUS_RECEIVER_H

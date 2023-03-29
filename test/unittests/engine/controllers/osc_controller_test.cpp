@@ -18,10 +18,11 @@ using ::testing::_;
 
 using namespace midi;
 using namespace sushi;
-using namespace sushi::engine;
-using namespace sushi::control_frontend;
-using namespace sushi::midi_dispatcher;
-using namespace sushi::engine::controller_impl;
+using namespace sushi::internal;
+using namespace sushi::internal::engine;
+using namespace sushi::internal::control_frontend;
+using namespace sushi::internal::midi_dispatcher;
+using namespace sushi::internal::engine::controller_impl;
 
 constexpr float TEST_SAMPLE_RATE = 44100;
 constexpr int OSC_TEST_SERVER_PORT = 24024;

@@ -24,9 +24,7 @@
 #include "library/midi_decoder.h"
 #include "library/midi_encoder.h"
 
-namespace sushi {
-namespace transposer_plugin {
-
+namespace sushi::internal::transposer_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.testing.transposer";
 constexpr auto DEFAULT_LABEL = "Transposer";
@@ -134,5 +132,4 @@ std::string_view TransposerPlugin::static_uid()
     return PLUGIN_UID;
 }
 
-}// namespace transposer_plugin
-}// namespace sushi
+} // end namespace sushi::internal::transposer_plugin

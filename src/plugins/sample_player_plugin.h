@@ -26,8 +26,7 @@
 #include "library/internal_plugin.h"
 #include "plugins/sample_player_voice.h"
 
-namespace sushi {
-namespace sample_player_plugin {
+namespace sushi::internal::sample_player_plugin {
 
 constexpr size_t TOTAL_POLYPHONY = 8;
 
@@ -73,8 +72,6 @@ private:
     std::array<sample_player_voice::Voice, TOTAL_POLYPHONY> _voices;
 };
 
+} // end namespace sushi::internal::sample_player_plugin
 
-}// namespace sample_player_plugin
-}// namespace sushi
-
-#endif //SUSHI_SAMPLER_PLUGIN_H
+#endif // SUSHI_SAMPLER_PLUGIN_H

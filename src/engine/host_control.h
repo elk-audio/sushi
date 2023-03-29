@@ -22,12 +22,11 @@
 #ifndef SUSHI_HOST_CONTROL_H
 #define SUSHI_HOST_CONTROL_H
 
-
 #include "base_event_dispatcher.h"
 #include "engine/transport.h"
 #include "engine/plugin_library.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 class HostControl
 {
@@ -79,5 +78,6 @@ protected:
     engine::PluginLibrary*           _plugin_library;
 };
 
-} // end namespace sushi
-#endif //SUSHI_HOST_CONTROL_H
+} // end namespace sushi::internal
+
+#endif // SUSHI_HOST_CONTROL_H

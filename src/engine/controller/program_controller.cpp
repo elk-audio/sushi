@@ -24,9 +24,7 @@
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
 ProgramController::ProgramController(BaseEngine* engine) : /* _engine(engine), */
                                                            _event_dispatcher(engine->event_dispatcher()),
@@ -111,6 +109,4 @@ ext::ControlStatus ProgramController::set_processor_program(int processor_id, in
     return ext::ControlStatus::OK;
 }
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl

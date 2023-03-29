@@ -24,7 +24,7 @@
 
 #include "event.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 enum EventPosterId : int
 {
@@ -56,5 +56,6 @@ public:
     virtual int poster_id() = 0;
 };
 
-} // end namespace sushi
-#endif //SUSHI_EVENT_INTERFACE_H
+} // end namespace sushi::internal
+
+#endif // SUSHI_EVENT_INTERFACE_H

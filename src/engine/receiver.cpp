@@ -26,8 +26,7 @@
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("event_receiver");
 
-namespace sushi {
-namespace receiver {
+namespace sushi::internal::receiver {
 
 constexpr int MAX_RETRIES = 100;
 
@@ -67,5 +66,5 @@ bool AsynchronousEventReceiver::wait_for_response(EventId id, std::chrono::milli
     SUSHI_LOG_WARNING("Waiting for RtEvent with id {} timed out", id);
     return false;
 }
-} // end namespace receiver
-} // end namespace sushi
+
+} // end namespace sushi::internal::receiver

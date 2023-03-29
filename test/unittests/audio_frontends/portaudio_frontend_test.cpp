@@ -15,8 +15,9 @@ using ::testing::NiceMock;
 using ::testing::SetArgPointee;
 
 using namespace sushi;
-using namespace sushi::audio_frontend;
-using namespace sushi::midi_dispatcher;
+using namespace sushi::internal;
+using namespace sushi::internal::audio_frontend;
+using namespace sushi::internal::midi_dispatcher;
 
 constexpr float SAMPLE_RATE = 44000;
 

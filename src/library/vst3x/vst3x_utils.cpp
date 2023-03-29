@@ -20,8 +20,7 @@
 
 #include "vst3x_utils.h"
 
-namespace sushi {
-namespace vst3{
+namespace sushi::internal::vst3 {
 
 void SushiProcessData::assign_buffers(const ChunkSampleBuffer& input, ChunkSampleBuffer& output,
                                       int in_channels, int out_channels)
@@ -129,5 +128,4 @@ Steinberg::Vst::IParamValueQueue* Vst3xRtState::addParameterData(const Steinberg
     return nullptr;
 }
 
-} // end namespace vst3
-} // end namespace sushi
+} // end namespace sushi::internal::vst3

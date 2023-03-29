@@ -27,8 +27,7 @@
 #include "vst3x_host_app.h"
 #include "vst3x_wrapper.h"
 
-namespace sushi {
-namespace vst3 {
+namespace sushi::internal::vst3 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("vst3");
 
@@ -375,5 +374,4 @@ Steinberg::Vst::IEditController* load_controller(Steinberg::IPluginFactory* fact
     return nullptr;
 }
 
-} // end namespace vst3
-} // end namespace sushi
+} // end namespace sushi::internal::vst3

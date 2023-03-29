@@ -27,7 +27,7 @@
 
 #include "library/rt_event.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 class RtEventPipe
 {
@@ -35,6 +35,6 @@ public:
     virtual void send_event(const RtEvent& event) = 0;
 };
 
-} // end namespace sushi
+} // end namespace sushi::internal
 
-#endif //SUSHI_RT_EVENT_PIPE_H
+#endif // SUSHI_RT_EVENT_PIPE_H

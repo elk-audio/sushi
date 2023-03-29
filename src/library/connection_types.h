@@ -23,7 +23,7 @@
 
 #include "id_generator.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 /**
  * @brief Data for routing Audio to and from tracks
@@ -78,5 +78,7 @@ bool inline operator==(const GateConnection& lhs, const GateConnection& rhs)
            lhs.channel      == rhs.channel;
 }
 
-} // namespace sushi
-#endif //SUSHI_CONNECTION_TYPES_H
+} // end namespace sushi::internal
+
+#endif // SUSHI_CONNECTION_TYPES_H
+

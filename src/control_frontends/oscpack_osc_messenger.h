@@ -38,7 +38,7 @@
 
 namespace oscpack = ::osc;
 
-namespace sushi::osc
+namespace sushi::internal::osc
 {
 
 struct LightKey
@@ -135,6 +135,6 @@ private:
     char _output_buffer[OSC_OUTPUT_BUFFER_SIZE];
 };
 
-} // namespace osc
+} // end namespace osc
 
-#endif //SUSHI_OSCPACK_OSC_MESSENGER_H
+#endif // SUSHI_OSCPACK_OSC_MESSENGER_H

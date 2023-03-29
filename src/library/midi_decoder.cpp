@@ -22,8 +22,7 @@
 
 #include "library/midi_decoder.h"
 
-namespace sushi {
-namespace midi {
+namespace sushi::internal::midi {
 
 constexpr uint8_t NOTE_OFF_PREFIX   = 0b1000;
 constexpr uint8_t NOTE_ON_PREFIX    = 0b1001;
@@ -302,5 +301,4 @@ SongSelectMessage decode_song_select(MidiDataByte data)
     return message;
 }
 
-} // end namspace midi
-} // end namespace sushi
+} // end namespace sushi::internal::midi

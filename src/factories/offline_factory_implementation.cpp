@@ -29,8 +29,7 @@
 #include "engine/json_configurator.h"
 #include "control_frontends/oscpack_osc_messenger.h"
 
-namespace sushi
-{
+namespace sushi::internal {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("offline-factory");
 
@@ -122,4 +121,4 @@ Status
     return Status::OK;
 }
 
-} // namespace sushi
+} // end namespace sushi::internal

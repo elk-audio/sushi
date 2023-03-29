@@ -27,7 +27,7 @@
 #include "send_plugin.h"
 #include "return_plugin.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 class SendReturnFactory : public BaseProcessorFactory
 {
@@ -52,6 +52,6 @@ private:
     std::mutex _return_inst_lock;
 };
 
-}// namespace sushi
+} // end namespace sushi::internal
 
-#endif //SUSHI_SEND_RETURN_FACTORY_H
+#endif // SUSHI_SEND_RETURN_FACTORY_H

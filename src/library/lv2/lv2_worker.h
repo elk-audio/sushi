@@ -22,8 +22,7 @@
 #include "lv2/worker/worker.h"
 #include "lv2_model.h"
 
-namespace sushi {
-namespace lv2 {
+namespace sushi::internal::lv2 {
 
 constexpr int WORKER_FIFO_SIZE = 128;
 constexpr int WORKER_REQUEST_SIZE = 64;
@@ -77,9 +76,8 @@ private:
     bool _threaded{false};
 };
 
-}
-}
+} // end namespace sushi::internal::lv2
 
-#endif //SUSHI_BUILD_WITH_LV2
+#endif // SUSHI_BUILD_WITH_LV2
 
-#endif //SUSHI_LV2_WORKER_H
+#endif // SUSHI_LV2_WORKER_H

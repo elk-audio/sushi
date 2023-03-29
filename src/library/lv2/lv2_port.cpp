@@ -26,8 +26,7 @@
 
 #include "lv2_model.h"
 
-namespace sushi {
-namespace lv2 {
+namespace sushi::internal::lv2 {
 
 
 Port::Port(const LilvPlugin* plugin, int port_index, float default_value, Model* model):
@@ -185,7 +184,6 @@ bool Port::optional() const
     return _optional;
 }
 
-}
-}
+} // end namespace sushi::internal::lv2
 
-#endif //SUSHI_BUILD_WITH_LV2
+#endif // SUSHI_BUILD_WITH_LV2

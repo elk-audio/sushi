@@ -64,8 +64,8 @@ rapidjson::Document generate_processor_parameter_document(sushi::ext::SushiContr
                 parameter_obj.AddMember(rapidjson::Value("label", allocator).Move(),
                                         rapidjson::Value(parameter.label.c_str(), allocator).Move(), allocator);
 
-                std::string osc_path("/parameter/" + osc::make_safe_path(processor.name) + "/" +
-                                     osc::make_safe_path(parameter.name));
+                std::string osc_path("/parameter/" + sushi::internal::osc::make_safe_path(processor.name) + "/" +
+                                     sushi::internal::osc::make_safe_path(parameter.name));
                 parameter_obj.AddMember(rapidjson::Value("osc_path", allocator).Move(),
                                         rapidjson::Value(osc_path.c_str(), allocator).Move(), allocator);
 
@@ -84,5 +84,5 @@ rapidjson::Document generate_processor_parameter_document(sushi::ext::SushiContr
     return document;
 }
 
-} // end namespace sushi
+} // end namespace sushi::internal
 

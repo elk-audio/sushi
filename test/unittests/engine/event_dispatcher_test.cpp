@@ -8,7 +8,8 @@
 #include "test_utils/engine_mockup.h"
 
 using namespace sushi;
-using namespace sushi::dispatcher;
+using namespace sushi::internal;
+using namespace sushi::internal::dispatcher;
 
 constexpr int DUMMY_POSTER_ID = 1;
 constexpr int DUMMY_STATUS = 100;

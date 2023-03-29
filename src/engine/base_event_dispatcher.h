@@ -25,9 +25,7 @@
 #include "library/event.h"
 #include "library/event_interface.h"
 
-
-namespace sushi {
-namespace dispatcher {
+namespace sushi::internal::dispatcher {
 
 enum class EventDispatcherStatus
 {
@@ -61,8 +59,6 @@ public:
     virtual void set_time(Time /*timestamp*/) {}
 };
 
+} // end namespace sushi::internal::dispatcher
 
-} // end namespace dispatcher
-} // end namespace sushi
-
-#endif //SUSHI_BASE_EVENT_DISPATCHER_H
+#endif // SUSHI_BASE_EVENT_DISPATCHER_H

@@ -27,8 +27,7 @@
 
 #include "base_midi_frontend.h"
 
-namespace sushi {
-namespace midi_frontend {
+namespace sushi::internal::midi_frontend {
 
 /**
  * @brief Callback signature for method to invoke to notify host of any new MIDI message received.
@@ -78,7 +77,6 @@ private:
     ReactiveMidiCallback _callback;
 };
 
-} // end namespace midi_frontend
-} // end namespace sushi
+} // end namespace sushi::internal::midi_frontend
 
-#endif //SUSHI_REACTIVE_MIDI_FRONTEND_H_H
+#endif // SUSHI_REACTIVE_MIDI_FRONTEND_H_H

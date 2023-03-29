@@ -23,8 +23,7 @@
 #include "lv2_port.h"
 #include "lv2_features.h"
 
-namespace sushi {
-namespace lv2 {
+namespace sushi::internal::lv2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
@@ -331,5 +330,4 @@ void set_port_value(const char* port_symbol,
     }
 }
 
-}
-}
+} // end namespace sushi::internal::lv2

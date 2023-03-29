@@ -21,7 +21,7 @@ namespace sushi {
 
 StandaloneFactory::StandaloneFactory()
 {
-    _implementation = std::make_unique<StandaloneFactoryImplementation>();
+    _implementation = std::make_unique<internal::StandaloneFactoryImplementation>();
 }
 
 StandaloneFactory::~StandaloneFactory() = default;

@@ -22,8 +22,7 @@
 
 #include "sushi/constants.h"
 
-namespace sushi {
-namespace stereo_mixer_plugin {
+namespace sushi::internal::stereo_mixer_plugin {
 
 constexpr char PLUGIN_UID[] = "sushi.testing.stereo_mixer";
 constexpr char DEFAULT_LABEL[] = "Stereo Mixer";
@@ -174,6 +173,5 @@ std::string_view StereoMixerPlugin::static_uid()
     return PLUGIN_UID;
 }
 
-} // namespace stereo_mixer_plugin
-} // namespace sushi
+} // end namespace sushi::internal::stereo_mixer_plugin
 

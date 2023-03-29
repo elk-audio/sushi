@@ -190,4 +190,4 @@ private:
 
 } // end namespace dsp
 
-#endif //SUSHI_ENVELOPES_H
+#endif // SUSHI_ENVELOPES_H

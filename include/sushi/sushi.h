@@ -157,7 +157,7 @@ struct SushiOptions
  * This should be called only once in the lifetime of the embedding binary - or it will fail.
  * @param options
  */
-void init_logger(const SushiOptions& options);
+void init_logger([[maybe_unused]] const SushiOptions& options);
 
 class Sushi
 {
@@ -175,6 +175,6 @@ public:
     virtual float sample_rate() const = 0;
 };
 
-} // namespace Sushi
+} // end namespace sushi
 
 #endif // SUSHI_SUSHI_INTERFACE_H

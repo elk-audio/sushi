@@ -20,8 +20,7 @@
 
 #include "passthrough_plugin.h"
 
-namespace sushi {
-namespace passthrough_plugin {
+namespace sushi::internal::passthrough_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.testing.passthrough";
 constexpr auto DEFAULT_LABEL = "Passthrough";
@@ -44,6 +43,4 @@ std::string_view PassthroughPlugin::static_uid()
     return PLUGIN_UID;
 }
 
-
-}// namespace passthrough_plugin
-}// namespace sushi
+} // end namespace sushi::internal::passthrough_plugin

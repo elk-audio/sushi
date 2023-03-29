@@ -22,8 +22,7 @@
 
 #include "track.h"
 
-namespace sushi {
-namespace engine {
+namespace sushi::internal::engine {
 
 constexpr int TRACK_MAX_PROCESSORS = 32;
 constexpr float PAN_GAIN_3_DB = 1.412537f;
@@ -458,5 +457,4 @@ void Track::_apply_gain(ChunkSampleBuffer& buffer, bool muted)
     }
 }
 
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine

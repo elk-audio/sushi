@@ -27,9 +27,7 @@
 #include "library/event_interface.h"
 #include "engine/base_engine.h"
 
-namespace sushi {
-namespace control_frontend {
-
+namespace sushi::internal::control_frontend {
 
 enum class ControlFrontendStatus
 {
@@ -98,7 +96,6 @@ private:
     EventPosterId _poster_id;
 };
 
-} // namespace control_frontend
-} // namespace sushi
+} // end namespace sushi::internal::control_frontend
 
-#endif //SUSHI_BASE_CONTROL_FRONTEND_H
+#endif // SUSHI_BASE_CONTROL_FRONTEND_H

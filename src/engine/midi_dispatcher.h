@@ -36,7 +36,8 @@
 #include "control_frontends/base_midi_frontend.h"
 #include "library/event_interface.h"
 
-namespace sushi {
+namespace sushi::internal {
+
 namespace engine {
 class BaseProcessorContainer;
 }
@@ -395,6 +396,6 @@ private:
 };
 
 } // end namespace midi_dispatcher
-} // end namespace sushi
+} // end namespace sushi::internal
 
-#endif //SUSHI_MIDI_DISPATCHER_H
+#endif // SUSHI_MIDI_DISPATCHER_H

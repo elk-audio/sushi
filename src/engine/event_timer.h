@@ -26,8 +26,7 @@
 
 #include "sushi/sushi_time.h"
 
-namespace sushi {
-namespace event_timer {
+namespace sushi::internal::event_timer {
 
 class EventTimer
 {
@@ -80,8 +79,6 @@ private:
     std::atomic<Time>   _incoming_chunk_time{IMMEDIATE_PROCESS};
 };
 
-} // end event_timer
-} // end sushi
+} // end namespace sushi::internal::event_timer
 
-
-#endif //SUSHI_EVENT_TIMER_H
+#endif // SUSHI_EVENT_TIMER_H

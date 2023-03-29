@@ -5,6 +5,7 @@
 #include "dsp_library/value_smoother.h"
 
 using namespace sushi;
+using namespace sushi::internal;
 
 constexpr float TEST_SAMPLE_RATE = 1000;
 constexpr float TEST_TARGET_VALUE = 1;

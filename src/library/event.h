@@ -31,7 +31,10 @@
 #include "library/rt_event.h"
 #include "base_performance_timer.h"
 
-namespace sushi {
+namespace sushi::internal {
+
+namespace engine {class BaseEngine;}
+
 namespace dispatcher
 {
     class EventDispatcher;
@@ -63,8 +66,8 @@ typedef void (*EventCompletionCallback)(void *arg, Event* event, int status);
  */
 class Event
 {
-    friend class dispatcher::EventDispatcher;
-    friend class dispatcher::Worker;
+    friend class sushi::internal::dispatcher::EventDispatcher;
+    friend class sushi::internal::dispatcher::Worker;
 
 public:
     virtual ~Event() {}
@@ -401,8 +404,6 @@ private:
     ObjectId _processor_id;
     bool     _bypass_enabled;
 };
-
-namespace engine {class BaseEngine;}
 
 class EngineEvent : public Event
 {
@@ -769,6 +770,6 @@ private:
     SyncMode _mode;
 };
 
-} // end namespace sushi
+} // end namespace sushi::internal
 
-#endif //SUSHI_CONTROL_EVENT_H
+#endif // SUSHI_CONTROL_EVENT_H

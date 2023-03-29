@@ -35,7 +35,7 @@
 #include "library/rt_event_pipe.h"
 #include "processor_state.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 enum class ProcessorReturnCode
 {
@@ -648,5 +648,6 @@ private:
     int _ramp_count{0};
 };
 
-} // end namespace sushi
-#endif //SUSHI_PROCESSOR_H
+} // end namespace sushi::internal
+
+#endif // SUSHI_PROCESSOR_H

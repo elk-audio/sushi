@@ -10,7 +10,8 @@
 #include "plugins/sample_player_plugin.cpp"
 
 using namespace sushi;
-using namespace sushi::sample_player_plugin;
+using namespace sushi::internal;
+using namespace sushi::internal::sample_player_plugin;
 using namespace sample_player_voice;
 
 constexpr float TEST_SAMPLERATE = 44100;

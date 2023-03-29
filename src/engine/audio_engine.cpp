@@ -28,8 +28,7 @@
 #include "audio_engine.h"
 
 
-namespace sushi {
-namespace engine {
+namespace sushi::internal::engine {
 
 constexpr auto CLIPPING_DETECTION_INTERVAL = std::chrono::milliseconds(500);
 
@@ -1344,5 +1343,4 @@ RealtimeState update_state(RealtimeState current_state)
     return current_state;
 }
 
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine

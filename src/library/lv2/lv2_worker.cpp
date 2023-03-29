@@ -16,8 +16,7 @@
 #include "lv2_worker.h"
 #include "lv2_wrapper.h"
 
-namespace sushi {
-namespace lv2 {
+namespace sushi::internal::lv2 {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // Static methods:
@@ -143,5 +142,4 @@ const LV2_Worker_Interface* Worker::iface()
     return _iface;
 }
 
-}
-}
+} // end namespace sushi::internal::lv2

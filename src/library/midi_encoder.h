@@ -23,8 +23,7 @@
 
 #include "sushi/types.h"
 
-namespace sushi {
-namespace midi {
+namespace sushi::internal::midi {
 
 /**
  * @brief Encode a midi note on message
@@ -122,7 +121,6 @@ MidiDataByte encode_active_sensing();
 MidiDataByte encode_reset_message();
 
 
-} // end namespace midi
-} // end namespace sushi
+} // end namespace sushi::internal::midi
 
-#endif //SUSHI_MIDI_ENCODER_H
+#endif // SUSHI_MIDI_ENCODER_H

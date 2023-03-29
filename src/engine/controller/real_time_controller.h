@@ -19,8 +19,7 @@
 #include "sushi/rt_controller.h"
 #include "sushi/sushi.h"
 
-namespace sushi
-{
+namespace sushi::internal {
 
 class ConcreteSushi;
 
@@ -48,7 +47,7 @@ class RealTimeController : public RtController
 public:
     RealTimeController(audio_frontend::ReactiveFrontend* audio_frontend,
                        midi_frontend::ReactiveMidiFrontend* midi_frontend,
-                       sushi::engine::Transport* transport);
+                       engine::Transport* transport);
 
     ~RealTimeController() override;
 
@@ -87,7 +86,7 @@ public:
 private:
     audio_frontend::ReactiveFrontend* _audio_frontend {nullptr};
     midi_frontend::ReactiveMidiFrontend* _midi_frontend {nullptr};
-    sushi::engine::Transport* _transport {nullptr};
+    engine::Transport* _transport {nullptr};
     uint64_t _samples_since_start {0};
 
     float _tempo {0};
@@ -95,7 +94,6 @@ private:
     ext::PlayingMode _playing_mode {ext::PlayingMode::STOPPED};
 };
 
-} // namespace sushi
-
+} // end namespace sushi::internal
 
 #endif // REACTIVE_CONTROLLER_H

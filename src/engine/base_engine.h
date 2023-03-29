@@ -42,8 +42,7 @@
 #include "library/base_performance_timer.h"
 #include "library/connection_types.h"
 
-namespace sushi {
-namespace engine {
+namespace sushi::internal::engine {
 
 using BitSet32 = std::bitset<std::numeric_limits<uint32_t>::digits>;
 
@@ -357,7 +356,6 @@ protected:
     int _cv_outputs{0};
 };
 
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine
 
-#endif //SUSHI_BASE_ENGINE_H
+#endif // SUSHI_BASE_ENGINE_H

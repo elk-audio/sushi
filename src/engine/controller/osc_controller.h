@@ -27,9 +27,7 @@
 #include "engine/base_engine.h"
 #include "engine/base_processor_container.h"
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
 class OscController : public ext::OscController
 {
@@ -62,8 +60,6 @@ private:
     const engine::BaseProcessorContainer* _processors;
 };
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl
 
-#endif //SUSHI_OSC_CONTROLLER_H
+#endif // SUSHI_OSC_CONTROLLER_H

@@ -3,7 +3,7 @@
 
 #include "library/processor.h"
 
-using namespace sushi;
+using namespace sushi::internal;
 
 class DummyProcessor : public Processor
 {
@@ -25,7 +25,7 @@ public:
     }
 
     void process_event(const RtEvent& /*event*/) override {}
-    void process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer) override
+    void process_audio(const sushi::ChunkSampleBuffer& in_buffer, sushi::ChunkSampleBuffer& out_buffer) override
     {
         out_buffer = in_buffer;
     }

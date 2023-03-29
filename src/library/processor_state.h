@@ -30,7 +30,7 @@
 #include "library/id_generator.h"
 #include "engine/host_control.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 class ProcessorState
 {
@@ -163,6 +163,6 @@ protected:
     std::vector<std::pair<ObjectId, float>> _parameter_changes;
 };
 
-} // end namespace sushi
+} // end namespace sushi::internal
 
-#endif //SUSHI_PROCESSOR_STATE_H
+#endif // SUSHI_PROCESSOR_STATE_H

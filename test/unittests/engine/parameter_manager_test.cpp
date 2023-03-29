@@ -12,6 +12,7 @@
 #include "test_utils/host_control_mockup.h"
 
 using namespace sushi;
+using namespace sushi::internal;
 
 using ::testing::Return;
 using ::testing::AllOf;

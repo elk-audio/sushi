@@ -22,8 +22,7 @@
 
 #include "equalizer_plugin.h"
 
-namespace sushi {
-namespace equalizer_plugin {
+namespace sushi::internal::equalizer_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.testing.equalizer";
 constexpr auto DEFAULT_LABEL = "Equalizer";
@@ -113,5 +112,4 @@ void EqualizerPlugin::_reset_filters()
     }
 }
 
-}// namespace equalizer_plugin
-}// namespace sushi
+} // end namespace sushi::internal::equalizer_plugin

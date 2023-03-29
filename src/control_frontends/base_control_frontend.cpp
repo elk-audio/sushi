@@ -21,10 +21,7 @@
 #include "library/midi_encoder.h"
 #include "control_frontends/base_control_frontend.h"
 
-namespace sushi {
-namespace control_frontend {
-
-
+namespace sushi::internal::control_frontend {
 
 void BaseControlFrontend::send_parameter_change_event(ObjectId processor,
                                                       ObjectId parameter,
@@ -103,5 +100,4 @@ void BaseControlFrontend::send_with_callback(Event* event)
     _event_dispatcher->post_event(event);
 }
 
-} // end namespace control_frontend
-} // end namespace sushi
+} // end namespace sushi::internal::control_frontend

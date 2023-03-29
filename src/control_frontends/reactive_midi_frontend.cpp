@@ -28,8 +28,7 @@
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("reactive midi frontend");
 
-namespace sushi {
-namespace midi_frontend {
+namespace sushi::internal::midi_frontend {
 
 ReactiveMidiFrontend::ReactiveMidiFrontend(midi_receiver::MidiReceiver* dispatcher)
         : BaseMidiFrontend(dispatcher)
@@ -82,6 +81,5 @@ void ReactiveMidiFrontend::set_callback(ReactiveMidiCallback&& callback)
     _callback = std::move(callback);
 }
 
-} // end namespace midi_frontend
-} // end namespace sushi
+} // end namespace sushi::internal::midi_frontend
 

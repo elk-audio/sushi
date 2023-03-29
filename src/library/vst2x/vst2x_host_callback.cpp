@@ -25,8 +25,7 @@
 
 #include "vst2x_wrapper.h"
 
-namespace sushi {
-namespace vst2 {
+namespace sushi::internal::vst2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("vst2");
 
@@ -101,5 +100,4 @@ VstIntPtr VSTCALLBACK host_callback(AEffect* effect, VstInt32 opcode, VstInt32 i
 
 }
 
-} // namespace vst2
-} // namespace sushi
+} // end namespace sushi::internal::vst2

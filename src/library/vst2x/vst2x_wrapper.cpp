@@ -33,8 +33,7 @@ char canDoBypass[] = "bypass";
 
 } // anonymous namespace
 
-namespace sushi {
-namespace vst2 {
+namespace sushi::internal::vst2 {
 
 constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = kVstNanosValid | kVstPpqPosValid | kVstTempoValid |
                                                   kVstBarsValid | kVstTimeSigValid;
@@ -595,5 +594,4 @@ VstSpeakerArrangementType arrangement_from_channels(int channels)
     }
 }
 
-} // namespace vst2
-} // namespace sushi
+} // end namespace sushi::internal::vst2

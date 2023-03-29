@@ -24,7 +24,7 @@ namespace sushi_rpc {
 class GrpcServer;
 }
 
-namespace sushi {
+namespace sushi::internal {
 
 /**
  * @brief Factory for when Sushi will run in real-time standalone mode.
@@ -51,6 +51,6 @@ protected:
                              jsonconfig::JsonConfigurator* configurator) override;
 };
 
-} // namespace sushi
+} // end namespace sushi::internal
 
 #endif // SUSHI_STANDALONE_FACTORY_IMPLEMENTATION_H

@@ -71,4 +71,4 @@ private:
 };
 
 } // end namespace dsp
-#endif //SUSHI_AUDIO_SAMPLE_H
+#endif // SUSHI_AUDIO_SAMPLE_H

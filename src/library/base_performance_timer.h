@@ -23,8 +23,7 @@
 
 #include <optional>
 
-namespace sushi {
-namespace performance {
+namespace sushi::internal::performance {
 
 struct ProcessTimings
 {
@@ -85,8 +84,6 @@ public:
     virtual void clear_all_timings() = 0;
 };
 
+} // end namespace sushi::internal::performance
 
-} // namespace performance
-} // namespace sushi
-
-#endif //SUSHI_BASE_PERFORMANCE_TIMER_H
+#endif // SUSHI_BASE_PERFORMANCE_TIMER_H

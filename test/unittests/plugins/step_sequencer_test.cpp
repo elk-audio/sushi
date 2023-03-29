@@ -5,7 +5,7 @@
 #include "test_utils/host_control_mockup.h"
 
 using namespace sushi;
-using namespace sushi::step_sequencer_plugin;
+using namespace sushi::internal::step_sequencer_plugin;
 
 constexpr float TEST_SAMPLERATE = 48000;
 

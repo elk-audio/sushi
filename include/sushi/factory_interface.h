@@ -29,6 +29,6 @@ public:
     [[nodiscard]] virtual std::pair<std::unique_ptr<Sushi>, Status> new_instance(SushiOptions& options) = 0;
 };
 
-} // namespace sushi
+} // end namespace sushi
 
 #endif // FACTORY_INTERFACE_H

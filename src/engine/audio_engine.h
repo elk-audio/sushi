@@ -31,8 +31,8 @@
 #include "sushi/types.h"
 #include "sushi/sample_buffer.h"
 
-
 #include "dsp_library/master_limiter.h"
+
 #include "engine/audio_graph.h"
 #include "engine/base_engine.h"
 #include "engine/connection_storage.h"
@@ -44,14 +44,14 @@
 #include "engine/receiver.h"
 #include "engine/track.h"
 #include "engine/transport.h"
+
 #include "library/internal_plugin.h"
 #include "library/midi_decoder.h"
 #include "library/performance_timer.h"
 #include "library/plugin_registry.h"
 #include "library/rt_event_fifo.h"
 
-namespace sushi {
-namespace engine {
+namespace sushi::internal::engine {
 
 class ClipDetector
 {
@@ -75,7 +75,6 @@ public:
     void detect_clipped_samples(const ChunkSampleBuffer& buffer, RtSafeRtEventFifo& queue, bool audio_input);
 
 private:
-
     unsigned int _interval{0};
     std::vector<unsigned int> _input_clip_count;
     std::vector<unsigned int> _output_clip_count;
@@ -481,12 +480,12 @@ public:
         return _master_limiter_enabled;
     }
 
-    sushi::dispatcher::BaseEventDispatcher* event_dispatcher() override
+    dispatcher::BaseEventDispatcher* event_dispatcher() override
     {
         return _event_dispatcher.get();
     }
 
-    sushi::engine::Transport* transport() override
+    engine::Transport* transport() override
     {
         return &_transport;
     }
@@ -659,6 +658,5 @@ private:
  */
 RealtimeState update_state(RealtimeState current_state);
 
-} // namespace engine
-} // namespace sushi
-#endif //SUSHI_ENGINE_H
+} // end namespace sushi::internal::engine
+#endif // SUSHI_ENGINE_H

@@ -28,8 +28,7 @@
 
 #include "audio_frontend_internals.h"
 
-namespace sushi {
-namespace audio_frontend {
+namespace sushi::internal::audio_frontend {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("offline audio");
 
@@ -274,6 +273,4 @@ void OfflineFrontend::pause(bool /*enabled*/)
     // Currently a no-op
 }
 
-} // end namespace audio_frontend
-
-} // end namespace sushi
+} // end namespace sushi::internal::audio_frontend

@@ -36,8 +36,7 @@
 
 #include "base_audio_frontend.h"
 
-namespace sushi {
-namespace audio_frontend {
+namespace sushi::internal::audio_frontend {
 
 struct PortaudioDeviceInfo
 {
@@ -217,10 +216,9 @@ private:
     engine::ControlBuffer _out_controls;
 };
 
-}; // end namespace audio_frontend
-}; // end namespace sushi
+} // end namespace sushi::internal::audio_frontend
 
-#endif //SUSHI_BUILD_WITH_PORTAUDIO
+#endif // SUSHI_BUILD_WITH_PORTAUDIO
 
 #ifndef SUSHI_BUILD_WITH_PORTAUDIO
 /* If PortAudio is disabled in the build config, the PortAudio frontend is replaced with
@@ -228,8 +226,8 @@ private:
 #include <string>
 #include "base_audio_frontend.h"
 #include "engine/midi_dispatcher.h"
-namespace sushi {
-namespace audio_frontend {
+
+namespace sushi::internal::audio_frontend {
 
 struct PortAudioFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
@@ -256,9 +254,10 @@ public:
     std::optional<int> default_input_device() { return 0; }
     std::optional<int> default_output_device() { return 0; }
 };
-}; // end namespace audio_frontend
-}; // end namespace sushi
+
+} // end namespace sushi::internal::audio_frontend
+
 #endif
 
-#endif //SUSHI_PORTAUDIO_FRONTEND_H
+#endif // SUSHI_PORTAUDIO_FRONTEND_H
 

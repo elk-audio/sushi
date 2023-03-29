@@ -23,8 +23,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace lfo_plugin {
+namespace sushi::internal::lfo_plugin {
 
 class LfoPlugin : public InternalPlugin, public UidHelper<LfoPlugin>
 {
@@ -48,6 +47,6 @@ private:
     FloatParameterValue* _out_parameter;
 };
 
-}// namespace lfo_plugin
-}// namespace sushi
+} // end namespace sushi::internal::lfo_plugin
+
 #endif // LFO_PLUGIN_H

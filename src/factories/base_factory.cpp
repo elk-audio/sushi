@@ -20,8 +20,7 @@
 
 #include "concrete_sushi.h"
 
-namespace sushi
-{
+namespace sushi::internal {
 
 BaseFactory::BaseFactory() = default;
 
@@ -210,4 +209,4 @@ Status BaseFactory::_load_json_configuration(jsonconfig::JsonConfigurator* confi
     return Status::OK;
 }
 
-} // namespace sushi
+} // end namespace sushi::internal

@@ -31,7 +31,7 @@
 #include "id_generator.h"
 #include "library/connection_types.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 /* Currently limiting the size of an event to 32 bytes and forcing it to align
  * to 32 byte boundaries. We could possibly extend this to 64 bytes if neccesary,
@@ -1263,6 +1263,6 @@ inline bool is_returnable_event(const RtEvent& event)
     return event.type() >= RtEventType::INSERT_PROCESSOR && event.type() <= RtEventType::REMOVE_GATE_CONNECTION;
 }
 
-} // namespace sushi
+} // end namespace sushi::internal
 
-#endif //SUSHI_RT_EVENTS_H
+#endif // SUSHI_RT_EVENTS_H

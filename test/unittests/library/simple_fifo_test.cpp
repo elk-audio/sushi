@@ -3,6 +3,7 @@
 #include "library/simple_fifo.h"
 
 using namespace sushi;
+using namespace sushi::internal;
 
 constexpr int FIFO_SIZE = 5;
 

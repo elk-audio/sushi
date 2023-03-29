@@ -19,9 +19,9 @@
 
 namespace sushi {
 
-    OfflineFactory::OfflineFactory()
+OfflineFactory::OfflineFactory()
 {
-    _implementation = std::make_unique<OfflineFactoryImplementation>();
+    _implementation = std::make_unique<internal::OfflineFactoryImplementation>();
 }
 
 OfflineFactory::~OfflineFactory() = default;

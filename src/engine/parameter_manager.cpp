@@ -22,7 +22,7 @@
 #include "library/processor.h"
 #include "engine/base_processor_container.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 inline void send_parameter_notification(ObjectId processor_id,
                                         ObjectId parameter_id,
@@ -41,7 +41,7 @@ inline void send_parameter_notification(ObjectId processor_id,
 }
 
 ParameterManager::ParameterManager(Time update_rate,
-                                   const sushi::engine::BaseProcessorContainer* processor_container) : _processors(processor_container),
+                                   const engine::BaseProcessorContainer* processor_container) : _processors(processor_container),
                                                                                                        _update_rate(update_rate)
 {}
 
@@ -176,4 +176,4 @@ void ParameterManager::_output_processor_notifications(dispatcher::BaseEventDisp
     _processor_change_queue.erase(swap_iter, _processor_change_queue.end());
 }
 
-} // namespace sushi
+} // end namespace sushi::internal

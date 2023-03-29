@@ -22,8 +22,7 @@
 
 #include "plugins/wav_writer_plugin.h"
 
-namespace sushi {
-namespace wav_writer_plugin {
+namespace sushi::internal::wav_writer_plugin {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("wav_writer");
 
@@ -255,5 +254,4 @@ std::string_view WavWriterPlugin::static_uid()
     return PLUGIN_UID;
 }
 
-} // namespace wav_writer_plugin
-} // namespace sushis
+} // end namespace sushi::internal::wav_writer_plugin

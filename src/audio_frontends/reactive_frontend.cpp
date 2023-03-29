@@ -24,8 +24,7 @@
 
 #include "sushi/logging.h"
 
-namespace sushi {
-namespace audio_frontend {
+namespace sushi::internal::audio_frontend {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("Reactive audio frontend");
 
@@ -130,6 +129,4 @@ ChunkSampleBuffer& ReactiveFrontend::out_buffer()
     return _out_buffer;
 }
 
-} // end namespace audio_frontend
-
-} // end namespace sushi
+} // end namespace sushi::internal::audio_frontend

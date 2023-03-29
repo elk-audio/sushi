@@ -13,8 +13,8 @@
 #include "test_utils/host_control_mockup.h"
 #include "test_utils/test_utils.h"
 
-
 using namespace sushi;
+using namespace sushi::internal;
 
 class TestPlugin : public InternalPlugin
 {

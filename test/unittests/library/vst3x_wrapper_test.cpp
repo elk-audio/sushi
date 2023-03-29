@@ -12,7 +12,7 @@
 #include "library/vst3x/vst3x_host_app.cpp"
 
 using namespace sushi;
-using namespace sushi::vst3;
+using namespace sushi::internal::vst3;
 
 #ifdef NDEBUG
 const char PLUGIN_FILE[] = "../VST3/Release/adelay.vst3";

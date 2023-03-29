@@ -25,13 +25,11 @@
 
 #include "library/base_performance_timer.h"
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
 /* Convenience conversion functions between external and internal
  * enums and data structs */
-inline ext::PlayingMode to_external(const sushi::PlayingMode mode)
+inline ext::PlayingMode to_external(const sushi::internal::PlayingMode mode)
 {
     switch (mode)
     {
@@ -42,18 +40,18 @@ inline ext::PlayingMode to_external(const sushi::PlayingMode mode)
     }
 }
 
-inline sushi::PlayingMode to_internal(const ext::PlayingMode mode)
+inline sushi::internal::PlayingMode to_internal(const ext::PlayingMode mode)
 {
     switch (mode)
     {
-        case ext::PlayingMode::STOPPED:   return sushi::PlayingMode::STOPPED;
-        case ext::PlayingMode::PLAYING:   return sushi::PlayingMode::PLAYING;
-        case ext::PlayingMode::RECORDING: return sushi::PlayingMode::RECORDING;
-        default:                          return sushi::PlayingMode::PLAYING;
+        case ext::PlayingMode::STOPPED:   return sushi::internal::PlayingMode::STOPPED;
+        case ext::PlayingMode::PLAYING:   return sushi::internal::PlayingMode::PLAYING;
+        case ext::PlayingMode::RECORDING: return sushi::internal::PlayingMode::RECORDING;
+        default:                          return sushi::internal::PlayingMode::PLAYING;
     }
 }
 
-inline ext::SyncMode to_external(const sushi::SyncMode mode)
+inline ext::SyncMode to_external(const sushi::internal::SyncMode mode)
 {
     switch (mode)
     {
@@ -65,19 +63,19 @@ inline ext::SyncMode to_external(const sushi::SyncMode mode)
     }
 }
 
-inline sushi::SyncMode to_internal(const ext::SyncMode mode)
+inline sushi::internal::SyncMode to_internal(const ext::SyncMode mode)
 {
     switch (mode)
     {
-        case ext::SyncMode::INTERNAL: return sushi::SyncMode::INTERNAL;
-        case ext::SyncMode::MIDI:     return sushi::SyncMode::MIDI;
-        case ext::SyncMode::GATE:     return sushi::SyncMode::GATE_INPUT;
-        case ext::SyncMode::LINK:     return sushi::SyncMode::ABLETON_LINK;
-        default:                      return sushi::SyncMode::INTERNAL;
+        case ext::SyncMode::INTERNAL: return sushi::internal::SyncMode::INTERNAL;
+        case ext::SyncMode::MIDI:     return sushi::internal::SyncMode::MIDI;
+        case ext::SyncMode::GATE:     return sushi::internal::SyncMode::GATE_INPUT;
+        case ext::SyncMode::LINK:     return sushi::internal::SyncMode::ABLETON_LINK;
+        default:                      return sushi::internal::SyncMode::INTERNAL;
     }
 }
 
-inline ext::CpuTimings to_external(const sushi::performance::ProcessTimings& timings)
+inline ext::CpuTimings to_external(const sushi::internal::performance::ProcessTimings& timings)
 {
     return {.avg = timings.avg_case,
             .min = timings.min_case,
@@ -179,7 +177,7 @@ inline ext::TrackType to_external(TrackType type)
     }
 }
 
-inline void to_internal(sushi::ProcessorState* dest, const ext::ProcessorState* src)
+inline void to_internal(sushi::internal::ProcessorState* dest, const ext::ProcessorState* src)
 {
     if (src->program.has_value()) dest->set_program(src->program.value());
     if (src->bypassed.has_value()) dest->set_bypass(src->bypassed.value());
@@ -195,7 +193,7 @@ inline void to_internal(sushi::ProcessorState* dest, const ext::ProcessorState* 
     dest->set_binary_data(std::move(src->binary_data));
 }
 
-inline void to_external(ext::ProcessorState* dest, sushi::ProcessorState* src)
+inline void to_external(ext::ProcessorState* dest, sushi::internal::ProcessorState* src)
 {
     dest->program = src->program();
     dest->bypassed = src->bypassed();
@@ -213,8 +211,6 @@ inline void to_external(ext::ProcessorState* dest, sushi::ProcessorState* src)
     dest->binary_data = std::move(src->binary_data());
 }
 
-} // controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl
 
-#endif //SUSHI_CONTROLLER_COMMON_H
+#endif // SUSHI_CONTROLLER_COMMON_H

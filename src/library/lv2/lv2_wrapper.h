@@ -52,8 +52,7 @@
 
 #include "lv2_model.h"
 
-namespace sushi {
-namespace lv2 {
+namespace sushi::internal::lv2 {
 
 /* Should match the maximum reasonable number of channels of a plugin */
 constexpr int LV2_WRAPPER_MAX_N_CHANNELS = MAX_TRACK_CHANNELS;
@@ -232,7 +231,6 @@ private:
     int _control_output_sample_count{0};
 };
 
-} // end namespace lv2
-} // end namespace sushi
+} // end namespace sushi::internal::lv2
 
-#endif //SUSHI_LV2_PLUGIN_H
+#endif // SUSHI_LV2_PLUGIN_H

@@ -25,7 +25,7 @@
 #include "send_plugin.h"
 #include "return_plugin.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 SendReturnFactory::SendReturnFactory() = default;
 
@@ -82,4 +82,5 @@ SendReturnFactory::new_instance(const PluginInfo& plugin_info, HostControl& host
     }
     return {ProcessorReturnCode::ERROR, processor};
 }
-}// namespace sushi
+
+} // end namespace sushi::internal

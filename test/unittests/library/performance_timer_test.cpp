@@ -6,7 +6,8 @@
 #include "library/performance_timer.cpp"
 
 using namespace sushi;
-using namespace sushi::performance;
+using namespace sushi::internal;
+using namespace sushi::internal::performance;
 
 constexpr auto TEST_PERIOD = std::chrono::microseconds(100);
 

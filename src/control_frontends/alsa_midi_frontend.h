@@ -32,8 +32,7 @@
 #include "base_midi_frontend.h"
 #include "library/time.h"
 
-namespace sushi {
-namespace midi_frontend {
+namespace sushi::internal::midi_frontend {
 
 constexpr int ALSA_EVENT_MAX_SIZE = 12;
 
@@ -74,8 +73,8 @@ private:
     Time                        _time_offset{0};
 };
 
-} // end namespace midi_frontend
-} // end namespace sushi
-#endif //SUSHI_BUILD_WITH_ALSA_MIDI
+} // end namespace sushi::internal::midi_frontend
 
-#endif //SUSHI_ALSA_MIDI_FRONTEND_H_H
+#endif // SUSHI_BUILD_WITH_ALSA_MIDI
+
+#endif // SUSHI_ALSA_MIDI_FRONTEND_H_H

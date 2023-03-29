@@ -25,7 +25,9 @@
 
 #include "rapidjson/document.h"
 
+namespace sushi {
 std::ostream& operator<<(std::ostream& out, const rapidjson::Document& document);
+}
 
 #endif // SUSHI_JSON_UTILS_H
 

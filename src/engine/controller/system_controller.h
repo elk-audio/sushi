@@ -24,9 +24,7 @@
 #include "sushi/compile_time_settings.h"
 #include "sushi/control_interface.h"
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
 class SystemController : public ext::SystemController
 {
@@ -51,8 +49,6 @@ private:
     const int _audio_outputs{0};
 };
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl
 
-#endif //SUSHI_SYSTEM_CONTROLLER_H
+#endif // SUSHI_SYSTEM_CONTROLLER_H

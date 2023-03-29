@@ -39,8 +39,7 @@
 #include "engine/json_configurator.h"
 #include "control_frontends/oscpack_osc_messenger.h"
 
-namespace sushi
-{
+namespace sushi::internal {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("standalone-factory");
 
@@ -231,4 +230,4 @@ Status StandaloneFactoryImplementation::_load_json_events([[maybe_unused]] const
     return Status::OK;
 }
 
-} // namespace sushi
+} // end namespace sushi::internal

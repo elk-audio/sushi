@@ -33,8 +33,8 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("rtmidi");
 using RtMidiFunction = std::function<void(double deltatime, std::vector<unsigned char> message, void* user_data)>;
 
 constexpr int RTMIDI_MESSAGE_SIZE = 3;
-namespace sushi {
-namespace midi_frontend {
+
+namespace sushi::internal::midi_frontend {
 
 void midi_callback([[maybe_unused]]double deltatime, std::vector<unsigned char>* message, void* user_data)
 {
@@ -201,5 +201,5 @@ void RtMidiFrontend::send_midi(int input, MidiDataByte data, [[maybe_unused]]Tim
     _output_midi_ports[input].sendMessage(&message);
 }
 
-} // midi_frontend
-} // sushi
+} // end namespace sushi::internal::midi_frontend
+

@@ -25,8 +25,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace arpeggiator_plugin {
+namespace sushi::internal::arpeggiator_plugin {
 
 /**
  * @brief Simple arpeggiator module with only 1 mode (up)
@@ -98,7 +97,6 @@ private:
     Arpeggiator          _arp;
 };
 
-}// namespace sample_player_plugin
-}// namespace sushi
+} // end namespace sushi::internal::sample_player_plugin
 
-#endif //SUSHI_ARPEGGIATOR_PLUGIN_H
+#endif // SUSHI_ARPEGGIATOR_PLUGIN_H

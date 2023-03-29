@@ -22,8 +22,7 @@
 
 #include "plugins/step_sequencer_plugin.h"
 
-namespace sushi {
-namespace step_sequencer_plugin {
+namespace sushi::internal::step_sequencer_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.testing.step_sequencer";
 constexpr auto DEFAULT_LABEL = "Step Sequencer";
@@ -183,5 +182,5 @@ int snap_to_scale(int note, const std::array<int, 12>& scale)
     int octave = note / OCTAVE;
     return scale[note % OCTAVE] + octave * OCTAVE;
 }
-}// namespace step_sequencer_plugin
-}// namespace sushi
+
+} // end namespace sushi::internal::step_sequencer_plugin

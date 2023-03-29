@@ -20,8 +20,7 @@
 
 #include "sample_delay_plugin.h"
 
-namespace sushi {
-namespace sample_delay_plugin {
+namespace sushi::internal::sample_delay_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.testing.sample_delay";
 constexpr auto DEFAULT_LABEL = "Sample delay";
@@ -124,6 +123,4 @@ void SampleDelayPlugin::_reset()
     _write_idx = 0;
 }
 
-
-} // namespace sample_delay_plugin
-} // namespace sushi
+} // end namespace sushi::internal::sample_delay_plugin

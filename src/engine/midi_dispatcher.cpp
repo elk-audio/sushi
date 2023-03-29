@@ -28,8 +28,7 @@
 #include "base_engine.h"
 #include "library/midi_encoder.h"
 
-namespace sushi {
-namespace midi_dispatcher {
+namespace sushi::internal::midi_dispatcher {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("midi dispatcher");
 
@@ -1016,5 +1015,4 @@ bool MidiDispatcher::_handle_tick_notification(const EngineTimingTickNotificatio
     return EventStatus::HANDLED_OK;
 }
 
-} // end namespace midi_dispatcher
-} // end namespace sushi
+} // end namespace sushi::internal::midi_dispatcher

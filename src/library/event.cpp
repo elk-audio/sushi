@@ -38,6 +38,8 @@ RtDeletable::~RtDeletable()
     assert(twine::is_current_thread_realtime() == false);
 }
 
+namespace internal {
+
 Event* Event::from_rt_event(const RtEvent& rt_event, Time timestamp)
 {
     switch (rt_event.type())
@@ -333,4 +335,7 @@ int SetEngineSyncModeEvent::execute(engine::BaseEngine* engine) const
 }
 
 #pragma GCC diagnostic pop
-} // end namespace sushi
+
+} // end namespace internal
+
+} // end namespace sushi::internal

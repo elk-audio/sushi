@@ -27,8 +27,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace wav_writer_plugin {
+namespace sushi::internal::wav_writer_plugin {
 
 constexpr int N_AUDIO_CHANNELS = 2;
 constexpr int RINGBUFFER_SIZE = 65536 / AUDIO_CHUNK_SIZE;
@@ -92,7 +91,6 @@ private:
     sf_count_t _total_samples_written{0};
 };
 
-} // namespace wav_writer_plugin
-} // namespace sushi
+} // end namespace sushi::internal::wav_writer_plugin
 
 #endif // SUSHI_WAVE_WRITER_PLUGIN_H

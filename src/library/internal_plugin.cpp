@@ -26,7 +26,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 InternalPlugin::InternalPlugin(HostControl host_control) : Processor(host_control)
 {
@@ -451,4 +451,4 @@ void InternalPlugin::_handle_parameter_event(const ParameterChangeRtEvent* event
     }
 }
 
-} // end namespace sushi
+} // end namespace sushi::internal

@@ -40,8 +40,7 @@
 #include "lv2_host_nodes.h"
 #include "lv2_control.h"
 
-namespace sushi {
-namespace lv2 {
+namespace sushi::internal::lv2 {
 
 class Model;
 class State;
@@ -306,9 +305,8 @@ private:
     std::unique_ptr<Worker> _worker;
 };
 
-} // end namespace lv2
-} // end namespace sushi
+} // end namespace sushi::internal::lv2
 
-#endif //SUSHI_BUILD_WITH_LV2
+#endif // SUSHI_BUILD_WITH_LV2
 
-#endif //SUSHI_LV2_MODEL_H
+#endif // SUSHI_LV2_MODEL_H

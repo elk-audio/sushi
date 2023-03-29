@@ -12,7 +12,8 @@
 #include "test_utils/dummy_processor.h"
 
 using namespace sushi;
-using namespace engine;
+using namespace sushi::internal;
+using namespace sushi::internal::engine;
 
 constexpr float TEST_SAMPLE_RATE = 48000;
 constexpr int TEST_CHANNEL_COUNT = 2;

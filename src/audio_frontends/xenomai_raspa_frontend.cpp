@@ -27,8 +27,7 @@
 #include "audio_frontend_internals.h"
 #include "logging.h"
 
-namespace sushi {
-namespace audio_frontend {
+namespace sushi::internal::audio_frontend {
 
 /**
  * Ensure version compatibility with raspa library
@@ -198,8 +197,7 @@ AudioFrontendStatus XenomaiRaspaFrontend::config_audio_channels(const XenomaiRas
     return AudioFrontendStatus::OK;
 }
 
-}; // end namespace audio_frontend
-}; // end namespace sushi
+} // end namespace sushi::internal::audio_frontend
 
 #else // SUSHI_BUILD_WITH_XENOMAI
 
@@ -207,9 +205,10 @@ AudioFrontendStatus XenomaiRaspaFrontend::config_audio_channels(const XenomaiRas
 
 #include "sushi/logging.h"
 
-namespace sushi {
-namespace audio_frontend {
+namespace sushi::internal::audio_frontend {
+
 SUSHI_GET_LOGGER;
+
 XenomaiRaspaFrontend::XenomaiRaspaFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine)
 {}
 
@@ -219,6 +218,7 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration*)
     SUSHI_LOG_ERROR("Sushi was not built with Xenomai Cobalt support!");
     return AudioFrontendStatus::AUDIO_HW_ERROR;
 }
-}}
+
+}
 
 #endif // SUSHI_BUILD_WITH_XENOMAI

@@ -6,7 +6,7 @@
 
 #include "library/midi_decoder.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("processor");
 
@@ -256,4 +256,4 @@ std::pair<float, float> BypassManager::get_ramp()
             static_cast<float>(_ramp_count) / _ramp_chunks};
 }
 
-} // namespace sushi
+} // end namespace sushi::internal

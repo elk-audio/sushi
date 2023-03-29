@@ -35,8 +35,7 @@
 #include "vst3x_wrapper.h"
 #include "library/event.h"
 
-namespace sushi {
-namespace vst3 {
+namespace sushi::internal::vst3 {
 
 constexpr int VST_NAME_BUFFER_SIZE = 128;
 
@@ -1169,5 +1168,4 @@ Steinberg::Vst::SpeakerArrangement speaker_arr_from_channels(int channels)
     }
 }
 
-} // end namespace vst3
-} // end namespace sushi
+} // end namespace sushi::internal::vst3

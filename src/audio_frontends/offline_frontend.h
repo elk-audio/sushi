@@ -31,9 +31,7 @@
 #include "base_audio_frontend.h"
 #include "library/rt_event.h"
 
-namespace sushi {
-
-namespace audio_frontend {
+namespace sushi::internal::audio_frontend {
 
 constexpr int OFFLINE_FRONTEND_CHANNELS = 2;
 constexpr int DUMMY_FRONTEND_CHANNELS = 10;
@@ -106,8 +104,6 @@ private:
     std::vector<Event*> _event_queue;
 };
 
-} // end namespace audio_frontend
+} // end namespace sushi::internal::audio_frontend
 
-} // end namespace sushi
-
-#endif //SUSHI_OFFLINE_FRONTEND_H
+#endif // SUSHI_OFFLINE_FRONTEND_H

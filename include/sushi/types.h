@@ -88,6 +88,6 @@ private:
     T _data;
 };
 
-} // namespace sushi
+} // end namespace sushi
 
 #endif //SUSHI_TYPES_H

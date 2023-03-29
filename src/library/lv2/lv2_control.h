@@ -25,8 +25,7 @@
 
 #include "lv2_model.h"
 
-namespace sushi {
-namespace lv2 {
+namespace sushi::internal::lv2 {
 
 struct ScalePoint
 {
@@ -78,9 +77,8 @@ private:
     explicit ControlID() = default;
 };
 
-} // end namespace lv2
-} // end namespace sushi
+} // end namespace sushi::internal::lv2
 
-#endif //SUSHI_BUILD_WITH_LV2
+#endif // SUSHI_BUILD_WITH_LV2
 
-#endif //SUSHI_LV2_CONTROL_H
+#endif // SUSHI_LV2_CONTROL_H

@@ -32,8 +32,7 @@
 
 #include "json_configurator.h"
 
-namespace sushi {
-namespace jsonconfig {
+namespace sushi::internal::jsonconfig {
 
 using namespace engine;
 using namespace midi_dispatcher;
@@ -1033,5 +1032,4 @@ JsonConfigReturnStatus JsonConfigurator::_add_plugin(const rapidjson::Value& plu
     return JsonConfigReturnStatus::OK;
 }
 
-} // namespace jsonconfig
-} // namespace sushi
+} // end namespace sushi::internal::jsonconfig

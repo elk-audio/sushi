@@ -29,7 +29,7 @@
 #include <array>
 #include <cassert>
 
-namespace sushi {
+namespace sushi::internal {
 
 template<typename T, size_t storage_capacity>
 class SimpleFifo
@@ -108,6 +108,6 @@ private:
     int _tail{0};
 };
 
-}// namespace sushi
+} // end namespace sushi
 
-#endif //SUSHI_SIMPLE_FIFO_H
+#endif // SUSHI_SIMPLE_FIFO_H

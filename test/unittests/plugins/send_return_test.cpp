@@ -10,8 +10,9 @@
 #include "plugins/return_plugin.cpp"
 
 using namespace sushi;
-using namespace sushi::send_plugin;
-using namespace sushi::return_plugin;
+using namespace sushi::internal;
+using namespace sushi::internal::send_plugin;
+using namespace sushi::internal::return_plugin;
 
 constexpr float TEST_SAMPLERATE = 44100;
 

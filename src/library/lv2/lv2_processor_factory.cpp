@@ -25,8 +25,7 @@
 #include "lv2_wrapper.h"
 #endif
 
-namespace sushi {
-namespace lv2 {
+namespace sushi::internal::lv2 {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
@@ -68,7 +67,6 @@ std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> Lv2ProcessorFactory::
     return {ProcessorReturnCode::UNSUPPORTED_OPERATION, nullptr};
 }
 
-#endif //SUSHI_BUILD_WITH_LV2
+#endif // SUSHI_BUILD_WITH_LV2
 
-} // end namespace lv2
-} // end namespace sushi
+} // end namespace sushi::internal::lv2

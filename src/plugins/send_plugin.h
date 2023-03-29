@@ -28,9 +28,10 @@
 #include "send_return_factory.h"
 #include "library/internal_plugin.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 class SendReturnFactory;
+
 namespace return_plugin { class ReturnPlugin; }
 
 constexpr int MAX_SEND_CHANNELS = MAX_TRACK_CHANNELS;
@@ -42,7 +43,7 @@ class SendPlugin : public InternalPlugin, public UidHelper<SendPlugin>
 public:
     SendPlugin(HostControl host_control, SendReturnFactory* manager);
 
-    virtual ~SendPlugin();
+    ~SendPlugin() override;
 
     void clear_destination();
 
@@ -82,7 +83,7 @@ private:
     BypassManager _bypass_manager;
 };
 
-} // namespace send_plugin
-} // namespace sushi
+} // end namespace sushi::internal
+} // end namespace send_plugin
 
-#endif //SUSHI_SEND_PLUGIN_H
+#endif // SUSHI_SEND_PLUGIN_H

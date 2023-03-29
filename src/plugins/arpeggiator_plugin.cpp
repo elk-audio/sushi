@@ -22,8 +22,7 @@
 
 #include "plugins/arpeggiator_plugin.h"
 
-namespace sushi {
-namespace arpeggiator_plugin {
+namespace sushi::internal::arpeggiator_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.testing.arpeggiator";
 constexpr auto DEFAULT_LABEL = "Arpeggiator";
@@ -209,5 +208,6 @@ int Arpeggiator::next_note()
     }
     return _notes[_note_idx] + _octave_idx * OCTAVE;
 }
-}// namespace sample_player_plugin
-}// namespace sushi
+
+} // end namespace sushi::internal::sample_player_plugin
+

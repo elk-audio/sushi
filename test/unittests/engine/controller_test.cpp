@@ -18,7 +18,8 @@
 #include "engine/controller/cv_gate_controller.cpp"
 
 using namespace sushi;
-using namespace sushi::engine;
+using namespace sushi::internal;
+using namespace sushi::internal::engine;
 
 constexpr unsigned int TEST_SAMPLE_RATE = 48000;
 constexpr unsigned int ENGINE_CHANNELS = 8;

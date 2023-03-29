@@ -32,11 +32,9 @@
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
-inline ext::TrackAudioConnectionState to_external(const ::sushi::AudioConnection& con,
+inline ext::TrackAudioConnectionState to_external(const AudioConnection& con,
                                                   const std::string& track_name)
 {
     ext::TrackAudioConnectionState ext_con;
@@ -46,7 +44,7 @@ inline ext::TrackAudioConnectionState to_external(const ::sushi::AudioConnection
     return ext_con;
 }
 
-inline ext::MidiKbdConnectionState to_external(const ::sushi::midi_dispatcher::KbdInputConnection& con,
+inline ext::MidiKbdConnectionState to_external(const midi_dispatcher::KbdInputConnection& con,
                                                const std::string& track_name)
 {
     ext::MidiKbdConnectionState ext_con;
@@ -57,7 +55,7 @@ inline ext::MidiKbdConnectionState to_external(const ::sushi::midi_dispatcher::K
     return ext_con;
 }
 
-inline ext::MidiKbdConnectionState to_external(const ::sushi::midi_dispatcher::KbdOutputConnection& con,
+inline ext::MidiKbdConnectionState to_external(const midi_dispatcher::KbdOutputConnection& con,
                                                const std::string& track_name)
 {
     ext::MidiKbdConnectionState ext_con;
@@ -68,7 +66,7 @@ inline ext::MidiKbdConnectionState to_external(const ::sushi::midi_dispatcher::K
     return ext_con;
 }
 
-inline ext::MidiCCConnectionState to_external(const ::sushi::midi_dispatcher::CCInputConnection& con,
+inline ext::MidiCCConnectionState to_external(const midi_dispatcher::CCInputConnection& con,
                                               const std::string& track_name)
 {
     ext::MidiCCConnectionState ext_con;
@@ -83,7 +81,7 @@ inline ext::MidiCCConnectionState to_external(const ::sushi::midi_dispatcher::CC
     return ext_con;
 }
 
-inline ext::MidiPCConnectionState to_external(const ::sushi::midi_dispatcher::PCInputConnection& con,
+inline ext::MidiPCConnectionState to_external(const midi_dispatcher::PCInputConnection& con,
                                               const std::string& track_name)
 {
     ext::MidiPCConnectionState ext_con;
@@ -93,7 +91,7 @@ inline ext::MidiPCConnectionState to_external(const ::sushi::midi_dispatcher::PC
     return ext_con;
 }
 
-inline void to_internal(sushi::control_frontend::OscState& dest, const ext::OscState& src)
+inline void to_internal(control_frontend::OscState& dest, const ext::OscState& src)
 {
     dest.set_auto_enable_outputs(src.enable_all_processor_outputs);
     for (const auto& output : src.enabled_processor_outputs)
@@ -102,7 +100,7 @@ inline void to_internal(sushi::control_frontend::OscState& dest, const ext::OscS
     }
 }
 
-inline void to_external(ext::OscState& dest, const sushi::control_frontend::OscState& src)
+inline void to_external(ext::OscState& dest, const control_frontend::OscState& src)
 {
     dest.enable_all_processor_outputs = src.auto_enable_outputs();
     for (const auto& output : src.enabled_outputs())
@@ -322,7 +320,7 @@ std::vector<ext::TrackState> SessionController::_save_tracks() const
     return tracks;
 }
 
-ext::PluginClass SessionController::_save_plugin(const sushi::Processor* plugin) const
+ext::PluginClass SessionController::_save_plugin(const Processor* plugin) const
 {
     ext::PluginClass plugin_class;
 
@@ -411,7 +409,7 @@ void SessionController::_restore_plugin_states(std::vector<ext::TrackState> trac
             continue;
         }
 
-        sushi::ProcessorState state;
+        ProcessorState state;
         to_internal(&state, &track.track_state);
         auto status = track_instance->set_state(&state, false);
         if (status != ProcessorReturnCode::OK)
@@ -437,7 +435,7 @@ void SessionController::_restore_plugin_states(std::vector<ext::TrackState> trac
     }
 }
 
-void SessionController::_restore_plugin(ext::PluginClass plugin, sushi::engine::Track* track)
+void SessionController::_restore_plugin(ext::PluginClass plugin, Track* track)
 {
     PluginInfo info {.uid = plugin.uid,
                      .path = plugin.path,
@@ -565,7 +563,7 @@ void SessionController::_restore_osc(ext::OscState& state)
 {
     if (_osc_frontend)
     {
-        sushi::control_frontend::OscState internal_state;
+        control_frontend::OscState internal_state;
         to_internal(internal_state, state);
         _osc_frontend->set_state(internal_state);
     }
@@ -586,6 +584,4 @@ void SessionController::_clear_all_tracks()
     }
 }
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::engine::controller_impl

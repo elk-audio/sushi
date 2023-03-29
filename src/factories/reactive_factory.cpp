@@ -23,7 +23,7 @@ namespace sushi
 
 ReactiveFactory::ReactiveFactory()
 {
-    _implementation = std::make_unique<ReactiveFactoryImplementation>();
+    _implementation = std::make_unique<internal::ReactiveFactoryImplementation>();
 }
 
 ReactiveFactory::~ReactiveFactory() = default;

@@ -41,8 +41,9 @@ using ::testing::NiceMock;
 using ::testing::_;
 
 using namespace sushi;
-using namespace sushi::control_frontend;
-using namespace sushi::osc;
+using namespace sushi::internal;
+using namespace sushi::internal::control_frontend;
+using namespace sushi::internal::osc;
 
 constexpr int OSC_TEST_SERVER_PORT = 24024;
 constexpr int OSC_TEST_SEND_PORT = 24023;
@@ -85,7 +86,7 @@ TEST_F(TestOscpackOscMessenger, TestAddAndRemoveConnections)
     EXPECT_EQ(_module_under_test->_registered_messages.size(), 0);
 
     auto id_1 = _module_under_test->add_method("/engine/set_tempo",
-                                              "f", sushi::osc::OscMethodType::SET_TEMPO,
+                                              "f", sushi::internal::osc::OscMethodType::SET_TEMPO,
                                               &connection);
 
     EXPECT_EQ(_module_under_test->_last_generated_handle, 1);
@@ -94,7 +95,7 @@ TEST_F(TestOscpackOscMessenger, TestAddAndRemoveConnections)
 
     // Attempting to register with an existing address_pattern and tts should fail:
     auto id_2 = _module_under_test->add_method("/engine/set_tempo",
-                                               "f", sushi::osc::OscMethodType::SET_TEMPO,
+                                               "f", sushi::internal::osc::OscMethodType::SET_TEMPO,
                                                &connection);
 
     EXPECT_EQ(_module_under_test->_last_generated_handle, 1);
@@ -103,7 +104,7 @@ TEST_F(TestOscpackOscMessenger, TestAddAndRemoveConnections)
 
     // BUT the same AP with a different TTS, should be fine:
     auto id_3 = _module_under_test->add_method("/engine/set_tempo",
-                                               "ff", sushi::osc::OscMethodType::SET_TEMPO,
+                                               "ff", sushi::internal::osc::OscMethodType::SET_TEMPO,
                                                &connection);
 
     EXPECT_EQ(_module_under_test->_last_generated_handle, 2);
@@ -125,7 +126,7 @@ TEST_F(TestOscpackOscMessenger, TestSendParameterChange)
     auto address_pattern = "/parameter/track_1/param_1";
 
     _module_under_test->add_method(address_pattern,
-                                   "f", sushi::osc::OscMethodType::SEND_PARAMETER_CHANGE_EVENT,
+                                   "f", sushi::internal::osc::OscMethodType::SEND_PARAMETER_CHANGE_EVENT,
                                    &connection);
 
     oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
@@ -154,7 +155,7 @@ TEST_F(TestOscpackOscMessenger, TestSendPropertyChange)
     auto address_pattern = "/property/sampler/sample_file";
 
     _module_under_test->add_method(address_pattern,
-                                   "s", sushi::osc::OscMethodType::SEND_PROPERTY_CHANGE_EVENT,
+                                   "s", sushi::internal::osc::OscMethodType::SEND_PROPERTY_CHANGE_EVENT,
                                    &connection);
 
     oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
@@ -183,7 +184,7 @@ TEST_F(TestOscpackOscMessenger, TestSendNoteOn)
     auto address_pattern = "/keyboard_event/sampler";
 
     _module_under_test->add_method(address_pattern,
-                                   "siif", sushi::osc::OscMethodType::SEND_KEYBOARD_NOTE_EVENT,
+                                   "siif", sushi::internal::osc::OscMethodType::SEND_KEYBOARD_NOTE_EVENT,
                                    &connection);
 
     oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
@@ -213,7 +214,7 @@ TEST_F(TestOscpackOscMessenger, TestSendNoteOff)
     auto address_pattern = "/keyboard_event/sampler";
 
     _module_under_test->add_method(address_pattern,
-                                   "siif", sushi::osc::OscMethodType::SEND_KEYBOARD_NOTE_EVENT,
+                                   "siif", sushi::internal::osc::OscMethodType::SEND_KEYBOARD_NOTE_EVENT,
                                    &connection);
 
     oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
@@ -243,7 +244,7 @@ TEST_F(TestOscpackOscMessenger, TestSendNoteAftertouch)
     auto address_pattern = "/keyboard_event/sampler";
 
     _module_under_test->add_method(address_pattern,
-                                   "siif", sushi::osc::OscMethodType::SEND_KEYBOARD_NOTE_EVENT,
+                                   "siif", sushi::internal::osc::OscMethodType::SEND_KEYBOARD_NOTE_EVENT,
                                    &connection);
 
     oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
@@ -274,7 +275,7 @@ TEST_F(TestOscpackOscMessenger, TestSendKeyboardModulation)
 
     _module_under_test->add_method(address_pattern,
                                    "sif",
-                                   sushi::osc::OscMethodType::SEND_KEYBOARD_MODULATION_EVENT,
+                                   sushi::internal::osc::OscMethodType::SEND_KEYBOARD_MODULATION_EVENT,
                                    &connection);
 
     oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
@@ -304,7 +305,7 @@ TEST_F(TestOscpackOscMessenger, TestSendKeyboardPitchBend)
 
     _module_under_test->add_method(address_pattern,
                                    "sif",
-                                 sushi::osc::OscMethodType::SEND_KEYBOARD_MODULATION_EVENT,
+                                 sushi::internal::osc::OscMethodType::SEND_KEYBOARD_MODULATION_EVENT,
                                    &connection);
 
     oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
@@ -333,7 +334,7 @@ TEST_F(TestOscpackOscMessenger, TestSendKeyboardAftertouch)
 
     _module_under_test->add_method(address_pattern,
                                    "sif",
-                                 sushi::osc::OscMethodType::SEND_KEYBOARD_MODULATION_EVENT,
+                                 sushi::internal::osc::OscMethodType::SEND_KEYBOARD_MODULATION_EVENT,
                                    &connection);
 
     oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
@@ -361,7 +362,7 @@ TEST_F(TestOscpackOscMessenger, TestSendProgramChange)
     auto address_pattern = "/program/sampler";
 
     _module_under_test->add_method(address_pattern,
-                                   "i", sushi::osc::OscMethodType::SEND_PROGRAM_CHANGE_EVENT,
+                                   "i", sushi::internal::osc::OscMethodType::SEND_PROGRAM_CHANGE_EVENT,
                                    &connection);
 
     oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
@@ -389,7 +390,7 @@ TEST_F(TestOscpackOscMessenger, TestSetBypassState)
     auto address_pattern = "/bypass/sampler";
 
     _module_under_test->add_method(address_pattern,
-                                   "i", sushi::osc::OscMethodType::SEND_BYPASS_STATE_EVENT,
+                                   "i", sushi::internal::osc::OscMethodType::SEND_BYPASS_STATE_EVENT,
                                    &connection);
 
     oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
@@ -416,7 +417,7 @@ TEST_F(TestOscpackOscMessenger, TestSetTempo)
     auto address_pattern = "/engine/set_tempo";
 
     _module_under_test->add_method(address_pattern,
-                                   "f", sushi::osc::OscMethodType::SET_TEMPO,
+                                   "f", sushi::internal::osc::OscMethodType::SET_TEMPO,
                                    &_mock_controller);
 
     oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
@@ -436,7 +437,7 @@ TEST_F(TestOscpackOscMessenger, TestSetTimeSignature)
     auto address_pattern = "/engine/set_time_signature";
 
     _module_under_test->add_method(address_pattern,
-                                   "ii", sushi::osc::OscMethodType::SET_TIME_SIGNATURE,
+                                   "ii", sushi::internal::osc::OscMethodType::SET_TIME_SIGNATURE,
                                    &_mock_controller);
 
     oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
@@ -457,7 +458,7 @@ TEST_F(TestOscpackOscMessenger, TestSetPlayingMode)
     auto address_pattern = "/engine/set_playing_mode";
 
     _module_under_test->add_method(address_pattern,
-                                   "s", sushi::osc::OscMethodType::SET_PLAYING_MODE,
+                                   "s", sushi::internal::osc::OscMethodType::SET_PLAYING_MODE,
                                    &_mock_controller);
 
     oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
@@ -477,7 +478,7 @@ TEST_F(TestOscpackOscMessenger, TestSetSyncMode)
     auto address_pattern = "/engine/set_sync_mode";
 
     _module_under_test->add_method(address_pattern,
-                                   "s", sushi::osc::OscMethodType::SET_TEMPO_SYNC_MODE,
+                                   "s", sushi::internal::osc::OscMethodType::SET_TEMPO_SYNC_MODE,
                                    &_mock_controller);
 
     oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
@@ -498,7 +499,7 @@ TEST_F(TestOscpackOscMessenger, TestSetTimingStatisticsEnabled)
 
     _module_under_test->add_method(address_pattern,
                                    "i",
-                                 sushi::osc::OscMethodType::SET_TIMING_STATISTICS_ENABLED,
+                                 sushi::internal::osc::OscMethodType::SET_TIMING_STATISTICS_ENABLED,
                                    &_mock_controller);
 
     oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
@@ -519,7 +520,7 @@ TEST_F(TestOscpackOscMessenger, TestResetAllTimings)
 
     _module_under_test->add_method(address_pattern,
                                    "s",
-                                 sushi::osc::OscMethodType::RESET_TIMING_STATISTICS,
+                                 sushi::internal::osc::OscMethodType::RESET_TIMING_STATISTICS,
                                    &_mock_controller);
 
     oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);
@@ -536,7 +537,7 @@ TEST_F(TestOscpackOscMessenger, TestResetProcessorTimings)
 
     _module_under_test->add_method(address_pattern,
                                    "ss",
-                                 sushi::osc::OscMethodType::RESET_TIMING_STATISTICS,
+                                 sushi::internal::osc::OscMethodType::RESET_TIMING_STATISTICS,
                                    &_mock_controller);
 
     oscpack::OutboundPacketStream p(_buffer, OSC_OUTPUT_BUFFER_SIZE);

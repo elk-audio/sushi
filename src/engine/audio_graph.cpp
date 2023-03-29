@@ -23,8 +23,7 @@
 
 #include "audio_graph.h"
 
-namespace sushi {
-namespace engine {
+namespace sushi::internal::engine {
 
 constexpr bool DISABLE_DENORMALS = true;
 
@@ -120,5 +119,4 @@ void AudioGraph::render()
     }
 }
 
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine

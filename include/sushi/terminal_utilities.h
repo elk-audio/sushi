@@ -249,6 +249,6 @@ ParseStatus parse_options(int argc, char* argv[], sushi::SushiOptions& options)
     return ParseStatus::OK;
 }
 
-} // namespace Sushi
+} // end namespace Sushi
 
 #endif // SUSHI_TERMINAL_UTILITIES_H

@@ -21,7 +21,9 @@
 
 namespace sushi {
 
-class StandaloneFactoryImplementation;
+namespace internal {
+    class StandaloneFactoryImplementation;
+}
 
 class StandaloneFactory : public FactoryInterface
 {
@@ -32,9 +34,9 @@ public:
     [[nodiscard]] std::pair<std::unique_ptr<Sushi>, Status> new_instance(SushiOptions& options) override;
 
 private:
-    std::unique_ptr<StandaloneFactoryImplementation> _implementation;
+    std::unique_ptr<internal::StandaloneFactoryImplementation> _implementation;
 };
 
-} // namespace sushi
+} // end namespace sushi
 
 #endif // STANDALONE_FACTORY_H

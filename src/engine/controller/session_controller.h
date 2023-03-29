@@ -29,9 +29,7 @@
 #include "control_frontends/osc_frontend.h"
 #include "audio_frontends/base_audio_frontend.h"
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
 class SessionController : public ext::SessionController
 {
@@ -54,12 +52,12 @@ private:
     ext::MidiState      _save_midi_state() const;
     ext::EngineState    _save_engine_state() const;
     std::vector<ext::TrackState> _save_tracks() const;
-    ext::PluginClass    _save_plugin(const sushi::Processor* plugin) const;
+    ext::PluginClass    _save_plugin(const sushi::internal::Processor* plugin) const;
 
     bool _check_state(const ext::SessionState& state) const;
     void _restore_tracks(std::vector<ext::TrackState> tracks);
     void _restore_plugin_states(std::vector<ext::TrackState> tracks);
-    void _restore_plugin(ext::PluginClass plugin, sushi::engine::Track* track);
+    void _restore_plugin(ext::PluginClass plugin, sushi::internal::engine::Track* track);
     void _restore_engine(ext::EngineState& state);
     void _restore_midi(ext::MidiState& state);
     void _restore_osc(ext::OscState& state);
@@ -73,8 +71,6 @@ private:
     control_frontend::OSCFrontend*      _osc_frontend;
 };
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl
 
-#endif //SUSHI_SESSION_CONTROLLER_H
+#endif // SUSHI_SESSION_CONTROLLER_H

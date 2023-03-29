@@ -30,8 +30,7 @@
 #include "library/internal_plugin.h"
 #include "library/rt_event_fifo.h"
 
-namespace sushi {
-namespace control_to_cv_plugin {
+namespace sushi::internal::control_to_cv_plugin {
 
 constexpr int MAX_CV_VOICES = MAX_ENGINE_CV_IO_PORTS;
 
@@ -87,6 +86,6 @@ private:
 
 float pitch_to_cv(float value);
 
-}// namespace control_to_cv_plugin
-}// namespace sushi
-#endif //SUSHI_CONTROL_TO_CV_PLUGIN_H
+} // end namespace sushi::internal::control_to_cv_plugin
+
+#endif // SUSHI_CONTROL_TO_CV_PLUGIN_H

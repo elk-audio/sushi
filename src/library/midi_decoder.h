@@ -30,8 +30,7 @@
 
 #include "sushi/types.h"
 
-namespace sushi {
-namespace midi {
+namespace sushi::internal::midi {
 
 /* Max value for midi velocity, pressure, controller value, etc. */
 constexpr int MAX_VALUE = 127;
@@ -279,8 +278,7 @@ SongPositionMessage decode_song_position(MidiDataByte data);
 SongSelectMessage decode_song_select(MidiDataByte data);
 
 
-} // end namespace midi
-} // end namespace sushi
+} // end namespace sushi::internal::midi
 
 
-#endif //SUSHI_MIDI_DECODER_H
+#endif // SUSHI_MIDI_DECODER_H

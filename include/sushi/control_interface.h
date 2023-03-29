@@ -28,8 +28,7 @@
 #include <vector>
 #include <chrono>
 
-namespace sushi {
-namespace ext {
+namespace sushi::ext {
 
 using Time = std::chrono::microseconds;
 
@@ -705,7 +704,6 @@ private:
     SessionController*          _session_controller;
 };
 
-} // ext
-} // sushi
+} // end namespace sushi::ext
 
 #endif //SUSHI_CONTROL_INTERFACE_H

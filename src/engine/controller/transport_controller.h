@@ -26,9 +26,7 @@
 #include "engine/base_engine.h"
 #include "engine/base_event_dispatcher.h"
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
 class TransportController : public ext::TransportController
 {
@@ -59,8 +57,6 @@ private:
     dispatcher::BaseEventDispatcher*    _event_dispatcher;
 };
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl
 
-#endif //SUSHI_TRANSPORT_CONTROLLER_H
+#endif // SUSHI_TRANSPORT_CONTROLLER_H

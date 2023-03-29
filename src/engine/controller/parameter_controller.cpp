@@ -26,11 +26,9 @@
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
-inline ext::ParameterType to_external(const sushi::ParameterType type)
+inline ext::ParameterType to_external(const ParameterType type)
 {
     switch (type)
     {
@@ -293,6 +291,4 @@ std::pair<ext::ControlStatus, ext::PropertyInfo> ParameterController::get_proper
     return {ext::ControlStatus::NOT_FOUND, info};
 }
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl

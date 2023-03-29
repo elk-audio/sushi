@@ -20,13 +20,14 @@
 
 #include <iostream>
 
-
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wtype-limits"
 #include "rapidjson/ostreamwrapper.h"
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/document.h"
 #pragma GCC diagnostic pop
+
+namespace sushi {
 
 std::ostream& operator<<(std::ostream& out, const rapidjson::Document& document)
 {
@@ -36,3 +37,4 @@ std::ostream& operator<<(std::ostream& out, const rapidjson::Document& document)
     return out;
 }
 
+}

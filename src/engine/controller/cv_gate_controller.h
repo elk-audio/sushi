@@ -26,14 +26,12 @@
 #include "engine/base_engine.h"
 #include "engine/base_event_dispatcher.h"
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
 class CvGateController : public ext::CvGateController
 {
 public:
-    explicit CvGateController([[maybe_unused]] engine::BaseEngine* engine) {}
+    explicit CvGateController([[maybe_unused]] BaseEngine* engine) {}
 
     ~CvGateController() override = default;
 
@@ -88,8 +86,6 @@ public:
 private:
 };
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl
 
-#endif //SUSHI_CV_GATE_CONTROLLER_H
+#endif // SUSHI_CV_GATE_CONTROLLER_H

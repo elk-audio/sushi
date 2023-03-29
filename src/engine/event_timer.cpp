@@ -26,8 +26,7 @@
 
 #include "event_timer.h"
 
-namespace sushi {
-namespace event_timer {
+namespace sushi::internal::event_timer {
 
 using namespace std::chrono_literals;
 constexpr float MICROSECONDS = std::chrono::microseconds(1s).count();
@@ -68,5 +67,4 @@ void EventTimer::set_sample_rate(float sample_rate)
     _chunk_time = calc_chunk_time(sample_rate);
 }
 
-} // end event_timer
-} // end sushi
+} // end sushi::internal::event_timer

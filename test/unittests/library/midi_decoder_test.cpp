@@ -4,7 +4,8 @@
 #include "library/midi_decoder.cpp"
 
 using namespace sushi;
-using namespace midi;
+using namespace sushi::internal;
+using namespace sushi::internal::midi;
 
 const MidiDataByte TEST_NOTE_OFF_MSG  = {0x81, 60, 45, 0};
 const MidiDataByte TEST_NOTE_ON_MSG   = {0x92, 62, 55, 0};
@@ -23,9 +24,6 @@ const MidiDataByte TEST_STOP_MSG      = {0xFC, 0, 0, 0};
 const MidiDataByte TEST_ACTIVE_SNS_MSG= {0xFE, 0, 0, 0};
 const MidiDataByte TEST_RESET_MSG     = {0xFF, 0, 0, 0};
 const MidiDataByte TEST_UNKNOWN_MSG   = {0, 0, 0, 0};
-
-
-
 
 TEST (MidiDecoderTest, TestDecodeMessageType) {
     EXPECT_EQ(MessageType::NOTE_OFF, decode_message_type(TEST_NOTE_OFF_MSG));
@@ -127,4 +125,3 @@ TEST (MidiDecoderTest, TestDecodeSongSelect)
     SongSelectMessage msg = decode_song_select(TEST_SONG_SEL_MSG);
     EXPECT_EQ(35, msg.index);
 }
-
