@@ -23,9 +23,10 @@
 
 #include <alsa/seq_event.h>
 
+#include "sushi/logging.h"
+
 #include "alsa_midi_frontend.h"
 #include "library/midi_decoder.h"
-#include "logging.h"
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("alsamidi");
 

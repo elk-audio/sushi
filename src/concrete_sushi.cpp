@@ -75,7 +75,7 @@ std::optional<std::pair<std::string, int>> SushiOptions::grpc_address_and_port()
         return std::nullopt;
     }
 
-    return std::tie(address_part, port);
+    return std::optional<std::pair<std::string, int>>({address_part, port});
 }
 
 bool SushiOptions::increment_grpc_port_number()

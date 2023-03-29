@@ -452,8 +452,8 @@ void PortAudioFrontend::_output_interleaved_audio(float* output)
 } // end namespace sushi
 #endif
 #ifndef SUSHI_BUILD_WITH_PORTAUDIO
+#include "sushi/logging.h"
 #include "audio_frontends/portaudio_frontend.h"
-#include "logging.h"
 namespace sushi {
 namespace audio_frontend {
 SUSHI_GET_LOGGER;

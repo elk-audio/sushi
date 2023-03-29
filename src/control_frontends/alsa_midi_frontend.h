@@ -27,10 +27,11 @@
 #include <vector>
 #include <map>
 
+#include "sushi/sushi_time.h"
+
 #include <alsa/asoundlib.h>
 
 #include "base_midi_frontend.h"
-#include "library/time.h"
 
 namespace sushi {
 namespace midi_frontend {
