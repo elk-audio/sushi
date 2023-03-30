@@ -104,19 +104,16 @@ void RealTimeController::set_position_source(TransportPositionSource ps)
     }
 }
 
-void RealTimeController::process_audio(int channel_count, Time timestamp)
+void RealTimeController::process_audio(ChunkSampleBuffer& in_buffer,
+                                       ChunkSampleBuffer& out_buffer,
+                                       int channel_count,
+                                       Time timestamp)
 {
-    _audio_frontend->process_audio(channel_count, _samples_since_start, timestamp);
-}
-
-ChunkSampleBuffer& RealTimeController::in_buffer()
-{
-    return _audio_frontend->in_buffer();
-}
-
-ChunkSampleBuffer& RealTimeController::out_buffer()
-{
-    return _audio_frontend->out_buffer();
+    _audio_frontend->process_audio(in_buffer,
+                                   out_buffer,
+                                   channel_count,
+                                   _samples_since_start,
+                                   timestamp);
 }
 
 void RealTimeController::receive_midi(int input, MidiDataByte data, Time timestamp)

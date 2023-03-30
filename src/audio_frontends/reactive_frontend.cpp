@@ -38,9 +38,6 @@ AudioFrontendStatus ReactiveFrontend::init(BaseAudioFrontendConfiguration* confi
 
     auto frontend_config = static_cast<ReactiveFrontendConfiguration*>(_config);
 
-    _in_buffer = ChunkSampleBuffer(REACTIVE_FRONTEND_CHANNELS);
-    _out_buffer = ChunkSampleBuffer(REACTIVE_FRONTEND_CHANNELS);
-
     _engine->set_audio_input_channels(REACTIVE_FRONTEND_CHANNELS);
     _engine->set_audio_output_channels(REACTIVE_FRONTEND_CHANNELS);
 
@@ -76,7 +73,9 @@ void ReactiveFrontend::run()
 // TODO: While in JUCE plugins channel count can change, in sushi it's set on init.
 //  In JUCE, the buffer size is always the same for in and out, with some unused,
 //  if they differ.
-void ReactiveFrontend::process_audio(int channel_count,
+void ReactiveFrontend::process_audio(ChunkSampleBuffer& in_buffer,
+                                     ChunkSampleBuffer& out_buffer,
+                                     int channel_count,
                                      int total_sample_count,
                                      Time timestamp)
 {
@@ -93,12 +92,12 @@ void ReactiveFrontend::process_audio(int channel_count,
 
     // TODO: Deal also with CV.
 
-    _out_buffer.clear();
+    out_buffer.clear();
 
     if (_pause_manager.should_process())
     {
-        _engine->process_chunk(&_in_buffer,
-                               &_out_buffer,
+        _engine->process_chunk(&in_buffer,
+                               &out_buffer,
                                &_in_controls,
                                &_out_controls,
                                timestamp,
@@ -106,7 +105,7 @@ void ReactiveFrontend::process_audio(int channel_count,
 
         if (_pause_manager.should_ramp())
         {
-            _pause_manager.ramp_output(_out_buffer);
+            _pause_manager.ramp_output(out_buffer);
         }
     }
     else
@@ -117,16 +116,6 @@ void ReactiveFrontend::process_audio(int channel_count,
             _pause_notified = true;
         }
     }
-}
-
-ChunkSampleBuffer& ReactiveFrontend::in_buffer()
-{
-    return _in_buffer;
-}
-
-ChunkSampleBuffer& ReactiveFrontend::out_buffer()
-{
-    return _out_buffer;
 }
 
 } // end namespace sushi::internal::audio_frontend
