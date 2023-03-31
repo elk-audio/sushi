@@ -525,6 +525,7 @@ set(SOURCE_FILES
     src/plugins/lfo_plugin.cpp
     src/plugins/passthrough_plugin.cpp
     src/plugins/equalizer_plugin.cpp
+    src/plugins/compressor_plugin.cpp
     src/plugins/peak_meter_plugin.cpp
     src/plugins/return_plugin.cpp
     src/plugins/sample_player_plugin.cpp
@@ -561,7 +562,9 @@ set(INCLUDE_DIRS ${INCLUDE_DIRS}
                  "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
                  "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"
                  "${PROJECT_SOURCE_DIR}/third-party/vst3sdk"
-                 "${PROJECT_SOURCE_DIR}/third-party/link/include")
+                 "${PROJECT_SOURCE_DIR}/third-party/link/include"
+                 "${PROJECT_SOURCE_DIR}/third-party/brickworks/include"
+)
 
 #################################
 #  Linked libraries             #

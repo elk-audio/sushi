@@ -17,6 +17,7 @@
 #include "plugins/mono_summing_plugin.cpp"
 #include "plugins/sample_delay_plugin.cpp"
 #include "plugins/stereo_mixer_plugin.cpp"
+#include "plugins/compressor_plugin.cpp"
 #include "dsp_library/biquad_filter.cpp"
 
 using namespace sushi;
