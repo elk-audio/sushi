@@ -46,7 +46,7 @@ void RealTimeController::set_tempo(float tempo)
     }
 }
 
-void RealTimeController::set_time_signature(ext::TimeSignature time_signature)
+void RealTimeController::set_time_signature(control::TimeSignature time_signature)
 {
     auto internal_time_signature = engine::controller_impl::to_internal(time_signature);
 
@@ -58,7 +58,7 @@ void RealTimeController::set_time_signature(ext::TimeSignature time_signature)
     }
 }
 
-void RealTimeController::set_playing_mode(ext::PlayingMode mode)
+void RealTimeController::set_playing_mode(control::PlayingMode mode)
 {
     auto internal_playing_mode = engine::controller_impl::to_internal(mode);
 

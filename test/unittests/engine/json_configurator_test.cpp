@@ -60,7 +60,7 @@ protected:
     AudioEngine _engine{SAMPLE_RATE};
     MidiDispatcher _midi_dispatcher{_engine.event_dispatcher()};
 
-    sushi::ext::ControlMockup _controller;
+    sushi::control::ControlMockup _controller;
 
     std::unique_ptr<JsonConfigurator> _module_under_test;
 

@@ -28,24 +28,24 @@
 
 namespace sushi::internal::engine::controller_impl {
 
-class KeyboardController : public ext::KeyboardController
+class KeyboardController : public control::KeyboardController
 {
 public:
     explicit KeyboardController(BaseEngine* engine);
 
     ~KeyboardController() override = default;
 
-    ext::ControlStatus send_note_on(int track_id, int channel, int note, float velocity) override;
+    control::ControlStatus send_note_on(int track_id, int channel, int note, float velocity) override;
 
-    ext::ControlStatus send_note_off(int track_id, int channel, int note, float velocity) override;
+    control::ControlStatus send_note_off(int track_id, int channel, int note, float velocity) override;
 
-    ext::ControlStatus send_note_aftertouch(int track_id, int channel, int note, float value) override;
+    control::ControlStatus send_note_aftertouch(int track_id, int channel, int note, float value) override;
 
-    ext::ControlStatus send_aftertouch(int track_id, int channel, float value) override;
+    control::ControlStatus send_aftertouch(int track_id, int channel, float value) override;
 
-    ext::ControlStatus send_pitch_bend(int track_id, int channel, float value) override;
+    control::ControlStatus send_pitch_bend(int track_id, int channel, float value) override;
 
-    ext::ControlStatus send_modulation(int track_id, int channel, float value) override;
+    control::ControlStatus send_modulation(int track_id, int channel, float value) override;
 
 private:
     dispatcher::BaseEventDispatcher* _event_dispatcher;

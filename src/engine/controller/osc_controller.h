@@ -29,7 +29,7 @@
 
 namespace sushi::internal::engine::controller_impl {
 
-class OscController : public ext::OscController
+class OscController : public control::OscController
 {
 public:
     explicit OscController(BaseEngine* engine);
@@ -46,13 +46,13 @@ public:
 
     std::vector<std::string> get_enabled_parameter_outputs() const override;
 
-    ext::ControlStatus enable_output_for_parameter(int processor_id, int parameter_id) override;
+    control::ControlStatus enable_output_for_parameter(int processor_id, int parameter_id) override;
 
-    ext::ControlStatus disable_output_for_parameter(int processor_id, int parameter_id) override;
+    control::ControlStatus disable_output_for_parameter(int processor_id, int parameter_id) override;
 
-    ext::ControlStatus enable_all_output() override;
+    control::ControlStatus enable_all_output() override;
 
-    ext::ControlStatus disable_all_output() override;
+    control::ControlStatus disable_all_output() override;
 
 private:
     dispatcher::BaseEventDispatcher* _event_dispatcher;

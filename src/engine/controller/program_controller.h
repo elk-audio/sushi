@@ -29,22 +29,22 @@
 
 namespace sushi::internal::engine::controller_impl {
 
-class ProgramController : public ext::ProgramController
+class ProgramController : public control::ProgramController
 {
 public:
     explicit ProgramController(BaseEngine* engine);
 
     ~ProgramController() override = default;
 
-    std::pair<ext::ControlStatus, int> get_processor_current_program(int processor_id) const override;
+    std::pair<control::ControlStatus, int> get_processor_current_program(int processor_id) const override;
 
-    std::pair<ext::ControlStatus, std::string> get_processor_current_program_name(int processor_id) const override;
+    std::pair<control::ControlStatus, std::string> get_processor_current_program_name(int processor_id) const override;
 
-    std::pair<ext::ControlStatus, std::string> get_processor_program_name(int processor_id, int program_id) const override;
+    std::pair<control::ControlStatus, std::string> get_processor_program_name(int processor_id, int program_id) const override;
 
-    std::pair<ext::ControlStatus, std::vector<std::string>> get_processor_programs(int processor_id) const override;
+    std::pair<control::ControlStatus, std::vector<std::string>> get_processor_programs(int processor_id) const override;
 
-    ext::ControlStatus set_processor_program(int processor_id, int program_id) override;
+    control::ControlStatus set_processor_program(int processor_id, int program_id) override;
 
 private:
     dispatcher::BaseEventDispatcher*    _event_dispatcher;

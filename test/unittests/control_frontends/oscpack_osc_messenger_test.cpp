@@ -69,7 +69,7 @@ protected:
 
     void TearDown() {}
 
-    sushi::ext::ControlMockup _mock_controller;
+    sushi::control::ControlMockup _mock_controller;
 
     OscConnection connection;
 

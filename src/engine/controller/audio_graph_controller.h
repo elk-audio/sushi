@@ -29,58 +29,58 @@
 
 namespace sushi::internal::engine::controller_impl {
 
-class AudioGraphController : public ext::AudioGraphController
+class AudioGraphController : public control::AudioGraphController
 {
 public:
     explicit AudioGraphController(BaseEngine* engine);
 
     ~AudioGraphController() override = default;
 
-    std::vector<ext::ProcessorInfo> get_all_processors() const override;
+    std::vector<control::ProcessorInfo> get_all_processors() const override;
 
-    std::vector<ext::TrackInfo> get_all_tracks() const override;
+    std::vector<control::TrackInfo> get_all_tracks() const override;
 
-    std::pair<ext::ControlStatus, int> get_track_id(const std::string& track_name) const override;
+    std::pair<control::ControlStatus, int> get_track_id(const std::string& track_name) const override;
 
-    std::pair<ext::ControlStatus, ext::TrackInfo> get_track_info(int track_id) const override;
+    std::pair<control::ControlStatus, control::TrackInfo> get_track_info(int track_id) const override;
 
-    std::pair<ext::ControlStatus, std::vector<ext::ProcessorInfo>> get_track_processors(int track_id) const override;
+    std::pair<control::ControlStatus, std::vector<control::ProcessorInfo>> get_track_processors(int track_id) const override;
 
-    std::pair<ext::ControlStatus, int> get_processor_id(const std::string& processor_name) const override;
+    std::pair<control::ControlStatus, int> get_processor_id(const std::string& processor_name) const override;
 
-    std::pair<ext::ControlStatus, ext::ProcessorInfo> get_processor_info(int processor_id) const override;
+    std::pair<control::ControlStatus, control::ProcessorInfo> get_processor_info(int processor_id) const override;
 
-    std::pair<ext::ControlStatus, bool> get_processor_bypass_state(int processor_id) const override;
+    std::pair<control::ControlStatus, bool> get_processor_bypass_state(int processor_id) const override;
 
-    std::pair<ext::ControlStatus, ext::ProcessorState> get_processor_state(int processor_id) const override;
+    std::pair<control::ControlStatus, control::ProcessorState> get_processor_state(int processor_id) const override;
 
-    ext::ControlStatus set_processor_bypass_state(int processor_id, bool bypass_enabled) override;
+    control::ControlStatus set_processor_bypass_state(int processor_id, bool bypass_enabled) override;
 
-    ext::ControlStatus set_processor_state(int processor_id, const ext::ProcessorState& state) override;
+    control::ControlStatus set_processor_state(int processor_id, const control::ProcessorState& state) override;
 
-    ext::ControlStatus create_track(const std::string& name, int channels) override;
+    control::ControlStatus create_track(const std::string& name, int channels) override;
 
-    ext::ControlStatus create_multibus_track(const std::string& name, int buses) override;
+    control::ControlStatus create_multibus_track(const std::string& name, int buses) override;
 
-    ext::ControlStatus create_pre_track(const std::string& name) override;
+    control::ControlStatus create_pre_track(const std::string& name) override;
 
-    ext::ControlStatus create_post_track(const std::string& name) override;
+    control::ControlStatus create_post_track(const std::string& name) override;
 
-    ext::ControlStatus move_processor_on_track(int processor_id,
-                                               int source_track_id,
-                                               int dest_track_id,
-                                               std::optional<int> before_processor) override;
+    control::ControlStatus move_processor_on_track(int processor_id,
+                                                   int source_track_id,
+                                                   int dest_track_id,
+                                                   std::optional<int> before_processor) override;
 
-    ext::ControlStatus create_processor_on_track(const std::string& name,
-                                                 const std::string& uid,
-                                                 const std::string& file,
-                                                 ext::PluginType type,
-                                                 int track_id,
-                                                 std::optional<int> before_processor_id) override;
+    control::ControlStatus create_processor_on_track(const std::string& name,
+                                                     const std::string& uid,
+                                                     const std::string& file,
+                                                     control::PluginType type,
+                                                     int track_id,
+                                                     std::optional<int> before_processor_id) override;
 
-    ext::ControlStatus delete_processor_from_track(int processor_id, int track_id) override;
+    control::ControlStatus delete_processor_from_track(int processor_id, int track_id) override;
 
-    ext::ControlStatus delete_track(int track_id) override;
+    control::ControlStatus delete_track(int track_id) override;
 
 
 private:

@@ -50,46 +50,46 @@ TEST_F(AudioGraphControllerTest, TestGettingProcessors)
     EXPECT_EQ(_track_id, tracks[0].id);
 
     auto [track_status, track] = _module_under_test->get_track_info(_track_id);
-    ASSERT_EQ(ext::ControlStatus::OK, track_status);
+    ASSERT_EQ(control::ControlStatus::OK, track_status);
     EXPECT_EQ(_track_id, track.id);
     EXPECT_EQ(2, track.channels);
     EXPECT_EQ(1, track.buses);
     EXPECT_EQ("Track 1", track.name);
 
     auto [proc_status, track_proc] = _module_under_test->get_track_processors(_track_id);
-    ASSERT_EQ(ext::ControlStatus::OK, proc_status);
+    ASSERT_EQ(control::ControlStatus::OK, proc_status);
     EXPECT_EQ(0u, track_proc.size());
 
     auto [status, id] = _module_under_test->get_processor_id("Track 1");
-    ASSERT_EQ(ext::ControlStatus::OK, status);
+    ASSERT_EQ(control::ControlStatus::OK, status);
     EXPECT_EQ(_track_id, id);
 
     auto [proc_status_2, proc] = _module_under_test->get_processor_info(_track_id);
-    ASSERT_EQ(ext::ControlStatus::OK, proc_status_2);
+    ASSERT_EQ(control::ControlStatus::OK, proc_status_2);
     EXPECT_EQ(_track_id, proc.id);
     EXPECT_EQ(0, proc.program_count);
     EXPECT_EQ(3, proc.parameter_count);
     EXPECT_EQ("Track 1", proc.name);
 
     std::tie(status, id) = _module_under_test->get_track_id("Track 1");
-    ASSERT_EQ(ext::ControlStatus::OK, status);
+    ASSERT_EQ(control::ControlStatus::OK, status);
     EXPECT_EQ(_track_id, id);
 
     std::tie(status, id) = _module_under_test->get_processor_id("Track 2");
-    ASSERT_EQ(ext::ControlStatus::NOT_FOUND, status);
+    ASSERT_EQ(control::ControlStatus::NOT_FOUND, status);
 
     std::tie(status, id) = _module_under_test->get_track_id("Track 2");
-    ASSERT_EQ(ext::ControlStatus::NOT_FOUND, status);
+    ASSERT_EQ(control::ControlStatus::NOT_FOUND, status);
 
     auto [bypass_status, bypassed] = _module_under_test->get_processor_bypass_state(_track_id);
-    ASSERT_EQ(ext::ControlStatus::OK, bypass_status);
+    ASSERT_EQ(control::ControlStatus::OK, bypass_status);
     EXPECT_FALSE(bypassed);
 }
 
 TEST_F(AudioGraphControllerTest, TestCreatingAndRemovingTracks)
 {
     auto status = _module_under_test->create_track("Track 2", 2);
-    ASSERT_EQ(ext::ControlStatus::OK, status);
+    ASSERT_EQ(control::ControlStatus::OK, status);
 
     auto execution_status1 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
     ASSERT_EQ(execution_status1, EventStatus::HANDLED_OK);
@@ -101,19 +101,19 @@ TEST_F(AudioGraphControllerTest, TestCreatingAndRemovingTracks)
     EXPECT_EQ(2, tracks[1]->output_channels());
 
     status = _module_under_test->create_multibus_track("Track 3", 2);
-    ASSERT_EQ(ext::ControlStatus::OK, status);
+    ASSERT_EQ(control::ControlStatus::OK, status);
 
     auto execution_status2 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
     ASSERT_EQ(execution_status2, EventStatus::HANDLED_OK);
 
     status = _module_under_test->create_pre_track("Track 4");
-    ASSERT_EQ(ext::ControlStatus::OK, status);
+    ASSERT_EQ(control::ControlStatus::OK, status);
 
     auto execution_status_3 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
     ASSERT_EQ(execution_status_3, EventStatus::HANDLED_OK);
 
     status = _module_under_test->create_post_track("Track 5");
-    ASSERT_EQ(ext::ControlStatus::OK, status);
+    ASSERT_EQ(control::ControlStatus::OK, status);
 
     auto execution_status_4 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
     ASSERT_EQ(execution_status_4, EventStatus::HANDLED_OK);
@@ -124,7 +124,7 @@ TEST_F(AudioGraphControllerTest, TestCreatingAndRemovingTracks)
     EXPECT_EQ(2, tracks[2]->buses());
 
     status = _module_under_test->delete_track(tracks[2]->id());
-    ASSERT_EQ(ext::ControlStatus::OK, status);
+    ASSERT_EQ(control::ControlStatus::OK, status);
 
     auto execution_status_5 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
     ASSERT_EQ(execution_status_5, EventStatus::HANDLED_OK);
@@ -138,10 +138,10 @@ TEST_F(AudioGraphControllerTest, TestCreatingAndRemovingProcessors)
     auto status = _module_under_test->create_processor_on_track("Proc 1",
                                                                 "sushi.testing.gain",
                                                                 "",
-                                                                ext::PluginType::INTERNAL,
+                                                                control::PluginType::INTERNAL,
                                                                 _track_id,
                                                                 std::nullopt);
-    ASSERT_EQ(ext::ControlStatus::OK, status);
+    ASSERT_EQ(control::ControlStatus::OK, status);
 
     auto execution_status1 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
     ASSERT_EQ(execution_status1, EventStatus::HANDLED_OK);
@@ -156,7 +156,7 @@ TEST_F(AudioGraphControllerTest, TestCreatingAndRemovingProcessors)
     ASSERT_EQ(EngineReturnStatus::OK, track_status);
 
     status = _module_under_test->move_processor_on_track(proc_id, _track_id, track_2_id, std::nullopt);
-    ASSERT_EQ(ext::ControlStatus::OK, status);
+    ASSERT_EQ(control::ControlStatus::OK, status);
 
     auto execution_status2 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
     ASSERT_EQ(execution_status2, EventStatus::HANDLED_OK);
@@ -166,7 +166,7 @@ TEST_F(AudioGraphControllerTest, TestCreatingAndRemovingProcessors)
 
     // Delete the processor from the new track
     status = _module_under_test->delete_processor_from_track(proc_id, track_2_id);
-    ASSERT_EQ(ext::ControlStatus::OK, status);
+    ASSERT_EQ(control::ControlStatus::OK, status);
 
     auto execution_status4 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
     ASSERT_EQ(execution_status4, EventStatus::HANDLED_OK);

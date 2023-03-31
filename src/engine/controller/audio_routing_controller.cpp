@@ -26,19 +26,19 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
 
 namespace sushi::internal::engine::controller_impl {
 
-inline ext::AudioConnection to_external(const AudioConnection& con)
+inline control::AudioConnection to_external(const AudioConnection& con)
 {
-    return ext::AudioConnection{.track_id = static_cast<int>(con.track),
+    return control::AudioConnection{.track_id = static_cast<int>(con.track),
                                 .track_channel = con.track_channel,
                                 .engine_channel = con.engine_channel};
 }
 
 
-std::vector<ext::AudioConnection> AudioRoutingController::get_all_input_connections() const
+std::vector<control::AudioConnection> AudioRoutingController::get_all_input_connections() const
 {
     SUSHI_LOG_DEBUG("get_all_input_connections called");
     auto connections = _engine->audio_input_connections();
-    std::vector<ext::AudioConnection> returns;
+    std::vector<control::AudioConnection> returns;
     returns.reserve(connections.size());
     for (const auto& connection : connections)
     {
@@ -47,11 +47,11 @@ std::vector<ext::AudioConnection> AudioRoutingController::get_all_input_connecti
     return returns;
 }
 
-std::vector<ext::AudioConnection> AudioRoutingController::get_all_output_connections() const
+std::vector<control::AudioConnection> AudioRoutingController::get_all_output_connections() const
 {
     SUSHI_LOG_DEBUG("get_all_output_connections called");
     auto connections = _engine->audio_output_connections();
-    std::vector<ext::AudioConnection> returns;
+    std::vector<control::AudioConnection> returns;
     returns.reserve(connections.size());
     for (const auto& connection : connections)
     {
@@ -60,11 +60,11 @@ std::vector<ext::AudioConnection> AudioRoutingController::get_all_output_connect
     return returns;
 }
 
-std::vector<ext::AudioConnection> AudioRoutingController::get_input_connections_for_track(int track_id) const
+std::vector<control::AudioConnection> AudioRoutingController::get_input_connections_for_track(int track_id) const
 {
     SUSHI_LOG_DEBUG("get_input_connections_for_track called with track id {}", track_id);
     auto connections = _engine->audio_input_connections();
-    std::vector<ext::AudioConnection> returns;
+    std::vector<control::AudioConnection> returns;
     for (const auto& connection : connections)
     {
         if (connection.track == static_cast<ObjectId>(track_id))
@@ -75,11 +75,11 @@ std::vector<ext::AudioConnection> AudioRoutingController::get_input_connections_
     return returns;
 }
 
-std::vector<ext::AudioConnection> AudioRoutingController::get_output_connections_for_track(int track_id) const
+std::vector<control::AudioConnection> AudioRoutingController::get_output_connections_for_track(int track_id) const
 {
     SUSHI_LOG_DEBUG("get_output_connections_for_track called with track id {}", track_id);
     auto connections = _engine->audio_output_connections();
-    std::vector<ext::AudioConnection> returns;
+    std::vector<control::AudioConnection> returns;
     for (const auto& connection : connections)
     {
         if (connection.track == static_cast<ObjectId>(track_id))
@@ -90,7 +90,7 @@ std::vector<ext::AudioConnection> AudioRoutingController::get_output_connections
     return returns;
 }
 
-ext::ControlStatus AudioRoutingController::connect_input_channel_to_track(int track_id, int track_channel, int input_channel)
+control::ControlStatus AudioRoutingController::connect_input_channel_to_track(int track_id, int track_channel, int input_channel)
 {
     SUSHI_LOG_DEBUG("disconnect_output called with track id {}, track_channel {}, input_channel {}", track_id, track_channel, input_channel);
     auto lambda = [=] () -> int
@@ -103,10 +103,10 @@ ext::ControlStatus AudioRoutingController::connect_input_channel_to_track(int tr
     };
     auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    return control::ControlStatus::OK;
 }
 
-ext::ControlStatus AudioRoutingController::connect_output_channel_to_track(int track_id, int track_channel, int output_channel)
+control::ControlStatus AudioRoutingController::connect_output_channel_to_track(int track_id, int track_channel, int output_channel)
 {
     SUSHI_LOG_DEBUG("connect_output called with track id {}, track_channel {}, output_channel {}", track_id, track_channel, output_channel);
     auto lambda = [=] () -> int
@@ -119,10 +119,10 @@ ext::ControlStatus AudioRoutingController::connect_output_channel_to_track(int t
     };
     auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    return control::ControlStatus::OK;
 }
 
-ext::ControlStatus AudioRoutingController::disconnect_input(int track_id, int track_channel, int input_channel)
+control::ControlStatus AudioRoutingController::disconnect_input(int track_id, int track_channel, int input_channel)
 {
     SUSHI_LOG_DEBUG("disconnect_input called with track id {}, track_channel {}, input_channel {}", track_id, track_channel, input_channel);
     auto lambda = [=] () -> int
@@ -135,10 +135,10 @@ ext::ControlStatus AudioRoutingController::disconnect_input(int track_id, int tr
     };
     auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    return control::ControlStatus::OK;
 }
 
-ext::ControlStatus AudioRoutingController::disconnect_output(int track_id, int track_channel, int output_channel)
+control::ControlStatus AudioRoutingController::disconnect_output(int track_id, int track_channel, int output_channel)
 {
     SUSHI_LOG_DEBUG("disconnect_output called with track id {}, track_channel {}, output_channel {}", track_id, track_channel, output_channel);
     auto lambda = [=] () -> int
@@ -151,10 +151,10 @@ ext::ControlStatus AudioRoutingController::disconnect_output(int track_id, int t
     };
     auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    return control::ControlStatus::OK;
 }
 
-ext::ControlStatus AudioRoutingController::disconnect_all_inputs_from_track(int track_id)
+control::ControlStatus AudioRoutingController::disconnect_all_inputs_from_track(int track_id)
 {
     SUSHI_LOG_DEBUG("disconnect_all_inputs_from_track called with track {}", track_id);
     auto lambda = [=] () -> int
@@ -178,10 +178,10 @@ ext::ControlStatus AudioRoutingController::disconnect_all_inputs_from_track(int 
     };
     auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    return control::ControlStatus::OK;
 }
 
-ext::ControlStatus AudioRoutingController::disconnect_all_outputs_from_track(int track_id)
+control::ControlStatus AudioRoutingController::disconnect_all_outputs_from_track(int track_id)
 {
     SUSHI_LOG_DEBUG("disconnect_all_outputs_from_track called with track {}", track_id);
     auto lambda = [=] () -> int
@@ -204,7 +204,7 @@ ext::ControlStatus AudioRoutingController::disconnect_all_outputs_from_track(int
     };
     auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    return control::ControlStatus::OK;
 }
 
 } // end namespace sushi::engine::controller_impl

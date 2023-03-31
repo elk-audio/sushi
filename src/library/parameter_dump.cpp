@@ -27,7 +27,7 @@
 
 namespace sushi {
 
-rapidjson::Document generate_processor_parameter_document(sushi::ext::SushiControl* engine_controller)
+rapidjson::Document generate_processor_parameter_document(sushi::control::SushiControl* engine_controller)
 {
     rapidjson::Document document;
     document.SetObject();

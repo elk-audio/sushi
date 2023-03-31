@@ -34,20 +34,20 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
 
 namespace sushi::internal::engine::controller_impl {
 
-inline ext::TrackAudioConnectionState to_external(const AudioConnection& con,
-                                                  const std::string& track_name)
+inline control::TrackAudioConnectionState to_external(const AudioConnection& con,
+                                                      const std::string& track_name)
 {
-    ext::TrackAudioConnectionState ext_con;
+    control::TrackAudioConnectionState ext_con;
     ext_con.track = track_name;
     ext_con.track_channel = con.track_channel;
     ext_con.engine_channel = con.engine_channel;
     return ext_con;
 }
 
-inline ext::MidiKbdConnectionState to_external(const midi_dispatcher::KbdInputConnection& con,
-                                               const std::string& track_name)
+inline control::MidiKbdConnectionState to_external(const midi_dispatcher::KbdInputConnection& con,
+                                                   const std::string& track_name)
 {
-    ext::MidiKbdConnectionState ext_con;
+    control::MidiKbdConnectionState ext_con;
     ext_con.track = track_name;
     ext_con.channel = to_external_midi_channel(con.channel);
     ext_con.port = con.port;
@@ -55,10 +55,10 @@ inline ext::MidiKbdConnectionState to_external(const midi_dispatcher::KbdInputCo
     return ext_con;
 }
 
-inline ext::MidiKbdConnectionState to_external(const midi_dispatcher::KbdOutputConnection& con,
-                                               const std::string& track_name)
+inline control::MidiKbdConnectionState to_external(const midi_dispatcher::KbdOutputConnection& con,
+                                                   const std::string& track_name)
 {
-    ext::MidiKbdConnectionState ext_con;
+    control::MidiKbdConnectionState ext_con;
     ext_con.track = track_name;
     ext_con.channel = to_external_midi_channel(con.channel);
     ext_con.port = con.port;
@@ -66,10 +66,10 @@ inline ext::MidiKbdConnectionState to_external(const midi_dispatcher::KbdOutputC
     return ext_con;
 }
 
-inline ext::MidiCCConnectionState to_external(const midi_dispatcher::CCInputConnection& con,
-                                              const std::string& track_name)
+inline control::MidiCCConnectionState to_external(const midi_dispatcher::CCInputConnection& con,
+                                                  const std::string& track_name)
 {
-    ext::MidiCCConnectionState ext_con;
+    control::MidiCCConnectionState ext_con;
     ext_con.processor = track_name;
     ext_con.channel = to_external_midi_channel(con.channel);
     ext_con.port = con.port;
@@ -81,17 +81,17 @@ inline ext::MidiCCConnectionState to_external(const midi_dispatcher::CCInputConn
     return ext_con;
 }
 
-inline ext::MidiPCConnectionState to_external(const midi_dispatcher::PCInputConnection& con,
-                                              const std::string& track_name)
+inline control::MidiPCConnectionState to_external(const midi_dispatcher::PCInputConnection& con,
+                                                  const std::string& track_name)
 {
-    ext::MidiPCConnectionState ext_con;
+    control::MidiPCConnectionState ext_con;
     ext_con.processor = track_name;
     ext_con.channel = to_external_midi_channel(con.channel);
     ext_con.port = con.port;
     return ext_con;
 }
 
-inline void to_internal(control_frontend::OscState& dest, const ext::OscState& src)
+inline void to_internal(control_frontend::OscState& dest, const control::OscState& src)
 {
     dest.set_auto_enable_outputs(src.enable_all_processor_outputs);
     for (const auto& output : src.enabled_processor_outputs)
@@ -100,7 +100,7 @@ inline void to_internal(control_frontend::OscState& dest, const ext::OscState& s
     }
 }
 
-inline void to_external(ext::OscState& dest, const control_frontend::OscState& src)
+inline void to_external(control::OscState& dest, const control_frontend::OscState& src)
 {
     dest.enable_all_processor_outputs = src.auto_enable_outputs();
     for (const auto& output : src.enabled_outputs())
@@ -124,11 +124,11 @@ void SessionController::set_osc_frontend(control_frontend::OSCFrontend* osc_fron
     _osc_frontend = osc_frontend;
 }
 
-ext::SessionState SessionController::save_session() const
+control::SessionState SessionController::save_session() const
 {
     SUSHI_LOG_DEBUG("save_session called");
 
-    ext::SessionState session;
+    control::SessionState session;
     auto date = time(nullptr);
     session.save_date = fmt::format("{:%Y-%m-%d %H:%M}", fmt::localtime(date));
     session.sushi_info = _save_build_info();
@@ -140,14 +140,14 @@ ext::SessionState SessionController::save_session() const
     return session;
 }
 
-ext::ControlStatus SessionController::restore_session(const ext::SessionState& state)
+control::ControlStatus SessionController::restore_session(const control::SessionState& state)
 {
     SUSHI_LOG_DEBUG("restore_session called");
     if (_check_state(state) == false)
     {
-        return ext::ControlStatus::INVALID_ARGUMENTS;
+        return control::ControlStatus::INVALID_ARGUMENTS;
     }
-    auto new_session = std::make_unique<ext::SessionState>(state);
+    auto new_session = std::make_unique<control::SessionState>(state);
 
     auto lambda = [&, state = std::move(new_session)] () -> int
     {
@@ -174,12 +174,12 @@ ext::ControlStatus SessionController::restore_session(const ext::SessionState& s
 
     auto event = new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    return control::ControlStatus::OK;
 }
 
-ext::SushiBuildInfo SessionController::_save_build_info() const
+control::SushiBuildInfo SessionController::_save_build_info() const
 {
-    ext::SushiBuildInfo info;
+    control::SushiBuildInfo info;
     for(auto& option : sushi::CompileTimeSettings::enabled_build_options)
     {
         info.build_options.emplace_back(option);
@@ -192,9 +192,9 @@ ext::SushiBuildInfo SessionController::_save_build_info() const
     return info;
 }
 
-ext::OscState SessionController::_save_osc_state() const
+control::OscState SessionController::_save_osc_state() const
 {
-    ext::OscState ext_state;
+    control::OscState ext_state;
     if (_osc_frontend)
     {
         auto state = _osc_frontend->save_state();
@@ -203,9 +203,9 @@ ext::OscState SessionController::_save_osc_state() const
     return ext_state;
 }
 
-ext::MidiState SessionController::_save_midi_state() const
+control::MidiState SessionController::_save_midi_state() const
 {
-    ext::MidiState state;
+    control::MidiState state;
 
     state.inputs = _midi_dispatcher->get_midi_inputs();
     state.outputs = _midi_dispatcher->get_midi_outputs();
@@ -252,9 +252,9 @@ ext::MidiState SessionController::_save_midi_state() const
     return state;
 }
 
-ext::EngineState SessionController::_save_engine_state() const
+control::EngineState SessionController::_save_engine_state() const
 {
-    ext::EngineState state;
+    control::EngineState state;
     auto transport = _engine->transport();
 
     state.sample_rate = _engine->sample_rate();
@@ -296,12 +296,12 @@ ext::EngineState SessionController::_save_engine_state() const
     return state;
 }
 
-std::vector<ext::TrackState> SessionController::_save_tracks() const
+std::vector<control::TrackState> SessionController::_save_tracks() const
 {
-    std::vector<ext::TrackState> tracks;
+    std::vector<control::TrackState> tracks;
     for (const auto& track : _processors->all_tracks())
     {
-        ext::TrackState state;
+        control::TrackState state;
         auto track_state = track->save_state();
         to_external(&state.track_state, &track_state);
         state.name = track->name();
@@ -320,9 +320,9 @@ std::vector<ext::TrackState> SessionController::_save_tracks() const
     return tracks;
 }
 
-ext::PluginClass SessionController::_save_plugin(const Processor* plugin) const
+control::PluginClass SessionController::_save_plugin(const Processor* plugin) const
 {
-    ext::PluginClass plugin_class;
+    control::PluginClass plugin_class;
 
     auto info = plugin->info();
     plugin_class.name = plugin->name();
@@ -337,7 +337,7 @@ ext::PluginClass SessionController::_save_plugin(const Processor* plugin) const
     return plugin_class;
 }
 
-bool SessionController::_check_state(const ext::SessionState& state) const
+bool SessionController::_check_state(const control::SessionState& state) const
 {
     // Todo: check if state was saved with a newer/older version of sushi.
     if (state.engine_state.used_audio_inputs > _engine->audio_input_channels() ||
@@ -355,7 +355,7 @@ bool SessionController::_check_state(const ext::SessionState& state) const
     return true;
 }
 
-void SessionController::_restore_tracks(std::vector<ext::TrackState> tracks)
+void SessionController::_restore_tracks(std::vector<control::TrackState> tracks)
 {
     for (auto& track : tracks)
     {
@@ -364,15 +364,15 @@ void SessionController::_restore_tracks(std::vector<ext::TrackState> tracks)
 
         switch (track.type)
         {
-            case ext::TrackType::PRE:
+            case control::TrackType::PRE:
                 std::tie(status, track_id) = _engine->create_pre_track(track.name);
                 break;
 
-            case ext::TrackType::POST:
+            case control::TrackType::POST:
                 std::tie(status, track_id) = _engine->create_post_track(track.name);
                 break;
 
-            case ext::TrackType::REGULAR:
+            case control::TrackType::REGULAR:
                 if (track.buses > 1)
                 {
                     std::tie(status, track_id) = _engine->create_multibus_track(track.name, track.buses);
@@ -398,7 +398,7 @@ void SessionController::_restore_tracks(std::vector<ext::TrackState> tracks)
     }
 }
 
-void SessionController::_restore_plugin_states(std::vector<ext::TrackState> tracks)
+void SessionController::_restore_plugin_states(std::vector<control::TrackState> tracks)
 {
     for (auto& track : tracks)
     {
@@ -435,7 +435,7 @@ void SessionController::_restore_plugin_states(std::vector<ext::TrackState> trac
     }
 }
 
-void SessionController::_restore_plugin(ext::PluginClass plugin, Track* track)
+void SessionController::_restore_plugin(control::PluginClass plugin, Track* track)
 {
     PluginInfo info {.uid = plugin.uid,
                      .path = plugin.path,
@@ -454,7 +454,7 @@ void SessionController::_restore_plugin(ext::PluginClass plugin, Track* track)
     }
 }
 
-void SessionController::_restore_engine(ext::EngineState& state)
+void SessionController::_restore_engine(control::EngineState& state)
 {
     if (_engine->sample_rate() != state.sample_rate)
     {
@@ -493,7 +493,7 @@ void SessionController::_restore_engine(ext::EngineState& state)
     }
 }
 
-void SessionController::_restore_midi(ext::MidiState& state)
+void SessionController::_restore_midi(control::MidiState& state)
 {
     [[maybe_unused]] midi_dispatcher::MidiDispatcherStatus status;
     for (const auto& con : state.kbd_input_connections)
@@ -559,7 +559,7 @@ void SessionController::_restore_midi(ext::MidiState& state)
     }
 }
 
-void SessionController::_restore_osc(ext::OscState& state)
+void SessionController::_restore_osc(control::OscState& state)
 {
     if (_osc_frontend)
     {

@@ -27,7 +27,7 @@
 
 namespace sushi::internal::engine::controller_impl {
 
-class AudioRoutingController : public ext::AudioRoutingController
+class AudioRoutingController : public control::AudioRoutingController
 {
 public:
     explicit AudioRoutingController(BaseEngine* engine) : _engine(engine),
@@ -35,25 +35,25 @@ public:
 
     ~AudioRoutingController() override = default;
 
-    std::vector<ext::AudioConnection> get_all_input_connections() const override;
+    std::vector<control::AudioConnection> get_all_input_connections() const override;
 
-    std::vector<ext::AudioConnection> get_all_output_connections() const override;
+    std::vector<control::AudioConnection> get_all_output_connections() const override;
 
-    std::vector<ext::AudioConnection> get_input_connections_for_track(int track_id) const override;
+    std::vector<control::AudioConnection> get_input_connections_for_track(int track_id) const override;
 
-    std::vector<ext::AudioConnection> get_output_connections_for_track(int track_id) const override;
+    std::vector<control::AudioConnection> get_output_connections_for_track(int track_id) const override;
 
-    ext::ControlStatus connect_input_channel_to_track(int track_id, int track_channel, int input_channel) override;
+    control::ControlStatus connect_input_channel_to_track(int track_id, int track_channel, int input_channel) override;
 
-    ext::ControlStatus connect_output_channel_to_track(int track_id, int track_channel, int output_channel) override;
+    control::ControlStatus connect_output_channel_to_track(int track_id, int track_channel, int output_channel) override;
 
-    ext::ControlStatus disconnect_input(int track_id, int track_channel, int input_channel) override;
+    control::ControlStatus disconnect_input(int track_id, int track_channel, int input_channel) override;
 
-    ext::ControlStatus disconnect_output(int track_id, int track_channel, int output_channel) override;
+    control::ControlStatus disconnect_output(int track_id, int track_channel, int output_channel) override;
 
-    ext::ControlStatus disconnect_all_inputs_from_track(int track_id) override;
+    control::ControlStatus disconnect_all_inputs_from_track(int track_id) override;
 
-    ext::ControlStatus disconnect_all_outputs_from_track(int track_id) override;
+    control::ControlStatus disconnect_all_outputs_from_track(int track_id) override;
 
 private:
     BaseEngine* _engine;

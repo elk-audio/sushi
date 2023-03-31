@@ -56,9 +56,9 @@ public:
 
     void set_tempo(float tempo) override;
 
-    void set_time_signature(ext::TimeSignature time_signature) override;
+    void set_time_signature(control::TimeSignature time_signature) override;
 
-    void set_playing_mode(ext::PlayingMode mode) override;
+    void set_playing_mode(control::PlayingMode mode) override;
 
     bool set_current_beats(double beat_count) override;
 
@@ -91,7 +91,7 @@ private:
 
     float _tempo {0};
     sushi::TimeSignature _time_signature {0, 0};
-    ext::PlayingMode _playing_mode {ext::PlayingMode::STOPPED};
+    control::PlayingMode _playing_mode {control::PlayingMode::STOPPED};
 };
 
 } // end namespace sushi::internal

@@ -26,7 +26,7 @@
 
 namespace sushi::internal::engine::controller_impl {
 
-class SystemController : public ext::SystemController
+class SystemController : public control::SystemController
 {
 public:
     SystemController(int inputs, int outputs);
@@ -35,7 +35,7 @@ public:
 
     std::string get_sushi_version() const override;
 
-    ext::SushiBuildInfo get_sushi_build_info() const override;
+    control::SushiBuildInfo get_sushi_build_info() const override;
 
     int get_input_audio_channel_count() const override;
 
@@ -43,7 +43,7 @@ public:
 
 private:
     std::vector<std::string> _build_options;
-    ext::SushiBuildInfo _build_info;
+    control::SushiBuildInfo _build_info;
 
     const int _audio_inputs{0};
     const int _audio_outputs{0};

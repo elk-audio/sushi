@@ -28,21 +28,21 @@
 namespace sushi_rpc {
 
 GrpcServer::GrpcServer(const std::string& listen_address,
-                       sushi::ext::SushiControl* controller) : _listen_address{listen_address},
-                                                               _system_control_service{std::make_unique<SystemControlService>(controller)},
-                                                               _transport_control_service{std::make_unique<TransportControlService>(controller)},
-                                                               _timing_control_service{std::make_unique<TimingControlService>(controller)},
-                                                               _keyboard_control_service{std::make_unique<KeyboardControlService>(controller)},
-                                                               _audio_graph_control_service{std::make_unique<AudioGraphControlService>(controller)},
-                                                               _parameter_control_service{std::make_unique<ParameterControlService>(controller)},
-                                                               _program_control_service{std::make_unique<ProgramControlService>(controller)},
-                                                               _midi_control_service{std::make_unique<MidiControlService>(controller)},
-                                                               _audio_routing_control_service{std::make_unique<AudioRoutingControlService>(controller)},
-                                                               _osc_control_service{std::make_unique<OscControlService>(controller)},
-                                                               _session_control_service{std::make_unique<SessionControlService>(controller)},
-                                                               _notification_control_service{std::make_unique<NotificationControlService>(controller)},
-                                                               _server_builder{std::make_unique<grpc::ServerBuilder>()},
-                                                               _running{false}
+                       sushi::control::SushiControl* controller) : _listen_address{listen_address},
+                                                                   _system_control_service{std::make_unique<SystemControlService>(controller)},
+                                                                   _transport_control_service{std::make_unique<TransportControlService>(controller)},
+                                                                   _timing_control_service{std::make_unique<TimingControlService>(controller)},
+                                                                   _keyboard_control_service{std::make_unique<KeyboardControlService>(controller)},
+                                                                   _audio_graph_control_service{std::make_unique<AudioGraphControlService>(controller)},
+                                                                   _parameter_control_service{std::make_unique<ParameterControlService>(controller)},
+                                                                   _program_control_service{std::make_unique<ProgramControlService>(controller)},
+                                                                   _midi_control_service{std::make_unique<MidiControlService>(controller)},
+                                                                   _audio_routing_control_service{std::make_unique<AudioRoutingControlService>(controller)},
+                                                                   _osc_control_service{std::make_unique<OscControlService>(controller)},
+                                                                   _session_control_service{std::make_unique<SessionControlService>(controller)},
+                                                                   _notification_control_service{std::make_unique<NotificationControlService>(controller)},
+                                                                   _server_builder{std::make_unique<grpc::ServerBuilder>()},
+                                                                   _running{false}
 {}
 
 GrpcServer::~GrpcServer() = default;

@@ -55,14 +55,14 @@ public:
      *        (can be called from a real-time context).
      * @param time_signature
      */
-    virtual void set_time_signature(ext::TimeSignature time_signature) = 0;
+    virtual void set_time_signature(control::TimeSignature time_signature) = 0;
 
     /**
      * @brief Set the PlayingMode of the Sushi transport.
      *        (can be called from a real-time context).
      * @param mode
      */
-    virtual void set_playing_mode(ext::PlayingMode mode) = 0;
+    virtual void set_playing_mode(control::PlayingMode mode) = 0;
 
     /**
      * @brief Set the beat time of the Sushi transport.

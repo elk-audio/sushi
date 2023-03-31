@@ -28,7 +28,7 @@
 
 namespace sushi::internal::engine::controller_impl {
 
-class TimingController : public ext::TimingController
+class TimingController : public control::TimingController
 {
 public:
     explicit TimingController(BaseEngine* engine);
@@ -39,20 +39,20 @@ public:
 
     void set_timing_statistics_enabled(bool enabled) override;
 
-    std::pair<ext::ControlStatus, ext::CpuTimings> get_engine_timings() const override;
+    std::pair<control::ControlStatus, control::CpuTimings> get_engine_timings() const override;
 
-    std::pair<ext::ControlStatus, ext::CpuTimings> get_track_timings(int track_id) const override;
+    std::pair<control::ControlStatus, control::CpuTimings> get_track_timings(int track_id) const override;
 
-    std::pair<ext::ControlStatus, ext::CpuTimings> get_processor_timings(int processor_id) const override;
+    std::pair<control::ControlStatus, control::CpuTimings> get_processor_timings(int processor_id) const override;
 
-    ext::ControlStatus reset_all_timings() override;
+    control::ControlStatus reset_all_timings() override;
 
-    ext::ControlStatus reset_track_timings(int track_id) override;
+    control::ControlStatus reset_track_timings(int track_id) override;
 
-    ext::ControlStatus reset_processor_timings(int processor_id) override;
+    control::ControlStatus reset_processor_timings(int processor_id) override;
 
 private:
-    std::pair<ext::ControlStatus, ext::CpuTimings> _get_timings(int node) const;
+    std::pair<control::ControlStatus, control::CpuTimings> _get_timings(int node) const;
 
     performance::BasePerformanceTimer*  _performance_timer;
 };

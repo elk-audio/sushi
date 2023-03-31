@@ -385,7 +385,7 @@ void OscpackOscMessenger::_set_timing_statistics_enabled(const oscpack::Received
     int value = (arg++)->AsInt32();
     bool is_enabled = (value) ? true : false;
 
-    auto controller = static_cast<ext::SushiControl*>(user_data)->timing_controller();
+    auto controller = static_cast<control::SushiControl*>(user_data)->timing_controller();
     controller->set_timing_statistics_enabled(is_enabled);
 
     SUSHI_LOG_DEBUG("Got request to set timing statistics enabled to {}", is_enabled);
@@ -397,14 +397,14 @@ void OscpackOscMessenger::_reset_timing_statistics(const oscpack::ReceivedMessag
     std::string output_text = (arg++)->AsString();
     std::string_view type = output_text;
 
-    auto controller = static_cast<ext::SushiControl*>(user_data);
+    auto controller = static_cast<control::SushiControl*>(user_data);
     auto timing_ctrl = controller->timing_controller();
     auto processor_ctrl = controller->audio_graph_controller();
 
     if (type == "all")
     {
         auto status = timing_ctrl->reset_all_timings();
-        if (status != ext::ControlStatus::OK)
+        if (status != control::ControlStatus::OK)
         {
             SUSHI_LOG_WARNING("Failed to reset track timings of all tracks and processors");
         }
@@ -414,7 +414,7 @@ void OscpackOscMessenger::_reset_timing_statistics(const oscpack::ReceivedMessag
         std::string track_name = (arg++)->AsString();
 
         auto [track_status, track_id] = processor_ctrl->get_track_id(track_name);
-        if (track_status == ext::ControlStatus::OK)
+        if (track_status == control::ControlStatus::OK)
         {
             output_text += " " + track_name;
             timing_ctrl->reset_track_timings(track_id);
@@ -429,7 +429,7 @@ void OscpackOscMessenger::_reset_timing_statistics(const oscpack::ReceivedMessag
         std::string processor_name = (arg++)->AsString();
 
         auto [processor_status, processor_id] = processor_ctrl->get_processor_id(processor_name);
-        if (processor_status == ext::ControlStatus::OK)
+        if (processor_status == control::ControlStatus::OK)
         {
             output_text += " " + processor_name;
             timing_ctrl->reset_processor_timings(processor_id);
@@ -451,7 +451,7 @@ void OscpackOscMessenger::_set_tempo(const oscpack::ReceivedMessage& m, void* us
     oscpack::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
     float tempo = (arg++)->AsFloat();
 
-    auto controller = static_cast<ext::SushiControl*>(user_data)->transport_controller();
+    auto controller = static_cast<control::SushiControl*>(user_data)->transport_controller();
     controller->set_tempo(tempo);
 
     SUSHI_LOG_DEBUG("Got a set tempo request to {} bpm", tempo);
@@ -463,7 +463,7 @@ void OscpackOscMessenger::_set_time_signature(const oscpack::ReceivedMessage& m,
     int numerator = (arg++)->AsInt32();
     int denominator = (arg++)->AsInt32();
 
-    auto controller = static_cast<ext::SushiControl*>(user_data)->transport_controller();
+    auto controller = static_cast<control::SushiControl*>(user_data)->transport_controller();
     controller->set_time_signature({numerator, denominator});
 
     SUSHI_LOG_DEBUG("Got a set time signature to {}/{} request", numerator, denominator);
@@ -474,15 +474,15 @@ void OscpackOscMessenger::_set_playing_mode(const oscpack::ReceivedMessage& m, v
     oscpack::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
     std::string mode_str = (arg++)->AsString();
 
-    auto controller = static_cast<ext::SushiControl*>(user_data)->transport_controller();
+    auto controller = static_cast<control::SushiControl*>(user_data)->transport_controller();
 
     if (mode_str == "playing")
     {
-        controller->set_playing_mode(ext::PlayingMode::PLAYING);
+        controller->set_playing_mode(control::PlayingMode::PLAYING);
     }
     else if (mode_str == "stopped")
     {
-        controller->set_playing_mode(ext::PlayingMode::STOPPED);
+        controller->set_playing_mode(control::PlayingMode::STOPPED);
     }
     else
     {
@@ -497,19 +497,19 @@ void OscpackOscMessenger::_set_tempo_sync_mode(const oscpack::ReceivedMessage& m
     oscpack::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
     std::string mode_str = (arg++)->AsString();
 
-    auto controller = static_cast<ext::SushiControl*>(user_data)->transport_controller();
+    auto controller = static_cast<control::SushiControl*>(user_data)->transport_controller();
 
     if (mode_str == "internal")
     {
-        controller->set_sync_mode(ext::SyncMode::INTERNAL);
+        controller->set_sync_mode(control::SyncMode::INTERNAL);
     }
     else if (mode_str == "ableton_link")
     {
-        controller->set_sync_mode(ext::SyncMode::LINK);
+        controller->set_sync_mode(control::SyncMode::LINK);
     }
     else if (mode_str == "midi")
     {
-        controller->set_sync_mode(ext::SyncMode::MIDI);
+        controller->set_sync_mode(control::SyncMode::MIDI);
     }
     else
     {

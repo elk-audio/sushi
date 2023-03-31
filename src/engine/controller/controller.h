@@ -61,7 +61,7 @@ namespace engine {
 
 class BaseEngine;
 
-class Controller : public ext::SushiControl, EventPoster
+class Controller : public control::SushiControl, EventPoster
 {
 public:
     Controller(engine::BaseEngine* engine,
@@ -70,7 +70,8 @@ public:
 
     ~Controller() override;
 
-    ext::ControlStatus subscribe_to_notifications(ext::NotificationType type, ext::ControlListener* listener) override;
+    control::ControlStatus subscribe_to_notifications(control::NotificationType type,
+                                                      control::ControlListener* listener) override;
 
     /* Inherited from EventPoster */
     int process(Event* event) override;
@@ -89,12 +90,12 @@ private:
     void _handle_audio_graph_notifications(const AudioGraphNotificationEvent* event);
 
     void _notify_processor_listeners(const AudioGraphNotificationEvent* typed_event,
-                                     ext::ProcessorAction action) const;
+                                     control::ProcessorAction action) const;
 
     void _notify_track_listeners(const AudioGraphNotificationEvent* typed_event,
-                                 ext::TrackAction action) const;
+                                 control::TrackAction action) const;
 
-    void _notify_transport_listeners(const ext::TransportNotification& notification) const;
+    void _notify_transport_listeners(const control::TransportNotification& notification) const;
 
     void _notify_parameter_listeners(Event* event) const;
 
@@ -102,12 +103,12 @@ private:
 
     void _notify_timing_listeners(const EngineTimingNotificationEvent* event) const;
 
-    std::vector<ext::ControlListener*>      _parameter_change_listeners;
-    std::vector<ext::ControlListener*>      _property_change_listeners;
-    std::vector<ext::ControlListener*>      _processor_update_listeners;
-    std::vector<ext::ControlListener*>      _track_update_listeners;
-    std::vector<ext::ControlListener*>      _transport_update_listeners;
-    std::vector<ext::ControlListener*>      _cpu_timing_update_listeners;
+    std::vector<control::ControlListener*>      _parameter_change_listeners;
+    std::vector<control::ControlListener*>      _property_change_listeners;
+    std::vector<control::ControlListener*>      _processor_update_listeners;
+    std::vector<control::ControlListener*>      _track_update_listeners;
+    std::vector<control::ControlListener*>      _transport_update_listeners;
+    std::vector<control::ControlListener*>      _cpu_timing_update_listeners;
 
     const engine::BaseProcessorContainer*   _processors;
 

@@ -37,108 +37,108 @@ int CvGateController::get_cv_output_ports() const
     return 0;
 }
 
-std::vector<ext::CvConnection> CvGateController::get_all_cv_input_connections() const
+std::vector<control::CvConnection> CvGateController::get_all_cv_input_connections() const
 {
     return {};
 }
 
-std::vector<ext::CvConnection> CvGateController::get_all_cv_output_connections() const
+std::vector<control::CvConnection> CvGateController::get_all_cv_output_connections() const
 {
     return {};
 }
 
-std::vector<ext::GateConnection> CvGateController::get_all_gate_input_connections() const
+std::vector<control::GateConnection> CvGateController::get_all_gate_input_connections() const
 {
     return {};
 }
 
-std::vector<ext::GateConnection> CvGateController::get_all_gate_output_connections() const
+std::vector<control::GateConnection> CvGateController::get_all_gate_output_connections() const
 {
     return {};
 }
 
-std::pair<ext::ControlStatus, std::vector<ext::CvConnection>>
+std::pair<control::ControlStatus, std::vector<control::CvConnection>>
 CvGateController::get_cv_input_connections_for_processor(int processor_id) const
 {
-    return {ext::ControlStatus::UNSUPPORTED_OPERATION, std::vector<ext::CvConnection>()};
+    return {control::ControlStatus::UNSUPPORTED_OPERATION, std::vector<control::CvConnection>()};
 }
 
-std::pair<ext::ControlStatus, std::vector<ext::CvConnection>>
+std::pair<control::ControlStatus, std::vector<control::CvConnection>>
 CvGateController::get_cv_output_connections_for_processor(int processor_id) const
 {
-    return {ext::ControlStatus::UNSUPPORTED_OPERATION, std::vector<ext::CvConnection>()};
+    return {control::ControlStatus::UNSUPPORTED_OPERATION, std::vector<control::CvConnection>()};
 }
 
-std::pair<ext::ControlStatus, std::vector<ext::GateConnection>>
+std::pair<control::ControlStatus, std::vector<control::GateConnection>>
 CvGateController::get_gate_input_connections_for_processor(int processor_id) const
 {
-    return {ext::ControlStatus::UNSUPPORTED_OPERATION, std::vector<ext::GateConnection>()};
+    return {control::ControlStatus::UNSUPPORTED_OPERATION, std::vector<control::GateConnection>()};
 }
 
-std::pair<ext::ControlStatus, std::vector<ext::GateConnection>>
+std::pair<control::ControlStatus, std::vector<control::GateConnection>>
 CvGateController::get_gate_output_connections_for_processor(int processor_id) const
 {
-    return {ext::ControlStatus::UNSUPPORTED_OPERATION, std::vector<ext::GateConnection>()};
+    return {control::ControlStatus::UNSUPPORTED_OPERATION, std::vector<control::GateConnection>()};
 }
 
-ext::ControlStatus CvGateController::connect_cv_input_to_parameter(int processor_id, int parameter_id, int cv_input_id)
+control::ControlStatus CvGateController::connect_cv_input_to_parameter(int processor_id, int parameter_id, int cv_input_id)
 {
-    return ext::ControlStatus::UNSUPPORTED_OPERATION;
+    return control::ControlStatus::UNSUPPORTED_OPERATION;
 }
 
-ext::ControlStatus CvGateController::connect_cv_output_from_parameter(int processor_id, int parameter_id, int cv_output_id)
+control::ControlStatus CvGateController::connect_cv_output_from_parameter(int processor_id, int parameter_id, int cv_output_id)
 {
-    return ext::ControlStatus::UNSUPPORTED_OPERATION;
+    return control::ControlStatus::UNSUPPORTED_OPERATION;
 }
 
-ext::ControlStatus CvGateController::connect_gate_input_to_processor(int processor_id, int gate_input_id, int channel, int note_no)
+control::ControlStatus CvGateController::connect_gate_input_to_processor(int processor_id, int gate_input_id, int channel, int note_no)
 {
-    return ext::ControlStatus::UNSUPPORTED_OPERATION;
+    return control::ControlStatus::UNSUPPORTED_OPERATION;
 }
 
-ext::ControlStatus CvGateController::connect_gate_output_from_processor(int processor_id, int gate_output_id, int channel, int note_no)
+control::ControlStatus CvGateController::connect_gate_output_from_processor(int processor_id, int gate_output_id, int channel, int note_no)
 {
-    return ext::ControlStatus::UNSUPPORTED_OPERATION;
+    return control::ControlStatus::UNSUPPORTED_OPERATION;
 }
 
-ext::ControlStatus CvGateController::disconnect_cv_input(int processor_id, int parameter_id, int cv_input_id)
+control::ControlStatus CvGateController::disconnect_cv_input(int processor_id, int parameter_id, int cv_input_id)
 {
-    return ext::ControlStatus::UNSUPPORTED_OPERATION;
+    return control::ControlStatus::UNSUPPORTED_OPERATION;
 }
 
-ext::ControlStatus CvGateController::disconnect_cv_output(int processor_id, int parameter_id, int cv_output_id)
+control::ControlStatus CvGateController::disconnect_cv_output(int processor_id, int parameter_id, int cv_output_id)
 {
-    return ext::ControlStatus::UNSUPPORTED_OPERATION;
+    return control::ControlStatus::UNSUPPORTED_OPERATION;
 }
 
-ext::ControlStatus CvGateController::disconnect_gate_input(int processor_id, int gate_input_id, int channel, int note_no)
+control::ControlStatus CvGateController::disconnect_gate_input(int processor_id, int gate_input_id, int channel, int note_no)
 {
-    return ext::ControlStatus::UNSUPPORTED_OPERATION;
+    return control::ControlStatus::UNSUPPORTED_OPERATION;
 }
 
-ext::ControlStatus CvGateController::disconnect_gate_output(int processor_id, int gate_output_id, int channel, int note_no)
+control::ControlStatus CvGateController::disconnect_gate_output(int processor_id, int gate_output_id, int channel, int note_no)
 {
-    return ext::ControlStatus::UNSUPPORTED_OPERATION;
+    return control::ControlStatus::UNSUPPORTED_OPERATION;
 }
 
-ext::ControlStatus CvGateController::disconnect_all_cv_inputs_from_processor(int processor_id)
+control::ControlStatus CvGateController::disconnect_all_cv_inputs_from_processor(int processor_id)
 {
-    return ext::ControlStatus::UNSUPPORTED_OPERATION;
+    return control::ControlStatus::UNSUPPORTED_OPERATION;
 }
 
-ext::ControlStatus CvGateController::disconnect_all_cv_outputs_from_processor(int processor_id)
+control::ControlStatus CvGateController::disconnect_all_cv_outputs_from_processor(int processor_id)
 {
-    return ext::ControlStatus::UNSUPPORTED_OPERATION;
+    return control::ControlStatus::UNSUPPORTED_OPERATION;
 }
 
-ext::ControlStatus CvGateController::disconnect_all_gate_inputs_from_processor(int processor_id)
+control::ControlStatus CvGateController::disconnect_all_gate_inputs_from_processor(int processor_id)
 {
-    return ext::ControlStatus::UNSUPPORTED_OPERATION;
+    return control::ControlStatus::UNSUPPORTED_OPERATION;
 }
 
-ext::ControlStatus CvGateController::disconnect_all_gate_outputs_from_processor(int processor_id)
+control::ControlStatus CvGateController::disconnect_all_gate_outputs_from_processor(int processor_id)
 {
-    return ext::ControlStatus::UNSUPPORTED_OPERATION;
+    return control::ControlStatus::UNSUPPORTED_OPERATION;
 }
 
 #pragma GCC diagnostic pop

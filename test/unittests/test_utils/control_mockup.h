@@ -9,7 +9,7 @@
 
 #include "sushi/control_interface.h"
 
-namespace sushi::ext {
+namespace sushi::control {
 
 const ParameterInfo parameter_1{0, ParameterType::INT, "param 1", "param 1", "unit", false, 0, 0};
 const ParameterInfo parameter_2{1, ParameterType::FLOAT, "param 2", "param 2", "unit", true, 1, 1};
@@ -102,11 +102,11 @@ public:
         _args_from_last_call.clear();
         switch (sync_mode)
         {
-            case ext::SyncMode::GATE:       _args_from_last_call["sync mode"] = "GATE"; break;
-            case ext::SyncMode::INTERNAL:   _args_from_last_call["sync mode"] = "INTERNAL"; break;
-            case ext::SyncMode::LINK:       _args_from_last_call["sync mode"] = "LINK"; break;
-            case ext::SyncMode::MIDI:       _args_from_last_call["sync mode"] = "MIDI"; break;
-            default:                        _args_from_last_call["sync mode"] = "UNKNOWN MODE";
+            case control::SyncMode::GATE:       _args_from_last_call["sync mode"] = "GATE"; break;
+            case control::SyncMode::INTERNAL:   _args_from_last_call["sync mode"] = "INTERNAL"; break;
+            case control::SyncMode::LINK:       _args_from_last_call["sync mode"] = "LINK"; break;
+            case control::SyncMode::MIDI:       _args_from_last_call["sync mode"] = "MIDI"; break;
+            default:                            _args_from_last_call["sync mode"] = "UNKNOWN MODE";
         }
 
         _recently_called = true;
@@ -117,9 +117,9 @@ public:
         _args_from_last_call.clear();
         switch (playing_mode)
         {
-            case ext::PlayingMode::STOPPED:         _args_from_last_call["playing mode"] = "STOPPED"; break;
-            case ext::PlayingMode::RECORDING:       _args_from_last_call["playing mode"] = "RECORDING"; break;
-            case ext::PlayingMode::PLAYING:         _args_from_last_call["playing mode"] = "PLAYING"; break;
+            case control::PlayingMode::STOPPED:     _args_from_last_call["playing mode"] = "STOPPED"; break;
+            case control::PlayingMode::RECORDING:   _args_from_last_call["playing mode"] = "RECORDING"; break;
+            case control::PlayingMode::PLAYING:     _args_from_last_call["playing mode"] = "PLAYING"; break;
             default:                                _args_from_last_call["playing mode"] = "UNKWON MODE";
         }
         _recently_called = true;
@@ -301,9 +301,9 @@ public:
         return {_return_status, DEFAULT_BYPASS_STATE};
     }
 
-    std::pair<ControlStatus, ext::ProcessorState> get_processor_state(int /*processor_id*/) const override
+    std::pair<ControlStatus, control::ProcessorState> get_processor_state(int /*processor_id*/) const override
     {
-        return {_return_status, ext::ProcessorState()};
+        return {_return_status, control::ProcessorState()};
     }
 
     ControlStatus set_processor_bypass_state(int processor_id, bool bypass_enabled) override
@@ -315,7 +315,7 @@ public:
         return _return_status;
     }
 
-    ControlStatus set_processor_state(int processor_id, const ext::ProcessorState& /*state*/) override
+    ControlStatus set_processor_state(int processor_id, const control::ProcessorState& /*state*/) override
     {
         _args_from_last_call.clear();
         _args_from_last_call["processor id"] = std::to_string(processor_id);
@@ -834,12 +834,12 @@ public:
 class SessionControllerMockup : public SessionController, public TestableController
 {
 public:
-    ext::SessionState save_session() const override
+    control::SessionState save_session() const override
     {
         return SessionState();
     }
 
-    ext::ControlStatus restore_session(const ext::SessionState& /*state*/) override
+    control::ControlStatus restore_session(const control::SessionState& /*state*/) override
     {
         return ControlStatus::UNSUPPORTED_OPERATION;
     }
@@ -976,6 +976,6 @@ private:
                                                   &_session_controller_mockup};
 };
 
-} // end namespace sushi::ext
+} // end namespace sushi::control
 
 #endif //SUSHI_CONTROL_MOCKUP_H

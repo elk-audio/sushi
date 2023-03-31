@@ -69,7 +69,7 @@ struct OscConnection
     ObjectId           processor;
     ObjectId           parameter;
     OSCFrontend*       instance;
-    ext::SushiControl* controller;
+    control::SushiControl* controller;
 
     void* callback;
 };
@@ -78,7 +78,8 @@ class OSCFrontend : public BaseControlFrontend
 {
 public:
     OSCFrontend(engine::BaseEngine* engine,
-                ext::SushiControl* controller, osc::BaseOscMessenger* osc_interface);
+                control::SushiControl* controller,
+                osc::BaseOscMessenger* osc_interface);
 
     ~OSCFrontend();
 
@@ -238,9 +239,9 @@ private:
 
     std::atomic_bool _running {false};
 
-    sushi::ext::SushiControl* _controller {nullptr};
-    sushi::ext::AudioGraphController* _graph_controller {nullptr};
-    sushi::ext::ParameterController*  _param_controller {nullptr};
+    sushi::control::SushiControl* _controller {nullptr};
+    sushi::control::AudioGraphController* _graph_controller {nullptr};
+    sushi::control::ParameterController*  _param_controller {nullptr};
 
     const engine::BaseProcessorContainer* _processor_container;
 

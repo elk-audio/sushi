@@ -28,7 +28,7 @@ namespace sushi::internal::engine::controller_impl {
 TimingController::TimingController(engine::BaseEngine* engine) : _performance_timer(engine->performance_timer())
 {}
 
-inline ext::CpuTimings to_external(performance::ProcessTimings& internal)
+inline control::CpuTimings to_external(performance::ProcessTimings& internal)
 {
     return {internal.avg_case, internal.min_case, internal.max_case};
 }
@@ -46,56 +46,56 @@ void TimingController::set_timing_statistics_enabled(bool enabled)
     _performance_timer->enable(enabled);
 }
 
-std::pair<ext::ControlStatus, ext::CpuTimings> TimingController::get_engine_timings() const
+std::pair<control::ControlStatus, control::CpuTimings> TimingController::get_engine_timings() const
 {
     SUSHI_LOG_DEBUG("get_engine_timings called, returning ");
     return _get_timings(engine::ENGINE_TIMING_ID);
 }
 
-std::pair<ext::ControlStatus, ext::CpuTimings> TimingController::get_track_timings(int track_id) const
+std::pair<control::ControlStatus, control::CpuTimings> TimingController::get_track_timings(int track_id) const
 {
     SUSHI_LOG_DEBUG("get_track_timings called, returning ");
     return _get_timings(track_id);
 }
 
-std::pair<ext::ControlStatus, ext::CpuTimings> TimingController::get_processor_timings(int processor_id) const
+std::pair<control::ControlStatus, control::CpuTimings> TimingController::get_processor_timings(int processor_id) const
 {
     SUSHI_LOG_DEBUG("get_processor_timings called, returning ");
     return _get_timings(processor_id);
 }
 
-ext::ControlStatus TimingController::reset_all_timings()
+control::ControlStatus TimingController::reset_all_timings()
 {
     SUSHI_LOG_DEBUG("reset_all_timings called, returning ");
     _performance_timer->clear_all_timings();
-    return ext::ControlStatus::OK;
+    return control::ControlStatus::OK;
 }
 
-ext::ControlStatus TimingController::reset_track_timings(int track_id)
+control::ControlStatus TimingController::reset_track_timings(int track_id)
 {
     SUSHI_LOG_DEBUG("reset_track_timings called, returning ");
     auto success =_performance_timer->clear_timings_for_node(track_id);
-    return success? ext::ControlStatus::OK : ext::ControlStatus::NOT_FOUND;
+    return success? control::ControlStatus::OK : control::ControlStatus::NOT_FOUND;
 }
 
-ext::ControlStatus TimingController::reset_processor_timings(int processor_id)
+control::ControlStatus TimingController::reset_processor_timings(int processor_id)
 {
     SUSHI_LOG_DEBUG("reset_processor_timings called, returning ");
     return reset_track_timings(processor_id);
 }
 
-std::pair<ext::ControlStatus, ext::CpuTimings> TimingController::_get_timings(int node) const
+std::pair<control::ControlStatus, control::CpuTimings> TimingController::_get_timings(int node) const
 {
     if (_performance_timer->enabled())
     {
         auto timings = _performance_timer->timings_for_node(node);
         if (timings.has_value())
         {
-            return {ext::ControlStatus::OK, to_external(timings.value())};
+            return {control::ControlStatus::OK, to_external(timings.value())};
         }
-        return {ext::ControlStatus::NOT_FOUND, {0,0,0}};
+        return {control::ControlStatus::NOT_FOUND, {0,0,0}};
     }
-    return {ext::ControlStatus::UNSUPPORTED_OPERATION, {0,0,0}};
+    return {control::ControlStatus::UNSUPPORTED_OPERATION, {0,0,0}};
 }
 
 } // end namespace sushi::internal::engine::controller_impl

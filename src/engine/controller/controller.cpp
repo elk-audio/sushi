@@ -34,7 +34,7 @@ using namespace controller_impl;
 
 Controller::Controller(engine::BaseEngine* engine,
                        midi_dispatcher::MidiDispatcher* midi_dispatcher,
-                       audio_frontend::BaseAudioFrontend* audio_frontend) : ext::SushiControl(&_system_controller_impl,
+                       audio_frontend::BaseAudioFrontend* audio_frontend) : control::SushiControl(&_system_controller_impl,
                                                                                               &_transport_controller_impl,
                                                                                               &_timing_controller_impl,
                                                                                               &_keyboard_controller_impl,
@@ -75,33 +75,33 @@ Controller::~Controller()
     _event_dispatcher->unsubscribe_from_engine_notifications(this);
 }
 
-ext::ControlStatus Controller::subscribe_to_notifications(ext::NotificationType type,
-                                                          ext::ControlListener* listener)
+control::ControlStatus Controller::subscribe_to_notifications(control::NotificationType type,
+                                                              control::ControlListener* listener)
 {
     switch (type)
     {
-        case ext::NotificationType::PARAMETER_CHANGE:
+        case control::NotificationType::PARAMETER_CHANGE:
             _parameter_change_listeners.push_back(listener);
             break;
-        case ext::NotificationType::PROPERTY_CHANGE:
+        case control::NotificationType::PROPERTY_CHANGE:
             _property_change_listeners.push_back(listener);
             break;
-        case ext::NotificationType::PROCESSOR_UPDATE:
+        case control::NotificationType::PROCESSOR_UPDATE:
             _processor_update_listeners.push_back(listener);
             break;
-        case ext::NotificationType::TRACK_UPDATE:
+        case control::NotificationType::TRACK_UPDATE:
             _track_update_listeners.push_back(listener);
             break;
-        case ext::NotificationType::TRANSPORT_UPDATE:
+        case control::NotificationType::TRANSPORT_UPDATE:
             _transport_update_listeners.push_back(listener);
             break;
-        case ext::NotificationType::CPU_TIMING_UPDATE:
+        case control::NotificationType::CPU_TIMING_UPDATE:
             _cpu_timing_update_listeners.push_back(listener);
         default:
             break;
     }
 
-    return ext::ControlStatus::OK;
+    return control::ControlStatus::OK;
 }
 
 void Controller::completion_callback(void*arg, Event*event, int status)
@@ -137,28 +137,32 @@ void Controller::_handle_engine_notifications(const EngineNotificationEvent* eve
     else if (event->is_tempo_notification())
     {
         auto typed_event = static_cast<const TempoNotificationEvent*>(event);
-        _notify_transport_listeners(ext::TransportNotification(ext::TransportAction::TEMPO_CHANGED,
+        _notify_transport_listeners(control::TransportNotification(
+            control::TransportAction::TEMPO_CHANGED,
                                                                typed_event->tempo(),
                                                                typed_event->time()));
     }
     else if (event->is_time_sign_notification())
     {
         auto typed_event = static_cast<const TimeSignatureNotificationEvent*>(event);
-        _notify_transport_listeners(ext::TransportNotification(ext::TransportAction::TIME_SIGNATURE_CHANGED,
+        _notify_transport_listeners(
+            control::TransportNotification(control::TransportAction::TIME_SIGNATURE_CHANGED,
                                                                to_external(typed_event->time_signature()),
                                                                typed_event->time()));
     }
     else if (event->is_playing_mode_notification())
     {
         auto typed_event = static_cast<const PlayingModeNotificationEvent*>(event);
-        _notify_transport_listeners(ext::TransportNotification(ext::TransportAction::PLAYING_MODE_CHANGED,
+        _notify_transport_listeners(
+            control::TransportNotification(control::TransportAction::PLAYING_MODE_CHANGED,
                                                                to_external(typed_event->mode()),
                                                                typed_event->time()));
     }
     else if (event->is_sync_mode_notification())
     {
         auto typed_event = static_cast<const SyncModeNotificationEvent*>(event);
-        _notify_transport_listeners(ext::TransportNotification(ext::TransportAction::SYNC_MODE_CHANGED,
+        _notify_transport_listeners(
+            control::TransportNotification(control::TransportAction::SYNC_MODE_CHANGED,
                                                                to_external(typed_event->mode()),
                                                                typed_event->time()));
     }
@@ -175,22 +179,22 @@ void Controller::_handle_audio_graph_notifications(const AudioGraphNotificationE
     {
         case AudioGraphNotificationEvent::Action::PROCESSOR_ADDED_TO_TRACK:
         {
-            _notify_processor_listeners(event, ext::ProcessorAction::ADDED);
+            _notify_processor_listeners(event, control::ProcessorAction::ADDED);
             break;
         }
         case AudioGraphNotificationEvent::Action::PROCESSOR_REMOVED_FROM_TRACK:
         {
-            _notify_processor_listeners(event, ext::ProcessorAction::DELETED);
+            _notify_processor_listeners(event, control::ProcessorAction::DELETED);
             break;
         }
         case AudioGraphNotificationEvent::Action::TRACK_CREATED:
         {
-            _notify_track_listeners(event, ext::TrackAction::ADDED);
+            _notify_track_listeners(event, control::TrackAction::ADDED);
             break;
         }
         case AudioGraphNotificationEvent::Action::TRACK_DELETED:
         {
-            _notify_track_listeners(event, ext::TrackAction::DELETED);
+            _notify_track_listeners(event, control::TrackAction::DELETED);
             break;
         }
         default:
@@ -202,7 +206,7 @@ void Controller::_handle_audio_graph_notifications(const AudioGraphNotificationE
 void Controller::_notify_parameter_listeners(Event* event) const
 {
     auto typed_event = static_cast<ParameterChangeNotificationEvent*>(event);
-    ext::ParameterChangeNotification notification(static_cast<int>(typed_event->processor_id()),
+    control::ParameterChangeNotification notification(static_cast<int>(typed_event->processor_id()),
                                                   static_cast<int>(typed_event->parameter_id()),
                                                   typed_event->normalized_value(),
                                                   typed_event->domain_value(),
@@ -217,10 +221,10 @@ void Controller::_notify_parameter_listeners(Event* event) const
 void Controller::_notify_property_listeners(Event* event) const
 {
     auto typed_event = static_cast<PropertyChangeNotificationEvent*>(event);
-    ext::PropertyChangeNotification notification(static_cast<int>(typed_event->processor_id()),
-                                                 static_cast<int>(typed_event->property_id()),
-                                                 typed_event->value(),
-                                                 typed_event->time());
+    control::PropertyChangeNotification notification(static_cast<int>(typed_event->processor_id()),
+                                                     static_cast<int>(typed_event->property_id()),
+                                                     typed_event->value(),
+                                                     typed_event->time());
     for (auto& listener : _property_change_listeners)
     {
         listener->notification(&notification);
@@ -228,9 +232,9 @@ void Controller::_notify_property_listeners(Event* event) const
 }
 
 void Controller::_notify_track_listeners(const AudioGraphNotificationEvent* typed_event,
-                                         ext::TrackAction action) const
+                                          control::TrackAction action) const
 {
-    ext::TrackNotification notification(action,
+    control::TrackNotification notification(action,
                                         typed_event->track(),
                                         typed_event->time());
     for (auto& listener : _track_update_listeners)
@@ -239,7 +243,7 @@ void Controller::_notify_track_listeners(const AudioGraphNotificationEvent* type
     }
 }
 
-void Controller::_notify_transport_listeners(const ext::TransportNotification& notification) const
+void Controller::_notify_transport_listeners(const control::TransportNotification& notification) const
 {
     for (auto& listener : _transport_update_listeners)
     {
@@ -248,12 +252,12 @@ void Controller::_notify_transport_listeners(const ext::TransportNotification& n
 }
 
 void Controller::_notify_processor_listeners(const AudioGraphNotificationEvent* typed_event,
-                                             ext::ProcessorAction action) const
+                                             control::ProcessorAction action) const
 {
-    ext::ProcessorNotification notification(action,
-                                            static_cast<int>(typed_event->processor()),
-                                            static_cast<int>(typed_event->track()),
-                                            typed_event->time());
+    control::ProcessorNotification notification(action,
+                                                static_cast<int>(typed_event->processor()),
+                                                static_cast<int>(typed_event->track()),
+                                                typed_event->time());
     for (auto& listener : _processor_update_listeners)
     {
         listener->notification(&notification);
@@ -280,7 +284,7 @@ void Controller::set_osc_frontend(control_frontend::OSCFrontend* osc_frontend)
 
 void Controller::_notify_timing_listeners(const EngineTimingNotificationEvent* event) const
 {
-    ext::CpuTimingNotification notification(to_external(event->timings()), event->time());
+    control::CpuTimingNotification notification(to_external(event->timings()), event->time());
     for (auto& listener : _cpu_timing_update_listeners)
     {
         listener->notification(&notification);

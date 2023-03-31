@@ -28,28 +28,28 @@
 
 namespace sushi::internal::engine::controller_impl {
 
-class TransportController : public ext::TransportController
+class TransportController : public control::TransportController
 {
 public:
     explicit TransportController(BaseEngine* engine);
 
     float get_samplerate() const override;
 
-    ext::PlayingMode get_playing_mode() const override;
+    control::PlayingMode get_playing_mode() const override;
 
-    ext::SyncMode get_sync_mode() const override;
+    control::SyncMode get_sync_mode() const override;
 
-    ext::TimeSignature get_time_signature() const override;
+    control::TimeSignature get_time_signature() const override;
 
     float get_tempo() const override;
 
-    void set_sync_mode(ext::SyncMode sync_mode) override;
+    void set_sync_mode(control::SyncMode sync_mode) override;
 
-    void set_playing_mode(ext::PlayingMode playing_mode) override;
+    void set_playing_mode(control::PlayingMode playing_mode) override;
 
-    ext::ControlStatus set_tempo(float tempo) override;
+    control::ControlStatus set_tempo(float tempo) override;
 
-    ext::ControlStatus set_time_signature(ext::TimeSignature signature) override;
+    control::ControlStatus set_time_signature(control::TimeSignature signature) override;
 
 private:
     BaseEngine*                         _engine;

@@ -110,7 +110,7 @@ protected:
     MockOscInterface* _mock_osc_interface {nullptr};
 
     EngineMockup _mock_engine {TEST_SAMPLE_RATE};
-    sushi::ext::ControlMockup _mock_controller;
+    sushi::control::ControlMockup _mock_controller;
 
     std::unique_ptr<OSCFrontend> _module_under_test;
 

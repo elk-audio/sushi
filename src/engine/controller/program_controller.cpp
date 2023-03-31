@@ -31,82 +31,82 @@ ProgramController::ProgramController(BaseEngine* engine) : /* _engine(engine), *
                                                            _processors(engine->processor_container())
 {}
 
-std::pair<ext::ControlStatus, int> ProgramController::get_processor_current_program(int processor_id) const
+std::pair<control::ControlStatus, int> ProgramController::get_processor_current_program(int processor_id) const
 {
     SUSHI_LOG_DEBUG("get_processor_current_program called with processor {}", processor_id);
     auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
-        return {ext::ControlStatus::NOT_FOUND, 0};
+        return {control::ControlStatus::NOT_FOUND, 0};
     }
     if (processor->supports_programs())
     {
-        return {ext::ControlStatus::OK, processor->current_program()};
+        return {control::ControlStatus::OK, processor->current_program()};
     }
-    return {ext::ControlStatus::UNSUPPORTED_OPERATION, 0};
+    return {control::ControlStatus::UNSUPPORTED_OPERATION, 0};
 }
 
-std::pair<ext::ControlStatus, std::string> ProgramController::get_processor_current_program_name(int processor_id) const
+std::pair<control::ControlStatus, std::string> ProgramController::get_processor_current_program_name(int processor_id) const
 {
     SUSHI_LOG_DEBUG("get_processor_current_program_name called with processor {}", processor_id);
     auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
-        return {ext::ControlStatus::NOT_FOUND, ""};
+        return {control::ControlStatus::NOT_FOUND, ""};
     }
     if (processor->supports_programs())
     {
-        return {ext::ControlStatus::OK, processor->current_program_name()};
+        return {control::ControlStatus::OK, processor->current_program_name()};
     }
-    return {ext::ControlStatus::UNSUPPORTED_OPERATION, ""};
+    return {control::ControlStatus::UNSUPPORTED_OPERATION, ""};
 }
 
-std::pair<ext::ControlStatus, std::string> ProgramController::get_processor_program_name(int processor_id, int program_id) const
+std::pair<control::ControlStatus, std::string> ProgramController::get_processor_program_name(int processor_id, int program_id) const
 {
     SUSHI_LOG_DEBUG("get_processor_program_name called with processor {}", processor_id);
     auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
-        return {ext::ControlStatus::NOT_FOUND, ""};
+        return {control::ControlStatus::NOT_FOUND, ""};
     }
     else if (processor->supports_programs() == false)
     {
-        return {ext::ControlStatus::UNSUPPORTED_OPERATION, ""};
+        return {control::ControlStatus::UNSUPPORTED_OPERATION, ""};
     }
     auto [status, name] = processor->program_name(program_id);
     if (status == ProcessorReturnCode::OK)
     {
-        return {ext::ControlStatus::OK, std::move(name)};
+        return {control::ControlStatus::OK, std::move(name)};
     }
-    return {ext::ControlStatus::OUT_OF_RANGE, ""};
+    return {control::ControlStatus::OUT_OF_RANGE, ""};
 }
 
-std::pair<ext::ControlStatus, std::vector<std::string>> ProgramController::get_processor_programs(int processor_id) const
+std::pair<control::ControlStatus, std::vector<std::string>> ProgramController::get_processor_programs(int processor_id) const
 {
     SUSHI_LOG_DEBUG("get_processor_program_name called with processor {}", processor_id);
     auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
-        return {ext::ControlStatus::NOT_FOUND, std::vector<std::string>()};
+        return {control::ControlStatus::NOT_FOUND, std::vector<std::string>()};
     }
     else if (processor->supports_programs() == false)
     {
-        return {ext::ControlStatus::UNSUPPORTED_OPERATION, std::vector<std::string>()};
+        return {control::ControlStatus::UNSUPPORTED_OPERATION, std::vector<std::string>()};
     }
     auto [status, names] = processor->all_program_names();
     if (status == ProcessorReturnCode::OK)
     {
-        return {ext::ControlStatus::OK, std::move(names)};
+        return {control::ControlStatus::OK, std::move(names)};
     }
-    return {ext::ControlStatus::OUT_OF_RANGE, std::vector<std::string>()};
+    return {control::ControlStatus::OUT_OF_RANGE, std::vector<std::string>()};
 }
 
-ext::ControlStatus ProgramController::set_processor_program(int processor_id, int program_id)
+control::ControlStatus ProgramController::set_processor_program(int processor_id, int program_id)
 {
     SUSHI_LOG_DEBUG("set_processor_program called with processor {} and program {}", processor_id, program_id);
     auto event = new ProgramChangeEvent(static_cast<ObjectId>(processor_id), program_id, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    return control::ControlStatus::OK;
 }
 
 } // end namespace sushi::internal::engine::controller_impl

@@ -29,155 +29,155 @@ namespace sushi::internal::engine::controller_impl {
 
 /* Convenience conversion functions between external and internal
  * enums and data structs */
-inline ext::PlayingMode to_external(const sushi::internal::PlayingMode mode)
+inline control::PlayingMode to_external(const sushi::internal::PlayingMode mode)
 {
     switch (mode)
     {
-        case PlayingMode::STOPPED:      return ext::PlayingMode::STOPPED;
-        case PlayingMode::PLAYING:      return ext::PlayingMode::PLAYING;
-        case PlayingMode::RECORDING:    return ext::PlayingMode::RECORDING;
-        default:                        return ext::PlayingMode::PLAYING;
+        case PlayingMode::STOPPED:      return control::PlayingMode::STOPPED;
+        case PlayingMode::PLAYING:      return control::PlayingMode::PLAYING;
+        case PlayingMode::RECORDING:    return control::PlayingMode::RECORDING;
+        default:                        return control::PlayingMode::PLAYING;
     }
 }
 
-inline sushi::internal::PlayingMode to_internal(const ext::PlayingMode mode)
+inline sushi::internal::PlayingMode to_internal(const control::PlayingMode mode)
 {
     switch (mode)
     {
-        case ext::PlayingMode::STOPPED:   return sushi::internal::PlayingMode::STOPPED;
-        case ext::PlayingMode::PLAYING:   return sushi::internal::PlayingMode::PLAYING;
-        case ext::PlayingMode::RECORDING: return sushi::internal::PlayingMode::RECORDING;
-        default:                          return sushi::internal::PlayingMode::PLAYING;
+        case control::PlayingMode::STOPPED:   return sushi::internal::PlayingMode::STOPPED;
+        case control::PlayingMode::PLAYING:   return sushi::internal::PlayingMode::PLAYING;
+        case control::PlayingMode::RECORDING: return sushi::internal::PlayingMode::RECORDING;
+        default:                              return sushi::internal::PlayingMode::PLAYING;
     }
 }
 
-inline ext::SyncMode to_external(const sushi::internal::SyncMode mode)
+inline control::SyncMode to_external(const sushi::internal::SyncMode mode)
 {
     switch (mode)
     {
-        case SyncMode::INTERNAL:     return ext::SyncMode::INTERNAL;
-        case SyncMode::MIDI:         return ext::SyncMode::MIDI;
-        case SyncMode::GATE_INPUT:   return ext::SyncMode::GATE;
-        case SyncMode::ABLETON_LINK: return ext::SyncMode::LINK;
-        default:                     return ext::SyncMode::INTERNAL;
+        case SyncMode::INTERNAL:     return control::SyncMode::INTERNAL;
+        case SyncMode::MIDI:         return control::SyncMode::MIDI;
+        case SyncMode::GATE_INPUT:   return control::SyncMode::GATE;
+        case SyncMode::ABLETON_LINK: return control::SyncMode::LINK;
+        default:                     return control::SyncMode::INTERNAL;
     }
 }
 
-inline sushi::internal::SyncMode to_internal(const ext::SyncMode mode)
+inline sushi::internal::SyncMode to_internal(const control::SyncMode mode)
 {
     switch (mode)
     {
-        case ext::SyncMode::INTERNAL: return sushi::internal::SyncMode::INTERNAL;
-        case ext::SyncMode::MIDI:     return sushi::internal::SyncMode::MIDI;
-        case ext::SyncMode::GATE:     return sushi::internal::SyncMode::GATE_INPUT;
-        case ext::SyncMode::LINK:     return sushi::internal::SyncMode::ABLETON_LINK;
-        default:                      return sushi::internal::SyncMode::INTERNAL;
+        case control::SyncMode::INTERNAL: return sushi::internal::SyncMode::INTERNAL;
+        case control::SyncMode::MIDI:     return sushi::internal::SyncMode::MIDI;
+        case control::SyncMode::GATE:     return sushi::internal::SyncMode::GATE_INPUT;
+        case control::SyncMode::LINK:     return sushi::internal::SyncMode::ABLETON_LINK;
+        default:                          return sushi::internal::SyncMode::INTERNAL;
     }
 }
 
-inline ext::CpuTimings to_external(const sushi::internal::performance::ProcessTimings& timings)
+inline control::CpuTimings to_external(const sushi::internal::performance::ProcessTimings& timings)
 {
     return {.avg = timings.avg_case,
             .min = timings.min_case,
             .max = timings.max_case};
 }
 
-inline ext::TimeSignature to_external(sushi::TimeSignature internal)
+inline control::TimeSignature to_external(sushi::TimeSignature internal)
 {
     return {internal.numerator, internal.denominator};
 }
 
-inline sushi::TimeSignature to_internal(ext::TimeSignature ext)
+inline sushi::TimeSignature to_internal(control::TimeSignature ext)
 {
     return {ext.numerator, ext.denominator};
 }
 
-inline ext::MidiChannel to_external_midi_channel(int channel_int)
+inline control::MidiChannel to_external_midi_channel(int channel_int)
 {
     switch (channel_int)
     {
-        case 0:  return sushi::ext::MidiChannel::MIDI_CH_1;
-        case 1:  return sushi::ext::MidiChannel::MIDI_CH_2;
-        case 2:  return sushi::ext::MidiChannel::MIDI_CH_3;
-        case 3:  return sushi::ext::MidiChannel::MIDI_CH_4;
-        case 4:  return sushi::ext::MidiChannel::MIDI_CH_5;
-        case 5:  return sushi::ext::MidiChannel::MIDI_CH_6;
-        case 6:  return sushi::ext::MidiChannel::MIDI_CH_7;
-        case 7:  return sushi::ext::MidiChannel::MIDI_CH_8;
-        case 8:  return sushi::ext::MidiChannel::MIDI_CH_9;
-        case 9:  return sushi::ext::MidiChannel::MIDI_CH_10;
-        case 10: return sushi::ext::MidiChannel::MIDI_CH_11;
-        case 11: return sushi::ext::MidiChannel::MIDI_CH_12;
-        case 12: return sushi::ext::MidiChannel::MIDI_CH_13;
-        case 13: return sushi::ext::MidiChannel::MIDI_CH_14;
-        case 14: return sushi::ext::MidiChannel::MIDI_CH_15;
-        case 15: return sushi::ext::MidiChannel::MIDI_CH_16;
-        case 16: return sushi::ext::MidiChannel::MIDI_CH_OMNI;
-        default: return sushi::ext::MidiChannel::MIDI_CH_OMNI;
+        case 0:  return sushi::control::MidiChannel::MIDI_CH_1;
+        case 1:  return sushi::control::MidiChannel::MIDI_CH_2;
+        case 2:  return sushi::control::MidiChannel::MIDI_CH_3;
+        case 3:  return sushi::control::MidiChannel::MIDI_CH_4;
+        case 4:  return sushi::control::MidiChannel::MIDI_CH_5;
+        case 5:  return sushi::control::MidiChannel::MIDI_CH_6;
+        case 6:  return sushi::control::MidiChannel::MIDI_CH_7;
+        case 7:  return sushi::control::MidiChannel::MIDI_CH_8;
+        case 8:  return sushi::control::MidiChannel::MIDI_CH_9;
+        case 9:  return sushi::control::MidiChannel::MIDI_CH_10;
+        case 10: return sushi::control::MidiChannel::MIDI_CH_11;
+        case 11: return sushi::control::MidiChannel::MIDI_CH_12;
+        case 12: return sushi::control::MidiChannel::MIDI_CH_13;
+        case 13: return sushi::control::MidiChannel::MIDI_CH_14;
+        case 14: return sushi::control::MidiChannel::MIDI_CH_15;
+        case 15: return sushi::control::MidiChannel::MIDI_CH_16;
+        case 16: return sushi::control::MidiChannel::MIDI_CH_OMNI;
+        default: return sushi::control::MidiChannel::MIDI_CH_OMNI;
     }
 }
 
-inline int int_from_ext_midi_channel(ext::MidiChannel channel)
+inline int int_from_ext_midi_channel(control::MidiChannel channel)
 {
     switch (channel)
     {
-        case sushi::ext::MidiChannel::MIDI_CH_1: return 0;
-        case sushi::ext::MidiChannel::MIDI_CH_2: return 1;
-        case sushi::ext::MidiChannel::MIDI_CH_3: return 2;
-        case sushi::ext::MidiChannel::MIDI_CH_4: return 3;
-        case sushi::ext::MidiChannel::MIDI_CH_5: return 4;
-        case sushi::ext::MidiChannel::MIDI_CH_6: return 5;
-        case sushi::ext::MidiChannel::MIDI_CH_7: return 6;
-        case sushi::ext::MidiChannel::MIDI_CH_8: return 7;
-        case sushi::ext::MidiChannel::MIDI_CH_9: return 8;
-        case sushi::ext::MidiChannel::MIDI_CH_10: return 9;
-        case sushi::ext::MidiChannel::MIDI_CH_11: return 10;
-        case sushi::ext::MidiChannel::MIDI_CH_12: return 11;
-        case sushi::ext::MidiChannel::MIDI_CH_13: return 12;
-        case sushi::ext::MidiChannel::MIDI_CH_14: return 13;
-        case sushi::ext::MidiChannel::MIDI_CH_15: return 14;
-        case sushi::ext::MidiChannel::MIDI_CH_16: return 15;
-        case sushi::ext::MidiChannel::MIDI_CH_OMNI: return 16;
+        case sushi::control::MidiChannel::MIDI_CH_1: return 0;
+        case sushi::control::MidiChannel::MIDI_CH_2: return 1;
+        case sushi::control::MidiChannel::MIDI_CH_3: return 2;
+        case sushi::control::MidiChannel::MIDI_CH_4: return 3;
+        case sushi::control::MidiChannel::MIDI_CH_5: return 4;
+        case sushi::control::MidiChannel::MIDI_CH_6: return 5;
+        case sushi::control::MidiChannel::MIDI_CH_7: return 6;
+        case sushi::control::MidiChannel::MIDI_CH_8: return 7;
+        case sushi::control::MidiChannel::MIDI_CH_9: return 8;
+        case sushi::control::MidiChannel::MIDI_CH_10: return 9;
+        case sushi::control::MidiChannel::MIDI_CH_11: return 10;
+        case sushi::control::MidiChannel::MIDI_CH_12: return 11;
+        case sushi::control::MidiChannel::MIDI_CH_13: return 12;
+        case sushi::control::MidiChannel::MIDI_CH_14: return 13;
+        case sushi::control::MidiChannel::MIDI_CH_15: return 14;
+        case sushi::control::MidiChannel::MIDI_CH_16: return 15;
+        case sushi::control::MidiChannel::MIDI_CH_OMNI: return 16;
         default: return 16;
     }
 }
 
-inline PluginType to_internal(ext::PluginType type)
+inline PluginType to_internal(control::PluginType type)
 {
     switch (type)
     {
-        case ext::PluginType::INTERNAL:   return PluginType::INTERNAL;
-        case ext::PluginType::VST2X:      return PluginType::VST2X;
-        case ext::PluginType::VST3X:      return PluginType::VST3X;
-        case ext::PluginType::LV2:        return PluginType::LV2;
-        default:                          return PluginType::INTERNAL;
+        case control::PluginType::INTERNAL:   return PluginType::INTERNAL;
+        case control::PluginType::VST2X:      return PluginType::VST2X;
+        case control::PluginType::VST3X:      return PluginType::VST3X;
+        case control::PluginType::LV2:        return PluginType::LV2;
+        default:                              return PluginType::INTERNAL;
     }
 }
 
-inline ext::PluginType to_external(PluginType type)
+inline control::PluginType to_external(PluginType type)
 {
     switch (type)
     {
-        case PluginType::INTERNAL:   return ext::PluginType::INTERNAL;
-        case PluginType::VST2X:      return ext::PluginType::VST2X;
-        case PluginType::VST3X:      return ext::PluginType::VST3X;
-        case PluginType::LV2:        return ext::PluginType::LV2;
-        default:                     return ext::PluginType::INTERNAL;
+        case PluginType::INTERNAL:   return control::PluginType::INTERNAL;
+        case PluginType::VST2X:      return control::PluginType::VST2X;
+        case PluginType::VST3X:      return control::PluginType::VST3X;
+        case PluginType::LV2:        return control::PluginType::LV2;
+        default:                     return control::PluginType::INTERNAL;
     }
 }
 
-inline ext::TrackType to_external(TrackType type)
+inline control::TrackType to_external(TrackType type)
 {
     switch (type)
     {
-        case TrackType::REGULAR:    return ext::TrackType::REGULAR;
-        case TrackType::PRE:        return ext::TrackType::PRE;
-        case TrackType::POST:       return ext::TrackType::POST;
-        default:                    return ext::TrackType::REGULAR;
+        case TrackType::REGULAR:    return control::TrackType::REGULAR;
+        case TrackType::PRE:        return control::TrackType::PRE;
+        case TrackType::POST:       return control::TrackType::POST;
+        default:                    return control::TrackType::REGULAR;
     }
 }
 
-inline void to_internal(sushi::internal::ProcessorState* dest, const ext::ProcessorState* src)
+inline void to_internal(sushi::internal::ProcessorState* dest, const control::ProcessorState* src)
 {
     if (src->program.has_value()) dest->set_program(src->program.value());
     if (src->bypassed.has_value()) dest->set_bypass(src->bypassed.value());
@@ -193,7 +193,7 @@ inline void to_internal(sushi::internal::ProcessorState* dest, const ext::Proces
     dest->set_binary_data(std::move(src->binary_data));
 }
 
-inline void to_external(ext::ProcessorState* dest, sushi::internal::ProcessorState* src)
+inline void to_external(control::ProcessorState* dest, sushi::internal::ProcessorState* src)
 {
     dest->program = src->program();
     dest->bypassed = src->bypassed();

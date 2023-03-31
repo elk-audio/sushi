@@ -31,7 +31,7 @@
 
 namespace sushi {
 
-namespace ext {
+namespace control {
 class SushiControl;
 }
 
@@ -169,7 +169,7 @@ public:
 
     virtual void stop() = 0;
 
-    virtual ext::SushiControl* controller() = 0;
+    virtual control::SushiControl* controller() = 0;
 
     virtual void set_sample_rate(float sample_rate) = 0;
     virtual float sample_rate() const = 0;

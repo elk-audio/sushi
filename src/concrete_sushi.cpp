@@ -215,7 +215,7 @@ void ConcreteSushi::stop()
 #endif
 }
 
-ext::SushiControl* ConcreteSushi::controller()
+control::SushiControl* ConcreteSushi::controller()
 {
     return _engine_controller.get();
 }

@@ -25,11 +25,11 @@
 
 namespace sushi {
 
-namespace ext {
+namespace control {
     class SushiControl;
 }
 
-rapidjson::Document generate_processor_parameter_document(sushi::ext::SushiControl* engine_controller);
+rapidjson::Document generate_processor_parameter_document(sushi::control::SushiControl* engine_controller);
 
 } // end namespace sushi
 

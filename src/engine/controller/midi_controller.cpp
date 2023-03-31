@@ -26,9 +26,9 @@
 
 namespace sushi::internal::engine::controller_impl {
 
-ext::MidiCCConnection populate_cc_connection(const midi_dispatcher::CCInputConnection& connection)
+    control::MidiCCConnection populate_cc_connection(const midi_dispatcher::CCInputConnection& connection)
 {
-    ext::MidiCCConnection ext_connection;
+    control::MidiCCConnection ext_connection;
 
     ext_connection.processor_id = connection.input_connection.target;
     ext_connection.parameter_id = connection.input_connection.parameter;
@@ -42,9 +42,9 @@ ext::MidiCCConnection populate_cc_connection(const midi_dispatcher::CCInputConne
     return ext_connection;
 }
 
-ext::MidiPCConnection populate_pc_connection(const midi_dispatcher::PCInputConnection& connection)
+control::MidiPCConnection populate_pc_connection(const midi_dispatcher::PCInputConnection& connection)
 {
-    ext::MidiPCConnection ext_connection;
+    control::MidiPCConnection ext_connection;
 
     ext_connection.processor_id = connection.processor_id;
     ext_connection.channel = to_external_midi_channel(connection.channel);
@@ -68,14 +68,14 @@ int MidiController::get_output_ports() const
     return _midi_dispatcher->get_midi_outputs();
 }
 
-std::vector<ext::MidiKbdConnection> MidiController::get_all_kbd_input_connections() const
+std::vector<control::MidiKbdConnection> MidiController::get_all_kbd_input_connections() const
 {
-    std::vector<ext::MidiKbdConnection> returns;
+    std::vector<control::MidiKbdConnection> returns;
 
     const auto connections = _midi_dispatcher->get_all_kb_input_connections();
     for (auto connection : connections)
     {
-        ext::MidiKbdConnection ext_connection;
+        control::MidiKbdConnection ext_connection;
         ext_connection.track_id = connection.input_connection.target;
         ext_connection.port = connection.port;
         ext_connection.channel = to_external_midi_channel(connection.channel);
@@ -86,14 +86,14 @@ std::vector<ext::MidiKbdConnection> MidiController::get_all_kbd_input_connection
     return returns;
 }
 
-std::vector<ext::MidiKbdConnection> MidiController::get_all_kbd_output_connections() const
+std::vector<control::MidiKbdConnection> MidiController::get_all_kbd_output_connections() const
 {
-    std::vector<ext::MidiKbdConnection> returns;
+    std::vector<control::MidiKbdConnection> returns;
 
     const auto connections = _midi_dispatcher->get_all_kb_output_connections();
     for (auto connection : connections)
     {
-        ext::MidiKbdConnection ext_connection;
+        control::MidiKbdConnection ext_connection;
         ext_connection.track_id = connection.track_id;
         ext_connection.port = connection.port;
         ext_connection.channel = to_external_midi_channel(connection.channel);
@@ -104,9 +104,9 @@ std::vector<ext::MidiKbdConnection> MidiController::get_all_kbd_output_connectio
     return returns;
 }
 
-std::vector<ext::MidiCCConnection> MidiController::get_all_cc_input_connections() const
+std::vector<control::MidiCCConnection> MidiController::get_all_cc_input_connections() const
 {
-    std::vector<ext::MidiCCConnection> returns;
+    std::vector<control::MidiCCConnection> returns;
 
     const auto connections = _midi_dispatcher->get_all_cc_input_connections();
     for (auto connection : connections)
@@ -118,9 +118,9 @@ std::vector<ext::MidiCCConnection> MidiController::get_all_cc_input_connections(
     return returns;
 }
 
-std::vector<ext::MidiPCConnection> MidiController::get_all_pc_input_connections() const
+std::vector<control::MidiPCConnection> MidiController::get_all_pc_input_connections() const
 {
-    std::vector<ext::MidiPCConnection> returns;
+    std::vector<control::MidiPCConnection> returns;
 
     const auto connections = _midi_dispatcher->get_all_pc_input_connections();
     for (auto connection : connections)
@@ -138,7 +138,7 @@ bool MidiController::get_midi_clock_output_enabled(int port) const
     return _midi_dispatcher->midi_clock_enabled(port);
 }
 
-ext::ControlStatus MidiController::set_midi_clock_output_enabled(bool enabled, int port)
+control::ControlStatus MidiController::set_midi_clock_output_enabled(bool enabled, int port)
 {
     auto lambda = [=] () -> int
     {
@@ -148,14 +148,14 @@ ext::ControlStatus MidiController::set_midi_clock_output_enabled(bool enabled, i
 
     auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    return control::ControlStatus::OK;
 }
 
-std::pair<ext::ControlStatus, std::vector<ext::MidiCCConnection>>
+std::pair<control::ControlStatus, std::vector<control::MidiCCConnection>>
 MidiController::get_cc_input_connections_for_processor(int processor_id) const
 {
-    std::pair<ext::ControlStatus, std::vector<ext::MidiCCConnection>> returns;
-    returns.first = ext::ControlStatus::OK;
+    std::pair<control::ControlStatus, std::vector<control::MidiCCConnection>> returns;
+    returns.first = control::ControlStatus::OK;
 
     const auto connections = _midi_dispatcher->get_cc_input_connections_for_processor(processor_id);
     for (auto connection : connections)
@@ -167,11 +167,11 @@ MidiController::get_cc_input_connections_for_processor(int processor_id) const
     return returns;
 }
 
-std::pair<ext::ControlStatus, std::vector<ext::MidiPCConnection>>
+std::pair<control::ControlStatus, std::vector<control::MidiPCConnection>>
 MidiController::get_pc_input_connections_for_processor(int processor_id) const
 {
-    std::pair<ext::ControlStatus, std::vector<ext::MidiPCConnection>> returns;
-    returns.first = ext::ControlStatus::OK;
+    std::pair<control::ControlStatus, std::vector<control::MidiPCConnection>> returns;
+    returns.first = control::ControlStatus::OK;
 
     const auto connections = _midi_dispatcher->get_pc_input_connections_for_processor(processor_id);
     for (auto connection : connections)
@@ -183,10 +183,10 @@ MidiController::get_pc_input_connections_for_processor(int processor_id) const
     return returns;
 }
 
-ext::ControlStatus MidiController::connect_kbd_input_to_track(int track_id,
-                                                              ext::MidiChannel channel,
-                                                              int port,
-                                                              bool raw_midi)
+control::ControlStatus MidiController::connect_kbd_input_to_track(int track_id,
+                                                                  control::MidiChannel channel,
+                                                                  int port,
+                                                                  bool raw_midi)
 {
     const int int_channel = int_from_ext_midi_channel(channel);
 
@@ -215,12 +215,12 @@ ext::ControlStatus MidiController::connect_kbd_input_to_track(int track_id,
     // If you get a compilation error here, it is due to a bug in gcc 8 - upgrade to 9.
     auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    return control::ControlStatus::OK;
 }
 
-ext::ControlStatus MidiController::connect_kbd_output_from_track(int track_id,
-                                                                 ext::MidiChannel channel,
-                                                                 int port)
+control::ControlStatus MidiController::connect_kbd_output_from_track(int track_id,
+                                                                     control::MidiChannel channel,
+                                                                     int port)
 {
     const int int_channel = int_from_ext_midi_channel(channel);
 
@@ -241,17 +241,17 @@ ext::ControlStatus MidiController::connect_kbd_output_from_track(int track_id,
 
     auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    return control::ControlStatus::OK;
 }
 
-ext::ControlStatus MidiController::connect_cc_to_parameter(int processor_id,
-                                                           int parameter_id,
-                                                           ext::MidiChannel channel,
-                                                           int port,
-                                                           int cc_number,
-                                                           float min_range,
-                                                           float max_range,
-                                                           bool relative_mode)
+control::ControlStatus MidiController::connect_cc_to_parameter(int processor_id,
+                                                               int parameter_id,
+                                                               control::MidiChannel channel,
+                                                               int port,
+                                                               int cc_number,
+                                                               float min_range,
+                                                               float max_range,
+                                                               bool relative_mode)
 {
     const int int_channel = int_from_ext_midi_channel(channel);
 
@@ -278,10 +278,11 @@ ext::ControlStatus MidiController::connect_cc_to_parameter(int processor_id,
 
     auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    return control::ControlStatus::OK;
 }
 
-ext::ControlStatus MidiController::connect_pc_to_processor(int processor_id, ext::MidiChannel channel, int port)
+control::ControlStatus MidiController::connect_pc_to_processor(int processor_id,
+                                                               control::MidiChannel channel, int port)
 {
     const int int_channel = int_from_ext_midi_channel(channel);
 
@@ -305,10 +306,11 @@ ext::ControlStatus MidiController::connect_pc_to_processor(int processor_id, ext
 
     auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    return control::ControlStatus::OK;
 }
 
-ext::ControlStatus MidiController::disconnect_kbd_input(int track_id, ext::MidiChannel channel, int port, bool raw_midi)
+control::ControlStatus MidiController::disconnect_kbd_input(int track_id,
+                                                            control::MidiChannel channel, int port, bool raw_midi)
 {
     const int int_channel = int_from_ext_midi_channel(channel);
 
@@ -341,10 +343,10 @@ ext::ControlStatus MidiController::disconnect_kbd_input(int track_id, ext::MidiC
     auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
 
     _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    return control::ControlStatus::OK;
 }
 
-ext::ControlStatus MidiController::disconnect_kbd_output(int track_id, ext::MidiChannel channel, int port)
+control::ControlStatus MidiController::disconnect_kbd_output(int track_id, control::MidiChannel channel, int port)
 {
     const int int_channel = int_from_ext_midi_channel(channel);
 
@@ -365,10 +367,11 @@ ext::ControlStatus MidiController::disconnect_kbd_output(int track_id, ext::Midi
 
     auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    return control::ControlStatus::OK;
 }
 
-ext::ControlStatus MidiController::disconnect_cc(int processor_id, ext::MidiChannel channel, int port, int cc_number)
+control::ControlStatus MidiController::disconnect_cc(int processor_id,
+                                                     control::MidiChannel channel, int port, int cc_number)
 {
     const int int_channel = int_from_ext_midi_channel(channel);
 
@@ -391,10 +394,10 @@ ext::ControlStatus MidiController::disconnect_cc(int processor_id, ext::MidiChan
 
     auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    return control::ControlStatus::OK;
 }
 
-ext::ControlStatus MidiController::disconnect_pc(int processor_id, ext::MidiChannel channel, int port)
+control::ControlStatus MidiController::disconnect_pc(int processor_id, control::MidiChannel channel, int port)
 {
     const int int_channel = int_from_ext_midi_channel(channel);
 
@@ -418,10 +421,10 @@ ext::ControlStatus MidiController::disconnect_pc(int processor_id, ext::MidiChan
 
     auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    return control::ControlStatus::OK;
 }
 
-ext::ControlStatus MidiController::disconnect_all_cc_from_processor(int processor_id)
+control::ControlStatus MidiController::disconnect_all_cc_from_processor(int processor_id)
 {
     auto lambda = [=] () -> int
     {
@@ -439,10 +442,10 @@ ext::ControlStatus MidiController::disconnect_all_cc_from_processor(int processo
 
     auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    return control::ControlStatus::OK;
 }
 
-ext::ControlStatus MidiController::disconnect_all_pc_from_processor(int processor_id)
+control::ControlStatus MidiController::disconnect_all_pc_from_processor(int processor_id)
 {
     auto lambda = [=] () -> int
     {
@@ -460,7 +463,7 @@ ext::ControlStatus MidiController::disconnect_all_pc_from_processor(int processo
 
     auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    return control::ControlStatus::OK;
 }
 
 } // end namespace sushi::internal::engine::controller_impl

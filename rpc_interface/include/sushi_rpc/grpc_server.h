@@ -60,7 +60,7 @@ constexpr std::chrono::duration SERVER_SHUTDOWN_DEADLINE = std::chrono::millisec
 class GrpcServer
 {
 public:
-    GrpcServer(const std::string& listenAddress, sushi::ext::SushiControl* controller);
+    GrpcServer(const std::string& listenAddress, sushi::control::SushiControl* controller);
 
     ~GrpcServer();
 

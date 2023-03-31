@@ -91,7 +91,7 @@ TEST_F(ReactiveControllerTestFrontend, TestRtControllerTransportCalls)
 
     // Time Signature:
     auto old_time_signature = _real_time_controller->_time_signature;
-    ext::TimeSignature new_time_signature {5, 8};
+    control::TimeSignature new_time_signature {5, 8};
     auto new_internal_time_signature = controller_impl::to_internal(new_time_signature);
 
     _real_time_controller->set_time_signature(new_time_signature);
@@ -103,7 +103,7 @@ TEST_F(ReactiveControllerTestFrontend, TestRtControllerTransportCalls)
 
     // Playing Mode:
     auto old_playing_mode = _real_time_controller->_playing_mode;
-    ext::PlayingMode new_playing_mode = ext::PlayingMode::PLAYING;
+    control::PlayingMode new_playing_mode = control::PlayingMode::PLAYING;
     auto new_internal_playing_mode = controller_impl::to_internal(new_playing_mode);
 
     _real_time_controller->set_playing_mode(new_playing_mode);
