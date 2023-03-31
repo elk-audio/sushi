@@ -88,7 +88,6 @@ public:
      */
      void process_audio(ChunkSampleBuffer& in_buffer,
                         ChunkSampleBuffer& out_buffer,
-                        int channel_count,
                         int total_sample_count,
                         Time timestamp);
 

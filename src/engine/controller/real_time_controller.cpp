@@ -106,12 +106,10 @@ void RealTimeController::set_position_source(TransportPositionSource ps)
 
 void RealTimeController::process_audio(ChunkSampleBuffer& in_buffer,
                                        ChunkSampleBuffer& out_buffer,
-                                       int channel_count,
                                        Time timestamp)
 {
     _audio_frontend->process_audio(in_buffer,
                                    out_buffer,
-                                   channel_count,
                                    _samples_since_start,
                                    timestamp);
 }

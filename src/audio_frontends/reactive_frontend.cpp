@@ -75,18 +75,10 @@ void ReactiveFrontend::run()
 //  if they differ.
 void ReactiveFrontend::process_audio(ChunkSampleBuffer& in_buffer,
                                      ChunkSampleBuffer& out_buffer,
-                                     int channel_count,
                                      int total_sample_count,
                                      Time timestamp)
 {
     // TODO: Do we need to concern ourselves with multiple buses?
-
-    if (channel_count != REACTIVE_FRONTEND_CHANNELS)
-    {
-        assert(false);
-        std::cout << "Channel count passed is different to REACTIVE_FRONTEND_CHANNELS, in passive frontend." << std::endl;
-        return;
-    }
 
     // TODO: Deal also with MIDI.
 

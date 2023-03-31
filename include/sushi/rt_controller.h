@@ -94,13 +94,11 @@ public:
      * @brief Method to invoke from the host's audio callback.
      * @param in_buffer Input sample buffer
      * @param out_buffer Output sample buffer
-     * @param channel_count number of audio channels
      * @param timestamp timestamp for call
      */
 
     virtual void process_audio(ChunkSampleBuffer& in_buffer,
                                ChunkSampleBuffer& out_buffer,
-                               int channel_count,
                                Time timestamp) = 0;
 
     /// For MIDI:
