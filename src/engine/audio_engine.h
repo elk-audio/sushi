@@ -648,7 +648,7 @@ private:
     ClipDetector _clip_detector;
 
     bool _master_limiter_enabled{false};
-    std::vector<::dsp::MasterLimiter<AUDIO_CHUNK_SIZE>> _master_limiters;
+    std::vector<sushi::dsp::MasterLimiter<AUDIO_CHUNK_SIZE>> _master_limiters;
 };
 
 /**

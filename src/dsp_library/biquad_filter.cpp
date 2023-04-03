@@ -24,8 +24,7 @@
 #include <cmath>
 #include <algorithm>
 
-namespace dsp {
-namespace biquad {
+namespace sushi::dsp::biquad {
 
 const int TIME_CONSTANTS_IN_SMOOTHING_FILTER = 3;
 
@@ -122,5 +121,5 @@ void BiquadFilter::process(const float *input, float *output, int samples)
         output[n] = y;
     }
 }
-} // end namespace biquad
-} // end namespace dsp
+
+} // end namespace sushi::dsp::biquad

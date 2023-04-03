@@ -27,7 +27,7 @@
 // And conflict with the RELEASE phase of the Adsr enum.
 #undef RELEASE
 
-namespace dsp {
+namespace sushi::dsp {
 
 /**
  * @brief Too avoid divisions by zero and extensive branching, we limit the
@@ -188,6 +188,6 @@ private:
     EnvelopeState _state{EnvelopeState::OFF};
 };
 
-} // end namespace dsp
+} // end namespace sushi::dsp
 
 #endif // SUSHI_ENVELOPES_H

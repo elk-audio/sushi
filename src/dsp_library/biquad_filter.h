@@ -23,8 +23,7 @@
 #ifndef EQUALIZER_BIQUADFILTER_H
 #define EQUALIZER_BIQUADFILTER_H
 
-namespace dsp {
-namespace biquad {
+namespace sushi::dsp::biquad {
 
 const int NUMBER_OF_BIQUAD_COEF = 5;
 
@@ -90,7 +89,7 @@ private:
     OnePoleCoefficients _smoothing_coefficients{0.0f, 0.0f};
     float _smoothing_registers[NUMBER_OF_BIQUAD_COEF]{0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 };
-} // end namespace biquad
-} // end namespace dsp
+
+} // end namespace sushi::dsp::biquad
 
 #endif //EQUALIZER_BIQUADFILTER_H

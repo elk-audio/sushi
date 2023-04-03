@@ -23,7 +23,7 @@
 
 #include <cmath>
 
-namespace dsp {
+namespace sushi::dsp {
 
 /**
  * @brief Class to wrap a mono audio sample into a prettier interface
@@ -70,5 +70,5 @@ private:
     int _length{0};
 };
 
-} // end namespace dsp
+} // end namespace sushi::dsp
 #endif // SUSHI_AUDIO_SAMPLE_H

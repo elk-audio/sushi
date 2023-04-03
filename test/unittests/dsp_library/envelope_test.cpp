@@ -5,7 +5,7 @@
 #include "dsp_library/envelopes.h"
 
 
-using namespace dsp;
+using namespace sushi::dsp;
 
 /* Test the envelope class */
 class TestADSREnvelope : public ::testing::Test

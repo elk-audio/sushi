@@ -7,7 +7,7 @@
 #include "dsp_library/master_limiter.h"
 #include "test/data/master_limiter_test_data.h"
 
-using namespace dsp;
+using namespace sushi::dsp;
 
 class TestUpSampler : public ::testing::Test
 {

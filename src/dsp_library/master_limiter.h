@@ -24,7 +24,7 @@
 #include <array>
 #include <cmath>
 
-namespace dsp {
+namespace sushi::dsp {
 
 /**
  * Calculated using windowed sinc method. Basic tests in python
@@ -185,7 +185,7 @@ private:
     UpSampler<CHUNK_SIZE> _up_sampler;
 };
 
-} // end namespace dsp
+} // end namespace sushi::dsp
 
 
 #endif // SUSHI_MASTER_LIMITER_H
