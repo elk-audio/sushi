@@ -30,6 +30,7 @@
 #include "library/id_generator.h"
 #include "library/types.h"
 
+
 namespace sushi {
 
 enum class ParameterType
@@ -138,12 +139,12 @@ public:
         return value;
     }
 
-    T to_domain(float value_normalized)
+    virtual T to_domain(float value_normalized)
     {
         return _max_domain_value + (_min_domain_value - _max_domain_value) / (_min_normalized - _max_normalized) * (value_normalized - _max_normalized);
     }
 
-    float to_normalized(T value)
+    virtual float to_normalized(T value)
     {
         return _max_normalized + (_min_normalized - _max_normalized) / (_min_domain_value - _max_domain_value) * (value - _max_domain_value);
     }
@@ -317,6 +318,29 @@ public:
         return value;
     }
 };
+
+/**
+ * @brief Preprocessor that applies a cubic map to the normalized parameter before scaling
+ */
+class CubicWarpPreProcessor : public FloatParameterPreProcessor
+{
+public:
+    CubicWarpPreProcessor(float min, float max): FloatParameterPreProcessor(min, max) {}
+
+    float to_domain(float value_normalized) override
+    {
+        float x = value_normalized;
+        float y = x * x * x;
+        return _max_domain_value + (_min_domain_value - _max_domain_value) / (_min_normalized - _max_normalized) * (y - _max_normalized);
+    }
+
+    float to_normalized(float value) override
+    {
+        float y = _max_normalized + (_min_normalized - _max_normalized) / (_min_domain_value - _max_domain_value) * (value - _max_domain_value);
+        return powf(y, 1.0f / 3.0f);
+    }
+};
+
 
 template<typename T, ParameterType enumerated_type>
 class ParameterValue
