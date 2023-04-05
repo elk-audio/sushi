@@ -34,6 +34,7 @@
 #include "plugins/stereo_mixer_plugin.h"
 #include "plugins/compressor_plugin.h"
 #include "plugins/bitcrusher_plugin.h"
+#include "plugins/wah_plugin.h"
 
 namespace sushi {
 
@@ -85,6 +86,7 @@ InternalProcessorFactory::InternalProcessorFactory() : _send_return_factory(std:
     _add(std::make_unique<InternalFactory<stereo_mixer_plugin::StereoMixerPlugin>>());
     _add(std::make_unique<InternalFactory<compressor_plugin::CompressorPlugin>>());
     _add(std::make_unique<InternalFactory<bitcrusher_plugin::BitcrusherPlugin>>());
+    _add(std::make_unique<InternalFactory<wah_plugin::WahPlugin>>());
 }
 
 std::pair<ProcessorReturnCode, std::shared_ptr<Processor>>

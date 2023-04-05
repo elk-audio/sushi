@@ -20,8 +20,6 @@
 
 #include <cassert>
 
-#include <iostream>
-
 #include "bitcrusher_plugin.h"
 
 namespace sushi {

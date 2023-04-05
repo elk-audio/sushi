@@ -19,6 +19,7 @@
 #include "plugins/stereo_mixer_plugin.cpp"
 #include "plugins/compressor_plugin.cpp"
 #include "plugins/bitcrusher_plugin.cpp"
+#include "plugins/wah_plugin.cpp"
 #include "dsp_library/biquad_filter.cpp"
 
 using namespace sushi;

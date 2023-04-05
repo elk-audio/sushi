@@ -527,6 +527,7 @@ set(SOURCE_FILES
     src/plugins/equalizer_plugin.cpp
     src/plugins/compressor_plugin.cpp
     src/plugins/bitcrusher_plugin.cpp
+    src/plugins/wah_plugin.cpp
     src/plugins/peak_meter_plugin.cpp
     src/plugins/return_plugin.cpp
     src/plugins/sample_player_plugin.cpp
