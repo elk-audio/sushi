@@ -37,6 +37,7 @@
 #include "plugins/wah_plugin.h"
 #include "plugins/eq3band_plugin.h"
 #include "plugins/phaser_plugin.h"
+#include "plugins/chorus_plugin.h"
 
 namespace sushi {
 
@@ -91,6 +92,7 @@ InternalProcessorFactory::InternalProcessorFactory() : _send_return_factory(std:
     _add(std::make_unique<InternalFactory<wah_plugin::WahPlugin>>());
     _add(std::make_unique<InternalFactory<eq3band_plugin::Eq3bandPlugin>>());
     _add(std::make_unique<InternalFactory<phaser_plugin::PhaserPlugin>>());
+    _add(std::make_unique<InternalFactory<chorus_plugin::ChorusPlugin>>());
 }
 
 std::pair<ProcessorReturnCode, std::shared_ptr<Processor>>
