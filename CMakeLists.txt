@@ -531,6 +531,7 @@ set(SOURCE_FILES
     src/plugins/eq3band_plugin.cpp
     src/plugins/phaser_plugin.cpp
     src/plugins/chorus_plugin.cpp
+    src/plugins/saturation_plugin.cpp
     src/plugins/peak_meter_plugin.cpp
     src/plugins/return_plugin.cpp
     src/plugins/sample_player_plugin.cpp
