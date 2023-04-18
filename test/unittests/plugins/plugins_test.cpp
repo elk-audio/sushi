@@ -24,6 +24,7 @@
 #include "plugins/phaser_plugin.cpp"
 #include "plugins/chorus_plugin.cpp"
 #include "plugins/saturation_plugin.cpp"
+#include "plugins/noise_gate_plugin.cpp"
 #include "dsp_library/biquad_filter.cpp"
 
 using namespace sushi;
