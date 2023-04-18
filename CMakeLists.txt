@@ -534,6 +534,7 @@ set(SOURCE_FILES
     src/plugins/saturation_plugin.cpp
     src/plugins/noise_gate_plugin.cpp
     src/plugins/tremolo_plugin.cpp
+    src/plugins/notch_plugin.cpp
     src/plugins/peak_meter_plugin.cpp
     src/plugins/return_plugin.cpp
     src/plugins/sample_player_plugin.cpp
