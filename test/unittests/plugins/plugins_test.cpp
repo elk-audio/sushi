@@ -27,6 +27,7 @@
 #include "plugins/noise_gate_plugin.cpp"
 #include "plugins/tremolo_plugin.cpp"
 #include "plugins/notch_plugin.cpp"
+#include "plugins/multi_filter_plugin.cpp"
 #include "dsp_library/biquad_filter.cpp"
 
 using namespace sushi;

@@ -43,6 +43,7 @@
 #include "plugins/noise_gate_plugin.h"
 #include "plugins/tremolo_plugin.h"
 #include "plugins/notch_plugin.h"
+#include "plugins/multi_filter_plugin.h"
 
 namespace sushi {
 
@@ -102,6 +103,7 @@ InternalProcessorFactory::InternalProcessorFactory() : _send_return_factory(std:
     _add(std::make_unique<InternalFactory<noise_gate_plugin::NoiseGatePlugin>>());
     _add(std::make_unique<InternalFactory<tremolo_plugin::TremoloPlugin>>());
     _add(std::make_unique<InternalFactory<notch_plugin::NotchPlugin>>());
+    _add(std::make_unique<InternalFactory<multi_filter_plugin::MultiFilterPlugin>>());
 }
 
 std::pair<ProcessorReturnCode, std::shared_ptr<Processor>>
