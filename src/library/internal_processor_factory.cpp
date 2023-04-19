@@ -44,6 +44,7 @@
 #include "plugins/tremolo_plugin.h"
 #include "plugins/notch_plugin.h"
 #include "plugins/multi_filter_plugin.h"
+#include "plugins/highpass_plugin.h"
 
 namespace sushi {
 
@@ -104,6 +105,7 @@ InternalProcessorFactory::InternalProcessorFactory() : _send_return_factory(std:
     _add(std::make_unique<InternalFactory<tremolo_plugin::TremoloPlugin>>());
     _add(std::make_unique<InternalFactory<notch_plugin::NotchPlugin>>());
     _add(std::make_unique<InternalFactory<multi_filter_plugin::MultiFilterPlugin>>());
+    _add(std::make_unique<InternalFactory<highpass_plugin::HighPassPlugin>>());
 }
 
 std::pair<ProcessorReturnCode, std::shared_ptr<Processor>>
