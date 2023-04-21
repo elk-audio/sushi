@@ -417,6 +417,8 @@ void Model::_initialize_map_feature()
     this->_map.handle = this;
     this->_map.map = map_uri;
     init_feature(&this->_features.map_feature, LV2_URID__map, &this->_map);
+
+    lv2_atom_forge_init(&_forge, &_map);
 }
 
 void Model::_initialize_unmap_feature()
