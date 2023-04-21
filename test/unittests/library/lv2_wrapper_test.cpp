@@ -72,12 +72,12 @@ class TestLv2Wrapper : public ::testing::Test
 protected:
     using ::testing::Test::SetUp; // Hide error of hidden overload of virtual function in clang when signatures differ but the name is the same
     TestLv2Wrapper()
-    {
-    }
+    {}
 
     ProcessorReturnCode SetUp(const std::string& plugin_URI)
     {
         auto mockup = _host_control.make_host_control_mockup(TEST_SAMPLE_RATE);
+        _host_control._transport.set_time(Time(0), 0);
         _world = std::make_shared<LilvWorldWrapper>();
         bool world_created = _world->create_world();
         EXPECT_TRUE(world_created);
@@ -102,10 +102,12 @@ protected:
 
     void TearDown()
     {
-        _module_under_test = nullptr;
+        _module_under_test.reset();
     }
 
     RtSafeRtEventFifo _fifo;
+
+
 
     HostControlMockup _host_control;
     std::shared_ptr<LilvWorldWrapper> _world;
@@ -463,6 +465,7 @@ TEST_F(TestLv2Wrapper, TestSynth)
     ASSERT_TRUE(_module_under_test->supports_programs());
     ASSERT_EQ(52, _module_under_test->program_count());
     ASSERT_EQ(0, _module_under_test->current_program());
+
     ASSERT_EQ("http://drobilla.net/plugins/mda/presets#JX10-303-saw-bass", _module_under_test->current_program_name());
     auto[status, program_name] = _module_under_test->program_name(2);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
