@@ -225,6 +225,7 @@ TEST_F(TestLv2Wrapper, TestBypassProcessing)
 
 TEST_F(TestLv2Wrapper, TestMidiEventInputAndOutput)
 {
+    // Use a plugin that doubles midi notes a fifth up for testing
     auto ret = SetUp("http://lv2plug.in/plugins/eg-fifths");
     ASSERT_EQ(ProcessorReturnCode::OK, ret);
 
@@ -233,33 +234,36 @@ TEST_F(TestLv2Wrapper, TestMidiEventInputAndOutput)
     ChunkSampleBuffer in_buffer(2);
     ChunkSampleBuffer out_buffer(2);
 
-    _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 0, 60, 1.0f));
-    _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 0.0f));
+    _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 1, 60, 1.0f));
+    _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 2, 60, 0.5f));
     _module_under_test->process_audio(in_buffer, out_buffer);
 
     RtEvent e;
-    bool got_event = _fifo.pop(e);
-    ASSERT_TRUE(got_event);
+    ASSERT_TRUE(_fifo.pop(e));
+    EXPECT_EQ(_module_under_test->id(), e.processor_id());
 
-    ASSERT_EQ(_module_under_test->id(), e.processor_id());
+    EXPECT_EQ(RtEventType::NOTE_ON, e.type());
+    EXPECT_EQ(1, e.keyboard_event()->channel());
+    EXPECT_EQ(60, e.keyboard_event()->note());
+    EXPECT_FLOAT_EQ(1.0f, e.keyboard_event()->velocity());
 
-    ASSERT_EQ(RtEventType::NOTE_ON, e.type());
-    ASSERT_EQ(60, e.keyboard_event()->note());
+    ASSERT_TRUE(_fifo.pop(e));
+    EXPECT_EQ(RtEventType::NOTE_ON, e.type());
+    EXPECT_EQ(1, e.keyboard_event()->channel());
+    EXPECT_EQ(67, e.keyboard_event()->note());
+    EXPECT_FLOAT_EQ(1.0f, e.keyboard_event()->velocity());
 
-    _fifo.pop(e);
+    ASSERT_TRUE(_fifo.pop(e));
+    EXPECT_EQ(RtEventType::NOTE_OFF, e.type());
+    EXPECT_EQ(2, e.keyboard_event()->channel());
+    EXPECT_EQ(60, e.keyboard_event()->note());
+    EXPECT_NEAR(0.5f, e.keyboard_event()->velocity(), 0.01);
 
-    ASSERT_EQ(RtEventType::NOTE_ON, e.type());
-    ASSERT_EQ(67, e.keyboard_event()->note());
-
-    _fifo.pop(e);
-
-    ASSERT_EQ(RtEventType::NOTE_OFF, e.type());
-    ASSERT_EQ(60, e.keyboard_event()->note());
-
-    _fifo.pop(e);
-
-    ASSERT_EQ(RtEventType::NOTE_OFF, e.type());
-    ASSERT_EQ(67, e.keyboard_event()->note());
+    ASSERT_TRUE(_fifo.pop(e));
+    EXPECT_EQ(RtEventType::NOTE_OFF, e.type());
+    EXPECT_EQ(2, e.keyboard_event()->channel());
+    EXPECT_EQ(67, e.keyboard_event()->note());
+    EXPECT_NEAR(0.5f, e.keyboard_event()->velocity(), 0.01);
 
     ASSERT_TRUE(_fifo.empty());
 }

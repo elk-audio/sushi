@@ -35,6 +35,7 @@ namespace midi {
 
 /* Max value for midi velocity, pressure, controller value, etc. */
 constexpr int MAX_VALUE = 127;
+constexpr float MAX_VALUE_F = MAX_VALUE;
 /* Max value for midi pitch bend (14 bit value). */
 constexpr int MAX_PITCH_BEND = 16384;
 /* Middle value for pitch bend */
@@ -53,8 +54,7 @@ constexpr int MOD_WHEEL_CONTROLLER_NO = 1;
 inline MidiDataByte to_midi_data_byte(const uint8_t* data, int size)
 {
     MidiDataByte data_byte{0};
-    assert(size < static_cast<int>(data_byte.size()));
-    for (int i = 0; i < size; ++i)
+    for (int i = 0; i < std::max(size, static_cast<int>(data_byte.size())); ++i)
     {
         data_byte[i] = data[i];
     }
