@@ -84,6 +84,7 @@ void SaturationPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSa
 
     if (!_bypassed)
     {
+        bw_satur_update_coeffs_ctrl(&_saturation_coeffs);
         int n = 0;
         while (n < AUDIO_CHUNK_SIZE)
         {

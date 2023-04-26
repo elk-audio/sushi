@@ -84,6 +84,7 @@ void ClipPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBu
 
     if (!_bypassed)
     {
+        bw_clip_update_coeffs_ctrl(&_clip_coeffs);
         int n = 0;
         while (n < AUDIO_CHUNK_SIZE)
         {
