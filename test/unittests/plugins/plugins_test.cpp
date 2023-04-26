@@ -29,6 +29,7 @@
 #include "plugins/notch_plugin.cpp"
 #include "plugins/multi_filter_plugin.cpp"
 #include "plugins/highpass_plugin.cpp"
+#include "plugins/clip_plugin.cpp"
 #include "plugins/simple_synth_plugin.cpp"
 #include "dsp_library/biquad_filter.cpp"
 
