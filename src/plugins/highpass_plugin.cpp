@@ -63,7 +63,7 @@ void HighPassPlugin::set_enabled(bool enabled)
     bw_hp1_reset_coeffs(&_hp1_coeffs);
     for (int i = 0; i < MAX_CHANNELS_SUPPORTED; i++)
     {
-        bw_hp1_reset_state(&_hp1_coeffs, &_hp1_states[i]);
+        bw_hp1_reset_state(&_hp1_coeffs, &_hp1_states[i], 0.0f);
     }
 }
 

@@ -71,8 +71,8 @@ void SaturationPlugin::set_enabled(bool enabled)
     for (int i = 0; i < MAX_CHANNELS_SUPPORTED; i++)
     {
         bw_satur_reset_state(&_saturation_coeffs, &_saturation_states[i]);
-        bw_src_int_reset_state(&_src_up_coeffs, &_src_up_states[i], 0.f);
-        bw_src_int_reset_state(&_src_down_coeffs, &_src_down_states[i], 0.f);
+        bw_src_int_reset_state(&_src_up_coeffs, &_src_up_states[i], 0.0f);
+        bw_src_int_reset_state(&_src_down_coeffs, &_src_down_states[i], 0.0f);
     }
 }
 
