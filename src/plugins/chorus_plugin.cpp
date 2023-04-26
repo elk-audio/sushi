@@ -43,14 +43,14 @@ ChorusPlugin::ChorusPlugin(HostControl host_control) : InternalPlugin(host_contr
 
     // The low-level module bw_chorus.h exposes other parameters
     // (delay & three coefficients for the direct / modulation / feedback branches)
-    // But for a high-level plugin we can just use these two as done in the Brickworks
-    // example fx_chorus
+
+    // but the high-level chorus example pre-configures them accordingly to Dattoro's reccomendations
     _rate = register_float_parameter("rate", "Rate", "Hz",
                                       1.0f, 0.01f, 2.0f,
                                       Direction::AUTOMATABLE,
                                       new CubicWarpPreProcessor(0.01f, 2.0f));
     _amount = register_float_parameter("amount", "Amount", "",
-                                       1.0f, 0.0f, 4.0f,
+                                       0.0f, 0.0f, 0.004f,
                                        Direction::AUTOMATABLE,
                                        new FloatParameterPreProcessor(0.0f, 0.004f));
 
