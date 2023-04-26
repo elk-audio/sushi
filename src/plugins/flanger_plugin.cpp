@@ -33,6 +33,8 @@ constexpr auto DEFAULT_LABEL = "Flanger";
 // to take better advantage of AVX etc. when supported by the compiler
 constexpr size_t DELAY_LINE_MEMALIGN = 32;
 
+constexpr float FLANGER_AMOUNT_SCALE = 0.001f;
+
 
 FlangerPlugin::FlangerPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
@@ -50,9 +52,9 @@ FlangerPlugin::FlangerPlugin(HostControl host_control) : InternalPlugin(host_con
                                       Direction::AUTOMATABLE,
                                       new CubicWarpPreProcessor(0.01f, 2.0f));
     _amount = register_float_parameter("amount", "Amount", "",
-                                       0.0f, 0.0f, 0.001f,
+                                       0.0f, 0.0f, 1.0f,
                                        Direction::AUTOMATABLE,
-                                       new FloatParameterPreProcessor(0.0f, 0.001f));
+                                       new FloatParameterPreProcessor(0.0f, 1.0f));
 
     assert(_rate);
     assert(_amount);
@@ -114,7 +116,7 @@ void FlangerPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampl
 {
     /* Update parameter values */
     bw_chorus_set_rate(&_chorus_coeffs, _rate->processed_value());
-    bw_chorus_set_amount(&_chorus_coeffs, _amount->processed_value());
+    bw_chorus_set_amount(&_chorus_coeffs, _amount->processed_value() * FLANGER_AMOUNT_SCALE);
 
     if (!_bypassed)
     {
