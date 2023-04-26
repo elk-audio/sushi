@@ -538,6 +538,7 @@ set(SOURCE_FILES
     src/plugins/multi_filter_plugin.cpp
     src/plugins/highpass_plugin.cpp
     src/plugins/clip_plugin.cpp
+    src/plugins/fuzz_plugin.cpp
     src/plugins/simple_synth_plugin.cpp
     src/plugins/peak_meter_plugin.cpp
     src/plugins/return_plugin.cpp

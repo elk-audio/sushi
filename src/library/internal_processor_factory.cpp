@@ -46,6 +46,7 @@
 #include "plugins/multi_filter_plugin.h"
 #include "plugins/highpass_plugin.h"
 #include "plugins/clip_plugin.h"
+#include "plugins/fuzz_plugin.h"
 #include "plugins/simple_synth_plugin.h"
 
 namespace sushi {
@@ -109,6 +110,7 @@ InternalProcessorFactory::InternalProcessorFactory() : _send_return_factory(std:
     _add(std::make_unique<InternalFactory<multi_filter_plugin::MultiFilterPlugin>>());
     _add(std::make_unique<InternalFactory<highpass_plugin::HighPassPlugin>>());
     _add(std::make_unique<InternalFactory<clip_plugin::ClipPlugin>>());
+    _add(std::make_unique<InternalFactory<fuzz_plugin::FuzzPlugin>>());
     _add(std::make_unique<InternalFactory<simple_synth_plugin::SimpleSynthPlugin>>());
 }
 
