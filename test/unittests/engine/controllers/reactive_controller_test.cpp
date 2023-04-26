@@ -81,7 +81,7 @@ TEST_F(ReactiveControllerTestFrontend, TestRtControllerAudioCalls)
 
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
 
-    _real_time_controller->process_audio(in_buffer, out_buffer, 2, 1s);
+    _real_time_controller->process_audio(in_buffer, out_buffer, 1s);
 
     test_utils::assert_buffer_value(1.0f, out_buffer);
 
