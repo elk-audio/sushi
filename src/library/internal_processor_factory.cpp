@@ -15,6 +15,7 @@
 
 #include "internal_processor_factory.h"
 
+#include "plugins/combdelay_plugin.h"
 #include "plugins/notch_plugin.h"
 #include "plugins/passthrough_plugin.h"
 #include "plugins/gain_plugin.h"
@@ -41,6 +42,7 @@
 #include "plugins/chorus_plugin.h"
 #include "plugins/vibrato_plugin.h"
 #include "plugins/flanger_plugin.h"
+#include "plugins/combdelay_plugin.h"
 #include "plugins/saturation_plugin.h"
 #include "plugins/noise_gate_plugin.h"
 #include "plugins/tremolo_plugin.h"
@@ -107,6 +109,7 @@ InternalProcessorFactory::InternalProcessorFactory() : _send_return_factory(std:
     _add(std::make_unique<InternalFactory<chorus_plugin::ChorusPlugin>>());
     _add(std::make_unique<InternalFactory<vibrato_plugin::VibratoPlugin>>());
     _add(std::make_unique<InternalFactory<flanger_plugin::FlangerPlugin>>());
+    _add(std::make_unique<InternalFactory<comb_plugin::CombPlugin>>());
     _add(std::make_unique<InternalFactory<saturation_plugin::SaturationPlugin>>());
     _add(std::make_unique<InternalFactory<noise_gate_plugin::NoiseGatePlugin>>());
     _add(std::make_unique<InternalFactory<tremolo_plugin::TremoloPlugin>>());
