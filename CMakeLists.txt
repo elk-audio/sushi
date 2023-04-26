@@ -531,6 +531,7 @@ set(SOURCE_FILES
     src/plugins/eq3band_plugin.cpp
     src/plugins/phaser_plugin.cpp
     src/plugins/chorus_plugin.cpp
+    src/plugins/vibrato_plugin.cpp
     src/plugins/flanger_plugin.cpp
     src/plugins/saturation_plugin.cpp
     src/plugins/noise_gate_plugin.cpp
