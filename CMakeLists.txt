@@ -525,24 +525,6 @@ set(SOURCE_FILES
     src/plugins/lfo_plugin.cpp
     src/plugins/passthrough_plugin.cpp
     src/plugins/equalizer_plugin.cpp
-    src/plugins/compressor_plugin.cpp
-    src/plugins/bitcrusher_plugin.cpp
-    src/plugins/wah_plugin.cpp
-    src/plugins/eq3band_plugin.cpp
-    src/plugins/phaser_plugin.cpp
-    src/plugins/chorus_plugin.cpp
-    src/plugins/vibrato_plugin.cpp
-    src/plugins/flanger_plugin.cpp
-    src/plugins/combdelay_plugin.cpp
-    src/plugins/saturation_plugin.cpp
-    src/plugins/noise_gate_plugin.cpp
-    src/plugins/tremolo_plugin.cpp
-    src/plugins/notch_plugin.cpp
-    src/plugins/multi_filter_plugin.cpp
-    src/plugins/highpass_plugin.cpp
-    src/plugins/clip_plugin.cpp
-    src/plugins/fuzz_plugin.cpp
-    src/plugins/simple_synth_plugin.cpp
     src/plugins/peak_meter_plugin.cpp
     src/plugins/return_plugin.cpp
     src/plugins/sample_player_plugin.cpp
@@ -556,6 +538,24 @@ set(SOURCE_FILES
     src/plugins/wav_writer_plugin.cpp
     src/plugins/mono_summing_plugin.cpp
     src/plugins/stereo_mixer_plugin.cpp
+    src/plugins/brickworks/compressor_plugin.cpp
+    src/plugins/brickworks/bitcrusher_plugin.cpp
+    src/plugins/brickworks/wah_plugin.cpp
+    src/plugins/brickworks/eq3band_plugin.cpp
+    src/plugins/brickworks/phaser_plugin.cpp
+    src/plugins/brickworks/chorus_plugin.cpp
+    src/plugins/brickworks/vibrato_plugin.cpp
+    src/plugins/brickworks/flanger_plugin.cpp
+    src/plugins/brickworks/combdelay_plugin.cpp
+    src/plugins/brickworks/saturation_plugin.cpp
+    src/plugins/brickworks/noise_gate_plugin.cpp
+    src/plugins/brickworks/tremolo_plugin.cpp
+    src/plugins/brickworks/notch_plugin.cpp
+    src/plugins/brickworks/multi_filter_plugin.cpp
+    src/plugins/brickworks/highpass_plugin.cpp
+    src/plugins/brickworks/clip_plugin.cpp
+    src/plugins/brickworks/fuzz_plugin.cpp
+    src/plugins/brickworks/simple_synth_plugin.cpp
     src/audio_frontends/offline_frontend.cpp)
 
 add_executable(sushi MACOSX_BUNDLE
