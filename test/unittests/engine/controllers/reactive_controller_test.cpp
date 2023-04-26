@@ -16,6 +16,8 @@
 #include <gmock/gmock.h>
 #include <gmock/gmock-actions.h>
 
+#include "test_utils/test_utils.h"
+
 #define private public
 #define protected public
 
@@ -71,10 +73,19 @@ TEST_F(ReactiveControllerTestFrontend, TestRtControllerAudioCalls)
 {
     // TODO: This test can be improved by mocking also ReactiveFrontend,
     //  so we can use "expect call" on it.
-    
-    _real_time_controller->process_audio(2, 1s);
-    EXPECT_TRUE(&_real_time_controller->in_buffer() == &_audio_frontend.in_buffer());
-    EXPECT_TRUE(&_real_time_controller->out_buffer() == &_audio_frontend.out_buffer());
+
+    ASSERT_FALSE(_mock_engine.process_called);
+
+    ChunkSampleBuffer in_buffer;
+    ChunkSampleBuffer out_buffer;
+
+    test_utils::fill_sample_buffer(in_buffer, 1.0f);
+
+    _real_time_controller->process_audio(in_buffer, out_buffer, 2, 1s);
+
+    test_utils::assert_buffer_value(1.0f, out_buffer);
+
+    ASSERT_TRUE(_mock_engine.process_called);
 }
 
 TEST_F(ReactiveControllerTestFrontend, TestRtControllerTransportCalls)

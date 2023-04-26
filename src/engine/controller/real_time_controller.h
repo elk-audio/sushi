@@ -69,10 +69,9 @@ public:
     /// For Audio:
     /////////////////////////////////////////////////////////////
 
-    void process_audio(int channel_count, Time timestamp) override;
-
-    ChunkSampleBuffer& in_buffer() override;
-    ChunkSampleBuffer& out_buffer() override;
+    void process_audio(ChunkSampleBuffer& in_buffer,
+                       ChunkSampleBuffer& out_buffer,
+                       Time timestamp) override;
 
     /// For MIDI:
     /////////////////////////////////////////////////////////////
