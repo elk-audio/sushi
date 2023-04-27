@@ -5,7 +5,9 @@
 
 #include "test_utils/engine_mockup.h"
 #include "library/lv2/lv2_state.cpp"
-#include "library/lv2/lv2_features.cpp"
+
+#include "spdlog/fmt/bundled/core.h"
+#include "spdlog/fmt/bundled/format.h"
 
 // Needed for unit tests to access private utility methods in lv2_wrapper.
 #define private public
@@ -16,6 +18,12 @@
 #include "library/lv2/lv2_model.cpp"
 #include "library/lv2/lv2_worker.cpp"
 #include "library/lv2/lv2_control.cpp"
+
+// For testing the LV2Log feature, override the logger macro to write to a local variable instead
+#undef SUSHI_LOG_DEBUG
+std::array<char, 1024> log_buffer;
+#define SUSHI_LOG_DEBUG(fmt_str, ...) ::fmt::format_to(log_buffer.data(), fmt_str, __VA_ARGS__);
+#include "library/lv2/lv2_features.cpp"
 
 using namespace sushi;
 using namespace sushi::lv2;
@@ -594,6 +602,19 @@ TEST_F(TestLv2Wrapper, TestBinaryStateSaving)
 
     // Check the value has reverted to the previous value
     EXPECT_FLOAT_EQ(prev_value, _module_under_test->parameter_value(desc->id()).second);
+}
+
+TEST_F(TestLv2Wrapper, TestLv2Logging)
+{
+    auto ret = SetUp("http://lv2plug.in/plugins/eg-amp");
+    ASSERT_EQ(ProcessorReturnCode::OK, ret);
+
+    log_buffer.fill('\0');
+    auto model= _module_under_test->_model.get();
+
+    // Note that LV2Log uses old style printf-formatting
+    lv2_printf(static_cast<void*>(model), model->urids().log_Error, "logged from %s%i", "lv", 2);
+    EXPECT_STREQ("LV2 Error: logged from lv2", log_buffer.data());
 }
 
 #endif //SUSHI_BUILD_WITH_LV2_MDA_TESTS
