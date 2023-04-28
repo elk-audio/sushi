@@ -2,7 +2,7 @@
 #define SUSHI_AUDIO_GRAPH_H
 
 /*
- * Copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -10,26 +10,25 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
  * @brief Wrapper around the list of tracks used for rt processing and its associated
  *        multicore management
- * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Elk Audio AB, Stockholm
  */
 
 #include <vector>
 
 #include "twine/twine.h"
-
 #include "engine/track.h"
+#include "twine/src/apple_threading.h"
 
-namespace sushi {
-namespace engine {
+namespace sushi::engine {
 
 class AudioGraph
 {
@@ -40,10 +39,18 @@ public:
      *                  exceed the number of cores on the architecture
      * @param max_no_tracks The maximum number of tracks to reserve space for. As
      *                      add() and remove() could be called from an rt thread
-     *                      they must not (de)allocate memory-
+     *                      they must not (de)allocate memory.
+     * @param sample_rate The sample_rate - used for calculating audio thread periodicity. Only used on Apple.
+     * @param device_name The Audio Device Name - only used on Apple, and will be unused on other platforms.
      * @param debug_mode_switches Enable xenomai-specific thread debugging
      */
-    AudioGraph(int cpu_cores, int max_no_tracks, bool debug_mode_switches = false);
+    AudioGraph(int cpu_cores,
+               int max_no_tracks,
+               float sample_rate,
+               std::optional<std::string> device_name = std::nullopt,
+               bool debug_mode_switches = false);
+
+    ~AudioGraph() = default;
 
     /**
      * @brief Add a track to the graph. The track will be assigned to a cpu
@@ -96,7 +103,6 @@ private:
     int _current_core;
 };
 
-} // namespace engine
-} // namespace sushi
+} // namespace sushi::engine
 
 #endif //SUSHI_AUDIO_GRAPH_H

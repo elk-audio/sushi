@@ -24,7 +24,6 @@
 
 #include <math.h>
 
-#include "logging.h"
 #include "lv2_model.h"
 
 namespace sushi {
@@ -62,17 +61,17 @@ Port::Port(const LilvPlugin* plugin, int port_index, float default_value, Model*
 
         lilv_port_get_range(plugin, _lilv_port, &defNode, &minNode, &maxNode);
 
-        if(defNode != nullptr)
+        if (defNode != nullptr)
         {
             _def = lilv_node_as_float(defNode);
         }
 
-        if(maxNode != nullptr)
+        if (maxNode != nullptr)
         {
             _max = lilv_node_as_float(maxNode);
         }
 
-        if(minNode != nullptr)
+        if (minNode != nullptr)
         {
             _min = lilv_node_as_float(minNode);
         }
@@ -136,22 +135,22 @@ void Port::_allocate_port_buffers(Model* model)
     }
 }
 
-float Port::min()
+float Port::min() const
 {
     return _min;
 }
 
-float Port::max()
+float Port::max() const
 {
     return _max;
 }
 
-PortFlow Port::flow()
+PortFlow Port::flow() const
 {
     return _flow;
 }
 
-PortType Port::type()
+PortType Port::type() const
 {
     return _type;
 }
@@ -171,7 +170,7 @@ void Port::set_control_value(float c)
     _control = c;
 }
 
-float Port::control_value()
+float Port::control_value() const
 {
     return _control;
 }
@@ -181,7 +180,7 @@ float* Port::control_pointer()
     return &_control;
 }
 
-bool Port::optional()
+bool Port::optional() const
 {
     return _optional;
 }

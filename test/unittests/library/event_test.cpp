@@ -40,7 +40,7 @@ TEST(EventTest, TestToRtEvent)
     EXPECT_TRUE(note_at_event.is_keyboard_event());
     EXPECT_TRUE(note_at_event.maps_to_rt_event());
     rt_event = note_at_event.to_rt_event(5);
-    EXPECT_EQ(RtEventType::NOTE_AFTERTOUCH, rt_event.type());;
+    EXPECT_EQ(RtEventType::NOTE_AFTERTOUCH, rt_event.type());
 
     auto pitchbend_event = KeyboardEvent(KeyboardEvent::Subtype::PITCH_BEND, 2, 3, 0.5f, IMMEDIATE_PROCESS);
     EXPECT_TRUE(pitchbend_event.is_keyboard_event());
@@ -108,7 +108,7 @@ TEST(EventTest, TestToRtEvent)
 TEST(EventTest, TestFromRtEvent)
 {
     auto note_on_event = RtEvent::make_note_on_event(2, 0, 1, 48, 1.0f);
-    Event* event = Event::from_rt_event(note_on_event, IMMEDIATE_PROCESS);
+    auto event = Event::from_rt_event(note_on_event, IMMEDIATE_PROCESS);
     ASSERT_TRUE(event != nullptr);
     EXPECT_TRUE(event->is_keyboard_event());
     EXPECT_EQ(IMMEDIATE_PROCESS, event->time());
@@ -193,17 +193,6 @@ TEST(EventTest, TestFromRtEvent)
     EXPECT_EQ(MidiDataByte({1,2,3,4}), kb_event->midi_data());
     delete event;
 
-    auto param_ch_event = RtEvent::make_parameter_change_event(9, 0, 50, 0.1f);
-    event = Event::from_rt_event(param_ch_event, IMMEDIATE_PROCESS);
-    ASSERT_TRUE(event != nullptr);
-    EXPECT_TRUE(event->is_parameter_change_notification());
-    auto pc_event = static_cast<ParameterChangeNotificationEvent*>(event);
-    EXPECT_EQ(ParameterChangeNotificationEvent::Subtype::FLOAT_PARAMETER_CHANGE_NOT, pc_event->subtype());
-    EXPECT_EQ(9u, pc_event->processor_id());
-    EXPECT_EQ(50u, pc_event->parameter_id());
-    EXPECT_FLOAT_EQ(0.1f, pc_event->float_value());
-    delete event;
-
     auto tempo_event = RtEvent::make_tempo_event(10, 125);
     event = Event::from_rt_event(tempo_event, IMMEDIATE_PROCESS);
     ASSERT_TRUE(event != nullptr);
@@ -254,5 +243,21 @@ TEST(EventTest, TestFromRtEvent)
     ASSERT_TRUE(event != nullptr);
     EXPECT_TRUE(event->is_async_work_event());
     EXPECT_TRUE(event->process_asynchronously());
+    delete event;
+
+    auto notify_event = RtEvent::make_processor_notify_event(30, ProcessorNotifyRtEvent::Action::PARAMETER_UPDATE);
+    event = Event::from_rt_event(notify_event, IMMEDIATE_PROCESS);
+    ASSERT_TRUE(event != nullptr);
+    EXPECT_TRUE(event->is_engine_notification());
+    EXPECT_EQ(static_cast<AudioGraphNotificationEvent*>(event)->action(), AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED);
+    delete event;
+
+    auto tick_event = RtEvent::make_timing_tick_event(14, 12);
+    event = Event::from_rt_event(tick_event, IMMEDIATE_PROCESS);
+    ASSERT_TRUE(event != nullptr);
+    EXPECT_TRUE(event->is_engine_notification());
+    auto tick_not = static_cast<EngineTimingTickNotificationEvent*>(event);
+    EXPECT_TRUE(tick_not->is_timing_tick_notification());
+    EXPECT_EQ(12, tick_not->tick_count());
     delete event;
 }

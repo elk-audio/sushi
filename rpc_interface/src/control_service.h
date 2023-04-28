@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Sushi Control Service, gRPC service for external control of Sushi
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_SUSHICONTROLSERVICE_H
@@ -38,6 +38,7 @@ class SubscribeToCpuTimingUpdatesCallData;
 class SubscribeToTrackChangesCallData;
 class SubscribeToProcessorChangesCallData;
 class SubscribeToParameterUpdatesCallData;
+class SubscribeToPropertyUpdatesCallData;
 
 class SystemControlService : public SystemController::Service
 {
@@ -124,6 +125,8 @@ public:
     grpc::Status SetProcessorState(grpc::ServerContext* context, const sushi_rpc::ProcessorStateSetRequest* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status CreateTrack(grpc::ServerContext* context, const sushi_rpc::CreateTrackRequest* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status CreateMultibusTrack(grpc::ServerContext* context, const sushi_rpc::CreateMultibusTrackRequest* request, sushi_rpc::GenericVoidValue* response) override;
+    grpc::Status CreatePreTrack(grpc::ServerContext* context, const sushi_rpc::CreatePreTrackRequest* request, sushi_rpc::GenericVoidValue* response) override;
+    grpc::Status CreatePostTrack(grpc::ServerContext* context, const sushi_rpc::CreatePostTrackRequest* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status CreateProcessorOnTrack(grpc::ServerContext* context, const sushi_rpc::CreateProcessorRequest* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status MoveProcessorOnTrack(grpc::ServerContext* context, const sushi_rpc::MoveProcessorRequest* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status DeleteProcessorFromTrack(grpc::ServerContext* context, const sushi_rpc::DeleteProcessorRequest* request, sushi_rpc::GenericVoidValue* response) override;
@@ -153,7 +156,6 @@ public:
     grpc::Status GetPropertyInfo(grpc::ServerContext* context, const sushi_rpc::PropertyIdentifier* request, sushi_rpc::PropertyInfo* response) override;
     grpc::Status GetPropertyValue(grpc::ServerContext* context, const sushi_rpc::PropertyIdentifier* request, sushi_rpc::GenericStringValue* response) override;
     grpc::Status SetPropertyValue(grpc::ServerContext* context, const sushi_rpc::PropertyValue* request, sushi_rpc::GenericVoidValue* response) override;
-
 
 private:
     sushi::ext::ParameterController* _controller;
@@ -187,6 +189,8 @@ public:
     grpc::Status GetAllPCInputConnections(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::MidiPCConnectionList* response) override;
     grpc::Status GetCCInputConnectionsForProcessor(grpc::ServerContext* context, const sushi_rpc::ProcessorIdentifier* request, sushi_rpc::MidiCCConnectionList* response) override;
     grpc::Status GetPCInputConnectionsForProcessor(grpc::ServerContext* context, const sushi_rpc::ProcessorIdentifier* request, sushi_rpc::MidiPCConnectionList* response) override;
+    grpc::Status GetMidiClockOutputEnabled(grpc::ServerContext* context, const sushi_rpc::GenericIntValue* request, sushi_rpc::GenericBoolValue* response) override;
+    grpc::Status SetMidiClockOutputEnabled(grpc::ServerContext* context, const sushi_rpc::MidiClockSetRequest* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status ConnectKbdInputToTrack(grpc::ServerContext* context, const sushi_rpc::MidiKbdConnection* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status ConnectKbdOutputFromTrack(grpc::ServerContext* context, const sushi_rpc::MidiKbdConnection* request, sushi_rpc::GenericVoidValue* response) override;
     grpc::Status ConnectCCToParameter(grpc::ServerContext* context, const sushi_rpc::MidiCCConnection* request, sushi_rpc::GenericVoidValue* response) override;
@@ -260,6 +264,7 @@ class OscControlService : public OscController::Service
 public:
     OscControlService(sushi::ext::SushiControl* controller) : _controller{controller->osc_controller()} {}
 
+    grpc::Status GetSendIP(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::GenericStringValue* response) override;
     grpc::Status GetSendPort(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::GenericIntValue* response) override;
     grpc::Status GetReceivePort(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::GenericIntValue* response) override;
     grpc::Status GetEnabledParameterOutputs(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::OscParameterOutputList* response) override;
@@ -272,13 +277,26 @@ private:
     sushi::ext::OscController* _controller;
 };
 
+class SessionControlService : public SessionController::Service
+{
+public:
+    SessionControlService(sushi::ext::SushiControl* controller) : _controller{controller->session_controller()} {}
+
+    grpc::Status SaveSession(grpc::ServerContext* context, const sushi_rpc::GenericVoidValue* request, sushi_rpc::SessionState* response) override;
+    grpc::Status RestoreSession(grpc::ServerContext* context, const sushi_rpc::SessionState* request, sushi_rpc::GenericVoidValue* response) override;
+
+private:
+    sushi::ext::SessionController* _controller;
+};
+
 using AsyncService = sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToParameterUpdates<
                      sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToProcessorChanges<
                      sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToTrackChanges<
                      sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToEngineCpuTimingUpdates<
                      sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToTransportChanges<
+                     sushi_rpc::NotificationController::WithAsyncMethod_SubscribeToPropertyUpdates<
                      sushi_rpc::NotificationController::Service
-                     >>>>>;
+                     >>>>>>;
 
 class NotificationControlService : public AsyncService,
                                    private sushi::ext::ControlListener
@@ -304,6 +322,9 @@ public:
     void subscribe(SubscribeToParameterUpdatesCallData* subscriber);
     void unsubscribe(SubscribeToParameterUpdatesCallData* subscriber);
 
+    void subscribe(SubscribeToPropertyUpdatesCallData* subscriber);
+    void unsubscribe(SubscribeToPropertyUpdatesCallData* subscriber);
+
     void delete_all_subscribers();
 
 private:
@@ -312,6 +333,7 @@ private:
     void _forward_track_notification_to_subscribers(const sushi::ext::ControlNotification* notification);
     void _forward_processor_notification_to_subscribers(const sushi::ext::ControlNotification* notification);
     void _forward_parameter_notification_to_subscribers(const sushi::ext::ControlNotification* notification);
+    void _forward_property_notification_to_subscribers(const sushi::ext::ControlNotification* notification);
 
     std::vector<SubscribeToTransportChangesCallData*> _transport_subscribers;
     std::mutex _transport_subscriber_lock;
@@ -327,6 +349,9 @@ private:
 
     std::vector<SubscribeToParameterUpdatesCallData*> _parameter_subscribers;
     std::mutex _parameter_subscriber_lock;
+
+    std::vector<SubscribeToPropertyUpdatesCallData*> _property_subscribers;
+    std::mutex _property_subscriber_lock;
 
     sushi::ext::SushiControl* _controller;
 

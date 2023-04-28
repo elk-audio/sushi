@@ -1,0 +1,116 @@
+{
+    "host_config" : {
+        "samplerate" : 48000
+    },
+    "tracks" : [
+        {
+            "name" : "main (Piano)",
+            "channels" : 2,
+            "inputs" : [],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "path" : "mda-vst3.vst3",
+                    "uid" : "mda Piano",
+                    "name" : "mda Piano",
+                    "type" : "vst3x"
+                }
+            ]
+        },
+        {
+            "name" : "second (Synth)",
+            "channels" : 2,
+            "inputs" : [],
+            "outputs" : [
+                {
+                    "engine_bus" : 1,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "path" : "mda-vst3.vst3",
+                    "name" : "mda JX10",
+                    "type" : "vst3x",
+                    "uid" : "mda JX10"
+                }
+            ]
+        },
+        {
+            "name" : "third (Guitar)",
+            "channels" : 2,
+            "inputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "outputs" : [
+                {
+                    "engine_bus" : 2,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "path" : "mda-vst3.vst3",
+                    "uid" : "mda Combo",
+                    "name" : "mda Combo",
+                    "type" : "vst3x"
+                },
+                {
+                    "path" : "mda-vst3.vst3",
+                    "uid" : "mda Delay",
+                    "name" : "mda Delay",
+                    "type" : "vst3x"
+                }
+            ]
+        },
+        {
+            "name" : "fourth (Passthrough)",
+            "channels" : 2,
+            "inputs" : [
+                {
+                    "engine_bus" : 1,
+                    "track_bus" : 0
+                }
+            ],
+            "outputs" : [
+                {
+                    "engine_bus" : 3,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "uid" : "sushi.testing.gain",
+                    "name" : "gain",
+                    "type" : "internal"
+                }
+            ]
+        }
+    ],
+    "midi" : {
+        "track_connections" : [
+            {
+                "port" : 0,
+                "channel" : "all",
+                "track" : "main (Piano)",
+                "raw_midi" : false
+            },
+            {
+                "port" : 0,
+                "channel" : "all",
+                "track" : "second (Synth)",
+                "raw_midi" : false
+            }
+        ],
+        "cc_mappings" : [
+        ]
+    }
+}

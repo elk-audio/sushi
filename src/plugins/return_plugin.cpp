@@ -26,13 +26,13 @@
 namespace sushi {
 namespace return_plugin {
 
-constexpr auto DEFAULT_NAME = "return";
+constexpr auto PLUGIN_UID = "sushi.testing.return";
 constexpr auto DEFAULT_LABEL = "Return";
 
 ReturnPlugin::ReturnPlugin(HostControl host_control, SendReturnFactory* manager) : InternalPlugin(host_control),
                                                                                    _manager(manager)
 {
-    Processor::set_name(DEFAULT_NAME);
+    Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
     _max_input_channels = MAX_SEND_CHANNELS;
     _max_output_channels = MAX_SEND_CHANNELS;
@@ -47,43 +47,32 @@ ReturnPlugin::~ReturnPlugin()
     }
 }
 
-void ReturnPlugin::send_audio(const ChunkSampleBuffer& send_buffer, float gain)
+void ReturnPlugin::send_audio(const ChunkSampleBuffer& buffer, int start_channel, float gain)
 {
     std::scoped_lock<SpinLock> lock(_buffer_lock);
 
     _maybe_swap_buffers(_host_control.transport()->current_process_time());
 
-    if (send_buffer.channel_count() == 1)
+    int max_channels = std::max(0, std::min(buffer.channel_count(), _current_output_channels - start_channel));
+
+    for (int c = 0 ; c < max_channels; ++c)
     {
-        _active_in->add_with_gain(send_buffer, gain);
-    }
-    else
-    {
-        int channels = std::min(send_buffer.channel_count(), _current_output_channels);
-        for (int c = 0; c < channels; ++c)
-        {
-            _active_in->add_with_gain(c, c, send_buffer, gain);
-        }
+        _active_in->add_with_gain(start_channel++, c, buffer, gain);
     }
 }
 
-void ReturnPlugin::send_audio_with_ramp(const ChunkSampleBuffer& send_buffer, float start_gain, float end_gain)
+void ReturnPlugin::send_audio_with_ramp(const ChunkSampleBuffer& buffer, int start_channel,
+                                        float start_gain, float end_gain)
 {
     std::scoped_lock<SpinLock> lock(_buffer_lock);
 
     _maybe_swap_buffers(_host_control.transport()->current_process_time());
 
-    if (send_buffer.channel_count() == 1)
+    int max_channels = std::max(0, std::min(buffer.channel_count(), _current_output_channels - start_channel));
+
+    for (int c = 0 ; c < max_channels; ++c)
     {
-        _active_in->add_with_ramp(send_buffer, start_gain, end_gain);
-    }
-    else
-    {
-        int channels = std::min(send_buffer.channel_count(), _current_output_channels);
-        for (int c = 0; c < channels; ++c)
-        {
-            _active_in->add_with_ramp(c, c, send_buffer, start_gain, end_gain);
-        }
+        _active_in->add_with_ramp(start_channel++, c, buffer, start_gain, end_gain);
     }
 }
 
@@ -182,6 +171,11 @@ bool ReturnPlugin::bypassed() const
 void ReturnPlugin::set_bypassed(bool bypassed)
 {
     _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
+}
+
+std::string_view ReturnPlugin::static_uid()
+{
+    return PLUGIN_UID;
 }
 
 void inline ReturnPlugin::_swap_buffers()

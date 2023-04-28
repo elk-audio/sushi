@@ -1,0 +1,63 @@
+{
+    "host_config" : {
+        "samplerate" : 48000,
+        "cv_inputs" : 2,
+        "cv_outputs" : 0
+    },
+    "tracks" : [
+        {
+            "name" : "main",
+            "channels" : 2,
+            "inputs" : [],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "uid" : "sushi.testing.cv_to_control",
+                    "name" : "cv-conv",
+                    "type" : "internal"
+                },
+                {
+                    "path" : "mda-vst3.vst3",
+                    "name" : "mda JX10",
+                    "type" : "vst3x",
+                    "uid" : "mda JX10"
+                }
+            ]
+        }
+    ],
+    "midi" : {
+
+    },
+    "cv_control" : {
+        "cv_inputs" : [
+            {
+                "cv" : 0,
+                "processor" : "cv-conv",
+                "parameter" : "pitch_0"
+            },
+            {
+                "cv": 1,
+                "processor" : "mda JX10",
+                "parameter" : "VCF Freq"
+            }
+        ],
+        "cv_outputs" : [
+
+        ],
+        "gate_inputs" : [  {
+            "mode" : "note_event",
+            "processor" : "cv-conv",
+            "gate" : 0,
+            "note_no" : 0,
+            "channel" : 0
+        } ],
+        "gate_outputs" : [
+
+        ]
+    }
+}

@@ -26,14 +26,16 @@
 namespace sushi {
 namespace gain_plugin {
 
-class GainPlugin : public InternalPlugin
+class GainPlugin : public InternalPlugin, public UidHelper<GainPlugin>
 {
 public:
-    GainPlugin(HostControl host_control);
+    explicit GainPlugin(HostControl host_control);
 
-    ~GainPlugin();
+    ~GainPlugin() override;
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
+
+    static std::string_view static_uid();
 
 private:
     FloatParameterValue* _gain_parameter;

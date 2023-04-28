@@ -35,6 +35,7 @@
 #include "engine/receiver.h"
 #include "engine/transport.h"
 #include "engine/host_control.h"
+#include "engine/plugin_library.h"
 #include "engine/controller/controller.h"
 #include "engine/audio_graph.h"
 #include "engine/connection_storage.h"
@@ -47,13 +48,12 @@
 #include "library/performance_timer.h"
 #include "library/plugin_registry.h"
 
-namespace sushi {
-namespace engine {
+namespace sushi::engine {
 
 class ClipDetector
 {
 public:
-    ClipDetector(float sample_rate)
+    explicit ClipDetector(float sample_rate)
     {
         this->set_sample_rate(sample_rate);
     }
@@ -72,8 +72,7 @@ public:
     void detect_clipped_samples(const ChunkSampleBuffer& buffer, RtSafeRtEventFifo& queue, bool audio_input);
 
 private:
-
-    unsigned int _interval;
+    unsigned int _interval{0};
     std::vector<unsigned int> _input_clip_count;
     std::vector<unsigned int> _output_clip_count;
 };
@@ -91,7 +90,8 @@ public:
      * @param rt_cpu_cores The maximum number of cpu cores to use for audio processing. Default
      *                     is 1 and means that audio processing is done only in the rt callback
      *                     of the audio frontend.
-     *                     With values >1 tracks will be processed in parallel threads.
+     *                     With values > 1 tracks will be processed in parallel threads.
+     * @param device_name The audio device name - only used on Apple for fetching the audio thread workgroup, and will be unused on other platforms.
      * @param debug_mode_sw Enable xenomai specific thread debugging for all audio threads in
      *                      multicore mode.
      * @param event_dispatcher A pointer to a BaseEventDispatcher instance, which AudioEngine takes over ownership of.
@@ -99,10 +99,11 @@ public:
      */
     explicit AudioEngine(float sample_rate,
                          int rt_cpu_cores = 1,
+                         std::optional<std::string> device_name = std::nullopt,
                          bool debug_mode_sw = false,
                          dispatcher::BaseEventDispatcher* event_dispatcher = nullptr);
 
-     ~AudioEngine();
+     ~AudioEngine() override;
 
     /**
      * @brief Configure the Engine with a new samplerate.
@@ -294,14 +295,14 @@ public:
      * @param in_controls input control voltage and gate data
      * @param out_controls output control voltage and gate data
      * @param timestamp Current time in microseconds
-     * @param samplecount Current number of samples processed
+     * @param sample_count Current number of samples processed
      */
     void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
                        SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer,
                        ControlBuffer* in_controls,
                        ControlBuffer* out_controls,
                        Time timestamp,
-                       int64_t samplecount) override;
+                       int64_t sample_count) override;
 
     /**
      * @brief Inform the engine of the current system latency
@@ -341,6 +342,16 @@ public:
     void set_tempo_sync_mode(SyncMode mode) override;
 
     /**
+     * @brief Set an absolute path to be the base for plugin paths
+     *
+     * @param path Absolute path of the base plugin folder
+     */
+    virtual void set_base_plugin_path(const std::string& path) override
+    {
+        _plugin_library.set_base_plugin_path(path);
+    }
+
+    /**
      * @brief Send an RtEvent directly to the realtime thread, should normally only be used
      *        from an rt thread or in a context where the engine is not running in realtime mode
      * @param event The event to process
@@ -359,13 +370,15 @@ public:
     /**
      * @brief Create an empty track
      * @param name The unique name of the track to be created.
-     * @param input_busses The number of input stereo pairs in the track.
-     * @param output_busses The number of output stereo pairs in the track.
+     * @param bus_count The number of stereo pairs in the track.
      * @return EngineInitStatus::OK in case of success, different error code otherwise.
      */
-    std::pair<EngineReturnStatus, ObjectId> create_multibus_track(const std::string& name,
-                                                                  int input_busses,
-                                                                  int output_busses) override;
+    std::pair<EngineReturnStatus, ObjectId> create_multibus_track(const std::string& name, int bus_count) override;
+
+    std::pair<EngineReturnStatus, ObjectId> create_post_track(const std::string& name) override;
+
+    std::pair<EngineReturnStatus, ObjectId> create_pre_track(const std::string& name) override;
+
     /**
      * @brief Delete a track, currently assumes that the track is empty before calling
      * @param track_id The unique name of the track to delete
@@ -380,8 +393,8 @@ public:
      * @param processor_name
      * @return
      */
-    std::pair <EngineReturnStatus, ObjectId> create_processor(const engine::PluginInfo& plugin_info,
-                                                              const std::string& processor_name) override;
+    std::pair<EngineReturnStatus, ObjectId> create_processor(const PluginInfo& plugin_info,
+                                                             const std::string& processor_name) override;
 
     /**
      * @brief Add a plugin to a track. The plugin must not currently be active on any track.
@@ -422,6 +435,15 @@ public:
     }
 
     /**
+    * @brief Return the state of clip detection on audio inputs
+    * @param true if clip detection is enabled, false if disabled.
+    */
+    bool input_clip_detection() const override
+    {
+        return _input_clip_detection_enabled;
+    }
+
+    /**
      * @brief Enable audio clip detection on engine outputs
      * @param enabled Enable if true, disable if false
      */
@@ -431,12 +453,30 @@ public:
     }
 
     /**
+    * @brief Return the state of clip detection on outputs
+    * @param true if clip detection is enabled, false if disabled.
+    */
+    bool output_clip_detection() const override
+    {
+        return _output_clip_detection_enabled;
+    }
+
+    /**
      * @brief Enable master limiter on outputs
      * @param enabled Enabled if true, disable if false
      */
     void enable_master_limiter(bool enabled) override
     {
-        _master_limter_enabled = enabled;
+        _master_limiter_enabled = enabled;
+    }
+
+    /**
+     * @brief Return the state of master limiter on outputs
+     * @param true if master limiter is enabled, false if disabled.
+     */
+    bool master_limiter() const override
+    {
+        return _master_limiter_enabled;
     }
 
     sushi::dispatcher::BaseEventDispatcher* event_dispatcher() override
@@ -518,6 +558,9 @@ private:
     * @param event The event to process
     * @return EngineReturnStatus::OK if the event was properly processed, error code otherwise
     */
+
+    std::pair<EngineReturnStatus, ObjectId> _create_master_track(const std::string& name, TrackType type, int channels);
+
     EngineReturnStatus _send_control_event(RtEvent& event);
 
     EngineReturnStatus _connect_audio_channel(int engine_channel, int track_channel, ObjectId track_id, Direction direction);
@@ -532,9 +575,29 @@ private:
 
     inline void _retrieve_events_from_tracks(ControlBuffer& buffer);
 
+    inline void _retrieve_events_from_output_pipe(RtEventFifo<>& pipe, ControlBuffer& buffer);
+
     inline void _copy_audio_to_tracks(ChunkSampleBuffer* input);
 
     inline void _copy_audio_from_tracks(ChunkSampleBuffer* output);
+
+    /**
+     * @brief Add a track to the audio engine, if engine is running, this must be called from the
+     *        rt thread before/after processing. If not running, then this function can safely be
+     *        called from a non-rt thread
+     * @param track The track to add
+     * @return True if successful, false otherwise
+     */
+    bool _add_track(Track* track);
+
+    /**
+     * @brief Remove a track from the audio engine, if engine is running, this must be called from
+     *        the rt thread before/after processing. If not running, then this function can safely be
+     *        called from a non-rt thread
+     * @param track The track to remove.
+     * @return True if successful, false otherwise
+ */
+    bool _remove_track(Track* track);
 
     void print_timings_to_file(const std::string& filename);
 
@@ -547,6 +610,11 @@ private:
     // Only to be accessed from the process callback in rt mode.
     std::vector<Processor*>    _realtime_processors{MAX_RT_PROCESSOR_ID, nullptr};
     AudioGraph                 _audio_graph;
+
+    Track* _pre_track{nullptr};
+    Track* _post_track{nullptr};
+    ChunkSampleBuffer _input_swap_buffer;
+    ChunkSampleBuffer _output_swap_buffer;
 
     ConnectionStorage<AudioConnection> _audio_in_connections;
     ConnectionStorage<AudioConnection> _audio_out_connections;
@@ -563,11 +631,13 @@ private:
     RtSafeRtEventFifo _main_out_queue;
     RtSafeRtEventFifo _control_queue_out;
     std::mutex _in_queue_lock;
+    RtEventFifo<> _prepost_event_outputs;
     receiver::AsynchronousEventReceiver _event_receiver{&_control_queue_out};
     Transport _transport;
+    PluginLibrary _plugin_library;
 
     std::unique_ptr<dispatcher::BaseEventDispatcher> _event_dispatcher;
-    HostControl _host_control{nullptr, &_transport};
+    HostControl _host_control{nullptr, &_transport, &_plugin_library};
 
     performance::PerformanceTimer _process_timer;
     int  _log_timing_print_counter{0};
@@ -576,7 +646,7 @@ private:
     bool _output_clip_detection_enabled{false};
     ClipDetector _clip_detector;
 
-    bool _master_limter_enabled{false};
+    bool _master_limiter_enabled{false};
     std::vector<dsp::MasterLimiter<AUDIO_CHUNK_SIZE>> _master_limiters;
 };
 
@@ -587,6 +657,6 @@ private:
  */
 RealtimeState update_state(RealtimeState current_state);
 
-} // namespace engine
-} // namespace sushi
+} // namespace sushi::engine
+
 #endif //SUSHI_ENGINE_H

@@ -133,7 +133,7 @@ public:
     /**
      * @brief Returns the number of midi input ports.
      */
-    int get_midi_inputs()
+    int get_midi_inputs() const
     {
         return _midi_inputs;
     }
@@ -143,15 +143,12 @@ public:
      * Not intended to be called dynamically, only once during creation.
      * @param ports number of output ports.
      */
-    void set_midi_outputs(int no_outputs)
-    {
-        _midi_outputs = no_outputs;
-    }
+    void set_midi_outputs(int no_outputs);
 
     /**
      * @brief Returns the number of midi output ports.
      */
-    int get_midi_outputs()
+    int get_midi_outputs() const
     {
         return _midi_outputs;
     }
@@ -332,6 +329,22 @@ public:
     std::vector<KbdOutputConnection> get_all_kb_output_connections();
 
     /**
+     * @brief Enable or disable sending of midi clock through an output
+     * @param enabled If true enables sending of midi clock messages (24ppqn),
+     *        and start and stop messages.
+     * @param midi_output The midi output to configure
+     * @return
+     */
+    MidiDispatcherStatus enable_midi_clock(bool enabled, int midi_output);
+
+    /**
+     * @brief Returns whether midi clock output is enabled for a particular midi output
+     * @param midi_output The midi output port
+     * @return true if the selected midi output is configured to send midi clock, false otherwise
+     */
+    bool midi_clock_enabled(int midi_output);
+
+    /**
      * @brief Process a raw midi message and send it of according to the
      *        configured connections.
      * @param port Index of the originating midi port.
@@ -351,7 +364,11 @@ public:
     int poster_id() override {return EventPosterId::MIDI_DISPATCHER;}
 
 private:
-    bool _handle_audio_graph_notification(const EngineNotificationEvent* typed_event);
+
+    bool _handle_engine_notification(const EngineNotificationEvent* event);
+    bool _handle_audio_graph_notification(const AudioGraphNotificationEvent* event);
+    bool _handle_transport_notification(const PlayingModeNotificationEvent* event);
+    bool _handle_tick_notification(const EngineTimingTickNotificationEvent* event);
 
     std::vector<CCInputConnection> _get_cc_input_connections(std::optional<int> processor_id_filter);
     std::vector<PCInputConnection> _get_pc_input_connections(std::optional<int> processor_id_filter);
@@ -369,6 +386,8 @@ private:
     std::mutex _cc_routes_lock;
     std::mutex _pc_routes_lock;
     std::mutex _raw_routes_in_lock;
+
+    std::vector<int> _enabled_clock_out;
 
     midi_frontend::BaseMidiFrontend* _frontend;
     dispatcher::BaseEventDispatcher* _event_dispatcher;

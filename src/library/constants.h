@@ -26,7 +26,7 @@
 #include <chrono>
 
 /* The number of samples to process in one chunk. It is defined as a
-compile time constant to give more room for optimizations */
+compile-time constant to give more room for optimizations */
 #ifdef SUSHI_CUSTOM_AUDIO_CHUNK_SIZE
 constexpr int AUDIO_CHUNK_SIZE = SUSHI_CUSTOM_AUDIO_CHUNK_SIZE;
 #else
@@ -42,6 +42,8 @@ constexpr int MAX_TRACK_CHANNELS = 16;
 constexpr float PAN_GAIN_3_DB = 1.412537f;
 constexpr auto GAIN_SMOOTHING_TIME = std::chrono::milliseconds(20);
 
+constexpr int SUSHI_PPQN_TICK = 24;
+
 /* Use in class declaration to disallow copying of this class.
  * Note that this marks copy constructor and assignment operator
  * as deleted and hence their r-value counterparts are not generated.
@@ -49,11 +51,10 @@ constexpr auto GAIN_SMOOTHING_TIME = std::chrono::milliseconds(20);
  * In order to make a class moveable though still non-copyable,
  * implement a move constructor and move assignment operator. Default
  * copy constructor will then not be generated. Usage of this macro is
- * in this case not neccesary to make the class non-copyable. But can
+ * in this case not necessary to make the class non-copyable. But can
  * still be used for clarity.
  */
 #define SUSHI_DECLARE_NON_COPYABLE(type) type(const type& other) = delete; \
                                          type& operator=(const type&) = delete;
-
 
 #endif //SUSHI_CONSTANTS_H

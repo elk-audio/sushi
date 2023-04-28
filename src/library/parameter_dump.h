@@ -22,7 +22,7 @@
 #define SUSHI_PARAMETER_DUMP_H
 
 #include "engine/controller/controller.h"
-#include "rapidjson/document.h"
+#include "json_utils.h"
 
 namespace sushi {
 
@@ -30,6 +30,5 @@ rapidjson::Document generate_processor_parameter_document(sushi::ext::SushiContr
 
 } // end namespace sushi
 
-std::ostream& operator<<(std::ostream& out, const rapidjson::Document& document);
 
 #endif //SUSHI_PARAMETER_DUMP_H

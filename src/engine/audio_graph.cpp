@@ -19,43 +19,73 @@
  * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include "twine/src/twine_internal.h"
-
 #include "audio_graph.h"
 #include "logging.h"
+#include "exit_control.h"
 
-namespace sushi {
-namespace engine {
+namespace sushi::engine {
+
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("audio graph");
 
 constexpr bool DISABLE_DENORMALS = true;
 
+constexpr int SUSHI_EXIT_SIGNAL = 32;
+
+/**
+ * Real-time worker thread callback method.
+ */
 void external_render_callback(void* data)
 {
-    /* Signal that this is a realtime audio processing thread */
-    twine::ThreadRtFlag rt_flag;
+    auto tracks = reinterpret_cast<std::vector<sushi::engine::Track*>*>(data);
 
-    auto tracks = reinterpret_cast<std::vector<Track*>*>(data);
-    for (auto i : *tracks)
+    for (auto track : *tracks)
     {
-        i->render();
+        track->render();
     }
 }
 
 AudioGraph::AudioGraph(int cpu_cores,
                        int max_no_tracks,
+                       [[maybe_unused]] float sample_rate,
+                       [[maybe_unused]] std::optional<std::string> device_name,
                        bool debug_mode_switches) : _audio_graph(cpu_cores),
                                                    _event_outputs(cpu_cores),
                                                    _cores(cpu_cores),
                                                    _current_core(0)
 {
     assert(cpu_cores > 0);
+
     if (_cores > 1)
     {
-        _worker_pool = twine::WorkerPool::create_worker_pool(_cores, DISABLE_DENORMALS, debug_mode_switches);
-        for (auto& i : _audio_graph)
+        twine::apple::AppleMultiThreadData apple_data;
+#ifdef SUSHI_APPLE_THREADING
+        apple_data.chunk_size = AUDIO_CHUNK_SIZE;
+        apple_data.current_sample_rate = sample_rate;
+        if (device_name.has_value())
         {
-            _worker_pool->add_worker(external_render_callback, &i);
-            i.reserve(max_no_tracks);
+            apple_data.device_name = device_name.value();
+        }
+#endif
+
+        _worker_pool = twine::WorkerPool::create_worker_pool(_cores,
+                                                             apple_data,
+                                                             DISABLE_DENORMALS,
+                                                             debug_mode_switches);
+
+        for (auto& tracks : _audio_graph)
+        {
+            auto status = _worker_pool->add_worker(external_render_callback,
+                                                   &tracks);
+
+            if (status.first != twine::WorkerPoolStatus::OK)
+            {
+#ifdef SUSHI_APPLE_THREADING
+                SUSHI_LOG_ERROR("Failed to start twine worker: {}",  twine::apple::status_to_string(status.second));
+                exit_on_signal(SUSHI_EXIT_SIGNAL);
+#endif
+            }
+
+            tracks.reserve(max_no_tracks);
         }
     }
     else
@@ -121,5 +151,4 @@ void AudioGraph::render()
     }
 }
 
-} // namespace engine
-} // namespace sushi
+} // namespace sushi::engine

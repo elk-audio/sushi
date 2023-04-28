@@ -165,11 +165,10 @@ TEST_F(TestEventDispatcher, TestFromRtEventParameterChangeNotification)
 {
     RtEvent rt_event = RtEvent::make_parameter_change_event(10, 0, 10, 5.f);
     _in_rt_queue.push(rt_event);
-
-    _module_under_test->subscribe_to_parameter_change_notifications(&_poster);
     crank_event_loop_once();
 
-    ASSERT_TRUE(_poster.event_received());
+    // Just test that a parameter change was queued. More thorough testing of ParameterManager is done elsewhere
+    ASSERT_FALSE(_module_under_test->_parameter_manager._parameter_change_queue.empty());
 }
 
 TEST_F(TestEventDispatcher, TestEngineNotificationForwarding)

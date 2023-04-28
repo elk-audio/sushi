@@ -33,7 +33,7 @@ constexpr int SEQUENCER_STEPS = 8;
 constexpr int START_NOTE = 48;
 constexpr int NOTE_EVENT_QUEUE_SIZE = 40;
 
-class StepSequencerPlugin : public InternalPlugin
+class StepSequencerPlugin : public InternalPlugin, public UidHelper<StepSequencerPlugin>
 {
 public:
     explicit StepSequencerPlugin(HostControl host_control);
@@ -49,6 +49,8 @@ public:
     void process_event(const RtEvent& event) override;
 
     void process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer) override;
+
+    static std::string_view static_uid();
 
 private:
     std::array<IntParameterValue*, SEQUENCER_STEPS>  _pitch_parameters;

@@ -20,7 +20,10 @@
 
 #include <thread>
 
+#include "logging.h"
 #include "engine/receiver.h"
+
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("event_receiver");
 
 namespace sushi {
 namespace receiver {
@@ -35,12 +38,14 @@ bool AsynchronousEventReceiver::wait_for_response(EventId id, std::chrono::milli
         RtEvent event;
         while (_queue->pop(event))
         {
-            if (event.type() >= RtEventType::STOP_ENGINE)
+            if (is_returnable_event(event))
             {
                 auto typed_event = event.returnable_event();
                 if (typed_event->event_id() == id)
                 {
-                    return (typed_event->status() == ReturnableRtEvent::EventStatus::HANDLED_OK);
+                    auto handled_ok = typed_event->status() == ReturnableRtEvent::EventStatus::HANDLED_OK;
+                    SUSHI_LOG_ERROR_IF(handled_ok == false, "RtEvent with id {} returned with error", id);
+                    return handled_ok;
                 }
                 bool status = (typed_event->status() == ReturnableRtEvent::EventStatus::HANDLED_OK);
                 _receive_list.push_back(Node{typed_event->event_id(), status});
@@ -58,6 +63,7 @@ bool AsynchronousEventReceiver::wait_for_response(EventId id, std::chrono::milli
         std::this_thread::sleep_for(timeout / MAX_RETRIES);
         retries++;
     }
+    SUSHI_LOG_WARNING("Waiting for RtEvent with id {} timed out", id);
     return false;
 }
 } // end namespace receiver

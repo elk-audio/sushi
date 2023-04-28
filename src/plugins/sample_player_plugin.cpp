@@ -29,13 +29,13 @@ namespace sample_player_plugin {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("sampleplayer");
 
-constexpr auto DEFAULT_NAME = "sushi.testing.sampleplayer";
+constexpr auto PLUGIN_UID = "sushi.testing.sampleplayer";
 constexpr auto DEFAULT_LABEL = "Sample player";
 constexpr int SAMPLE_PROPERTY_ID = 0;
 
 SamplePlayerPlugin::SamplePlayerPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
-    Processor::set_name(DEFAULT_NAME);
+    Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
     [[maybe_unused]] bool str_pr_ok = register_property("sample_file", "Sample File", "");
 
@@ -110,7 +110,7 @@ void SamplePlayerPlugin::set_bypassed(bool bypassed)
 
 SamplePlayerPlugin::~SamplePlayerPlugin()
 {
-    delete _sample_buffer;
+    delete[] _sample_buffer;
 }
 
 void SamplePlayerPlugin::process_event(const RtEvent& event)
@@ -170,6 +170,14 @@ void SamplePlayerPlugin::process_event(const RtEvent& event)
             break;
         }
 
+        case RtEventType::NOTE_AFTERTOUCH:
+        case RtEventType::PITCH_BEND:
+        case RtEventType::AFTERTOUCH:
+        case RtEventType::MODULATION:
+        case RtEventType::WRAPPED_MIDI_EVENT:
+            // Consume these events so they are not propagated
+            break;
+
         case RtEventType::DATA_PROPERTY_CHANGE:
         {
             // Kill all voices before swapping out the sample
@@ -198,7 +206,7 @@ void SamplePlayerPlugin::process_event(const RtEvent& event)
 }
 
 
-void SamplePlayerPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */, ChunkSampleBuffer &out_buffer)
+void SamplePlayerPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */, ChunkSampleBuffer& out_buffer)
 {
     float gain = _volume_parameter->processed_value();
     float attack = _attack_parameter->processed_value();
@@ -232,6 +240,11 @@ ProcessorReturnCode SamplePlayerPlugin::set_property_value(ObjectId property_id,
     return InternalPlugin::set_property_value(property_id, value);
 }
 
+std::string_view SamplePlayerPlugin::static_uid()
+{
+    return PLUGIN_UID;
+}
+
 void SamplePlayerPlugin::_all_notes_off()
 {
     for (auto &voice : _voices)
@@ -240,10 +253,10 @@ void SamplePlayerPlugin::_all_notes_off()
     }
 }
 
-BlobData SamplePlayerPlugin::_load_sample_file(const std::string &file_name)
+BlobData SamplePlayerPlugin::_load_sample_file(const std::string& file_name)
 {
-    SNDFILE*    sample_file;
-    SF_INFO     soundfile_info = {};
+    SNDFILE* sample_file;
+    SF_INFO  soundfile_info = {};
     if (! (sample_file = sf_open(file_name.c_str(), SFM_READ, &soundfile_info)))
     {
         SUSHI_LOG_ERROR("Failed to open sample file: {}", file_name);
@@ -267,10 +280,13 @@ BlobData SamplePlayerPlugin::_load_sample_file(const std::string &file_name)
     }
 
     sf_close(sample_file);
+
     if (samples <= 0)
     {
+        delete[] sample_buffer;
         return {0, nullptr};
     }
+
     return BlobData{static_cast<int>(soundfile_info.frames * sizeof(float)), reinterpret_cast<uint8_t*>(sample_buffer)};
 
 }

@@ -37,7 +37,7 @@ template <typename T>
 class ConnectionStorage
 {
 public:
-    ConnectionStorage(int max_connections) : _capacity(max_connections)
+    explicit ConnectionStorage(int max_connections) : _capacity(max_connections)
     {
         _items_rt.reserve(max_connections);
     }

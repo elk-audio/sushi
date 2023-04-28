@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Wrapper for VST 3.x plugins.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_VST3X_WRAPPER_H
@@ -38,6 +38,10 @@ namespace sushi {
 namespace vst3 {
 
 constexpr int VST_WRAPPER_NOTE_EVENT_QUEUE_SIZE = 256;
+// Maximum number of rt parameter changes passed on to the EditController
+constexpr int PARAMETER_UPDATE_QUEUE_SIZE = 100;
+// Maximum number of cached state changes, as only 1 can be processes per audio process call
+constexpr int STATE_CHANGE_QUEUE_SIZE = 10;
 
 /**
  * @brief internal wrapper class for loading VST plugins and make them accessible as Processor to the Engine.
@@ -56,14 +60,15 @@ public:
             Processor(host_control),
             _plugin_load_name(plugin_name),
             _plugin_load_path(vst_plugin_path),
-            _instance(host_app)
+            _instance(host_app),
+            _component_handler(this, &_host_control)
     {
         _max_input_channels = VST_WRAPPER_MAX_N_CHANNELS;
         _max_output_channels = VST_WRAPPER_MAX_N_CHANNELS;
         _enabled = false;
     }
 
-    virtual ~Vst3xWrapper();
+    ~Vst3xWrapper() override;
 
     /**
      * @brief Entry point for parameter changes from the plugin editor.
@@ -115,6 +120,10 @@ public:
 
     ProcessorReturnCode set_state(ProcessorState* state, bool realtime_running) override;
 
+    ProcessorState save_state() const override;
+
+    PluginInfo info() const override;
+
     static void program_change_callback(void* arg, Event* event, int status)
     {
         reinterpret_cast<Vst3xWrapper*>(arg)->_program_change_callback(event, status);
@@ -139,9 +148,9 @@ private:
      */
     bool _register_parameters();
 
-    bool _setup_audio_busses();
+    bool _setup_audio_buses();
 
-    bool _setup_event_busses();
+    bool _setup_event_buses();
 
     bool _setup_channels();
 
@@ -169,6 +178,14 @@ private:
     void _program_change_callback(Event* event, int status);
 
     int _parameter_update_callback(EventId id);
+
+    void _set_program_state(int program_id, RtState* rt_state, bool realtime_running);
+
+    void _set_bypass_state(bool bypassed, RtState* rt_state, bool realtime_running);
+
+    void _set_binary_state(std::vector<std::byte>& state);
+
+    void _set_state_rt(Vst3xRtState* state);
 
     struct SpecialParameter
     {
@@ -199,7 +216,7 @@ private:
     std::string _plugin_load_name;
     std::string _plugin_load_path;
     PluginInstance _instance;
-    ComponentHandler _component_handler{this};
+    ComponentHandler _component_handler;
 
     Steinberg::Vst::EventList _in_event_list{VST_WRAPPER_NOTE_EVENT_QUEUE_SIZE};
     Steinberg::Vst::EventList _out_event_list{VST_WRAPPER_NOTE_EVENT_QUEUE_SIZE};
@@ -217,8 +234,10 @@ private:
     SpecialParameter _mod_wheel_parameter;
     SpecialParameter _aftertouch_parameter;
 
-    memory_relaxed_aquire_release::CircularFifo<ParameterUpdate, 100> _parameter_update_queue;
+    memory_relaxed_aquire_release::CircularFifo<Vst3xRtState*, STATE_CHANGE_QUEUE_SIZE> _state_change_queue;
+    memory_relaxed_aquire_release::CircularFifo<ParameterUpdate, PARAMETER_UPDATE_QUEUE_SIZE> _parameter_update_queue;
     std::map<Steinberg::Vst::ParamID, const ParameterDescriptor*> _parameters_by_vst3_id;
+
     friend class ComponentHandler;
 };
 

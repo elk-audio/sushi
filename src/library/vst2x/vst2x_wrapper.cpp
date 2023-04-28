@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Wrapper for VST 2.x plugins.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include "twine/twine.h"
@@ -26,8 +26,9 @@
 
 namespace {
 
-static constexpr int VST_STRING_BUFFER_SIZE = 256;
-static char canDoBypass[] = "bypass";
+constexpr int VST_STRING_BUFFER_SIZE = 256;
+constexpr int SINGLE_PROGRAM = 1;
+char canDoBypass[] = "bypass";
 
 } // anonymous namespace
 
@@ -52,7 +53,7 @@ ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
     _sample_rate = sample_rate;
 
     // Load shared library and VsT struct
-    _library_handle = PluginLoader::get_library_handle_for_plugin(_plugin_path);
+    _library_handle = PluginLoader::get_library_handle_for_plugin(_host_control.to_absolute_path(_plugin_path));
     if (_library_handle == nullptr)
     {
         _cleanup();
@@ -68,7 +69,7 @@ ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
     // Check plugin's magic number
     // If incorrect, then the file either was not loaded properly, is not a
     // real VST2 plugin, or is otherwise corrupt.
-    if(_plugin_handle->magic != kEffectMagic)
+    if (_plugin_handle->magic != kEffectMagic)
     {
         _cleanup();
         return ProcessorReturnCode::PLUGIN_LOAD_ERROR;
@@ -84,20 +85,21 @@ ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
     set_label(std::string(&product_string[0]));
 
     // Get plugin can do:s
-    int bypass = _vst_dispatcher(effCanDo, 0, 0, canDoBypass, 0);
-    _can_do_soft_bypass = (bypass == 1);
+    int enabled = _vst_dispatcher(effCanDo, 0, 0, canDoBypass, 0);
+    _can_do_soft_bypass = (enabled == 1);
     _number_of_programs = _plugin_handle->numPrograms;
+    SUSHI_LOG_INFO_IF(enabled, "Plugin supports soft bypass");
 
-    SUSHI_LOG_INFO_IF(bypass, "Plugin supports soft bypass");
+    _has_binary_programs = _plugin_handle->flags &= effFlagsProgramChunks;
 
     // Channel setup
     _max_input_channels = _plugin_handle->numInputs;
     _max_output_channels = _plugin_handle->numOutputs;
 
     // Initialize internal plugin
-    _vst_dispatcher(effOpen, 0, 0, 0, 0);
-    _vst_dispatcher(effSetSampleRate, 0, 0, 0, _sample_rate);
-    _vst_dispatcher(effSetBlockSize, 0, AUDIO_CHUNK_SIZE, 0, 0);
+    _vst_dispatcher(effOpen, 0, 0, nullptr, 0);
+    _vst_dispatcher(effSetSampleRate, 0, 0, nullptr, _sample_rate);
+    _vst_dispatcher(effSetBlockSize, 0, AUDIO_CHUNK_SIZE, nullptr, 0);
 
     // Register internal parameters
     if (!_register_parameters())
@@ -119,26 +121,25 @@ void Vst2xWrapper::configure(float sample_rate)
     {
         set_enabled(false);
     }
-    _vst_dispatcher(effSetSampleRate, 0, 0, 0, _sample_rate);
+    _vst_dispatcher(effSetSampleRate, 0, 0, nullptr, _sample_rate);
     if (reset_enabled)
     {
         set_enabled(true);
     }
-    return;
 }
 
 void Vst2xWrapper::set_input_channels(int channels)
 {
     Processor::set_input_channels(channels);
     [[maybe_unused]] bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
-    SUSHI_LOG_WARNING_IF(!valid_arr, "Failed to set a valid speaker arrangement");
+    SUSHI_LOG_WARNING_IF(!valid_arr, "Failed to set a valid speaker arrangement")
 }
 
 void Vst2xWrapper::set_output_channels(int channels)
 {
     Processor::set_output_channels(channels);
     [[maybe_unused]] bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
-    SUSHI_LOG_WARNING_IF(!valid_arr, "Failed to set a valid speaker arrangement");
+    SUSHI_LOG_WARNING_IF(!valid_arr, "Failed to set a valid speaker arrangement")
 }
 
 
@@ -147,13 +148,13 @@ void Vst2xWrapper::set_enabled(bool enabled)
     Processor::set_enabled(enabled);
     if (enabled)
     {
-        _vst_dispatcher(effMainsChanged, 0, 1, NULL, 0.0f);
-        _vst_dispatcher(effStartProcess, 0, 0, NULL, 0.0f);
+        _vst_dispatcher(effMainsChanged, 0, 1, nullptr, 0.0f);
+        _vst_dispatcher(effStartProcess, 0, 0, nullptr, 0.0f);
     }
     else
     {
-        _vst_dispatcher(effMainsChanged, 0, 0, NULL, 0.0f);
-        _vst_dispatcher(effStopProcess, 0, 0, NULL, 0.0f);
+        _vst_dispatcher(effMainsChanged, 0, 0, nullptr, 0.0f);
+        _vst_dispatcher(effStopProcess, 0, 0, nullptr, 0.0f);
     }
 }
 
@@ -208,9 +209,9 @@ std::string Vst2xWrapper::current_program_name() const
         char buffer[VST_STRING_BUFFER_SIZE] = "";
         _vst_dispatcher(effGetProgramName, 0, 0, buffer, 0);
         buffer[VST_STRING_BUFFER_SIZE-1] = 0;
-        return std::string(buffer);
+        return {buffer};
     }
-    return "";
+    return {};
 }
 
 std::pair<ProcessorReturnCode, std::string> Vst2xWrapper::program_name(int program) const
@@ -237,7 +238,7 @@ std::pair<ProcessorReturnCode, std::vector<std::string>> Vst2xWrapper::all_progr
         char buffer[VST_STRING_BUFFER_SIZE] = "";
         _vst_dispatcher(effGetProgramNameIndexed, i, 0, buffer, 0);
         buffer[VST_STRING_BUFFER_SIZE-1] = 0;
-        programs.push_back(buffer);
+        programs.emplace_back(buffer);
     }
     return {ProcessorReturnCode::OK, programs};
 }
@@ -250,6 +251,8 @@ ProcessorReturnCode Vst2xWrapper::set_program(int program)
         /* Vst2 lacks a mechanism for signaling that the program change was successful */
         _vst_dispatcher(effSetProgram, 0, program, nullptr, 0);
         _vst_dispatcher(effEndSetProgram, 0, 0, nullptr, 0);
+        _host_control.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
+                                                                 this->id(), 0, IMMEDIATE_PROCESS));
         return ProcessorReturnCode::OK;
     }
     return ProcessorReturnCode::UNSUPPORTED_OPERATION;
@@ -261,7 +264,7 @@ void Vst2xWrapper::_cleanup()
     {
         // Tell plugin to stop and shutdown
         set_enabled(false);
-        _vst_dispatcher(effClose, 0, 0, 0, 0);
+        _vst_dispatcher(effClose, 0, 0, nullptr, 0);
         _plugin_handle = nullptr;
     }
     if (_library_handle != nullptr)
@@ -345,22 +348,8 @@ void Vst2xWrapper::process_event(const RtEvent& event)
         case RtEventType::SET_STATE:
         {
             auto state = event.processor_state_event()->state();
-
-            if (state->bypassed().has_value())
-            {
-                _set_bypass_rt(*state->bypassed());
-            }
-
-            for (const auto& parameter : state->parameters())
-            {
-                VstInt32 id = parameter.first;
-                float value = parameter.second;
-                if (id < _plugin_handle->numParams)
-                {
-                    _plugin_handle->setParameter(_plugin_handle, id, value);
-                }
-            }
-            async_delete(state);
+            _set_state_rt(state);
+            break;
         }
 
         default:
@@ -405,10 +394,11 @@ void Vst2xWrapper::notify_parameter_change_rt(VstInt32 parameter_index, float va
 
 void Vst2xWrapper::notify_parameter_change(VstInt32 parameter_index, float value)
 {
-    auto e = new ParameterChangeNotificationEvent(ParameterChangeNotificationEvent::Subtype::FLOAT_PARAMETER_CHANGE_NOT,
-                                                  this->id(),
+    auto e = new ParameterChangeNotificationEvent(this->id(),
                                                   static_cast<ObjectId>(parameter_index),
                                                   value,
+                                                  value,
+                                                  this->parameter_value_formatted(parameter_index).second,
                                                   IMMEDIATE_PROCESS);
     _host_control.post_event(e);
 }
@@ -514,6 +504,42 @@ ProcessorReturnCode Vst2xWrapper::set_state(ProcessorState* state, bool realtime
     return ProcessorReturnCode::OK;
 }
 
+ProcessorState Vst2xWrapper::save_state() const
+{
+    ProcessorState state;
+    if (_has_binary_programs)
+    {
+        std::byte* data = nullptr;
+        int size = _vst_dispatcher(effGetChunk, SINGLE_PROGRAM, reinterpret_cast<VstIntPtr>(&data), nullptr, 0);
+        if (size > 0)
+        {
+            state.set_binary_data(std::vector<std::byte>(data, data + size));
+        }
+        if (_can_do_soft_bypass == false)
+        {
+            state.set_bypass(bypassed());
+        }
+    }
+    else
+    {
+        for (int id = 0; id < _plugin_handle->numParams; ++id)
+        {
+            float value = _plugin_handle->getParameter(_plugin_handle, static_cast<VstInt32>(id));
+            state.add_parameter_change(id, value);
+        }
+        state.set_bypass(bypassed());
+    }
+    return state;
+}
+
+PluginInfo Vst2xWrapper::info() const
+{
+    PluginInfo info;
+    info.type = PluginType::VST2X;
+    info.path = _plugin_path;
+    return info;
+}
+
 void Vst2xWrapper::_set_bypass_rt(bool bypassed)
 {
     _bypass_manager.set_bypass(bypassed, _sample_rate);
@@ -521,6 +547,26 @@ void Vst2xWrapper::_set_bypass_rt(bool bypassed)
     {
         _vst_dispatcher(effSetBypass, 0, bypassed ? 1 : 0, nullptr, 0.0f);
     }
+}
+
+void Vst2xWrapper::_set_state_rt(RtState* state)
+{
+    if (state->bypassed().has_value())
+    {
+        _set_bypass_rt(*state->bypassed());
+    }
+
+    for (const auto& parameter : state->parameters())
+    {
+        VstInt32 id = parameter.first;
+        float value = parameter.second;
+        if (id < _plugin_handle->numParams)
+        {
+            _plugin_handle->setParameter(_plugin_handle, id, value);
+        }
+    }
+    async_delete(state);
+    notify_state_change_rt();
 }
 
 VstSpeakerArrangementType arrangement_from_channels(int channels)

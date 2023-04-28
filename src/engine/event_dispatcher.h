@@ -15,7 +15,7 @@
 
 /**
  * @Brief Implementation of Event Dispatcher
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_EVENT_DISPATCHER_H
@@ -28,6 +28,7 @@
 #include "engine/base_event_dispatcher.h"
 #include "engine/base_engine.h"
 #include "engine/event_timer.h"
+#include "engine/parameter_manager.h"
 #include "library/synchronised_fifo.h"
 #include "library/rt_event_fifo.h"
 #include "library/event_interface.h"
@@ -37,10 +38,6 @@ namespace engine {class BaseEngine;}
 namespace dispatcher {
 
 class BaseEventDispatcher;
-
-constexpr int AUDIO_ENGINE_ID = 0;
-constexpr std::chrono::milliseconds THREAD_PERIODICITY = std::chrono::milliseconds(1);
-constexpr auto WORKER_THREAD_PERIODICITY = std::chrono::milliseconds(1);
 
 /**
  * @brief Low priority worker for handling possibly time consuming tasks like
@@ -77,7 +74,7 @@ class EventDispatcher : public BaseEventDispatcher
 public:
     EventDispatcher(engine::BaseEngine* engine, RtSafeRtEventFifo* in_rt_queue,  RtSafeRtEventFifo* out_rt_queue);
 
-    virtual ~EventDispatcher();
+    ~EventDispatcher() override;
 
     void run() override;
     void stop() override;
@@ -97,7 +94,7 @@ public:
     void set_time(Time timestamp) override {_event_timer.set_incoming_time(timestamp);}
 
     int process(Event* event) override;
-    int poster_id() override {return AUDIO_ENGINE_ID;}
+    int poster_id() override;
 
 private:
     void _event_loop();
@@ -109,6 +106,7 @@ private:
     void _publish_keyboard_events(Event* event);
     void _publish_parameter_events(Event* event);
     void _publish_engine_notification_events(Event* event);
+    void _handle_engine_notifications_internally(EngineNotificationEvent* event);
 
     std::atomic<bool>           _running;
     std::thread                 _event_thread;
@@ -120,6 +118,9 @@ private:
 
     Worker                      _worker;
     event_timer::EventTimer     _event_timer;
+    ParameterManager            _parameter_manager;
+    int                         _parameter_update_count;
+    Time                        _last_rt_event_time;
 
     std::array<EventPoster*, EventPosterId::MAX_POSTERS> _posters;
     std::vector<EventPoster*> _keyboard_event_listeners;

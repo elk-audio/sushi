@@ -112,7 +112,7 @@ protected:
     std::string _label;
     std::string _name;
     std::string _unit;
-    ObjectId _id;
+    ObjectId _id {0};
     ParameterType _type;
 };
 
@@ -259,7 +259,7 @@ public:
                              const std::string& label,
                              const std::string& unit) : ParameterDescriptor(name, label, unit, ParameterType::DATA) {}
 
-    ~TypedParameterDescriptor() {}
+    ~TypedParameterDescriptor() override = default;
 
     bool automatable() const override {return false;}
 };
@@ -457,9 +457,9 @@ public:
     }
 
 private:
-    ParameterStorage(BoolParameterValue value) : _bool_value(value) {}
-    ParameterStorage(IntParameterValue value) : _int_value(value) {}
-    ParameterStorage(FloatParameterValue value) : _float_value(value) {}
+    explicit ParameterStorage(BoolParameterValue value) : _bool_value(value) {}
+    explicit ParameterStorage(IntParameterValue value) : _int_value(value) {}
+    explicit ParameterStorage(FloatParameterValue value) : _float_value(value) {}
 
     union
     {

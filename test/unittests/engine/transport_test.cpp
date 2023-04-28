@@ -63,8 +63,8 @@ TEST_F(TestTransport, TestBasicQuerying)
 TEST_F(TestTransport, TestTimeline44Time)
 {
     constexpr int TEST_SAMPLERATE_X2 = 32768;
-    /* Odd samplerate, but it's a convenient factor of 2 which makes testing easier
-     * as bar boundaries end up on a power of 2 samplecount if AUDIO_CHUNK_SIZE is
+    /* Odd samplerate, but it's a convenient factor of 2 which makes testing easier,
+     * since bar boundaries end up on a power of 2 samplecount if AUDIO_CHUNK_SIZE is
      * a power of 2*/
     _module_under_test.set_sample_rate(TEST_SAMPLERATE_X2);
     _module_under_test.set_time_signature({4, 4}, false);
@@ -103,7 +103,9 @@ TEST_F(TestTransport, TestTimeline68Time)
     _module_under_test.set_sample_rate(TEST_SAMPLERATE);
     _module_under_test.set_tempo(180, false);
     _module_under_test.set_time_signature({6, 8}, false);
-    constexpr float precision = 4.0f * AUDIO_CHUNK_SIZE / TEST_SAMPLERATE;
+
+    // We cannot assume chunk size is an absolute multiple of samples for all buffer sizes.
+    constexpr float precision = 4.0f * static_cast<float>(AUDIO_CHUNK_SIZE) / TEST_SAMPLERATE;
 
     /* Check that the starting point is 0 */
     _module_under_test.set_playing_mode(PlayingMode::PLAYING, false);
@@ -112,7 +114,7 @@ TEST_F(TestTransport, TestTimeline68Time)
     EXPECT_DOUBLE_EQ(0.0f, _module_under_test.current_beats());
     EXPECT_DOUBLE_EQ(0.0f, _module_under_test.current_bar_start_beats());
 
-    /* Advance time by 1/2 second equal to 1/2 bar at 180 bpm. Cant test exact
+    /* Advance time by 1/2 second equal to 1/2 bar at 180 bpm. Can't test exact
      * values here since 48000 is not an even multiple of AUDIO_CHUNK_SIZE */
     _module_under_test.set_time(std::chrono::milliseconds(500), TEST_SAMPLERATE / 2);
     EXPECT_NEAR(1.5, _module_under_test.current_bar_beats(), precision);
@@ -156,7 +158,7 @@ TEST_F(TestTransport, TestPlayStateChange)
 TEST_F(TestTransport, TestNotifications)
 {
     /* Notifications are only sent if the engine is running audio processing, during which,
-     * changes are passed as RtEvents so they can be applied at the start of an audio chunk */
+     * changes are passed as RtEvents, so they can be applied at the start of an audio chunk */
     _module_under_test.set_time_signature({4, 4}, false);
     _module_under_test.set_playing_mode(PlayingMode::STOPPED, false);
 

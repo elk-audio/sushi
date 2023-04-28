@@ -98,7 +98,7 @@ private:
     EventPosterId _poster_id;
 };
 
-}; // namespace control_frontend
-}; // namespace sushi
+} // namespace control_frontend
+} // namespace sushi
 
 #endif //SUSHI_BASE_CONTROL_FRONTEND_H

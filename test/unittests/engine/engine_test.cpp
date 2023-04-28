@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <thread>
 
 #include "gtest/gtest.h"
@@ -14,7 +13,6 @@
 #include "library/internal_processor_factory.cpp"
 #include "library/plugin_registry.cpp"
 #include "test_utils/dummy_processor.h"
-#include "test_utils/host_control_mockup.h"
 
 constexpr float SAMPLE_RATE = 44000;
 constexpr int TEST_CHANNEL_COUNT = 4;
@@ -189,8 +187,31 @@ TEST_F(TestEngine, TestCreateEmptyTrack)
     ASSERT_EQ(_module_under_test->_audio_graph._audio_graph[0].size(),0u);
 
     /* Test invalid number of channels */
-    std::tie(status, track_id) = _module_under_test->create_track("left", 3);
+    std::tie(status, track_id) = _module_under_test->create_track("left", MAX_TRACK_CHANNELS + 1);
     ASSERT_EQ(status, EngineReturnStatus::INVALID_N_CHANNELS);
+}
+
+TEST_F(TestEngine, TestCreatePreAndPostTracks)
+{
+    auto [status, track_id] = _module_under_test->create_pre_track("pre");
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+
+    auto track = _processors->track("pre");
+    ASSERT_TRUE(track);
+    ASSERT_EQ(TrackType::PRE, track->type());
+    ASSERT_EQ(track_id, track->id());
+
+    std::tie(status, track_id) = _module_under_test->create_post_track("post");
+    ASSERT_EQ(EngineReturnStatus::OK, status);
+
+    track = _processors->track("post");
+    ASSERT_TRUE(track);
+    ASSERT_EQ(TrackType::POST, track->type());
+    ASSERT_EQ(track_id, track->id());
+
+    /* Test creating a second post track, this should fail */
+    std::tie(status, track_id) = _module_under_test->create_post_track("post");
+    ASSERT_NE(EngineReturnStatus::OK, status);
 }
 
 TEST_F(TestEngine, TestAddAndRemovePlugin)
@@ -398,7 +419,7 @@ TEST_F(TestEngine, TestAudioConnections)
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(4);
     ControlBuffer control_buffer;
 
-    // Fill the channels with different values so we can differentiate channels
+    // Fill the channels with different values, so we can differentiate channels
     for (int i = 0; i < in_buffer.channel_count(); ++i)
     {
         auto channel_buffer = ChunkSampleBuffer::create_non_owning_buffer(in_buffer, i, 1);
@@ -501,6 +522,7 @@ TEST_F(TestEngine, TestCvRouting)
     // We should have a non-zero value in this slot
     ASSERT_NE(0.0f, out_controls.cv_values[1]);
 }
+
 TEST_F(TestEngine, TestGateRouting)
 {
     /* Build a cv/gate to midi to cv/gate chain and verify gate changes travel through it*/
@@ -548,4 +570,42 @@ TEST_F(TestEngine, TestGateRouting)
     // A gate high event on gate input 1 should result in a gate high on gate output 0
     ASSERT_TRUE(out_controls.gate_values[0]);
     ASSERT_EQ(1u, out_controls.gate_values.count());
+}
+
+TEST_F(TestEngine, TestMasterTrackProcessing)
+{
+    constexpr float GAIN_6DB = 126.0 / 144;
+
+    ChunkSampleBuffer in_buffer(TEST_CHANNEL_COUNT);
+    ChunkSampleBuffer out_buffer(TEST_CHANNEL_COUNT);
+    ControlBuffer ctrl_buffer;
+    test_utils::fill_sample_buffer(in_buffer, 1.0f);
+
+    auto [empty_status, empty_track_id] = _module_under_test->create_track("empty", TEST_CHANNEL_COUNT);
+    ASSERT_EQ(EngineReturnStatus::OK, empty_status);
+
+    auto [pre_status, pre_track_id] = _module_under_test->create_pre_track("pre");
+    ASSERT_EQ(EngineReturnStatus::OK, pre_status);
+
+    auto [post_status, post_track_id] = _module_under_test->create_post_track("post");
+    ASSERT_EQ(EngineReturnStatus::OK, post_status);
+
+    for (int i = 0; i < TEST_CHANNEL_COUNT; ++i)
+    {
+        _module_under_test->connect_audio_input_channel(i, i, empty_track_id);
+        _module_under_test->connect_audio_output_channel(i, i, empty_track_id);
+    }
+
+    // Process and verify passthrough
+    _module_under_test->process_chunk(&in_buffer, &out_buffer, &ctrl_buffer, &ctrl_buffer, Time(0), 0);
+    test_utils::assert_buffer_value(1.0f, out_buffer);
+
+    // Change the gain on the pre track and verify
+    auto track = _processors->mutable_track("pre");
+    auto gain_param = track->parameter_from_name("gain");
+    auto gain_event = RtEvent::make_parameter_change_event(track->id(), 0, gain_param->id(), GAIN_6DB);
+
+    track->process_event(gain_event);
+    _module_under_test->process_chunk(&in_buffer, &out_buffer, &ctrl_buffer, &ctrl_buffer, Time(0), 0);
+    EXPECT_GE(out_buffer.channel(0)[0], 1.0f);
 }

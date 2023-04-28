@@ -1,7 +1,5 @@
 #include "gtest/gtest.h"
 
-#include "test_utils/test_utils.h"
-
 #define private public
 #define protected public
 #include "engine/event_timer.cpp"

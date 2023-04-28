@@ -32,7 +32,7 @@ namespace controller_impl {
 class TransportController : public ext::TransportController
 {
 public:
-    TransportController(BaseEngine* engine);
+    explicit TransportController(BaseEngine* engine);
 
     float get_samplerate() const override;
 

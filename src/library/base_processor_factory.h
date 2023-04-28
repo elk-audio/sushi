@@ -39,11 +39,11 @@ public:
      * @return A pair with ReturnCode, and Processor instance.
      *         If failed, the instance will be nullptr.
      */
-    virtual std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const sushi::engine::PluginInfo &plugin_info,
+    virtual std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const PluginInfo& plugin_info,
                                                                                     HostControl& host_control,
                                                                                     float sample_rate) = 0;
 };
 
-}; // end namespace sushi
+} // end namespace sushi
 
 #endif //SUSHI_BASE_PROCESSOR_FACTORY_H

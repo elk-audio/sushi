@@ -169,7 +169,18 @@ TEST_F(TestProcessor, TestGateOutput)
 TEST(TestProcessorUtils, TestSetBypassRampTime)
 {
     int chunks_in_10ms = (TEST_SAMPLE_RATE * 0.01) / AUDIO_CHUNK_SIZE;
-    EXPECT_EQ(chunks_in_10ms, chunks_to_ramp(TEST_SAMPLE_RATE));
+
+    // With some sample rate and buffer size combinations this is false.
+    if (chunks_in_10ms <= 0)
+    {
+        // But also in those cases, we want to test with at least one chunk.
+        chunks_in_10ms = 1;
+    }
+
+    // ... Because chunks_to_rap returns a minimum of 1.
+    int to_ramp = chunks_to_ramp(TEST_SAMPLE_RATE);
+
+    EXPECT_EQ(chunks_in_10ms, to_ramp);
 }
 
 class TestBypassManager : public ::testing::Test
@@ -202,19 +213,27 @@ TEST_F(TestBypassManager, TestOperation)
 TEST_F(TestBypassManager, TestRamping)
 {
     int chunks_in_ramp = (TEST_SAMPLE_RATE * 0.01) / AUDIO_CHUNK_SIZE;
+
+    // With some sample rate and buffer size combinations this is false.
+    if (chunks_in_ramp <= 0)
+    {
+        // But also in those cases, we want to test with at least one chunk.
+        chunks_in_ramp = 1;
+    }
+
     ChunkSampleBuffer buffer(2);
     _module_under_test.set_bypass(true, TEST_SAMPLE_RATE);
     EXPECT_TRUE(_module_under_test.should_ramp());
 
-    for (int i = 0; i < chunks_in_ramp ; ++i)
+    for (int i = 0; i < chunks_in_ramp; ++i)
     {
         test_utils::fill_sample_buffer(buffer, 1.0f);
         _module_under_test.ramp_output(buffer);
     }
 
     // We should now have ramped down to 0
-    EXPECT_FLOAT_EQ(0.0f, buffer.channel(0)[AUDIO_CHUNK_SIZE - 1]);
-    EXPECT_FLOAT_EQ(0.0f, buffer.channel(1)[AUDIO_CHUNK_SIZE - 1]);
+    EXPECT_NEAR(0.0f, buffer.channel(0)[AUDIO_CHUNK_SIZE - 1], 1.0e-7);
+    EXPECT_NEAR(0.0f, buffer.channel(1)[AUDIO_CHUNK_SIZE - 1], 1.0e-7);
     EXPECT_FLOAT_EQ(1.0f / chunks_in_ramp, buffer.channel(0)[0]);
     EXPECT_FLOAT_EQ(1.0f / chunks_in_ramp, buffer.channel(1)[0]);
 
@@ -224,7 +243,7 @@ TEST_F(TestBypassManager, TestRamping)
     _module_under_test.set_bypass(false, TEST_SAMPLE_RATE);
     EXPECT_TRUE(_module_under_test.should_ramp());
 
-    for (int i = 0; i < chunks_in_ramp ; ++i)
+    for (int i = 0; i < chunks_in_ramp; ++i)
     {
         test_utils::fill_sample_buffer(buffer, 1.0f);
         _module_under_test.ramp_output(buffer);

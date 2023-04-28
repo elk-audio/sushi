@@ -1,3 +1,5 @@
+#include <filesystem>
+
 #include "gtest/gtest.h"
 
 #include "test_utils/test_utils.h"
@@ -12,7 +14,12 @@
 using namespace sushi;
 using namespace sushi::vst3;
 
-const char PLUGIN_FILE[] = "../third-party/vst3sdk/VST3/adelay.vst3";
+#ifdef NDEBUG
+const char PLUGIN_FILE[] = "../VST3/Release/adelay.vst3";
+#else
+const char PLUGIN_FILE[] = "../VST3/Debug/adelay.vst3";
+#endif
+
 const char PLUGIN_NAME[] = "ADelay";
 
 constexpr unsigned int DELAY_PARAM_ID = 100;
@@ -23,7 +30,9 @@ constexpr int   TEST_CHANNEL_COUNT = 2;
 /* Quick test to test plugin loading */
 TEST(TestVst3xPluginInstance, TestLoadPlugin)
 {
-    char* full_test_plugin_path = realpath(PLUGIN_FILE, NULL);
+    auto full_path = std::filesystem::path(PLUGIN_FILE);
+    auto full_test_plugin_path = std::string(std::filesystem::absolute(full_path));
+
     SushiHostApplication host_app;
     PluginInstance module_under_test(&host_app);
     bool success = module_under_test.load_plugin(full_test_plugin_path, PLUGIN_NAME);
@@ -31,25 +40,55 @@ TEST(TestVst3xPluginInstance, TestLoadPlugin)
     ASSERT_TRUE(module_under_test.processor());
     ASSERT_TRUE(module_under_test.component());
     ASSERT_TRUE(module_under_test.controller());
-
-    free(full_test_plugin_path);
 }
 
 /* Test that nothing breaks if the plugin is not found */
 TEST(TestVst3xPluginInstance, TestLoadPluginFromErroneousFilename)
 {
-    /* Non existing library */
+    /* Non-existing library */
     SushiHostApplication host_app;
     PluginInstance module_under_test(&host_app);
     bool success = module_under_test.load_plugin("/usr/lib/lxvst/no_plugin.vst3", PLUGIN_NAME);
     ASSERT_FALSE(success);
 
     /* Existing library but non-existing plugin */
-    char* full_test_plugin_path = realpath(PLUGIN_FILE, NULL);
+    auto full_path = std::filesystem::path(PLUGIN_FILE);
+    auto full_test_plugin_path = std::string(std::filesystem::absolute(full_path));
+
     success = module_under_test.load_plugin(full_test_plugin_path, "NoPluginWithThisName");
     ASSERT_FALSE(success);
-    free(full_test_plugin_path);
 }
+
+TEST(TestVst3xRtState, TestOperation)
+{
+    ProcessorState state;
+    state.add_parameter_change(3, 0.5f);
+    state.add_parameter_change(10, 0.25f);
+    Vst3xRtState module_under_test(state);
+
+    EXPECT_EQ(2, module_under_test.getParameterCount());
+    auto data = module_under_test.getParameterData(0);
+    ASSERT_TRUE(data);
+    EXPECT_EQ(1, data->getPointCount());
+    EXPECT_EQ(3, data->getParameterId());
+    Steinberg::Vst::ParamValue value = 0;
+    Steinberg::int32 offset = -1;
+
+    EXPECT_EQ(Steinberg::kResultOk, data->getPoint(0, offset, value));
+    EXPECT_FLOAT_EQ(0.5, value);
+    EXPECT_EQ(0, offset);
+
+    data = module_under_test.getParameterData(1);
+    ASSERT_TRUE(data);
+    EXPECT_EQ(10, data->getParameterId());
+    EXPECT_EQ(Steinberg::kResultOk, data->getPoint(0, offset, value));
+    EXPECT_FLOAT_EQ(0.25, value);
+    EXPECT_EQ(0, offset);
+
+    data = module_under_test.getParameterData(2);
+    EXPECT_FALSE(data);
+}
+
 
 class TestVst3xWrapper : public ::testing::Test
 {
@@ -59,12 +98,13 @@ protected:
 
     void SetUp(const char* plugin_file, const char* plugin_name)
     {
-        char* full_plugin_path = realpath(plugin_file, NULL);
+        auto full_path = std::filesystem::path(plugin_file);
+        auto full_plugin_path = std::string(std::filesystem::absolute(full_path));
+
         _module_under_test = std::make_unique<Vst3xWrapper>(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE),
                                                             full_plugin_path,
                                                             plugin_name,
                                                             &_host_app);
-        free(full_plugin_path);
 
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
         ASSERT_EQ(ProcessorReturnCode::OK, ret);
@@ -204,6 +244,7 @@ TEST_F(TestVst3xWrapper, TestTimeInfo)
     _host_control._transport.set_playing_mode(PlayingMode::PLAYING, false);
     _host_control._transport.set_tempo(120, false);
     _host_control._transport.set_time_signature({3, 4}, false);
+    _host_control._transport.set_time(Time(0), 0);
     _host_control._transport.set_time(std::chrono::seconds(2), static_cast<int64_t>(TEST_SAMPLE_RATE) * 2);
 
     _module_under_test->_fill_processing_context();
@@ -280,7 +321,7 @@ TEST_F(TestVst3xWrapper, TestCVOutput)
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
 
     auto status = _module_under_test->connect_cv_from_parameter(DELAY_PARAM_ID, 1);
-    ASSERT_EQ(ProcessorReturnCode::OK, status);;
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
 
     int index_unused;
     auto param_queue = _module_under_test->_process_data.outputParameterChanges->addParameterData(DELAY_PARAM_ID, index_unused);
@@ -316,9 +357,11 @@ TEST_F(TestVst3xWrapper, TestStateHandling)
     auto status = _module_under_test->set_state(&state, false);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
 
-    // Check that new values are set
+    // Check that new values are set and update notification is queued
     EXPECT_FLOAT_EQ(0.88f, _module_under_test->parameter_value(desc->id()).second);
     EXPECT_TRUE(_module_under_test->bypassed());
+    auto event = _host_control._dummy_dispatcher.retrieve_event();
+    ASSERT_TRUE(event->is_engine_notification());
 
     // Test setting state with realtime running
     state.set_bypass(false);
@@ -327,8 +370,7 @@ TEST_F(TestVst3xWrapper, TestStateHandling)
 
     status = _module_under_test->set_state(&state, true);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
-    auto event = _host_control._dummy_dispatcher.retrieve_event();
-    ASSERT_TRUE(event.get());
+    event = _host_control._dummy_dispatcher.retrieve_event();
     _module_under_test->process_event(event->to_rt_event(0));
     _module_under_test->process_audio(buffer, buffer);
 
@@ -337,15 +379,117 @@ TEST_F(TestVst3xWrapper, TestStateHandling)
     EXPECT_FALSE(_module_under_test->bypassed());
 
     // Retrive the delete event and execute it to delete the RtState object
-    ASSERT_FALSE(_event_queue.empty());
     RtEvent rt_event;
-    _event_queue.pop(rt_event);
-    auto delete_event = Event::from_rt_event(rt_event, IMMEDIATE_PROCESS);
-    ASSERT_TRUE(delete_event);
-    static_cast<AsynchronousDeleteEvent*>(delete_event)->execute();
-    delete delete_event;
+
+    int deleted_states = 0;
+    int notifications = 0;
+    while (_event_queue.pop(rt_event))
+    {
+        if (rt_event.type() == RtEventType::DELETE)
+        {
+            auto delete_event = Event::from_rt_event(rt_event, IMMEDIATE_PROCESS);
+            ASSERT_TRUE(delete_event);
+            static_cast<AsynchronousDeleteEvent*>(delete_event)->execute();
+            delete delete_event;
+            deleted_states++;
+        }
+        if (rt_event.type() == RtEventType::NOTIFY)
+        {
+            notifications++;
+        }
+    }
+
+    EXPECT_EQ(1, deleted_states);
+    EXPECT_EQ(1, notifications);
 }
 
+TEST_F(TestVst3xWrapper, TestMultipleStates)
+{
+    ChunkSampleBuffer buffer(2);
+    SetUp(PLUGIN_FILE, PLUGIN_NAME);
+
+    auto desc = _module_under_test->parameter_from_name("Delay");
+    ASSERT_TRUE(desc);
+
+    ProcessorState state;
+
+    // Test setting state with realtime running
+    state.set_bypass(false);
+    state.add_parameter_change(desc->id(), 0.33);
+
+    auto status = _module_under_test->set_state(&state, true);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+    auto event = _host_control._dummy_dispatcher.retrieve_event();
+    _module_under_test->process_event(event->to_rt_event(0));
+
+    // Send another state, also with manual event passing
+    state.add_parameter_change(desc->id(), 0.55);
+    status = _module_under_test->set_state(&state, true);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+
+    EXPECT_FALSE(_module_under_test->_state_change_queue.wasEmpty());
+
+    event = _host_control._dummy_dispatcher.retrieve_event();
+    _module_under_test->process_event(event->to_rt_event(0));
+
+    // Process twice and check that we got the value from the second state
+    _module_under_test->process_audio(buffer, buffer);
+    _module_under_test->process_audio(buffer, buffer);
+
+    EXPECT_FLOAT_EQ(0.55f, _module_under_test->parameter_value(desc->id()).second);
+    EXPECT_FALSE(_module_under_test->bypassed());
+
+    // Retrieve the delete events and execute them to delete the RtState objects
+    // Also make sure that a notification was sent for every state change
+    RtEvent rt_event;
+    int deleted_states = 0;
+    int notifications = 0;
+    while (_event_queue.pop(rt_event))
+    {
+        if (rt_event.type() == RtEventType::DELETE)
+        {
+            auto delete_event = Event::from_rt_event(rt_event, IMMEDIATE_PROCESS);
+            ASSERT_TRUE(delete_event);
+            static_cast<AsynchronousDeleteEvent*>(delete_event)->execute();
+            delete delete_event;
+            deleted_states++;
+        }
+        if (rt_event.type() == RtEventType::NOTIFY)
+        {
+            notifications++;
+        }
+    }
+
+    EXPECT_EQ(2, deleted_states);
+    EXPECT_EQ(2, notifications);
+}
+
+TEST_F(TestVst3xWrapper, TestBinaryStateSaving)
+{
+    ChunkSampleBuffer buffer(2);
+    SetUp(PLUGIN_FILE, PLUGIN_NAME);
+
+    auto desc = _module_under_test->parameter_from_name("Delay");
+    ASSERT_TRUE(desc);
+    float prev_value = _module_under_test->parameter_value(desc->id()).second;
+
+    ProcessorState state = _module_under_test->save_state();
+    ASSERT_TRUE(state.has_binary_data());
+
+    // Set a parameter value, the re-apply the state
+    auto event = RtEvent::make_parameter_change_event(_module_under_test->id(), 0, desc->id(), 0.5f);
+    _module_under_test->process_event(event);
+    _module_under_test->process_audio(buffer, buffer);
+    _module_under_test->parameter_update_callback(_module_under_test.get(), 0);
+
+    EXPECT_NE(prev_value, _module_under_test->parameter_value(desc->id()).second);
+
+    auto status = _module_under_test->set_state(&state, false);
+    ASSERT_EQ(ProcessorReturnCode::OK, status);
+
+    // Check the value has reverted to the previous value
+    EXPECT_FLOAT_EQ(prev_value, _module_under_test->parameter_value(desc->id()).second);
+}
 
 class TestVst3xUtils : public ::testing::Test
 {

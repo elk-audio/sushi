@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -27,6 +27,7 @@
 #include "plugins/cv_to_control_plugin.h"
 #include "plugins/control_to_cv_plugin.h"
 #include "plugins/wav_writer_plugin.h"
+#include "plugins/wav_streamer_plugin.h"
 #include "plugins/mono_summing_plugin.h"
 #include "plugins/send_return_factory.h"
 #include "plugins/sample_delay_plugin.h"
@@ -34,15 +35,61 @@
 
 namespace sushi {
 
+/**
+ * @brief Simplified factory only used internally in this file
+ */
+class BaseInternalPlugFactory
+{
+public:
+    virtual ~BaseInternalPlugFactory() = default;
+    virtual std::string_view uid() const = 0;
+    virtual std::shared_ptr<Processor> create(const HostControl &host_control) = 0;
+};
+
+template<class T>
+class InternalFactory : public BaseInternalPlugFactory
+{
+public:
+    std::string_view uid() const override
+    {
+        return T::static_uid();
+    }
+
+    std::shared_ptr<Processor> create(const HostControl &host_control) override
+    {
+        return std::make_shared<T>(host_control);
+    }
+};
+
 InternalProcessorFactory::InternalProcessorFactory() : _send_return_factory(std::make_unique<SendReturnFactory>())
-{}
+{
+    /* When adding new internal plugins, make sure they implement static_uid()
+     * then add a line here to add them to the factory  */
+    _add(std::make_unique<InternalFactory<passthrough_plugin::PassthroughPlugin>>());
+    _add(std::make_unique<InternalFactory<gain_plugin::GainPlugin>>());
+    _add(std::make_unique<InternalFactory<lfo_plugin::LfoPlugin>>());
+    _add(std::make_unique<InternalFactory<equalizer_plugin::EqualizerPlugin>>());
+    _add(std::make_unique<InternalFactory<sample_player_plugin::SamplePlayerPlugin>>());
+    _add(std::make_unique<InternalFactory<arpeggiator_plugin::ArpeggiatorPlugin>>());
+    _add(std::make_unique<InternalFactory<peak_meter_plugin::PeakMeterPlugin>>());
+    _add(std::make_unique<InternalFactory<transposer_plugin::TransposerPlugin>>());
+    _add(std::make_unique<InternalFactory<step_sequencer_plugin::StepSequencerPlugin>>());
+    _add(std::make_unique<InternalFactory<cv_to_control_plugin::CvToControlPlugin>>());
+    _add(std::make_unique<InternalFactory<control_to_cv_plugin::ControlToCvPlugin>>());
+    _add(std::make_unique<InternalFactory<wav_writer_plugin::WavWriterPlugin>>());
+    _add(std::make_unique<InternalFactory<wav_streamer_plugin::WavStreamerPlugin>>());
+    _add(std::make_unique<InternalFactory<mono_summing_plugin::MonoSummingPlugin>>());
+    _add(std::make_unique<InternalFactory<sample_delay_plugin::SampleDelayPlugin>>());
+    _add(std::make_unique<InternalFactory<stereo_mixer_plugin::StereoMixerPlugin>>());
+}
 
 std::pair<ProcessorReturnCode, std::shared_ptr<Processor>>
-InternalProcessorFactory::new_instance(const engine::PluginInfo &plugin_info,
+InternalProcessorFactory::new_instance(const PluginInfo &plugin_info,
                                        HostControl &host_control,
                                        float sample_rate)
 {
-    if (plugin_info.uid == "sushi.testing.send" || plugin_info.uid == "sushi.testing.return")
+    if (plugin_info.uid == send_plugin::SendPlugin::static_uid() ||
+        plugin_info.uid == return_plugin::ReturnPlugin::static_uid())
     {
         return _send_return_factory->new_instance(plugin_info, host_control, sample_rate);
     }
@@ -59,70 +106,22 @@ InternalProcessorFactory::new_instance(const engine::PluginInfo &plugin_info,
     }
 }
 
+InternalProcessorFactory::~InternalProcessorFactory() = default;
+
 std::shared_ptr<Processor> sushi::InternalProcessorFactory::_create_internal_plugin(const std::string &uid,
                                                                                     sushi::HostControl &host_control)
 {
-    if (uid == "sushi.testing.passthrough")
+    auto factory = _internal_plugin_factories.find(uid);
+    if (factory == _internal_plugin_factories.end())
     {
-        return std::make_shared<passthrough_plugin::PassthroughPlugin>(host_control);
+        return nullptr;
     }
-    else if (uid == "sushi.testing.gain")
-    {
-        return std::make_shared<gain_plugin::GainPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.lfo")
-    {
-        return std::make_shared<lfo_plugin::LfoPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.equalizer")
-    {
-        return std::make_shared<equalizer_plugin::EqualizerPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.sampleplayer")
-    {
-        return std::make_shared<sample_player_plugin::SamplePlayerPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.arpeggiator")
-    {
-        return std::make_shared<arpeggiator_plugin::ArpeggiatorPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.peakmeter")
-    {
-        return std::make_shared<peak_meter_plugin::PeakMeterPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.transposer")
-    {
-        return std::make_shared<transposer_plugin::TransposerPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.step_sequencer")
-    {
-        return std::make_shared<step_sequencer_plugin::StepSequencerPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.cv_to_control")
-    {
-        return std::make_shared<cv_to_control_plugin::CvToControlPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.control_to_cv")
-    {
-        return std::make_shared<control_to_cv_plugin::ControlToCvPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.wav_writer")
-    {
-        return std::make_shared<wav_writer_plugin::WavWriterPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.mono_summing")
-    {
-        return std::make_shared<mono_summing_plugin::MonoSummingPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.sample_delay")
-    {
-        return std::make_shared<sample_delay_plugin::SampleDelayPlugin>(host_control);
-    }
-    else if (uid == "sushi.testing.stereo_mixer")
-    {
-        return std::make_shared<stereo_mixer_plugin::StereoMixerPlugin>(host_control);
-    }
-    return nullptr;
+    return factory->second->create(host_control);
+}
+
+void InternalProcessorFactory::_add(std::unique_ptr<BaseInternalPlugFactory> factory)
+{
+    _internal_plugin_factories.insert({factory->uid(), std::move(factory)});
 }
 
 } // namespace sushi

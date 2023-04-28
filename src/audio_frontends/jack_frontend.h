@@ -26,6 +26,7 @@
 #include <memory>
 
 #include <jack/jack.h>
+#include "twine/twine.h"
 
 #include "base_audio_frontend.h"
 
@@ -142,8 +143,8 @@ private:
     engine::ControlBuffer          _out_controls;
 };
 
-}; // end namespace jack_frontend
-}; // end namespace sushi
+} // end namespace jack_frontend
+} // end namespace sushi
 
 #endif //SUSHI_BUILD_WITH_JACK
 #ifndef SUSHI_BUILD_WITH_JACK
@@ -168,6 +169,7 @@ public:
     AudioFrontendStatus init(BaseAudioFrontendConfiguration*) override;
     void cleanup() override {}
     void run() override {}
+    void pause([[maybe_unused]] bool enabled) override {}
 };
 }; // end namespace jack_frontend
 }; // end namespace sushi

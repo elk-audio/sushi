@@ -32,7 +32,7 @@ namespace controller_impl {
 class CvGateController : public ext::CvGateController
 {
 public:
-    CvGateController([[maybe_unused]] engine::BaseEngine* engine) {}
+    explicit CvGateController([[maybe_unused]] engine::BaseEngine* engine) {}
 
     ~CvGateController() override = default;
 

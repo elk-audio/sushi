@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Utility functions for encoding raw midi data.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #ifndef SUSHI_MIDI_ENCODER_H
@@ -85,6 +85,42 @@ MidiDataByte encode_pitch_bend(int channel, float value);
  * @return A MidiDataByte containing the encoded message
  */
 MidiDataByte encode_program_change(int channel, int program);
+
+/**
+ * @brief Encode a midi clock start message
+ * @return A MidiDataByte containing the encoded message
+ */
+MidiDataByte encode_start_message();
+
+/**
+ * @brief Encode a midi clock stop message
+ * @return A MidiDataByte containing the encoded message
+ */
+MidiDataByte encode_stop_message();
+/**
+ * @brief Encode a midi clock continue message
+ * @return A MidiDataByte containing the encoded message
+ */
+MidiDataByte encode_continue_message();
+
+/**
+ * @brief Encode a midi clock tick message
+ * @return A MidiDataByte containing the encoded message
+ */
+MidiDataByte encode_timing_clock();
+
+/**
+ * @brief Encode a midi active sensing message
+ * @return A MidiDataByte containing the encoded message
+ */
+MidiDataByte encode_active_sensing();
+
+/**
+ * @brief Encode a midi global reset message
+ * @return A MidiDataByte containing the encoded message
+ */
+MidiDataByte encode_reset_message();
+
 
 } // end namespace midi
 } // end namespace sushi

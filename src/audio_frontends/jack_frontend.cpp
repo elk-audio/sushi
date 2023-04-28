@@ -37,6 +37,7 @@ AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration* config)
     {
         return ret_code;
     }
+
     auto jack_config = static_cast<JackFrontendConfiguration*>(_config);
     _autoconnect_ports = jack_config->autoconnect_ports;
     _engine->set_audio_input_channels(MAX_FRONTEND_CHANNELS);
@@ -58,17 +59,15 @@ AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration* config)
     return setup_client(jack_config->client_name, jack_config->server_name);
 }
 
-
 void JackFrontend::cleanup()
 {
-    _engine->enable_realtime(false);
     if (_client)
     {
         jack_client_close(_client);
         _client = nullptr;
     }
+    _engine->enable_realtime(false);
 }
-
 
 void JackFrontend::run()
 {
@@ -83,7 +82,6 @@ void JackFrontend::run()
         connect_ports();
     }
 }
-
 
 AudioFrontendStatus JackFrontend::setup_client(const std::string& client_name,
                                                const std::string& server_name)
@@ -140,7 +138,8 @@ AudioFrontendStatus JackFrontend::setup_sample_rate()
     _sample_rate = jack_get_sample_rate(_client);
     if (std::lround(_sample_rate) != _engine->sample_rate())
     {
-        SUSHI_LOG_WARNING("Sample rate mismatch between engine ({}) and jack ({})", _engine->sample_rate(), _sample_rate);
+        SUSHI_LOG_WARNING("Sample rate mismatch between engine ({}) and jack ({}), setting to {}",
+                          _engine->sample_rate(), _sample_rate, _sample_rate);
         _engine->set_sample_rate(_sample_rate);
     }
     auto status = jack_set_sample_rate_callback(_client, samplerate_callback, this);
@@ -285,12 +284,19 @@ int JackFrontend::internal_process_callback(jack_nframes_t framecount)
     {
         _start_frame = current_frames;
     }
+
     /* Process in chunks of AUDIO_CHUNK_SIZE */
     Time start_time = std::chrono::microseconds(current_usecs);
     for (jack_nframes_t frame = 0; frame < framecount; frame += AUDIO_CHUNK_SIZE)
     {
         Time delta_time = std::chrono::microseconds((frame * 1'000'000) / _sample_rate);
         process_audio(frame, AUDIO_CHUNK_SIZE, start_time + delta_time, current_frames + frame - _start_frame);
+    }
+
+    if (_pause_notified == false && _pause_manager.should_process() == false)
+    {
+        _pause_notify->notify();
+        _pause_notified = true;
     }
     return 0;
 }
@@ -312,9 +318,9 @@ int JackFrontend::internal_samplerate_callback(jack_nframes_t sample_rate)
 
 void JackFrontend::internal_latency_callback(jack_latency_callback_mode_t mode)
 {
-    /* Currently all we want to know is the output latency to a physical
+    /* Currently, all we want to know is the output latency to a physical
      * audio output.
-     * We also don't support individual latency compensation on ports so
+     * We also don't support individual latency compensation on ports, so
      * we get the maximum latency and pass that on to Sushi. */
     if (mode == JackPlaybackLatency)
     {
@@ -331,7 +337,8 @@ void JackFrontend::internal_latency_callback(jack_latency_callback_mode_t mode)
     }
 }
 
-void inline JackFrontend::process_audio(jack_nframes_t start_frame, jack_nframes_t framecount, Time timestamp, int64_t samplecount)
+void inline JackFrontend::process_audio(jack_nframes_t start_frame, jack_nframes_t framecount,
+                                        Time timestamp, int64_t samplecount)
 {
     /* Copy jack buffer data to internal buffers */
     for (size_t i = 0; i < _input_ports.size(); ++i)
@@ -344,8 +351,18 @@ void inline JackFrontend::process_audio(jack_nframes_t start_frame, jack_nframes
         float* in_data = static_cast<float*>(jack_port_get_buffer(_cv_input_ports[i], framecount)) + start_frame;
         _in_controls.cv_values[i] = map_audio_to_cv(in_data[AUDIO_CHUNK_SIZE - 1]);
     }
+
     _out_buffer.clear();
-    _engine->process_chunk(&_in_buffer, &_out_buffer, &_in_controls, &_out_controls, timestamp, samplecount);
+
+    if (_pause_manager.should_process())
+    {
+        _engine->process_chunk(&_in_buffer, &_out_buffer, &_in_controls, &_out_controls, timestamp, samplecount);
+        if (_pause_manager.should_ramp())
+        {
+            _pause_manager.ramp_output(_out_buffer);
+        }
+    }
+
     for (size_t i = 0; i < _input_ports.size(); ++i)
     {
         float* out_data = static_cast<float*>(jack_port_get_buffer(_output_ports[i], framecount)) + start_frame;
@@ -359,8 +376,8 @@ void inline JackFrontend::process_audio(jack_nframes_t start_frame, jack_nframes
     }
 }
 
-}; // end namespace audio_frontend
-}; // end namespace sushi
+} // end namespace audio_frontend
+} // end namespace sushi
 #endif
 #ifndef SUSHI_BUILD_WITH_JACK
 #include "audio_frontends/jack_frontend.h"

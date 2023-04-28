@@ -1,0 +1,59 @@
+{
+    "host_config" : {
+        "samplerate" : 48000,
+        "playing_mode" : "playing"
+    },
+    "tracks" : [
+        {
+            "name" : "main",
+            "channels" : 2,
+            "inputs" : [],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "uid" : "sushi.testing.arpeggiator",
+                    "name" : "arp",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.testing.sampleplayer",
+                    "name" : "sampler",
+                    "type" : "internal"
+                }
+            ]
+        }
+    ],
+    "post_track" : {
+        "name" : "master_gain",
+        "plugins" : [
+            {
+                "uid" : "sushi.testing.gain",
+                "name" : "gain",
+                "type" : "internal"
+            }
+        ]
+    },
+    "midi" : {
+        "track_connections" : [
+            {
+                "port" : 0,
+                "channel" : "all",
+                "track" : "main",
+                "raw_midi" : false
+            }
+        ]
+    },
+    "initial_state" : [
+        {
+            "processor" : "sampler",
+            "properties" : {
+                "sample_file" : "../test/data/Kawai-K11-GrPiano-C4_mono.wav"
+            }
+        }
+    ]
+}

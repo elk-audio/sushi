@@ -28,32 +28,6 @@ namespace sushi {
 namespace engine {
 namespace controller_impl {
 
-inline engine::PluginType to_internal(ext::PluginType type)
-{
-    switch (type)
-    {
-        case ext::PluginType::INTERNAL:   return engine::PluginType::INTERNAL;
-        case ext::PluginType::VST2X:      return engine::PluginType::VST2X;
-        case ext::PluginType::VST3X:      return engine::PluginType::VST3X;
-        case ext::PluginType::LV2:        return engine::PluginType::LV2;
-        default:                          return engine::PluginType::INTERNAL;
-    }
-}
-
-inline void to_internal(sushi::ProcessorState* dest, const ext::ProcessorState* src)
-{
-    if (src->program.has_value()) dest->set_program(src->program.value());
-    if (src->bypassed.has_value()) dest->set_bypass(src->bypassed.value());
-    for (const auto& p : src->parameters)
-    {
-        dest->add_parameter_change(p.first, p.second);
-    }
-    for (const auto& p : src->properties)
-    {
-        dest->add_property_change(p.first, p.second);
-    }
-}
-
 inline ext::ProcessorInfo to_external(const Processor* proc)
 {
     return ext::ProcessorInfo{.id = static_cast<int>(proc->id()),
@@ -68,10 +42,9 @@ inline ext::TrackInfo to_external(const Track* track, std::vector<int> proc_ids)
     return ext::TrackInfo{.id = static_cast<int>(track->id()),
                           .label = track->label(),
                           .name = track->name(),
-                          .input_channels = track->input_channels(),
-                          .input_busses = track->input_busses(),
-                          .output_channels = track->output_channels(),
-                          .output_busses = track->output_busses(),
+                          .channels = track->input_channels(),
+                          .buses = track->buses(),
+                          .type = to_external(track->type()),
                           .processors = std::move(proc_ids)};
 }
 
@@ -269,15 +242,40 @@ ext::ControlStatus AudioGraphController::create_track(const std::string& name, i
     return ext::ControlStatus::OK;
 }
 
-ext::ControlStatus AudioGraphController::create_multibus_track(const std::string& name,
-                                                               int input_busses,
-                                                               int output_busses)
+ext::ControlStatus AudioGraphController::create_multibus_track(const std::string& name, int buses)
 {
-    SUSHI_LOG_DEBUG("create_multibus_track called with name {}, {} input busses and {} output busses",
-                                                                  name, input_busses, output_busses);
+    SUSHI_LOG_DEBUG("create_multibus_track called with name {} and {} buses ", name, buses);
     auto lambda = [=] () -> int
     {
-        auto [status, track_id] = _engine->create_multibus_track(name, input_busses, output_busses);
+        auto [status, track_id] = _engine->create_multibus_track(name, buses);
+        return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
+    };
+
+    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
+    _event_dispatcher->post_event(event);
+    return ext::ControlStatus::OK;
+}
+
+ext::ControlStatus AudioGraphController::create_pre_track(const std::string& name)
+{
+    SUSHI_LOG_DEBUG("create_pre_track called with name {}", name);
+    auto lambda = [=] () -> int
+    {
+        auto [status, track_id] = _engine->create_pre_track(name);
+        return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
+    };
+
+    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
+    _event_dispatcher->post_event(event);
+    return ext::ControlStatus::OK;
+}
+
+ext::ControlStatus AudioGraphController::create_post_track(const std::string& name)
+{
+    SUSHI_LOG_DEBUG("create_post_track called with name {}", name);
+    auto lambda = [=] () -> int
+    {
+        auto [status, track_id] = _engine->create_post_track(name);
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
     };
 
@@ -331,7 +329,7 @@ ext::ControlStatus AudioGraphController::move_processor_on_track(int processor_i
 
             [[maybe_unused]] auto replace_status = _engine->add_plugin_to_track(processor_id, source_track_id, position);
             SUSHI_LOG_WARNING_IF(replace_status != engine::EngineReturnStatus::OK,
-                                 "Failed to replace processor {} on track {}", processor_id, source_track_id);
+                                 "Failed to replace processor {} on track {}", processor_id, source_track_id)
 
         }
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;

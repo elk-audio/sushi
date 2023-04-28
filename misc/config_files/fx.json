@@ -1,0 +1,51 @@
+{
+    "host_config" : {
+        "samplerate" : 48000
+    },
+    "tracks" : [
+        {
+            "name" : "main",
+            "channels" : 2,
+            "inputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "path" : "mda-vst3.vst3",
+                    "uid" : "mda Overdrive",
+                    "name" : "mda Overdrive",
+                    "type" : "vst3x"
+                },
+                {
+                    "path" : "mda-vst3.vst3",
+                    "uid" : "mda DubDelay",
+                    "name" : "mda DubDelay",
+                    "type" : "vst3x"
+                },
+                {
+                    "path" : "mda-vst3.vst3",
+                    "uid" : "mda Delay",
+                    "name" : "mda Delay",
+                    "type" : "vst3x"
+                },
+                {
+                    "path" : "mda-vst3.vst3",
+                    "uid" : "mda Ambience",
+                    "name" : "mda Ambience",
+                    "type" : "vst3x"
+                }
+            ]
+        }
+    ],
+    "midi" : {
+    }
+}

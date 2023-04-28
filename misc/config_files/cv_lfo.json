@@ -1,0 +1,39 @@
+{
+    "host_config" : {
+        "samplerate" : 48000,
+        "cv_inputs" : 0,
+        "cv_outputs" :4
+    },
+    "tracks" : [
+        {
+            "name" : "main",
+            "channels" : 2,
+            "inputs" : [
+            ],
+            "outputs" : [
+            ],
+            "plugins" : [
+                {
+                    "uid" : "sushi.testing.lfo",
+                    "name" : "lfo",
+                    "type" : "internal"
+                }
+            ]
+        }
+    ],
+    "midi" : {
+    },
+    "cv_control" : {
+        "cv_inputs" : [
+        ],
+        "cv_outputs" : [
+            {
+                "cv" : 0,
+                "processor" : "lfo",
+                "parameter" : "out"
+            }
+        ],
+        "gate_inputs" : [ ],
+        "gate_outputs" : [ ]
+    }
+}

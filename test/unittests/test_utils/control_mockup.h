@@ -5,6 +5,8 @@
 #include <bits/stdc++.h>
 #endif
 
+#include <unordered_map>
+
 #include "control_interface.h"
 
 namespace sushi {
@@ -20,8 +22,8 @@ const ProcessorInfo processor_1{0, "proc 1", "proc 1", 0 , 0};
 const ProcessorInfo processor_2{1, "proc 2", "proc 2", 1 , 1};
 const std::vector<ProcessorInfo> processors{processor_1, processor_2};
 
-const TrackInfo track1{0, "track 1", "track 1", 0, 0, 0, 0, {}};
-const TrackInfo track2{1, "track 2", "track 2", 1, 1, 1, 1, {}};
+const TrackInfo track1{0, "track 1", "track 1", 0, 0, TrackType::REGULAR, {}};
+const TrackInfo track2{1, "track 2", "track 2", 1, 1, TrackType::REGULAR, {}};
 const std::vector<TrackInfo> tracks{track1, track2};
 
 constexpr float                 DEFAULT_SAMPLERATE = 48000.0f;
@@ -331,15 +333,31 @@ public:
         return _return_status;
     }
 
-    ControlStatus create_multibus_track(const std::string& name, int input_busses, int output_busses) override
+    ControlStatus create_multibus_track(const std::string& name, int buses) override
     {
         _args_from_last_call.clear();
         _args_from_last_call["name"] = name;
-        _args_from_last_call["input_busses"] = std::to_string(input_busses);
-        _args_from_last_call["output_busses"] = std::to_string(output_busses);
+        _args_from_last_call["buses"] = std::to_string(buses);
         _recently_called = true;
         return _return_status;
     }
+
+    ControlStatus create_pre_track(const std::string& name) override
+    {
+        _args_from_last_call.clear();
+        _args_from_last_call["name"] = name;
+        _recently_called = true;
+        return _return_status;
+    }
+
+    ControlStatus create_post_track(const std::string& name) override
+    {
+        _args_from_last_call.clear();
+        _args_from_last_call["name"] = name;
+        _recently_called = true;
+        return _return_status;
+    }
+
 
     ControlStatus move_processor_on_track(int processor_id,
                                           int source_track_id,
@@ -543,6 +561,16 @@ public:
     get_pc_input_connections_for_processor(int /*processor_id*/) const override
     {
         return {_return_status, std::vector<MidiPCConnection>()};
+    }
+
+    bool get_midi_clock_output_enabled(int /*port*/) const override
+    {
+        return false;
+    }
+
+    ControlStatus set_midi_clock_output_enabled(bool /*enabled*/, int /*port*/) override
+    {
+        return _return_status;
     }
 
     ControlStatus connect_kbd_input_to_track(int /*track_id*/, MidiChannel /*channel*/, int /*port*/, bool /*raw_midi*/) override
@@ -772,6 +800,8 @@ public:
 class OscControllerMockup : public OscController, public TestableController
 {
 public:
+    std::string get_send_ip() const override {return "";}
+
     int get_send_port() const override {return 0;}
 
     int get_receive_port() const override {return 0;}
@@ -802,6 +832,21 @@ public:
     }
 };
 
+class SessionControllerMockup : public SessionController, public TestableController
+{
+public:
+    ext::SessionState save_session() const override
+    {
+        return SessionState();
+    }
+
+    ext::ControlStatus restore_session(const ext::SessionState& /*state*/) override
+    {
+        return ControlStatus::UNSUPPORTED_OPERATION;
+    }
+};
+
+
 class ControlMockup : public SushiControl
 {
 public:
@@ -815,7 +860,8 @@ public:
                                    &_midi_controller_mockup,
                                    &_audio_routing_controller_mockup,
                                    &_cv_gate_controller_mockup,
-                                   &_osc_controller_mockup) {}
+                                   &_osc_controller_mockup,
+                                   &_session_controller_mockup) {}
 
     ControlStatus subscribe_to_notifications(NotificationType /* type */, ControlListener* /* listener */) override
     {
@@ -897,6 +943,11 @@ public:
         return &_osc_controller_mockup;
     }
 
+    SessionControllerMockup* session_controller_mockup()
+    {
+        return &_session_controller_mockup;
+    }
+
 private:
 
     SystemControllerMockup       _system_controller_mockup;
@@ -910,6 +961,7 @@ private:
     AudioRoutingControllerMockup _audio_routing_controller_mockup;
     CvGateControllerMockup       _cv_gate_controller_mockup;
     OscControllerMockup          _osc_controller_mockup;
+    SessionControllerMockup      _session_controller_mockup;
 
     std::vector<TestableController*> _controllers{&_system_controller_mockup,
                                                   &_transport_controller_mockup,
@@ -921,7 +973,8 @@ private:
                                                   &_midi_controller_mockup,
                                                   &_audio_routing_controller_mockup,
                                                   &_cv_gate_controller_mockup,
-                                                  &_osc_controller_mockup};
+                                                  &_osc_controller_mockup,
+                                                  &_session_controller_mockup};
 };
 
 } // ext

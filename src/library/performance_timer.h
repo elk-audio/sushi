@@ -48,7 +48,7 @@ public:
     SUSHI_DECLARE_NON_COPYABLE(PerformanceTimer);
 
     PerformanceTimer() = default;
-    virtual ~PerformanceTimer();
+    ~PerformanceTimer() override;
 
     /**
      * @brief Set the period to use for timings
@@ -99,7 +99,7 @@ public:
      */
     void stop_timer_rt_safe(TimePoint start_time, int node_id)
     {
-        if(_enabled)
+        if (_enabled)
         {
             TimingLogPoint tp{node_id, twine::current_rt_time() - start_time};
             _queue_lock.lock();
@@ -144,21 +144,21 @@ protected:
 
     struct TimingLogPoint
     {
-        int id;
+        int id {0};
         TimePoint delta_time;
     };
 
     struct TimingNode
     {
-        int id;
+        int id {0};
         ProcessTimings timings;
     };
 
     void _worker();
     void _update_timings();
 
-    ProcessTimings _calculate_timings(const std::vector<TimingLogPoint>& entries);
-    ProcessTimings _merge_timings(ProcessTimings prev_timings, ProcessTimings new_timings);
+    ProcessTimings _calculate_timings(const std::vector<TimingLogPoint>& entries) const;
+    static ProcessTimings _merge_timings(ProcessTimings prev_timings, ProcessTimings new_timings);
 
     std::thread _process_thread;
     float _period{0};

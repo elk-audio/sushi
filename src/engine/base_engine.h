@@ -27,6 +27,7 @@
 #include <utility>
 #include <bitset>
 #include <limits>
+#include <string>
 
 #include "library/constants.h"
 #include "base_event_dispatcher.h"
@@ -65,34 +66,9 @@ enum class EngineReturnStatus
     INVALID_TRACK,
     INVALID_BUS,
     INVALID_CHANNEL,
+    ALREADY_IN_USE,
     QUEUE_FULL
 };
-
-enum class PluginType
-{
-    INTERNAL,
-    VST2X,
-    VST3X,
-    LV2
-};
-
-/**
- * @brief  Unique plugin descriptor, used to instantiate and identify a Plugin type throughout Sushi.
- */
-struct PluginInfo
-{
-    std::string uid;
-    std::string path;
-    PluginType type;
-
-    bool operator == (const PluginInfo& other) const
-    {
-        return (uid == other.uid) &&
-               (path == other.path) &&
-               (type == other.type);
-    }
-};
-
 
 enum class RealtimeState
 {
@@ -107,12 +83,12 @@ constexpr int ENGINE_TIMING_ID = -1;
 class BaseEngine
 {
 public:
-    BaseEngine(float sample_rate) : _sample_rate(sample_rate)
+    explicit BaseEngine(float sample_rate) : _sample_rate(sample_rate)
     {}
 
     virtual ~BaseEngine() = default;
 
-    float sample_rate()
+    float sample_rate() const
     {
         return _sample_rate;
     }
@@ -132,12 +108,12 @@ public:
         _audio_outputs = channels;
     }
 
-    int audio_input_channels()
+    int audio_input_channels() const
     {
         return _audio_inputs;
     }
 
-    int audio_output_channels()
+    int audio_output_channels() const
     {
         return _audio_outputs;
     }
@@ -146,13 +122,22 @@ public:
     {
         _cv_inputs = channels;
         return EngineReturnStatus::OK;
-
     }
 
     virtual EngineReturnStatus set_cv_output_channels(int channels)
     {
         _cv_outputs = channels;
         return EngineReturnStatus::OK;
+    }
+
+    int cv_input_channels() const
+    {
+        return _cv_inputs;
+    }
+
+    int cv_output_channels() const
+    {
+        return _cv_outputs;
     }
 
     virtual EngineReturnStatus connect_audio_input_channel(int /*engine_channel*/,
@@ -185,12 +170,12 @@ public:
 
     virtual std::vector<AudioConnection> audio_input_connections()
     {
-        return std::vector<AudioConnection>();
+        return {};
     }
 
     virtual std::vector<AudioConnection> audio_output_connections()
     {
-        return std::vector<AudioConnection>();
+        return {};
     }
 
     virtual EngineReturnStatus connect_audio_input_bus(int /*input_bus */,
@@ -273,6 +258,8 @@ public:
 
     virtual void set_tempo_sync_mode(SyncMode /*mode*/) = 0;
 
+    virtual void set_base_plugin_path(const std::string& /*path*/) = 0;
+
     virtual EngineReturnStatus send_rt_event(const RtEvent& /*event*/) = 0;
 
     virtual std::pair<EngineReturnStatus, ObjectId> create_track(const std::string & /*track_id*/,
@@ -281,12 +268,21 @@ public:
         return {EngineReturnStatus::OK, 0};
     }
 
-    virtual std::pair<EngineReturnStatus, ObjectId> create_multibus_track(const std::string & /*track_id*/,
-                                                                          int /*input_busses*/,
-                                                                          int /*output_busses*/)
+    virtual std::pair<EngineReturnStatus, ObjectId> create_multibus_track(const std::string&, int)
     {
         return {EngineReturnStatus::OK, 0};
     }
+
+    virtual std::pair<EngineReturnStatus, ObjectId> create_post_track(const std::string& /*name*/)
+    {
+        return {EngineReturnStatus::OK, 0};
+    }
+
+    virtual std::pair<EngineReturnStatus, ObjectId> create_pre_track(const std::string& /*name*/)
+    {
+        return {EngineReturnStatus::OK, 0};
+    }
+
 
     virtual EngineReturnStatus delete_track(ObjectId  /*track_id*/)
     {
@@ -341,7 +337,13 @@ public:
 
     virtual void enable_output_clip_detection(bool /*enabled*/) {}
 
+    virtual bool input_clip_detection() const {return false;}
+
+    virtual bool output_clip_detection() const {return false;}
+
     virtual void enable_master_limiter(bool /*enabled*/) {}
+
+    virtual bool master_limiter() const {return false;}
 
     virtual void update_timings() {}
 

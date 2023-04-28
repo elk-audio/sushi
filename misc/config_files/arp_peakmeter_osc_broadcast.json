@@ -1,0 +1,66 @@
+{
+    "host_config" : {
+        "samplerate" : 48000,
+        "tempo_sync" : "ableton_link",
+        "playing_mode" : "playing"
+    },
+    "tracks" : [
+        {
+            "name" : "main",
+            "channels" : 2,
+            "inputs" : [ ],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "uid" : "sushi.testing.step_sequencer",
+                    "name" : "step",
+                    "type" : "internal"
+                },
+                {
+                    "path" : "mda-vst3.vst3",
+                    "name" : "mda JX10",
+                    "type" : "vst3x",
+                    "uid" : "mda JX10"
+                },
+                {
+                    "uid" : "sushi.testing.peakmeter",
+                    "name" : "peakmeter",
+                    "type" : "internal"
+                }
+            ]
+        }
+    ],
+    "midi" : {
+        "track_connections" : [
+            {
+                "port" : 0,
+                "channel" : "all",
+                "track" : "main",
+                "raw_midi" : false
+            }
+        ]
+    },
+    "osc" : {
+        "enabled_processor_outputs" : [
+            {
+                "processor" : "peakmeter"
+            }
+        ]
+    },
+    "events" : [
+        {
+           "time" : 0.0,
+           "type" : "parameter_change",
+           "data" : {
+               "plugin_name" : "main",
+               "parameter_name" : "gain",
+               "value" : 0.7
+           }
+       }
+    ]
+}

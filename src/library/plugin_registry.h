@@ -32,7 +32,7 @@ namespace sushi {
 
 struct Hash
 {
-    size_t operator() (const engine::PluginType &type) const
+    size_t operator() (const PluginType &type) const
     {
         return std::hash<int>{}(static_cast<int>(type));
     }
@@ -41,14 +41,14 @@ struct Hash
 class PluginRegistry
 {
 public:
-    std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const engine::PluginInfo& plugin_info,
+    std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> new_instance(const PluginInfo& plugin_info,
                                                                             HostControl& host_control,
                                                                             float sample_rate);
 
 private:
-    std::unordered_map<engine::PluginType, std::unique_ptr<BaseProcessorFactory>, Hash> _factories;
+    std::unordered_map<PluginType, std::unique_ptr<BaseProcessorFactory>, Hash> _factories;
 };
 
-}; // end namespace sushi
+} // end namespace sushi
 
 #endif //SUSHI_PLUGIN_REGISTRY_H

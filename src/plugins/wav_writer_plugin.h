@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -44,10 +44,11 @@ enum WavWriterStatus : int
     FAILURE
 };
 
-class WavWriterPlugin : public InternalPlugin
+class WavWriterPlugin : public InternalPlugin, public UidHelper<WavWriterPlugin>
 {
 public:
     explicit WavWriterPlugin(HostControl host_control);
+
     ~WavWriterPlugin();
 
     ProcessorReturnCode init(float sample_rate) override;
@@ -62,6 +63,8 @@ public:
     {
         return reinterpret_cast<WavWriterPlugin*>(data)->_non_rt_callback(id);
     }
+
+    static std::string_view static_uid();
 
 private:
     WavWriterStatus _start_recording();

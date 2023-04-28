@@ -29,15 +29,46 @@ namespace audio_frontend {
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("portaudio");
 
+std::optional<std::string> get_portaudio_output_device_name(std::optional<int> portaudio_output_device_id)
+{
+    int device_index = -1;
+
+    if (portaudio_output_device_id.has_value())
+    {
+        device_index = portaudio_output_device_id.value();
+    }
+    else
+    {
+        device_index = Pa_GetDefaultOutputDevice();
+    }
+
+    sushi::audio_frontend::PortAudioFrontend frontend {nullptr};
+
+    auto device_info = frontend.device_info(device_index);
+
+    if (!device_info.has_value())
+    {
+        SUSHI_LOG_ERROR("Could not retrieve device info for Portaudio device with idx: {}", device_index);
+        return std::nullopt;
+    }
+
+    return device_info.value().name;
+}
+
 AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* config)
 {
     auto portaudio_config = static_cast<PortAudioFrontendConfiguration*>(config);
 
-    PaError err = Pa_Initialize();
-    if (err != paNoError)
+    auto ret_code = BaseAudioFrontend::init(config);
+    if (ret_code != AudioFrontendStatus::OK)
     {
-        SUSHI_LOG_ERROR("Error initializing PortAudio: {}", Pa_GetErrorText(err));
-        return AudioFrontendStatus::AUDIO_HW_ERROR;
+        return ret_code;
+    }
+
+    ret_code = _initialize_portaudio();
+    if (ret_code != AudioFrontendStatus::OK)
+    {
+        return ret_code;
     }
 
     // Setup devices
@@ -86,7 +117,7 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
     input_parameters.device = input_device_id;
     input_parameters.channelCount = _audio_input_channels + _cv_input_channels;
     input_parameters.sampleFormat = paFloat32;
-    input_parameters.suggestedLatency = 0.0;
+    input_parameters.suggestedLatency = portaudio_config->suggested_input_latency;
     input_parameters.hostApiSpecificStreamInfo = nullptr;
 
     PaStreamParameters output_parameters;
@@ -94,7 +125,7 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
     output_parameters.device = output_device_id;
     output_parameters.channelCount = _audio_output_channels + _cv_output_channels;
     output_parameters.sampleFormat = paFloat32;
-    output_parameters.suggestedLatency = 0.0;
+    output_parameters.suggestedLatency = portaudio_config->suggested_output_latency;
     output_parameters.hostApiSpecificStreamInfo = nullptr;
     // Setup samplerate
     double samplerate = _engine->sample_rate();
@@ -103,25 +134,34 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
         SUSHI_LOG_ERROR("Failed to configure samplerate");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
-    _engine->set_sample_rate(samplerate);
+    if (samplerate != _engine->sample_rate())
+    {
+        SUSHI_LOG_WARNING("Failed to use engine samplerate ({}), using {} instead", _engine->sample_rate(), samplerate);
+        _engine->set_sample_rate(samplerate);
+    }
 
     // Open the stream
     // In case there is no input device available we only want to use output
     auto input_param_ptr = (_audio_input_channels + _cv_input_channels) > 0 ? &input_parameters : NULL;
-    err = Pa_OpenStream(&_stream,
-                        input_param_ptr,
-                        &output_parameters,
-                        samplerate,
-                        AUDIO_CHUNK_SIZE,
-                        paNoFlag,
-                        &rt_process_callback,
-                        static_cast<void*>(this));
+    PaError err = Pa_OpenStream(&_stream,
+                                input_param_ptr,
+                                &output_parameters,
+                                samplerate,
+                                AUDIO_CHUNK_SIZE,
+                                paNoFlag,
+                                &rt_process_callback,
+                                static_cast<void*>(this));
     if (err != paNoError)
     {
         SUSHI_LOG_ERROR("Failed to open stream: {}", Pa_GetErrorText(err));
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
-    Time latency = std::chrono::microseconds(static_cast<int>(output_parameters.suggestedLatency * 1'000'000));
+    else
+    {
+        _stream_initialized = true;
+    }
+    auto stream_info = Pa_GetStreamInfo(_stream);
+    Time latency = std::chrono::microseconds(static_cast<int>(stream_info->outputLatency * 1'000'000));
     _engine->set_output_latency(latency);
 
     _time_offset = Pa_GetStreamTime(_stream);
@@ -129,7 +169,8 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
 
     if (_audio_input_channels + _cv_input_channels > 0)
     {
-        SUSHI_LOG_DEBUG("Connected input channels to {}", _input_device_info->name);
+        SUSHI_LOG_INFO("Connected input channels to {}", _input_device_info->name);
+        SUSHI_LOG_INFO("Input device has {} available channels", _input_device_info->maxInputChannels);
     }
     else
     {
@@ -139,27 +180,43 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
     if (_audio_output_channels + _cv_output_channels > 0)
     {
         SUSHI_LOG_DEBUG("Connected output channels to {}", _output_device_info->name);
+        SUSHI_LOG_INFO("Output device has {} available channels", _output_device_info->maxOutputChannels);
     }
     else
     {
-        SUSHI_LOG_DEBUG("No output channels found not connecting to output device");
+        SUSHI_LOG_INFO("No output channels found not connecting to output device");
     }
+    SUSHI_LOG_INFO("Stream started, using input latency {} and output latency {}", stream_info->inputLatency, stream_info->outputLatency);
 
     return AudioFrontendStatus::OK;
 }
 
 void PortAudioFrontend::cleanup()
 {
-    _engine->enable_realtime(false);
-    PaError result = Pa_IsStreamActive(_stream);
-    if (result == 1)
+    PaError result;
+    if (_engine != nullptr)
     {
-        SUSHI_LOG_INFO("Closing PortAudio stream");
-        Pa_StopStream(_stream);
+        _engine->enable_realtime(false);
     }
-    else if(result != paNoError)
+
+    if (_stream_initialized)
     {
-        SUSHI_LOG_WARNING("Error while checking for active stream: {}", Pa_GetErrorText(result));
+        result = Pa_IsStreamActive(_stream);
+        if (result == 1)
+        {
+            SUSHI_LOG_INFO("Closing PortAudio stream");
+            Pa_StopStream(_stream);
+        }
+        else if ((result != paNoError) && (_engine != nullptr))
+        {
+            SUSHI_LOG_WARNING("Error while checking for active stream: {}", Pa_GetErrorText(result));
+        }
+    }
+
+    result = Pa_Terminate();
+    if (result != paNoError)
+    {
+        SUSHI_LOG_WARNING("Error while terminating Portaudio: {}", Pa_GetErrorText(result));
     }
 }
 
@@ -167,6 +224,95 @@ void PortAudioFrontend::run()
 {
     _engine->enable_realtime(true);
     Pa_StartStream(_stream);
+}
+
+std::optional<int> PortAudioFrontend::devices_count()
+{
+    if (! (_initialize_portaudio() == AudioFrontendStatus::OK))
+    {
+        return std::nullopt;
+    }
+
+    int devices = Pa_GetDeviceCount();
+    if (devices < 0)
+    {
+        SUSHI_LOG_ERROR("Error querying portaudio devices: {}", devices);
+        return std::nullopt;
+    }
+
+    return devices;
+}
+
+std::optional<PortaudioDeviceInfo> PortAudioFrontend::device_info(int device_idx)
+{
+    if (! (_initialize_portaudio() == AudioFrontendStatus::OK))
+    {
+        return std::nullopt;
+    }
+
+    const PaDeviceInfo* pa_devinfo = Pa_GetDeviceInfo(device_idx);
+    if (pa_devinfo == nullptr)
+    {
+        SUSHI_LOG_ERROR("Error querying portaudio devices {}", device_idx);
+        return std::nullopt;
+    }
+
+    PortaudioDeviceInfo devinfo;
+    devinfo.name = pa_devinfo->name;
+    devinfo.inputs = pa_devinfo->maxInputChannels;
+    devinfo.outputs = pa_devinfo->maxOutputChannels;
+
+    return devinfo;
+}
+
+std::optional<int> PortAudioFrontend::default_input_device()
+{
+    if (! (_initialize_portaudio() == AudioFrontendStatus::OK))
+    {
+        return std::nullopt;
+    }
+
+    int default_input = Pa_GetDefaultInputDevice();
+    if (default_input == paNoDevice)
+    {
+        SUSHI_LOG_WARNING("Could not retrieve default input device");
+        return std::nullopt;
+    }
+
+    return default_input;
+}
+
+std::optional<int> PortAudioFrontend::default_output_device()
+{
+    if (! (_initialize_portaudio() == AudioFrontendStatus::OK))
+    {
+        return std::nullopt;
+    }
+
+    int default_output = Pa_GetDefaultOutputDevice();
+    if (default_output == paNoDevice)
+    {
+        SUSHI_LOG_WARNING("Could not retrieve default output device");
+        return std::nullopt;
+    }
+
+    return default_output;
+}
+
+AudioFrontendStatus PortAudioFrontend::_initialize_portaudio()
+{
+    if (_pa_initialized)
+    {
+        return AudioFrontendStatus::OK;
+    }
+
+    PaError err = Pa_Initialize();
+    if (err != paNoError)
+    {
+        SUSHI_LOG_ERROR("Error initializing PortAudio: {}", Pa_GetErrorText(err));
+        return AudioFrontendStatus::AUDIO_HW_ERROR;
+    }
+    return AudioFrontendStatus::OK;
 }
 
 AudioFrontendStatus PortAudioFrontend::_configure_audio_channels(const PortAudioFrontendConfiguration* config)
@@ -188,12 +334,12 @@ AudioFrontendStatus PortAudioFrontend::_configure_audio_channels(const PortAudio
     _cv_output_channels = config->cv_outputs;
     if (_cv_input_channels > _num_total_input_channels)
     {
-        SUSHI_LOG_ERROR("Requested more CV channels then available input channels");
+        SUSHI_LOG_ERROR("Requested more CV channels than available input channels");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     if (_cv_output_channels > _num_total_output_channels)
     {
-        SUSHI_LOG_ERROR("Requested more CV channels then available output channels");
+        SUSHI_LOG_ERROR("Requested more CV channels than available output channels");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
@@ -251,55 +397,83 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
                                                   [[maybe_unused]]PaStreamCallbackFlags status_flags)
 {
     // TODO: Print warning in case of under/overflow using the status_flags when we have rt-safe logging
+    SUSHI_LOG_WARNING_IF(status_flags == paOutputUnderflow, "Detected output underflow in portaudio");
+    SUSHI_LOG_WARNING_IF(status_flags == paOutputOverflow, "Detected output overflow in portaudio");
+    SUSHI_LOG_WARNING_IF(status_flags == paInputUnderflow, "Detected input underflow in portaudio");
+    SUSHI_LOG_WARNING_IF(status_flags == paInputOverflow, "Detected input overflow in portaudio");
+
     assert(frame_count == AUDIO_CHUNK_SIZE);
     auto pa_time_elapsed = std::chrono::duration<double>(time_info->currentTime - _time_offset);
     Time timestamp = _start_time + std::chrono::duration_cast<std::chrono::microseconds>(pa_time_elapsed);
 
-    // Deinterleave audio channels and updated cv values
+    _out_buffer.clear();
+    if (_pause_manager.should_process())
+    {
+        _copy_interleaved_audio(static_cast<const float*>(input));
+        _engine->process_chunk(&_in_buffer, &_out_buffer, &_in_controls, &_out_controls, timestamp, _processed_sample_count);
+        if (_pause_manager.should_ramp())
+        {
+            _pause_manager.ramp_output(_out_buffer);
+        }
+    }
+    else
+    {
+        if (_pause_notified == false)
+        {
+            _pause_notify->notify();
+            _pause_notified = true;
+            _engine->enable_realtime(false);
+        }
+    }
+
+    _output_interleaved_audio(static_cast<float*>(output));
+
+    _processed_sample_count += frame_count;
+    return 0;
+}
+
+void PortAudioFrontend::_copy_interleaved_audio(const float* input)
+{
     for (int c = 0; c < _num_total_input_channels; c++)
     {
-        const float* in_src = static_cast<const float*>(input);
         if (c < _audio_input_channels)
         {
+            float* in_dst = _in_buffer.channel(c);
             for (size_t s = 0; s < AUDIO_CHUNK_SIZE; s++)
             {
-                float* in_dst = _in_buffer.channel(c);
-                in_dst[s] = in_src[s * _num_total_input_channels + c];
+                in_dst[s] = input[s * _num_total_input_channels + c];
             }
         }
         else
         {
             int cc = c - _audio_input_channels;
-            _in_controls.cv_values[cc] = map_audio_to_cv(in_src[AUDIO_CHUNK_SIZE - 1]);
+            _in_controls.cv_values[cc] = map_audio_to_cv(input[AUDIO_CHUNK_SIZE - 1]);
         }
     }
-    _out_buffer.clear();
-    _engine->process_chunk(&_in_buffer, &_out_buffer, &_in_controls, &_out_controls, timestamp, _processed_sample_count);
+}
 
-    // Interleave audio channels and update cv values
+void PortAudioFrontend::_output_interleaved_audio(float* output)
+{
     for (int c = 0; c < _num_total_output_channels; c++)
     {
-        float* out_dst = static_cast<float*>(output);
         if (c < _audio_output_channels)
         {
+            const float* out_src = _out_buffer.channel(c);
             for (size_t s = 0; s < AUDIO_CHUNK_SIZE; s++)
             {
-                const float* out_src = _out_buffer.channel(c);
-                out_dst[s * _num_total_output_channels + c] = out_src[s];
+                output[s * _num_total_output_channels + c] = out_src[s];
             }
         }
         else
         {
             int cc = c - _audio_output_channels;
-            _cv_output_his[cc] = ramp_cv_output(out_dst, _cv_output_his[cc], map_cv_to_audio(_out_controls.cv_values[cc]));
+            _cv_output_his[cc] = ramp_cv_output(output, _cv_output_his[cc], map_cv_to_audio(_out_controls.cv_values[cc]));
         }
     }
-    _processed_sample_count += frame_count;
-    return 0;
 }
 
-}; // end namespace audio_frontend
-}; // end namespace sushi
+} // end namespace audio_frontend
+} // end namespace sushi
 #endif
 #ifndef SUSHI_BUILD_WITH_PORTAUDIO
 #include "audio_frontends/portaudio_frontend.h"

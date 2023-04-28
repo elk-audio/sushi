@@ -18,20 +18,17 @@
  * @copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include <algorithm>
-#include <cassert>
-
 #include "mono_summing_plugin.h"
 
 namespace sushi {
 namespace mono_summing_plugin {
 
-constexpr auto DEFAULT_NAME = "sushi.testing.mono_summing";
+constexpr auto PLUGIN_UID = "sushi.testing.mono_summing";
 constexpr auto DEFAULT_LABEL = "Mono summing";
 
 MonoSummingPlugin::MonoSummingPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
-    Processor::set_name(DEFAULT_NAME);
+    Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
 }
 
@@ -39,7 +36,7 @@ MonoSummingPlugin::~MonoSummingPlugin() = default;
 
 void MonoSummingPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
-    if(_bypassed == false)
+    if (_bypassed == false)
     {
         for (int output_channel = 0; output_channel < out_buffer.channel_count(); ++output_channel)
         {
@@ -56,6 +53,11 @@ void MonoSummingPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkS
         bypass_process(in_buffer, out_buffer);
     }
 
+}
+
+std::string_view MonoSummingPlugin::static_uid()
+{
+    return PLUGIN_UID;
 }
 
 

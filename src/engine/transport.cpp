@@ -21,8 +21,15 @@
 #include <cassert>
 #include <cmath>
 #include <algorithm>
+#include <mutex>
 
-#include "link_include.h"
+#ifdef SUSHI_BUILD_WITH_ABLETON_LINK
+#include "ableton/Link.hpp"
+#else //SUSHI_BUILD_WITH_ABLETON_LINK
+#include "link_dummy.h"
+#endif //SUSHI_BUILD_WITH_ABLETON_LINK
+
+#include "twine/twine.h"
 
 #include "library/rt_event.h"
 #include "library/constants.h"
@@ -34,6 +41,40 @@ namespace engine {
 
 constexpr float MIN_TEMPO = 20.0;
 constexpr float MAX_TEMPO = 1000.0;
+constexpr float PPQN_FLOAT = SUSHI_PPQN_TICK;
+
+
+#if SUSHI_BUILD_WITH_ABLETON_LINK
+
+/**
+ * @brief Custom realtime clock for Link
+ *        It is necessary to compile Link with another Clock implementation than the standard one
+ *        as calling clock_get_time() is not safe to do from a Xenomai thread. Instead we supply
+ *        our own clock implementation based on twine, which provides a threadsafe implementation
+ *        for calling from both xenomai and posix contexts.
+ */
+class RtSafeClock
+{
+public:
+    [[nodiscard]] std::chrono::microseconds micros() const
+    {
+        auto time = twine::current_rt_time();
+        return std::chrono::microseconds(std::chrono::duration_cast<std::chrono::microseconds>(time));
+    }
+};
+
+/**
+ * @brief Wrapping Link with a custom clock
+ */
+class SushiLink : public ::ableton::BasicLink<RtSafeClock>
+{
+public:
+  using Clock = RtSafeClock;
+
+  explicit SushiLink(double bpm) : ::ableton::BasicLink<Clock>(bpm) { }
+};
+
+#endif
 
 SUSHI_GET_LOGGER_WITH_MODULE_NAME("transport");
 
@@ -60,7 +101,7 @@ inline bool valid_time_signature(const TimeSignature& sig)
 Transport::Transport(float sample_rate,
                      RtEventPipe* rt_event_pipe) : _samplerate(sample_rate),
                                                    _rt_event_dispatcher(rt_event_pipe),
-                                                   _link_controller(std::make_unique<ableton::Link>(DEFAULT_TEMPO))
+                                                   _link_controller(std::make_unique<SushiLink>(DEFAULT_TEMPO))
 {
     _link_controller->setNumPeersCallback(peer_callback);
     _link_controller->setTempoCallback(tempo_callback);
@@ -94,6 +135,10 @@ void Transport::set_time(Time timestamp, int64_t samples)
             _update_link_sync(_time);
             break;
         }
+    }
+    if (_playmode != PlayingMode::STOPPED)
+    {
+        _output_ppqn_ticks();
     }
 }
 
@@ -237,7 +282,7 @@ void Transport::_update_internals()
 {
     assert(_samplerate > 0.0f);
     /* Time signatures are seen in relation to 4/4 and remapped to quarter notes
-     * the same way most DAWs do it. This makes 3/4 and 6/8 behave identically and
+     * the same way most DAWs do it. This makes 3/4 and 6/8 behave identically, and
      * they will play beatsynched with 4/4, i.e. not on triplets. */
     _beats_per_bar = 4.0f * static_cast<float>(_time_signature.numerator) /
                             static_cast<float>(_time_signature.denominator);
@@ -245,9 +290,8 @@ void Transport::_update_internals()
 
 void Transport::_update_internal_sync(int64_t samples)
 {
-    /* Assume that if there are missed callbacks, the numbers of samples
-     * will still be a multiple of AUDIO_CHUNK_SIZE */
-    auto chunks_passed = samples / AUDIO_CHUNK_SIZE;
+    // We cannot assume chunk size is an absolute multiple of samples for all buffer sizes.
+    auto chunks_passed = static_cast<double>(samples) / AUDIO_CHUNK_SIZE;
 
     if (_playmode != _set_playmode)
     {
@@ -257,17 +301,26 @@ void Transport::_update_internal_sync(int64_t samples)
         _rt_event_dispatcher->send_event(RtEvent::make_playing_mode_event(0, _set_playmode));
     }
 
-    _beats_per_chunk =  _set_tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
-    if (_playmode != PlayingMode::STOPPED)
+    double beats_per_chunk =  _set_tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
+    _beats_per_chunk = beats_per_chunk;
+
+    if (_state_change == PlayStateChange::STARTING) // Reset bar beat count when starting
     {
-        _current_bar_beat_count += chunks_passed * _beats_per_chunk;
+        _current_bar_beat_count = 0.0;
+        _beat_count = 0.0;
+        _bar_start_beat_count = 0.0;
+    }
+    else if (_playmode != PlayingMode::STOPPED)
+    {
+        _current_bar_beat_count += chunks_passed * beats_per_chunk;
         if (_current_bar_beat_count > _beats_per_bar)
         {
             _current_bar_beat_count = std::fmod(_current_bar_beat_count, _beats_per_bar);
             _bar_start_beat_count += _beats_per_bar;
         }
-        _beat_count += chunks_passed * _beats_per_chunk;
+        _beat_count += chunks_passed * beats_per_chunk;
     }
+
     if (_tempo != _set_tempo)
     {
         // Notify tempo change
@@ -307,8 +360,39 @@ void Transport::_update_link_sync(Time timestamp)
     }
 
     /* Due to the nature of the Xenomai RT architecture we cannot commit changes to
-     * the session here as that would cause a mode switch. Instead all changes need
+     * the session here as that would cause a mode switch. Instead, all changes need
      * to be made from the non rt thread */
+}
+
+void Transport::_output_ppqn_ticks()
+{
+    double beat = current_beats();
+    if (current_state_change() == PlayStateChange::STARTING)
+    {
+        _last_tick_sent = beat;
+    }
+
+    double last_beat_this_chunk = current_beats(AUDIO_CHUNK_SIZE);
+    double beat_period = last_beat_this_chunk - beat;
+    auto tick_this_chunk = std::min(PPQN_FLOAT * (last_beat_this_chunk - _last_tick_sent), 2.0);
+
+    while (tick_this_chunk >= 1.0)
+    {
+        double next_note_beat = _last_tick_sent + 1.0 / PPQN_FLOAT;
+        auto fraction = next_note_beat - beat - std::floor(next_note_beat - beat);
+        _last_tick_sent = next_note_beat;
+        int offset = 0;
+        if (fraction > 0)
+        {
+            /* If fraction is not positive, then there was a missed beat in an underrun */
+            offset = std::min(static_cast<int>(std::round(AUDIO_CHUNK_SIZE * fraction / beat_period)),
+                              AUDIO_CHUNK_SIZE - 1);
+        }
+
+        RtEvent tick = RtEvent::make_timing_tick_event(offset, 0);
+        _rt_event_dispatcher->send_event(tick);
+        tick_this_chunk = PPQN_FLOAT * (last_beat_this_chunk - _last_tick_sent);
+    }
 }
 
 #ifdef SUSHI_BUILD_WITH_ABLETON_LINK
@@ -341,6 +425,7 @@ void Transport::_set_link_quantum(TimeSignature signature)
         _link_controller->commitAppSessionState(session);
     }
 }
+
 #else
 void Transport::_set_link_playing(bool /*playing*/) {}
 void Transport::_set_link_tempo(float /*tempo*/) {}

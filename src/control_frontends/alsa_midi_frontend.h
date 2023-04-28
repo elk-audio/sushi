@@ -42,7 +42,7 @@ class AlsaMidiFrontend : public BaseMidiFrontend
 public:
     AlsaMidiFrontend(int inputs, int outputs, midi_receiver::MidiReceiver* dispatcher);
 
-    ~AlsaMidiFrontend();
+    ~AlsaMidiFrontend() override;
 
     bool init() override;
 
@@ -50,10 +50,9 @@ public:
 
     void stop() override;
 
-    void send_midi(int input, MidiDataByte data, Time timestamp) override;
+    void send_midi(int input, MidiDataByte data, [[maybe_unused]]Time timestamp) override;
 
 private:
-
     bool _init_ports();
     bool _init_time();
     Time _to_sushi_time(const snd_seq_real_time_t* alsa_time);
@@ -68,11 +67,11 @@ private:
     std::vector<int>            _input_midi_ports;
     std::vector<int>            _output_midi_ports;
     std::map<int, int>          _port_to_input_map;
-    int                         _queue;
+    int                         _queue{-1};
 
     snd_midi_event_t*           _input_parser{nullptr};
     snd_midi_event_t*           _output_parser{nullptr};
-    Time                        _time_offset;
+    Time                        _time_offset{0};
 };
 
 } // end namespace midi_frontend

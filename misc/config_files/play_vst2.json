@@ -1,0 +1,72 @@
+{
+    "host_config" : {
+        "samplerate" : 44100,
+        "playing_mode" : "playing",
+        "tempo_sync" : "internal"
+    },
+    "tracks" : [
+        {
+            "name" : "main",
+            "channels" : 2,
+            "inputs" : [],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "uid" : "sushi.testing.step_sequencer",
+                    "name" : "arp",
+                    "type" : "internal"
+                },
+                {
+                    "path" : "/usr/lib/lxvst/mda-vst.linux/mdaJX10.so",
+                    "name" : "synth",
+                    "type" : "vst2x"
+                }
+            ]
+        }
+    ],
+    "midi" : {
+        "track_connections" : [
+            {
+                "port" : 0,
+                "channel" : "all",
+                "track" : "main",
+                "raw_midi" : true
+            }
+        ],
+        "program_change_connections" : [
+            {
+                "port" : 0,
+                "channel" : "all",
+                "plugin" : "synth"
+            }
+        ],
+        "cc_mappings" : [
+            {
+                "port" : 0,
+                "channel" : 0,
+                "cc_number" : 22,
+                "plugin_name" : "synth",
+                "parameter_name" : "VCF Freq",
+                "min_range" : 0,
+                "max_range" : 1
+            },
+            {
+                "port" : 0,
+                "channel" : 0,
+                "cc_number" : 23,
+                "plugin_name" : "synth",
+                "parameter_name" : "VCF Reso",
+                "min_range" : 0,
+                "max_range" : 1
+            }
+        ]
+    },
+    "osc" : {
+        "enable_all_processor_outputs" : true
+    }
+}

@@ -1,0 +1,55 @@
+{
+    "host_config" : {
+        "samplerate" : 48000,
+        "cv_inputs" : 0,
+        "cv_outputs" : 4
+    },
+    "tracks" : [
+        {
+            "name" : "main",
+            "channels" : 2,
+            "inputs" : [],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "uid" : "sushi.testing.arpeggiator",
+                    "name" : "arp",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.testing.control_to_cv",
+                    "name" : "cv-conv",
+                    "type" : "internal"
+                }
+            ]
+        }
+    ],
+    "midi" : {
+
+    },
+    "cv_control" : {
+        "cv_inputs" : [ ],
+        "cv_outputs" : [
+            {
+                "cv" : 0,
+                "processor" : "cv-conv",
+                "parameter" : "pitch_0"
+            }
+        ],
+        "gate_inputs" : [ ],
+        "gate_outputs" : [
+            {
+                "mode" : "note_event",
+                "processor" : "cv-conv",
+                "gate" : 0,
+                "note_no" : 0,
+                "channel" : 0
+            }
+        ]
+    }
+}

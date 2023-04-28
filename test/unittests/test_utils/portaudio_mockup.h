@@ -5,6 +5,7 @@ class MockPortAudio
 {
 public:
     MOCK_METHOD(PaError, Pa_Initialize, ());
+    MOCK_METHOD(PaError, Pa_Terminate, ());
     MOCK_METHOD(const char*, Pa_GetErrorText, (PaError));
     MOCK_METHOD(int, Pa_GetDeviceCount, ());
     MOCK_METHOD(int, Pa_GetDefaultInputDevice, ());
@@ -25,6 +26,7 @@ public:
                                          void *userData ));
     MOCK_METHOD(PaError, Pa_StartStream, (PaStream*));
     MOCK_METHOD(PaError, Pa_StopStream, (PaStream*));
+    MOCK_METHOD(const PaStreamInfo*, Pa_GetStreamInfo, (PaStream*));
 };
 
 MockPortAudio* mockPortAudio;
@@ -32,6 +34,11 @@ MockPortAudio* mockPortAudio;
 PaError Pa_Initialize()
 {
     return mockPortAudio->Pa_Initialize();
+}
+
+PaError Pa_Terminate()
+{
+    return mockPortAudio->Pa_Terminate();
 }
 
 const char* Pa_GetErrorText(PaError error)
@@ -103,4 +110,9 @@ PaError Pa_StartStream(PaStream* stream)
 PaError Pa_StopStream(PaStream* stream)
 {
     return mockPortAudio->Pa_StopStream(stream);
+}
+
+const PaStreamInfo* Pa_GetStreamInfo(PaStream* stream)
+{
+    return mockPortAudio->Pa_GetStreamInfo(stream);
 }

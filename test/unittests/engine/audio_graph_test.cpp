@@ -1,16 +1,14 @@
-#include <algorithm>
 #include <thread>
 
 #include "gtest/gtest.h"
 
-#include "test_utils/test_utils.h"
 #include "engine/transport.h"
 
 #define private public
 #define protected public
 
+#include "exit_control.cpp"
 #include "engine/audio_graph.cpp"
-#include "test_utils/dummy_processor.h"
 #include "test_utils/host_control_mockup.h"
 
 constexpr float SAMPLE_RATE = 44000;
@@ -27,14 +25,14 @@ protected:
 
     void SetUp(int cores)
     {
-        _module_under_test = std::make_unique<AudioGraph>(cores, TEST_MAX_TRACKS);
+        _module_under_test = std::make_unique<AudioGraph>(cores, TEST_MAX_TRACKS, SAMPLE_RATE, "");
     }
 
     HostControlMockup             _hc;
     std::unique_ptr<AudioGraph>   _module_under_test;
     performance::PerformanceTimer _timer;
-    Track                         _track_1{_hc.make_host_control_mockup(SAMPLE_RATE), 2, &_timer};
-    Track                         _track_2{_hc.make_host_control_mockup(SAMPLE_RATE), 2, &_timer};
+    Track _track_1{_hc.make_host_control_mockup(SAMPLE_RATE), 2, &_timer};
+    Track _track_2{_hc.make_host_control_mockup(SAMPLE_RATE), 2, &_timer};
 };
 
 TEST_F(TestAudioGraph, TestSingleCoreOperation)
@@ -55,6 +53,15 @@ TEST_F(TestAudioGraph, TestSingleCoreOperation)
     ASSERT_EQ(0u, _module_under_test->_audio_graph[0].size());
 }
 
+/**
+ * On Apple computers, if Twine is built with CoreAudio support, this unit test will fail,
+ * since it fails to join a real-time thread workgroup - since there isn't one.
+ * To re-enable the test, we'll first need to build Twine statically only for these test,
+ * and either mock CoreAudio, or disable it in this static Twine build for these tests.
+ *
+ * It can also fail on Linux in other cases (e.g. sometimes when running in a Dockerized container).
+ */
+#ifndef DISABLE_MULTICORE_UNIT_TESTS
 TEST_F(TestAudioGraph, TestMultiCoreOperation)
 {
     SetUp(3);
@@ -78,6 +85,7 @@ TEST_F(TestAudioGraph, TestMultiCoreOperation)
     EXPECT_EQ(1, queues[1].size());
     EXPECT_EQ(0, queues[2].size());
 }
+#endif
 
 TEST_F(TestAudioGraph, TestMaxNumberOfTracks)
 {

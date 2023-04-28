@@ -19,7 +19,7 @@ protected:
     void SetUp()
     {
         bool debug_mode_sw = false;
-        _audio_engine = std::make_unique<AudioEngine>(TEST_SAMPLE_RATE, 1, debug_mode_sw, new EventDispatcherMockup());
+        _audio_engine = std::make_unique<AudioEngine>(TEST_SAMPLE_RATE, 1, "", debug_mode_sw, new EventDispatcherMockup());
         _event_dispatcher_mockup = static_cast<EventDispatcherMockup*>(_audio_engine->event_dispatcher());
         _module_under_test = std::make_unique<AudioGraphController>(_audio_engine.get());
 
@@ -51,10 +51,8 @@ TEST_F(AudioGraphControllerTest, TestGettingProcessors)
     auto [track_status, track] = _module_under_test->get_track_info(_track_id);
     ASSERT_EQ(ext::ControlStatus::OK, track_status);
     EXPECT_EQ(_track_id, track.id);
-    EXPECT_EQ(2, track.input_channels);
-    EXPECT_EQ(1, track.input_busses);
-    EXPECT_EQ(2, track.output_channels);
-    EXPECT_EQ(1, track.output_busses);
+    EXPECT_EQ(2, track.channels);
+    EXPECT_EQ(1, track.buses);
     EXPECT_EQ("Track 1", track.name);
 
     auto [proc_status, track_proc] = _module_under_test->get_track_processors(_track_id);
@@ -101,36 +99,47 @@ TEST_F(AudioGraphControllerTest, TestCreatingAndRemovingTracks)
     EXPECT_EQ(2, tracks[1]->input_channels());
     EXPECT_EQ(2, tracks[1]->output_channels());
 
-    status = _module_under_test->create_multibus_track("Track 3", 2, 3);
+    status = _module_under_test->create_multibus_track("Track 3", 2);
     ASSERT_EQ(ext::ControlStatus::OK, status);
 
     auto execution_status2 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
     ASSERT_EQ(execution_status2, EventStatus::HANDLED_OK);
 
+    status = _module_under_test->create_pre_track("Track 4");
+    ASSERT_EQ(ext::ControlStatus::OK, status);
+
+    auto execution_status_3 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
+    ASSERT_EQ(execution_status_3, EventStatus::HANDLED_OK);
+
+    status = _module_under_test->create_post_track("Track 5");
+    ASSERT_EQ(ext::ControlStatus::OK, status);
+
+    auto execution_status_4 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
+    ASSERT_EQ(execution_status_4, EventStatus::HANDLED_OK);
+
     tracks = _audio_engine->processor_container()->all_tracks();
-    ASSERT_EQ(3u, tracks.size());
+    ASSERT_EQ(5u, tracks.size());
     EXPECT_EQ("Track 3", tracks[2]->name());
-    EXPECT_EQ(2, tracks[2]->input_busses());
-    EXPECT_EQ(3, tracks[2]->output_busses());
+    EXPECT_EQ(2, tracks[2]->buses());
 
     status = _module_under_test->delete_track(tracks[2]->id());
     ASSERT_EQ(ext::ControlStatus::OK, status);
 
-    auto execution_status3 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
-    ASSERT_EQ(execution_status3, EventStatus::HANDLED_OK);
+    auto execution_status_5 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
+    ASSERT_EQ(execution_status_5, EventStatus::HANDLED_OK);
 
     tracks = _audio_engine->processor_container()->all_tracks();
-    ASSERT_EQ(2u, tracks.size());
+    ASSERT_EQ(4u, tracks.size());
 }
 
 TEST_F(AudioGraphControllerTest, TestCreatingAndRemovingProcessors)
 {
     auto status = _module_under_test->create_processor_on_track("Proc 1",
-                                                               "sushi.testing.gain",
-                                                               "",
-                                                               ext::PluginType::INTERNAL,
-                                                               _track_id,
-                                                               std::nullopt);
+                                                                "sushi.testing.gain",
+                                                                "",
+                                                                ext::PluginType::INTERNAL,
+                                                                _track_id,
+                                                                std::nullopt);
     ASSERT_EQ(ext::ControlStatus::OK, status);
 
     auto execution_status1 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());

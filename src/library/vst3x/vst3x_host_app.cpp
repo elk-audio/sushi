@@ -18,8 +18,6 @@
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include <cstring>
-
 #include "pluginterfaces/base/ustring.h"
 #include "public.sdk/source/vst/utility/stringconvert.h"
 #include "base/source/fobject.h"
@@ -43,7 +41,9 @@ Steinberg::tresult SushiHostApplication::getName(Steinberg::Vst::String128 name)
     return Steinberg::kResultOk;
 }
 
-ComponentHandler::ComponentHandler(Vst3xWrapper* wrapper_instance) : _wrapper_instance(wrapper_instance)
+ComponentHandler::ComponentHandler(Vst3xWrapper* wrapper_instance,
+                                   HostControl* host_control) : _wrapper_instance(wrapper_instance),
+                                                                _host_control(host_control)
 {}
 
 Steinberg::tresult ComponentHandler::performEdit(Steinberg::Vst::ParamID parameter_id,
@@ -59,7 +59,8 @@ Steinberg::tresult ComponentHandler::restartComponent(Steinberg::int32 flags)
     SUSHI_LOG_DEBUG("restartComponent called");
     if (flags | (Steinberg::Vst::kParamValuesChanged & Steinberg::Vst::kReloadComponent))
     {
-        // This is the place to signal parameter changes to listeners (gRPC, OSC, etc)
+        _host_control->post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
+                                                                  _wrapper_instance->id(), 0, IMMEDIATE_PROCESS));
         return Steinberg::kResultOk;
     }
     return Steinberg::kResultFalse;
@@ -73,7 +74,7 @@ public:
     SUSHI_DECLARE_NON_COPYABLE(ConnectionProxy);
 
     explicit ConnectionProxy(Steinberg::Vst::IConnectionPoint* src_connection) : _source_connection(src_connection) {}
-    ~ConnectionProxy() = default;
+    ~ConnectionProxy() override = default;
 
     Steinberg::tresult connect(Steinberg::Vst::IConnectionPoint* other) override;
     Steinberg::tresult disconnect(Steinberg::Vst::IConnectionPoint* other) override;

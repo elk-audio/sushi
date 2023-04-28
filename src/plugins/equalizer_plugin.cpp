@@ -25,14 +25,14 @@
 namespace sushi {
 namespace equalizer_plugin {
 
-constexpr auto DEFAULT_NAME = "sushi.testing.equalizer";
+constexpr auto PLUGIN_UID = "sushi.testing.equalizer";
 constexpr auto DEFAULT_LABEL = "Equalizer";
 
 EqualizerPlugin::EqualizerPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
     _max_input_channels = MAX_CHANNELS_SUPPORTED;
     _max_output_channels = MAX_CHANNELS_SUPPORTED;
-    Processor::set_name(DEFAULT_NAME);
+    Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
 
     _frequency = register_float_parameter("frequency", "Frequency", "Hz",
@@ -97,6 +97,11 @@ void EqualizerPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSam
     {
         bypass_process(in_buffer, out_buffer);
     }
+}
+
+std::string_view EqualizerPlugin::static_uid()
+{
+    return PLUGIN_UID;
 }
 
 void EqualizerPlugin::_reset_filters()

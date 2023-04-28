@@ -33,16 +33,16 @@
 
 # Hidden files
 .*
+!.clang-format
 !*/.gitkeep
 !.gitignore
 
 # Build and scratch directories
 scratch/
 */scratch
-build/
+build*/
 generated/
-cmake-build-debug/
-cmake-build-release/
+cmake-build-*
 third-party/install/
 third-party/rehost/
 
@@ -57,3 +57,4 @@ compile_commands.json
 
 # Log files created by running sushi from somewhere in the repository
 log.txt
+/vcpkg_installed/

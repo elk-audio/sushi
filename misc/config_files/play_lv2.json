@@ -1,0 +1,42 @@
+{
+    "host_config" : {
+        "samplerate" : 48000,
+        "tempo_sync" : "internal",
+        "playing_mode" : "playing"
+    },
+    "tracks" : [
+        {
+            "name" : "main",
+            "channels" : 2,
+            "inputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "uri" : "http://lv2plug.in/plugins/eg-metro",
+                    "name" : "metro",
+                    "type" : "lv2"
+                }
+            ]
+        }
+    ],
+    "midi" : {
+        "track_connections" : [
+            {
+                "port" : 0,
+                "channel" : "all",
+                "track" : "main",
+                "raw_midi" : false
+            }
+        ]
+    }
+}

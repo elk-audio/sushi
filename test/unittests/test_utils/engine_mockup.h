@@ -119,8 +119,8 @@ private:
 class ProcessorContainerMockup : public BaseProcessorContainer
 {
 public:
-    ProcessorContainerMockup() : _processor(std::make_shared<DummyProcessor>(HostControl(nullptr, nullptr))),
-                                 _track(std::make_shared<Track>(HostControl(nullptr, nullptr), 2, nullptr)) {}
+    ProcessorContainerMockup() : _processor(std::make_shared<DummyProcessor>(HostControl(nullptr, nullptr, nullptr))),
+                                 _track(std::make_shared<Track>(HostControl(nullptr, nullptr, nullptr), 2, nullptr)) {}
 
     bool add_processor(std::shared_ptr<Processor> /*processor*/) override {return true;}
 
@@ -194,6 +194,8 @@ public:
 
     void set_tempo_sync_mode(SyncMode /*mode*/) override {}
 
+    void set_base_plugin_path(const std::string& /*path*/) override {}
+
     EngineReturnStatus send_rt_event(const RtEvent& /*event*/) override
     {
         got_rt_event = true;
@@ -216,37 +218,6 @@ public:
 private:
     EventDispatcherMockup       _event_dispatcher;
     ProcessorContainerMockup    _processor_container;
-};
-
-// TODO: Should this really be here, or is it too specific for the engine_mockup scope,
-// thus needing its own file?
-class DummyMidiFrontend : public midi_frontend::BaseMidiFrontend
-{
-public:
-    DummyMidiFrontend() : BaseMidiFrontend(nullptr) {}
-
-    virtual ~DummyMidiFrontend() {};
-
-    bool init() override {return true;}
-    void run()  override {}
-    void stop() override {}
-    void send_midi(int input, MidiDataByte /*data*/, Time /*timestamp*/) override
-    {
-        _sent = true;
-        _input = input;
-    }
-    bool midi_sent_on_input(int input)
-    {
-        if (_sent && input == _input)
-        {
-            _sent = false;
-            return true;
-        }
-        return false;
-    }
-private:
-    bool _sent{false};
-    int  _input;
 };
 
 #endif //SUSHI_ENGINE_MOCKUP_H

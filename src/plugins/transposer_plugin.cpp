@@ -23,13 +23,12 @@
 #include "plugins/transposer_plugin.h"
 #include "library/midi_decoder.h"
 #include "library/midi_encoder.h"
-#include "logging.h"
 
 namespace sushi {
 namespace transposer_plugin {
 
 
-constexpr auto DEFAULT_NAME = "sushi.testing.transposer";
+constexpr auto PLUGIN_UID = "sushi.testing.transposer";
 constexpr auto DEFAULT_LABEL = "Transposer";
 
 constexpr int MAX_NOTE = 127;
@@ -37,7 +36,7 @@ constexpr int MIN_NOTE = 0;
 
 TransposerPlugin::TransposerPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
-    Processor::set_name(DEFAULT_NAME);
+    Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
     _transpose_parameter = register_float_parameter("transpose",
                                                     "Transpose",
@@ -64,18 +63,7 @@ void TransposerPlugin::process_event(const RtEvent& event)
         case RtEventType::NOTE_ON:
         {
             auto typed_event = event.keyboard_event();
-            _queue.push(RtEvent::make_note_on_event(typed_event->processor_id(),
-                                                    typed_event->sample_offset(),
-                                                    typed_event->channel(),
-                                                    _transpose_note(typed_event->note()),
-                                                    typed_event->velocity()));
-            break;
-        }
-
-        case RtEventType::NOTE_OFF:
-        {
-            auto typed_event = event.keyboard_event();
-            _queue.push(RtEvent::make_note_off_event(typed_event->processor_id(),
+            output_event(RtEvent::make_note_on_event(typed_event->processor_id(),
                                                      typed_event->sample_offset(),
                                                      typed_event->channel(),
                                                      _transpose_note(typed_event->note()),
@@ -83,12 +71,23 @@ void TransposerPlugin::process_event(const RtEvent& event)
             break;
         }
 
+        case RtEventType::NOTE_OFF:
+        {
+            auto typed_event = event.keyboard_event();
+            output_event(RtEvent::make_note_off_event(typed_event->processor_id(),
+                                                      typed_event->sample_offset(),
+                                                      typed_event->channel(),
+                                                      _transpose_note(typed_event->note()),
+                                                      typed_event->velocity()));
+            break;
+        }
+
         case RtEventType::WRAPPED_MIDI_EVENT:
         {
             auto typed_event = event.wrapped_midi_event();
-            _queue.push(RtEvent::make_wrapped_midi_event(typed_event->processor_id(),
-                                                         typed_event->sample_offset(),
-                                                         _transpose_midi(typed_event->midi_data())));
+            output_event(RtEvent::make_wrapped_midi_event(typed_event->processor_id(),
+                                                          typed_event->sample_offset(),
+                                                          _transpose_midi(typed_event->midi_data())));
             break;
         }
 
@@ -125,14 +124,14 @@ MidiDataByte TransposerPlugin::_transpose_midi(MidiDataByte midi_msg)
     }
 }
 
-void TransposerPlugin::process_audio(const ChunkSampleBuffer&, ChunkSampleBuffer&)
+void TransposerPlugin::process_audio(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer)
 {
-    while (_queue.empty() == false)
-    {
-        RtEvent e;
-        _queue.pop(e);
-        output_event(e);
-    }
+    bypass_process(in_buffer, out_buffer);
+}
+
+std::string_view TransposerPlugin::static_uid()
+{
+    return PLUGIN_UID;
 }
 
 }// namespace transposer_plugin

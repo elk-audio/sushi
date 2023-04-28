@@ -31,7 +31,7 @@ namespace peak_meter_plugin {
 
 constexpr int MAX_METERED_CHANNELS = MAX_TRACK_CHANNELS;
 
-class PeakMeterPlugin : public InternalPlugin
+class PeakMeterPlugin : public InternalPlugin, public UidHelper<PeakMeterPlugin>
 {
 public:
     PeakMeterPlugin(HostControl host_control);
@@ -45,6 +45,8 @@ public:
     void process_event(const RtEvent& event) override;
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
+
+    static std::string_view static_uid();
 
 private:
     void _process_peak_detection(const ChunkSampleBuffer& in, bool linked, bool send_only_peaks);

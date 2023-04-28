@@ -14,11 +14,12 @@
  */
 
 /**
- * @brief Alsa midi frontend
- * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @brief RT midi frontend
+ * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
 #include <functional>
+#include <tuple>
 
 #include "rt_midi_frontend.h"
 #include "library/midi_decoder.h"
@@ -46,7 +47,7 @@ void midi_callback([[maybe_unused]]double deltatime, std::vector<unsigned char>*
         SUSHI_LOG_DEBUG("Received midi message: [{:x} {:x} {:x} {:x}], port{}, timestamp: {}",
                          data_buffer[0], data_buffer[1], data_buffer[2], data_buffer[3], callback_data->input_number, timestamp.count());
     }
-    SUSHI_LOG_WARNING_IF(byte_count < 0, "Decoder returned {}", strerror(-byte_count));
+    SUSHI_LOG_WARNING_IF(byte_count < 0, "Decoder returned {}", strerror(-byte_count))
 }
 
 RtMidiFrontend::RtMidiFrontend(int inputs,
@@ -96,6 +97,24 @@ bool RtMidiFrontend::init()
         {
             SUSHI_LOG_WARNING("Failed to create midi output port for output {}: {}", i, error.getMessage());
             return false;
+        }
+    }
+
+    // If no I/O mappings were given, create a sensible default if MIDI ports are available
+    if ( (_inputs > 0) && (_input_midi_ports[0].midi_input.getPortCount() > 0) && (_input_mappings.size() == 0) )
+    {
+        for (int i = 0; i < _inputs; i++)
+        {
+            _input_mappings.emplace_back(std::make_tuple(i, i, false));
+            SUSHI_LOG_INFO("Adding default mapping for MIDI input device {}", i);
+        }
+    }
+    if ( (_outputs > 0) && (_output_midi_ports[0].getPortCount() > 0) &&  (_output_mappings.size() == 0) )
+    {
+        for (int i = 0; i < _outputs; i++)
+        {
+            _output_mappings.emplace_back(std::make_tuple(i, i, false));
+            SUSHI_LOG_INFO("Adding default mapping for MIDI output device {}", i);
         }
     }
 

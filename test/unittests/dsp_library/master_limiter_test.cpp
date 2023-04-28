@@ -54,5 +54,5 @@ TEST_F(TestMasterLimiter, Limit)
     for (int i = 0; i < LIMITER_OUTPUT_DATA_SIZE; i++)
     {
         EXPECT_NEAR(1.0, out[i] / LIMITER_OUTPUT_DATA[i], 1e-6);
-    };
+    }
 }

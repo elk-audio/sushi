@@ -27,11 +27,6 @@
 #include "engine/midi_dispatcher.h"
 
 namespace sushi {
-
-namespace ext {
-ext::MidiChannel midi_channel_from_int(int channel_int);
-}
-
 namespace engine {
 namespace controller_impl {
 
@@ -55,11 +50,15 @@ public:
 
     std::vector<ext::MidiPCConnection> get_all_pc_input_connections() const override;
 
+    bool get_midi_clock_output_enabled(int port) const override;
+
     std::pair<ext::ControlStatus, std::vector<ext::MidiCCConnection>>
     get_cc_input_connections_for_processor(int processor_id) const override;
 
     std::pair<ext::ControlStatus, std::vector<ext::MidiPCConnection>>
     get_pc_input_connections_for_processor(int processor_id) const override;
+
+    ext::ControlStatus set_midi_clock_output_enabled(bool enabled, int port) override;
 
     ext::ControlStatus
     connect_kbd_input_to_track(int track_id, ext::MidiChannel channel, int port, bool raw_midi) override;

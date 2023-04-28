@@ -15,8 +15,12 @@
 
 /**
  * @brief Option parsing
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2023 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
+
+#ifndef SUSHI_OPTIONS_H
+#define SUSHI_OPTIONS_H
+
 #include <cstdio>
 #include "optionparser.h"
 
@@ -32,9 +36,18 @@
 #define SUSHI_JSON_FILENAME_DEFAULT "config.json"
 #define SUSHI_SAMPLE_RATE_DEFAULT 48000
 #define SUSHI_JACK_CLIENT_NAME_DEFAULT "sushi"
-#define SUSHI_OSC_SERVER_PORT 24024
-#define SUSHI_OSC_SEND_PORT 24023
-#define SUSHI_GRPC_LISTENING_PORT "[::]:51051"
+#define SUSHI_OSC_SERVER_PORT_DEFAULT 24024
+#define SUSHI_OSC_SEND_PORT_DEFAULT 24023
+#define SUSHI_OSC_SEND_IP_DEFAULT "127.0.0.1"
+#define SUSHI_GRPC_LISTENING_PORT_DEFAULT "[::]:51051"
+#define SUSHI_PORTAUDIO_INPUT_LATENCY_DEFAULT 0.0f
+#define SUSHI_PORTAUDIO_OUTPUT_LATENCY_DEFAULT 0.0f
+#define SUSHI_SENTRY_CRASH_HANDLER_PATH_DEFAULT "./crashpad_handler"
+#ifdef SUSHI_BUILD_WITH_SENTRY
+    #define SUSHI_SENTRY_DSN_DEFAULT SUSHI_SENTRY_DSN
+#else
+    #define SUSHI_SENTRY_DSN_DEFAULT ""
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers for optionparse
@@ -77,7 +90,7 @@ struct SushiArg : public optionparser::Arg
     {
         char* endptr = 0;
         if (option.arg != 0 && strtol(option.arg, &endptr, 10))
-        {};
+        {}
 
         if (endptr != option.arg && *endptr == 0)
         {
@@ -112,8 +125,14 @@ enum OptionIndex
     OPT_IDX_OUTPUT_FILE,
     OPT_IDX_USE_DUMMY,
     OPT_IDX_USE_PORTAUDIO,
+    OPT_IDX_USE_APPLE_COREAUDIO,
     OPT_IDX_AUDIO_INPUT_DEVICE,
+    OPT_IDX_AUDIO_INPUT_DEVICE_UID,
     OPT_IDX_AUDIO_OUTPUT_DEVICE,
+    OPT_IDX_AUDIO_OUTPUT_DEVICE_UID,
+    OPT_IDX_PA_SUGGESTED_INPUT_LATENCY,
+    OPT_IDX_PA_SUGGESTED_OUTPUT_LATENCY,
+    OPT_IDX_DUMP_DEVICES,
     OPT_IDX_USE_JACK,
     OPT_IDX_CONNECT_PORTS,
     OPT_IDX_JACK_CLIENT,
@@ -124,7 +143,13 @@ enum OptionIndex
     OPT_IDX_TIMINGS_STATISTICS,
     OPT_IDX_OSC_RECEIVE_PORT,
     OPT_IDX_OSC_SEND_PORT,
-    OPT_IDX_GRPC_LISTEN_ADDRESS
+    OPT_IDX_OSC_SEND_IP,
+    OPT_IDX_GRPC_LISTEN_ADDRESS,
+    OPT_IDX_NO_OSC,
+    OPT_IDX_NO_GRPC,
+    OPT_IDX_BASE_PLUGIN_PATH,
+    OPT_IDX_SENTRY_CRASH_HANDLER,
+    OPT_IDX_SENTRY_DSN
 };
 
 // Option types (UNUSED is generally used for options that take a value as argument)
@@ -240,7 +265,15 @@ const optionparser::Descriptor usage[] =
         "a",
         "portaudio",
         SushiArg::Optional,
-        "\t\t-p --portaudio \tUse PortAudio realtime audio frontend."
+        "\t\t-a --portaudio \tUse PortAudio realtime audio frontend."
+    },
+    {
+        OPT_IDX_USE_APPLE_COREAUDIO,
+        OPT_TYPE_DISABLED,
+        "",
+        "coreaudio",
+        SushiArg::Optional,
+        "\t\t--coreaudio \tUse Apple CoreAudio realtime audio frontend."
     },
     {
         OPT_IDX_AUDIO_INPUT_DEVICE,
@@ -248,7 +281,7 @@ const optionparser::Descriptor usage[] =
         "",
         "audio-input-device",
         SushiArg::Optional,
-        "\t\t--audio-input-device \tIndex of the device to use for audio input with portaudio frontend [default=system default]"
+        "\t\t--audio-input-device=<device id> \tIndex of the device to use for audio input with portaudio frontend [default=system default]"
     },
     {
         OPT_IDX_AUDIO_OUTPUT_DEVICE,
@@ -256,7 +289,47 @@ const optionparser::Descriptor usage[] =
         "",
         "audio-output-device",
         SushiArg::Optional,
-        "\t\t--audio-output-device \tIndex of the device to use for audio output with portaudio frontend [default=system default]"
+        "\t\t--audio-output-device=<device id> \tIndex of the device to use for audio output with portaudio frontend [default=system default]"
+    },
+    {
+        OPT_IDX_AUDIO_INPUT_DEVICE_UID,
+        OPT_TYPE_UNUSED,
+        "",
+        "audio-input-device-uid",
+        SushiArg::Optional,
+        "\t\t--audio-input-device-uid=<device uid> \tUID of the device to use for audio input with Apple CoreAudio frontend [default=system default]"
+    },
+    {
+        OPT_IDX_AUDIO_OUTPUT_DEVICE_UID,
+        OPT_TYPE_UNUSED,
+        "",
+        "audio-output-device-uid",
+        SushiArg::Optional,
+        "\t\t--audio-output-device-uid=<device uid> \tUID of the device to use for audio output with Apple CoreAudio frontend [default=system default]"
+    },
+    {
+        OPT_IDX_PA_SUGGESTED_INPUT_LATENCY,
+        OPT_TYPE_UNUSED,
+        "",
+        "pa-suggested-input-latency",
+        SushiArg::Optional,
+        "\t\t--pa-suggested-input-latency=<latency> \tInput latency in seconds to suggest to portaudio. Will be rounded up to closest available latency depending on audio API [default=0.0]"
+    },
+    {
+        OPT_IDX_PA_SUGGESTED_OUTPUT_LATENCY,
+        OPT_TYPE_UNUSED,
+        "",
+        "pa-suggested-output-latency",
+        SushiArg::Optional,
+        "\t\t--pa-suggested-output-latency=<latency> \tOutput latency in seconds to suggest to portaudio. Will be rounded up to closest available latency depending on audio API [default=0.0]"
+    },
+    {
+        OPT_IDX_DUMP_DEVICES,
+        OPT_TYPE_DISABLED,
+        "",
+        "dump-audio-devices",
+        SushiArg::Optional,
+        "\t\t--dump-audio-devices \tDump available audio devices to stdout in JSON format. Requires a frontend to be specified."
     },
     {
         OPT_IDX_USE_JACK,
@@ -328,7 +401,8 @@ const optionparser::Descriptor usage[] =
         "p",
         "osc-rcv-port",
         SushiArg::NonEmpty,
-        "\t\t-p <port> --osc-rcv-port=<port> \tPort to listen for OSC messages on [default port=" SUSHI_STRINGIZE(SUSHI_OSC_SERVER_PORT) "]."
+        "\t\t-p <port> --osc-rcv-port=<port> \tPort to listen for OSC messages on [default port=" SUSHI_STRINGIZE(
+         SUSHI_OSC_SERVER_PORT_DEFAULT) "]."
     },
     {
         OPT_IDX_OSC_SEND_PORT,
@@ -336,7 +410,17 @@ const optionparser::Descriptor usage[] =
         "",
         "osc-send-port",
         SushiArg::NonEmpty,
-        "\t\t--osc-send-port=<port> \tPort to output OSC messages to [default port=" SUSHI_STRINGIZE(SUSHI_OSC_SEND_PORT) "]."
+        "\t\t--osc-send-port=<port> \tPort to output OSC messages to [default port=" SUSHI_STRINGIZE(
+         SUSHI_OSC_SEND_PORT_DEFAULT) "]."
+    },
+    {
+        OPT_IDX_OSC_SEND_IP,
+        OPT_TYPE_UNUSED,
+        "",
+        "osc-send-ip",
+        SushiArg::NonEmpty,
+        "\t\t--osc-send-ip=<ip> \tIP to output OSC messages to [default port=" SUSHI_STRINGIZE(
+         SUSHI_OSC_SEND_IP_DEFAULT) "]."
     },
     {
         OPT_IDX_GRPC_LISTEN_ADDRESS,
@@ -344,8 +428,50 @@ const optionparser::Descriptor usage[] =
         "",
         "grpc-address",
         SushiArg::NonEmpty,
-        "\t\t--grpc-address=<port> \tgRPC listening address in the format: address:port. By default accepts incoming connections from all ip:s [default port=" SUSHI_GRPC_LISTENING_PORT "]."
+        "\t\t--grpc-address=<port> \tgRPC listening address in the format: address:port. By default accepts incoming connections from all ip:s [default port=" SUSHI_GRPC_LISTENING_PORT_DEFAULT "]."
+    },
+    {
+        OPT_IDX_NO_OSC,
+        OPT_TYPE_DISABLED,
+        "",
+        "disable-osc",
+        SushiArg::Optional,
+        "\t\t--no-osc \tDisable Open Sound Control completely"
+    },
+    {
+        OPT_IDX_NO_GRPC,
+        OPT_TYPE_DISABLED,
+        "",
+        "disable-grpc",
+        SushiArg::Optional,
+        "\t\t--no-grpc \tDisable gRPC Control completely"
+    },
+    {
+        OPT_IDX_BASE_PLUGIN_PATH,
+        OPT_TYPE_UNUSED,
+        "",
+        "base-plugin-path",
+        SushiArg::NonEmpty,
+        "\t\t--base-plugin-path=<path> \tSpecify a directory to be the base of plugin paths used in JSON / gRPC."
+    },
+    {
+        OPT_IDX_SENTRY_CRASH_HANDLER,
+        OPT_TYPE_UNUSED,
+        "",
+        "sentry-crash-handler",
+        SushiArg::NonEmpty,
+        "\t\t--sentry-crash-handler=<path/to/crash_handler> \tSet the path to the crash handler to use for sentry reports [default path=" SUSHI_STRINGIZE(SUSHI_SENTRY_CRASH_HANDLER_PATH_DEFAULT) "]."
+    },
+    {
+        OPT_IDX_SENTRY_DSN,
+        OPT_TYPE_UNUSED,
+        "",
+        "sentry-dsn",
+        SushiArg::NonEmpty,
+        "\t\t--sentry-dsn=<dsn.address> \tSet the DSN that sentry should upload crashlogs to [default address=" SUSHI_STRINGIZE(SUSHI_SENTRY_DSN_DEFAULT) "]."
     },
     // Don't touch this one (set default values for optionparse library)
     { 0, 0, 0, 0, 0, 0}
 };
+
+#endif //SUSHI_OPTIONS_H

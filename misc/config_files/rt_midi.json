@@ -1,0 +1,54 @@
+{
+    "host_config" : {
+        "samplerate" : 48000,
+        "audio_clip_detection" : {
+            "inputs" : true,
+            "outputs" : true
+        },
+        "rt_midi_input_mappings" : [
+            {
+                "rt_midi_device" : 0,
+                "sushi_midi_port" : 0,
+                "virtual_port" : false
+            }
+        ],
+        "rt_midi_output_mappings" : [
+            {
+                "rt_midi_device" : 0,
+                "sushi_midi_port" : 0,
+                "virtual_port": false
+            }
+        ]
+    },
+    "tracks" : [
+        {
+            "name" : "main",
+            "channels" : 2,
+            "inputs" : [],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "path" : "mda-vst3.vst3",
+                    "name" : "mda JX10",
+                    "type" : "vst3x",
+                    "uid" : "mda JX10"
+                }
+            ]
+        }
+    ],
+    "midi" : {
+        "track_connections" : [
+            {
+                "port" : 0,
+                "channel" : "all",
+                "track" : "main",
+                "raw_midi" : false
+            }
+        ]
+    }
+}

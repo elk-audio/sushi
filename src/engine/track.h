@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -38,7 +38,15 @@ namespace sushi {
 namespace engine {
 
 /* No real technical limit, just something arbitrarily high enough */
-constexpr int MAX_TRACK_BUSSES = MAX_TRACK_CHANNELS / 2;
+constexpr int MAX_TRACK_BUSES = MAX_TRACK_CHANNELS / 2;
+constexpr int KEYBOARD_EVENT_QUEUE_SIZE = 256;
+
+enum class TrackType
+{
+    REGULAR,
+    PRE,
+    POST
+};
 
 class Track : public InternalPlugin, public RtEventPipe
 {
@@ -46,21 +54,24 @@ public:
     SUSHI_DECLARE_NON_COPYABLE(Track);
 
     /**
-     * @brief Create a track with a given number of channels
-     * @param channels The number of channels in the track.
-     *                 Note that even mono tracks have a stereo output bus
+     * @brief Create a track
+     * @param host_control Host callback object
+     * @param channels The number of channels in the track
+     * @param timer A timer object
+     * @param pan_controls If true, create a pan control parameter on the track
      */
-    Track(HostControl host_control, int channels, performance::PerformanceTimer* timer);
+    Track(HostControl host_control, int channels, performance::PerformanceTimer* timer, bool pan_controls, TrackType type = TrackType::REGULAR);
 
     /**
-     * @brief Create a track with a given number of stereo input and output busses
-     *        Busses are an abstraction for busses*2 channels internally.
-     * @param input_buffers The number of input busses
-     * @param output_buffers The number of output busses
+     * @brief Create a track with a given number of stereo input and output buses
+     *        buses are an abstraction for buses*2 channels internally.
+     * @param host_control Host callback object
+     * @param timer A timer object
+     * @param buses The number of stereo audio buses
      */
-    Track(HostControl host_control, int input_busses, int output_busses, performance::PerformanceTimer* timer);
+    Track(HostControl host_control, int buses, performance::PerformanceTimer* timer);
 
-    ~Track() = default;
+    ~Track() override = default;
 
     ProcessorReturnCode init(float sample_rate) override;
 
@@ -86,23 +97,23 @@ public:
 
     /**
      * @brief Return a SampleBuffer to an input bus
-     * @param bus The index of the bus, must not be greater than the number of busses configured
+     * @param bus The index of the bus, must not be greater than the number of buses configured
      * @return A non-owning SampleBuffer pointing to the given bus
      */
     ChunkSampleBuffer input_bus(int bus)
     {
-        assert(bus < _input_busses);
+        assert(bus < _buses);
         return ChunkSampleBuffer::create_non_owning_buffer(_input_buffer, bus * 2, 2);
     }
 
     /**
     * @brief Return a SampleBuffer to an output bus
-    * @param bus The index of the bus, must not be greater than the number of busses configured
+    * @param bus The index of the bus, must not be greater than the number of buses configured
     * @return A non-owning SampleBuffer pointing to the given bus
     */
     ChunkSampleBuffer output_bus(int bus)
     {
-        assert(bus < _output_busses);
+        assert(bus < _buses);
         return ChunkSampleBuffer::create_non_owning_buffer(_output_buffer, bus * 2, 2);
     }
 
@@ -129,21 +140,12 @@ public:
     }
 
     /**
-     * @brief Return the number of input busses of the track.
-     * @return The number of input busses on the track.
+     * @brief Return the number of stereo buses of the track.
+     * @return The number of stereo buses on the track.
      */
-    int input_busses() const
+    int buses() const
     {
-        return _input_busses;
-    }
-
-    /**
-     * @brief Return the number of input busses of the track.
-     * @return The number of input busses on the track.
-     */
-    int output_busses() const
-    {
-        return _output_busses;
+        return _buses;
     }
 
     /**
@@ -161,6 +163,11 @@ public:
         reinterpret_cast<Track*>(arg)->render();
     }
 
+    TrackType type() const
+    {
+        return _type;
+    }
+
     /* Inherited from Processor */
     void process_event(const RtEvent& event) override;
 
@@ -172,26 +179,36 @@ public:
     void send_event(const RtEvent& event) override;
 
 private:
-    void _common_init();
+    enum class PanMode
+    {
+        GAIN_ONLY,
+        PAN_AND_GAIN,
+        PAN_AND_GAIN_PER_BUS
+    };
+
+    void _common_init(PanMode mode);
+    void _process_plugins(ChunkSampleBuffer& in, ChunkSampleBuffer& out);
     void _process_output_events();
-    void _apply_pan_and_gain(ChunkSampleBuffer& buffer, int bus, bool muted);
+    void _apply_pan_and_gain(ChunkSampleBuffer& buffer, bool muted);
+    void _apply_pan_and_gain_per_bus(ChunkSampleBuffer& buffer, bool muted);
+    void _apply_gain(ChunkSampleBuffer& buffer, bool muted);
 
     std::vector<Processor*> _processors;
     ChunkSampleBuffer _input_buffer;
     ChunkSampleBuffer _output_buffer;
 
-    int _input_busses;
-    int _output_busses;
+    int _buses;
+    PanMode _pan_mode;
+    TrackType _type;
 
-    BoolParameterValue*                                _mute_parameter;
-    std::array<FloatParameterValue*, MAX_TRACK_BUSSES> _gain_parameters;
-    std::array<FloatParameterValue*, MAX_TRACK_BUSSES> _pan_parameters;
-    std::array<ValueSmootherFilter<float>, MAX_TRACK_BUSSES> _pan_gain_smoothers_right;
-    std::array<ValueSmootherFilter<float>, MAX_TRACK_BUSSES> _pan_gain_smoothers_left;
+    BoolParameterValue*                               _mute_parameter;
+    std::array<FloatParameterValue*, MAX_TRACK_BUSES> _gain_parameters;
+    std::array<FloatParameterValue*, MAX_TRACK_BUSES> _pan_parameters;
+    std::vector<std::array<ValueSmootherFilter<float>, 2>> _smoothers;
 
     performance::PerformanceTimer* _timer;
 
-    RtSafeRtEventFifo _kb_event_buffer;
+    RtEventFifo<KEYBOARD_EVENT_QUEUE_SIZE> _kb_event_buffer;
 };
 
 } // namespace engine
@@ -199,4 +216,4 @@ private:
 
 
 
-#endif //SUSHI_PLUGIN_CHAIN_H
+#endif // SUSHI_TRACK_H

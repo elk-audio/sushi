@@ -50,6 +50,31 @@ enum class ProcessorReturnCode
     PLUGIN_INIT_ERROR,
 };
 
+enum class PluginType
+{
+    INTERNAL,
+    VST2X,
+    VST3X,
+    LV2
+};
+
+/**
+ * @brief  Unique plugin descriptor, used to instantiate and identify a Plugin type throughout Sushi.
+ */
+struct PluginInfo
+{
+    std::string uid;
+    std::string path;
+    PluginType type;
+
+    bool operator == (const PluginInfo& other) const
+    {
+        return (uid == other.uid) &&
+               (path == other.path) &&
+               (type == other.type);
+    }
+};
+
 class Processor
 {
 public:
@@ -72,10 +97,7 @@ public:
      * @brief Configure an already initialised plugin
      * @param sample_rate the new sample rate to use
      */
-    virtual void configure(float /* sample_rate*/)
-    {
-        return;
-    }
+    virtual void configure(float /* sample_rate*/) {}
 
     /**
      * @brief Process a single realtime event that is to take place during the next call to process
@@ -377,9 +399,14 @@ public:
         return ProcessorReturnCode::UNSUPPORTED_OPERATION;
     }
 
-    virtual ProcessorState save_state(bool /*realtime_running*/) const
+    virtual ProcessorState save_state() const
     {
-        return ProcessorState();
+        return {};
+    }
+
+    virtual PluginInfo info() const
+    {
+        return PluginInfo();
     }
 
 
@@ -441,7 +468,7 @@ protected:
     * @param in_buffer Input SampleBuffer
     * @param out_buffer Output SampleBuffer
     */
-    void bypass_process(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer);
+    void bypass_process(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer);
 
     /**
      * @brief Called from the audio callback to request work to be done in another,
@@ -460,12 +487,18 @@ protected:
     void async_delete(RtDeletable* object);
 
     /**
+     * @brief Called from a realtime thread to notify that all parameter values have changed and
+     *        should be reloaded.
+     */
+    void notify_state_change_rt();
+
+    /**
      * @brief Takes a parameter name and makes sure that it is unique and is not empty. An
      *        index will be added in case of duplicates
      * @param name The name of the parameter
      * @return An std::string containing a unique parameter name
      */
-    std::string _make_unique_parameter_name(std::string name) const;
+    std::string _make_unique_parameter_name(const std::string& name) const;
 
     /* Minimum number of output/input channels a processor should support should always be 0 */
     int _max_input_channels{0};
@@ -485,8 +518,8 @@ private:
     /* Automatically generated unique id for identifying this processor */
     ObjectId _id{ProcessorIdGenerator::new_id()};
 
-    std::string _unique_name{""};
-    std::string _label{""};
+    std::string _unique_name;
+    std::string _label;
 
     std::map<std::string, std::unique_ptr<ParameterDescriptor>> _parameters;
     std::vector<ParameterDescriptor*> _parameters_by_index;
@@ -614,5 +647,5 @@ private:
     int _ramp_count{0};
 };
 
-}; // end namespace sushi
+} // end namespace sushi
 #endif //SUSHI_PROCESSOR_H

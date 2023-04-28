@@ -24,7 +24,6 @@
 
 #include "library/event.h"
 #include "engine/base_engine.h"
-#include "logging.h"
 #include "types.h"
 
 /* GCC does not seem to get when a switch case handles all cases */
@@ -107,33 +106,6 @@ Event* Event::from_rt_event(const RtEvent& rt_event, Time timestamp)
                                      typed_ev->midi_data(),
                                      timestamp);
         }
-        case RtEventType::FLOAT_PARAMETER_CHANGE:
-        {
-            auto typed_ev = rt_event.parameter_change_event();
-            return new ParameterChangeNotificationEvent(ParameterChangeNotificationEvent::Subtype::FLOAT_PARAMETER_CHANGE_NOT,
-                                                        typed_ev->processor_id(),
-                                                        typed_ev->param_id(),
-                                                        typed_ev->value(),
-                                                        timestamp);
-        }
-        case RtEventType::INT_PARAMETER_CHANGE:
-        {
-            auto typed_ev = rt_event.parameter_change_event();
-            return new ParameterChangeNotificationEvent(ParameterChangeNotificationEvent::Subtype::INT_PARAMETER_CHANGE_NOT,
-                                                        typed_ev->processor_id(),
-                                                        typed_ev->param_id(),
-                                                        typed_ev->value(),
-                                                        timestamp);
-        }
-        case RtEventType::BOOL_PARAMETER_CHANGE:
-        {
-            auto typed_ev = rt_event.parameter_change_event();
-            return new ParameterChangeNotificationEvent(ParameterChangeNotificationEvent::Subtype::BOOL_PARAMETER_CHANGE_NOT,
-                                                        typed_ev->processor_id(),
-                                                        typed_ev->param_id(),
-                                                        typed_ev->value(),
-                                                        timestamp);
-        }
         case RtEventType::TEMPO:
         {
             auto typed_event = rt_event.tempo_event();
@@ -181,7 +153,23 @@ Event* Event::from_rt_event(const RtEvent& rt_event, Time timestamp)
             auto typed_ev = rt_event.delete_data_event();
             return new AsynchronousDeleteEvent(typed_ev->data(), timestamp);
         }
-
+        case RtEventType::NOTIFY:
+        {
+            auto typed_ev = rt_event.processor_notify_event();
+            if (typed_ev->action() == ProcessorNotifyRtEvent::Action::PARAMETER_UPDATE)
+            {
+                return new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
+                                                       typed_ev->processor_id(),
+                                                       0,
+                                                       timestamp);
+            }
+            break;
+        }
+        case RtEventType::TIMING_TICK:
+        {
+            auto typed_ev = rt_event.timing_tick_event();
+            return new EngineTimingTickNotificationEvent(typed_ev->tick_count(), timestamp);
+        }
         default:
             return nullptr;
 
@@ -261,7 +249,7 @@ RtEvent DataPropertyEvent::to_rt_event(int sample_offset) const
 RtEvent StringPropertyEvent::to_rt_event(int sample_offset) const
 {
     /* std::string is a too large and complex type to be copied by value into an RtEvent.
-     * Hence copy the string to a heap allocation that will outlive the event.
+     * Instead, copy the string to a heap allocation that will outlive the event.
      * The string should be taken back to the non-rt domain and deleted there. This is handled
      * automatically by InternalPlugins process_event() function */
     auto heap_string = new RtDeletableWrapper<std::string>(_string_value);

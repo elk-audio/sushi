@@ -71,3 +71,57 @@ TEST(TestMidiEncoder, EncodeProgramChange)
     EXPECT_EQ(0u, midi_msg[2]);
     EXPECT_EQ(0u, midi_msg[3]);
 }
+
+TEST(TestMidiEncoder, EncodeStartMessage)
+{
+    auto midi_msg = encode_start_message();
+    EXPECT_EQ(0xFA, midi_msg[0]);
+    EXPECT_EQ(0u, midi_msg[1]);
+    EXPECT_EQ(0u, midi_msg[2]);
+    EXPECT_EQ(0u, midi_msg[3]);
+}
+
+TEST(TestMidiEncoder, EncodeStopMessage)
+{
+    auto midi_msg = encode_stop_message();
+    EXPECT_EQ(0xFC, midi_msg[0]);
+    EXPECT_EQ(0u, midi_msg[1]);
+    EXPECT_EQ(0u, midi_msg[2]);
+    EXPECT_EQ(0u, midi_msg[3]);
+}
+
+TEST(TestMidiEncoder, EncodeContinueMessage)
+{
+    auto midi_msg = encode_continue_message();
+    EXPECT_EQ(0xFB, midi_msg[0]);
+    EXPECT_EQ(0u, midi_msg[1]);
+    EXPECT_EQ(0u, midi_msg[2]);
+    EXPECT_EQ(0u, midi_msg[3]);
+}
+
+TEST(TestMidiEncoder, EncodeTimingClock)
+{
+    auto midi_msg = encode_timing_clock();
+    EXPECT_EQ(0xF8, midi_msg[0]);
+    EXPECT_EQ(0u, midi_msg[1]);
+    EXPECT_EQ(0u, midi_msg[2]);
+    EXPECT_EQ(0u, midi_msg[3]);
+}
+
+TEST(TestMidiEncoder, EncodeActiveSensing)
+{
+    auto midi_msg = encode_active_sensing();
+    EXPECT_EQ(0xFE, midi_msg[0]);
+    EXPECT_EQ(0u, midi_msg[1]);
+    EXPECT_EQ(0u, midi_msg[2]);
+    EXPECT_EQ(0u, midi_msg[3]);
+}
+
+TEST(TestMidiEncoder, EncodeResetMessage)
+{
+    auto midi_msg = encode_reset_message();
+    EXPECT_EQ(0xFF, midi_msg[0]);
+    EXPECT_EQ(0u, midi_msg[1]);
+    EXPECT_EQ(0u, midi_msg[2]);
+    EXPECT_EQ(0u, midi_msg[3]);
+}

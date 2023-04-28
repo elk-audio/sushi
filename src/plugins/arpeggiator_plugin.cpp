@@ -21,23 +21,21 @@
 #include <algorithm>
 
 #include "plugins/arpeggiator_plugin.h"
-#include "logging.h"
 
 namespace sushi {
 namespace arpeggiator_plugin {
 
-constexpr auto DEFAULT_NAME = "sushi.testing.arpeggiator";
+constexpr auto PLUGIN_UID = "sushi.testing.arpeggiator";
 constexpr auto DEFAULT_LABEL = "Arpeggiator";
 
 constexpr int MAX_ARP_NOTES = 8;
 constexpr int START_NOTE = 48;
-constexpr float SECONDS_IN_MINUTE = 60.0f;
 constexpr float MULTIPLIER_8TH_NOTE = 2.0f;
 constexpr int   OCTAVE = 12;
 
 ArpeggiatorPlugin::ArpeggiatorPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
-    Processor::set_name(DEFAULT_NAME);
+    Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
     _range_parameter = register_int_parameter("range", "Range", "octaves",
                                               2, 1, 5,
@@ -83,6 +81,14 @@ void ArpeggiatorPlugin::process_event(const RtEvent& event)
             _arp.remove_note(typed_event->note());
             break;
         }
+
+        case RtEventType::NOTE_AFTERTOUCH:
+        case RtEventType::PITCH_BEND:
+        case RtEventType::AFTERTOUCH:
+        case RtEventType::MODULATION:
+        case RtEventType::WRAPPED_MIDI_EVENT:
+            // Consume these events so they are not propagated
+            break;
 
         case RtEventType::INT_PARAMETER_CHANGE:
         case RtEventType::FLOAT_PARAMETER_CHANGE:
@@ -141,6 +147,11 @@ void ArpeggiatorPlugin::process_audio(const ChunkSampleBuffer& /*in_buffer*/, Ch
         /* Don't leave notes hanging if transport is stopped */
         output_event(RtEvent::make_note_off_event(this->id(), 0, 0, _current_note, 1.0f));
     }
+}
+
+std::string_view ArpeggiatorPlugin::static_uid()
+{
+    return PLUGIN_UID;
 }
 
 Arpeggiator::Arpeggiator()
