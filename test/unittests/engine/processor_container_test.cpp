@@ -47,10 +47,10 @@ TEST_F(TestProcessorContainer, TestAddingAndRemoving)
     ASSERT_EQ(2u, _module_under_test.all_processors().size());
 
     // Access non-existing processors
-    ASSERT_FALSE(_module_under_test.processor_exists(ObjectId(123)));
+    ASSERT_FALSE(_module_under_test.processor_exists(ObjectId(123'456'789)));
     ASSERT_FALSE(_module_under_test.processor_exists("three"));
     ASSERT_EQ(nullptr, _module_under_test.processor("four"));
-    ASSERT_EQ(nullptr, _module_under_test.processor(ObjectId(234)));
+    ASSERT_EQ(nullptr, _module_under_test.processor(ObjectId(234'567'890)));
 
     // Remove processors
     ASSERT_TRUE(_module_under_test.remove_processor(id_1));
