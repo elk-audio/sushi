@@ -16,6 +16,7 @@ SET(TEST_FILES
     unittests/plugins/control_to_cv_plugin_test.cpp
     unittests/plugins/cv_to_control_plugin_test.cpp
     unittests/plugins/plugins_test.cpp
+    unittests/plugins/brickworks_plugins_test.cpp
     unittests/plugins/sample_player_plugin_test.cpp
     unittests/plugins/send_return_test.cpp
     unittests/plugins/step_sequencer_test.cpp
