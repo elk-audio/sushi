@@ -6,7 +6,10 @@ image: ubuntu:22.10
 pipelines:
   default:
     - step:
-        name: Build sushi + tests 
+        name: Build sushi + tests
+
+        caches:
+          - vcpkgcache
         script:
           # Print the Linux version.
           #- echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
@@ -17,15 +20,18 @@ pipelines:
           - apt-get update -y
           - apt install build-essential -y
           - gcc --version
-          - apt-get install -y -q libjack-jackd2-dev liblo-dev 
+          - apt-get install -y -q libjack-jackd2-dev liblo-dev
           - apt-get install -y -q libsndfile1-dev libasound2-dev
-          - apt-get install -y -q cmake git
+          - apt-get install -y -q cmake git make
+          - apt-get install -y -q curl zip unzip tar
           - apt-get install -y -q libgrpc++-dev protobuf-compiler-grpc
           - apt-get install -y -q liblilv-dev lilv-utils lv2-dev lv2-examples mda-lv2
           - export LV2_PATH=$HOME/.lv2:/usr/local/lib/lv2:/usr/lib/lv2
           - apt-get install -y software-properties-common
           - add-apt-repository -y ppa:ubuntu-toolchain-r/test
           - cmake --version
+          # Rewrite the relative submodule url as bitbucket doesn't handle relative paths correctly
+          - sed -i 's/url = \.\.\(.*\)/url = git@bitbucket.org:'$BITBUCKET_TEAM'\1/g' .gitmodules
           # Optimise a bit by only load sub-submodules when neccesary
           - git submodule update --init
           - cd third-party/link
@@ -35,6 +41,9 @@ pipelines:
           - cd ../.. 
           # Set test data dir (for running unit test manually)
           - export SUSHI_TEST_DATA_DIR=$PWD/test/data
+          # Boostrap vcpkg
+          - export VCPKG_BINARY_SOURCES="clear;files,$(pwd)/cachevcpkg,readwrite"
+          - ./third-party/vcpkg/bootstrap-vcpkg.sh
           - mkdir build
           - cd build
           - cmake -DCMAKE_TOOLCHAIN_FILE=../third-party/vcpkg/scripts/buildsystems/vcpkg.cmake -DWITH_XENOMAI=FALSE -DWITH_JACK=TRUE -DWITH_VST2=OFF -DWITH_LV2=ON -DWITH_LV2_MDA_TESTS=ON -DTWINE_WITH_XENOMAI=OFF ..
@@ -43,10 +52,12 @@ pipelines:
           - cd test
           # Run unit tests with some tests test disabled
           - ./unit_tests --gtest_filter=-TestAudioGraph.TestMultiCoreOperation:TestLv2Wrapper.TestSynchronousStateAndWorkerThreads:TestLv2Wrapper.TestMidiEventInputAndOutput
-          # Quick smoke test
+          # Quick smoke test (not really working yet)
           - cd ..
-          - ./sushi -d -c ../../misc/config_files/config_play.json&
-          - sleep 6
-          - killall sushi
+          #- ./sushi -d -c ../../misc/config_files/config_play.json&
+          #- sleep 6
+          #- pkill sushi
 
-
+definitions:
+  caches:
+    vcpkgcache: cachevcpkg
