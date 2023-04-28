@@ -1,7 +1,7 @@
 # Only use spaces to indent your .yml configuration.
 # -----
 # You can specify a custom docker image from Docker Hub as your build environment.
-image: ubuntu:20.10
+image: ubuntu:22.10
 
 pipelines:
   default:
@@ -37,7 +37,7 @@ pipelines:
           - export SUSHI_TEST_DATA_DIR=$PWD/test/data
           - mkdir build
           - cd build
-          - cmake .. -DWITH_XENOMAI=FALSE -DWITH_JACK=TRUE -DWITH_VST2=OFF -DWITH_LV2=ON -DWITH_LV2_MDA_TESTS=ON -DTWINE_WITH_XENOMAI=OFF
+          - cmake -DCMAKE_TOOLCHAIN_FILE=../third-party/vcpkg/scripts/buildsystems/vcpkg.cmake -DWITH_XENOMAI=FALSE -DWITH_JACK=TRUE -DWITH_VST2=OFF -DWITH_LV2=ON -DWITH_LV2_MDA_TESTS=ON -DTWINE_WITH_XENOMAI=OFF ..
           - make sushi
           - make unit_tests
           - cd test
