@@ -31,7 +31,6 @@
 #include "plugins/brickworks/highpass_plugin.cpp"
 #include "plugins/brickworks/clip_plugin.cpp"
 #include "plugins/brickworks/fuzz_plugin.cpp"
-#include "plugins/brickworks/simple_synth_plugin.cpp"
 
 using namespace sushi;
 
