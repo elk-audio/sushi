@@ -11,28 +11,23 @@ pipelines:
         caches:
           - vcpkgcache
         script:
-          # Print the Linux version.
-          #- echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
-          - export TERM=linux
-          - echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
-          - uname -a
-          # Print the gcc version.
+          # Prepare system.
           - apt-get update -y
           - apt install build-essential -y
-          - gcc --version
           - apt-get install -y -q libjack-jackd2-dev liblo-dev
           - apt-get install -y -q libsndfile1-dev libasound2-dev
           - apt-get install -y -q cmake git make
           - apt-get install -y -q curl zip unzip tar
           - apt-get install -y -q libgrpc++-dev protobuf-compiler-grpc
           - apt-get install -y -q liblilv-dev lilv-utils lv2-dev lv2-examples mda-lv2
-          - export LV2_PATH=$HOME/.lv2:/usr/local/lib/lv2:/usr/lib/lv2
           - apt-get install -y software-properties-common
           - add-apt-repository -y ppa:ubuntu-toolchain-r/test
-          - cmake --version
+          - export LV2_PATH=$HOME/.lv2:/usr/local/lib/lv2:/usr/lib/lv2
+
+          # Prepare dependencies
           # Rewrite the relative submodule url as bitbucket doesn't handle relative paths correctly
           - sed -i 's/url = \.\.\(.*\)/url = git@bitbucket.org:'$BITBUCKET_TEAM'\1/g' .gitmodules
-          # Optimise a bit by only load sub-submodules when neccesary
+          # Optimise a bit by only load sub-submodules where needed
           - git submodule update --init
           - cd third-party/link
           - git submodule update --init
@@ -47,26 +42,49 @@ pipelines:
           - mkdir build
           - cd build
           - cmake -DCMAKE_TOOLCHAIN_FILE=../third-party/vcpkg/scripts/buildsystems/vcpkg.cmake -DWITH_XENOMAI=FALSE -DWITH_JACK=TRUE -DWITH_VST2=OFF -DWITH_LV2=ON -DWITH_LV2_MDA_TESTS=ON -DTWINE_WITH_XENOMAI=OFF ..
+
+          # Build multiple configuration and run unit tests
+          # Build sushi and unit tests with default options
+          - make sushi -j4
+          - make unit_tests -j4
+          # Run unit tests with some tests test disabled
+          - cd test
+          - ./unit_tests --gtest_filter=-TestAudioGraph.TestMultiCoreOperation:TestLv2Wrapper.TestSynchronousStateAndWorkerThreads:TestLv2Wrapper.TestMidiEventInputAndOutput
+          - cd ..
+
+          # Build with buffers size 32 samples
+          - cmake -DSUSHI_AUDIO_BUFFER_SIZE=32 ..
           - make sushi -j4
           - make unit_tests -j4
           - cd test
-          # Run unit tests with some tests test disabled
           - ./unit_tests --gtest_filter=-TestAudioGraph.TestMultiCoreOperation:TestLv2Wrapper.TestSynchronousStateAndWorkerThreads:TestLv2Wrapper.TestMidiEventInputAndOutput
+          - cd ..
+
+          # Build with buffer size 128 samples
+          - cmake -DSUSHI_AUDIO_BUFFER_SIZE=128 ..
+          - make sushi -j4
+          - make unit_tests -j4
+          - cd test
+          - ./unit_tests --gtest_filter=-TestAudioGraph.TestMultiCoreOperation:TestLv2Wrapper.TestSynchronousStateAndWorkerThreads:TestLv2Wrapper.TestMidiEventInputAndOutput
+          - cd ..
+
           # Quick smoke test (not really working yet)
-          #- cd ..
           #- ./sushi -d -c ../../misc/config_files/config_play.json&
           #- sleep 6
           #- pkill sushi
 
-          # Build with options disabled
-          - cd ..
-          - cmake -DSUSHI_WITH_VST2=OFF -DSUSHI_WITH_VST3=OFF -DSUSHI_WITH_LV2=OFF -DSUSHI_WITH_LV2_MDA_TESTS=OFF -DSUSHI_WITH_RT_MIDI=ON -DSUSHI_WITH_ALSA_MIDI=OFF ..
+          # Build with most options disabled to test compile time configuration
+          - cmake -DAUDIO_BUFFER_SIZE=64 -DSUSHI_WITH_VST2=OFF -DSUSHI_WITH_VST3=OFF -DSUSHI_WITH_LV2=OFF -DSUSHI_WITH_LV2_MDA_TESTS=OFF -DSUSHI_WITH_RT_MIDI=ON -DSUSHI_WITH_ALSA_MIDI=OFF ..
           - make sushi -j4
           - make unit_tests -j4
           - cd test
-          # Run unit tests with some tests test disabled
           - ./unit_tests --gtest_filter=-TestAudioGraph.TestMultiCoreOperation
+          - cd ..
 
 definitions:
   caches:
     vcpkgcache: cachevcpkg
+
+  variables:
+    - name: BUILD_CORES
+      default: 4

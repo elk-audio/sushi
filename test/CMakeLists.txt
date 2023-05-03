@@ -205,7 +205,7 @@ target_compile_definitions(unit_tests PRIVATE ${TEST_COMPILE_DEFINITIONS})
 target_compile_options(unit_tests PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
 target_include_directories(unit_tests PRIVATE ${INCLUDE_DIRS})
 target_link_libraries(unit_tests "${TEST_LINK_LIBRARIES}")
-if (${TEST_DEPENDENCIES})
+if (TEST_DEPENDENCIES)
     add_dependencies(unit_tests ${TEST_DEPENDENCIES})
 endif()
 
