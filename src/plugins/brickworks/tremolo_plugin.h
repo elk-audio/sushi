@@ -52,7 +52,7 @@ private:
     FloatParameterValue* _amount;
 
     bw_trem_coeffs _trem_coeffs;
-	bw_trem_state _trem_states[MAX_CHANNELS_SUPPORTED];
+    bw_trem_state _trem_states[MAX_CHANNELS_SUPPORTED];
 };
 
 }// namespace tremolo_plugin

@@ -54,7 +54,7 @@ private:
     FloatParameterValue* _release;
 
     bw_noise_gate_coeffs _noise_gate_coeffs;
-	bw_noise_gate_state	_noise_gate_states[MAX_CHANNELS_SUPPORTED];
+    bw_noise_gate_state _noise_gate_states[MAX_CHANNELS_SUPPORTED];
 };
 
 }// namespace noise_gate_plugin

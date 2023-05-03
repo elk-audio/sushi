@@ -53,11 +53,11 @@ private:
     FloatParameterValue* _gain;
 
     bw_satur_coeffs _saturation_coeffs;
-	bw_src_int_coeffs _src_up_coeffs;
-	bw_src_int_coeffs _src_down_coeffs;
-	bw_satur_state	_saturation_states[MAX_CHANNELS_SUPPORTED];
-	bw_src_int_state _src_up_states[MAX_CHANNELS_SUPPORTED];
-	bw_src_int_state _src_down_states[MAX_CHANNELS_SUPPORTED];
+    bw_src_int_coeffs _src_up_coeffs;
+    bw_src_int_coeffs _src_down_coeffs;
+    bw_satur_state  _saturation_states[MAX_CHANNELS_SUPPORTED];
+    bw_src_int_state _src_up_states[MAX_CHANNELS_SUPPORTED];
+    bw_src_int_state _src_down_states[MAX_CHANNELS_SUPPORTED];
 
     ChunkSampleBuffer _tmp_buf{MAX_CHANNELS_SUPPORTED};
 };

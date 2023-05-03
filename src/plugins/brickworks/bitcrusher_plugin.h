@@ -53,9 +53,9 @@ private:
     FloatParameterValue* _samplerate_ratio;
     IntParameterValue* _bit_depth;
 
-	bw_sr_reduce_coeffs	_sr_reduce_coeffs;
-	bw_bd_reduce_coeffs	_bd_reduce_coeffs;
-	bw_sr_reduce_state	_sr_reduce_states[MAX_CHANNELS_SUPPORTED];
+    bw_sr_reduce_coeffs _sr_reduce_coeffs;
+    bw_bd_reduce_coeffs _bd_reduce_coeffs;
+    bw_sr_reduce_state  _sr_reduce_states[MAX_CHANNELS_SUPPORTED];
 };
 
 }// namespace bitcrusher_plugin

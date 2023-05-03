@@ -55,7 +55,7 @@ private:
     FloatParameterValue* _fb_coeff;
 
     bw_comb_coeffs _comb_coeffs;
-	bw_comb_state	_comb_states[MAX_CHANNELS_SUPPORTED];
+    bw_comb_state   _comb_states[MAX_CHANNELS_SUPPORTED];
     void* _delay_mem_areas[MAX_CHANNELS_SUPPORTED]{nullptr};
 };
 

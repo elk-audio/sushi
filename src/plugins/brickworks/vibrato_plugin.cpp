@@ -75,10 +75,10 @@ ProcessorReturnCode VibratoPlugin::init(float sample_rate)
 {
     // Default values taken from Brickworks example fx_vibrato
     bw_chorus_init(&_chorus_coeffs, 0.01f);
-	bw_chorus_set_delay(&_chorus_coeffs, 0.005f);
-	bw_chorus_set_coeff_x(&_chorus_coeffs, 0.7071f);
-	bw_chorus_set_coeff_mod(&_chorus_coeffs, 1.f);
-	bw_chorus_set_coeff_fb(&_chorus_coeffs, -0.7071f);
+    bw_chorus_set_delay(&_chorus_coeffs, 0.005f);
+    bw_chorus_set_coeff_x(&_chorus_coeffs, 0.7071f);
+    bw_chorus_set_coeff_mod(&_chorus_coeffs, 1.f);
+    bw_chorus_set_coeff_fb(&_chorus_coeffs, -0.7071f);
     configure(sample_rate);
 
     // The Brickworks VST3 example does alloc/dealloc of the delay lines
