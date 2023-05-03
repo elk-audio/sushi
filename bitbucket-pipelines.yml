@@ -47,16 +47,25 @@ pipelines:
           - mkdir build
           - cd build
           - cmake -DCMAKE_TOOLCHAIN_FILE=../third-party/vcpkg/scripts/buildsystems/vcpkg.cmake -DWITH_XENOMAI=FALSE -DWITH_JACK=TRUE -DWITH_VST2=OFF -DWITH_LV2=ON -DWITH_LV2_MDA_TESTS=ON -DTWINE_WITH_XENOMAI=OFF ..
-          - make sushi
-          - make unit_tests
+          - make sushi -j4
+          - make unit_tests -j4
           - cd test
           # Run unit tests with some tests test disabled
           - ./unit_tests --gtest_filter=-TestAudioGraph.TestMultiCoreOperation:TestLv2Wrapper.TestSynchronousStateAndWorkerThreads:TestLv2Wrapper.TestMidiEventInputAndOutput
           # Quick smoke test (not really working yet)
-          - cd ..
+          #- cd ..
           #- ./sushi -d -c ../../misc/config_files/config_play.json&
           #- sleep 6
           #- pkill sushi
+
+          # Build with options disabled
+          - cd ..
+          - cmake -DSUSHI_WITH_VST2=OFF -DSUSHI_WITH_VST3=OFF -DSUSHI_WITH_LV2=OFF -DSUSHI_WITH_LV2_MDA_TESTS=OFF -DSUSHI_WITH_RT_MIDI=ON -DSUSHI_WITH_ALSA_MIDI=OFF ..
+          - make sushi -j4
+          - make unit_tests -j4
+          - cd test
+          # Run unit tests with some tests test disabled
+          - ./unit_tests --gtest_filter=-TestAudioGraph.TestMultiCoreOperation
 
 definitions:
   caches:

@@ -205,7 +205,9 @@ target_compile_definitions(unit_tests PRIVATE ${TEST_COMPILE_DEFINITIONS})
 target_compile_options(unit_tests PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
 target_include_directories(unit_tests PRIVATE ${INCLUDE_DIRS})
 target_link_libraries(unit_tests "${TEST_LINK_LIBRARIES}")
-add_dependencies(unit_tests ${TEST_DEPENDENCIES})
+if (${TEST_DEPENDENCIES})
+    add_dependencies(unit_tests ${TEST_DEPENDENCIES})
+endif()
 
 # Disable Link in tests as this slows down the testing a lot due to network activity etc
 remove_definitions(-DSUSHI_BUILD_WITH_ABLETON_LINK)
