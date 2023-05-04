@@ -31,8 +31,8 @@ constexpr auto DEFAULT_LABEL = "Noise gate";
 
 NoiseGatePlugin::NoiseGatePlugin(HostControl host_control) : InternalPlugin(host_control)
 {
-    _max_input_channels = MAX_CHANNELS_SUPPORTED;
-    _max_output_channels = MAX_CHANNELS_SUPPORTED;
+    _max_input_channels = MAX_TRACK_CHANNELS;
+    _max_output_channels = MAX_TRACK_CHANNELS;
     Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
 
@@ -76,7 +76,7 @@ void NoiseGatePlugin::set_enabled(bool enabled)
 {
     Processor::set_enabled(enabled);
     bw_noise_gate_reset_coeffs(&_noise_gate_coeffs);
-    for (int i = 0; i < MAX_CHANNELS_SUPPORTED; i++)
+    for (int i = 0; i < MAX_TRACK_CHANNELS; i++)
     {
         bw_noise_gate_reset_state(&_noise_gate_coeffs, &_noise_gate_states[i]);
     }

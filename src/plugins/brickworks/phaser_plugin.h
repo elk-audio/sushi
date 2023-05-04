@@ -28,8 +28,6 @@
 namespace sushi {
 namespace phaser_plugin {
 
-constexpr int MAX_CHANNELS_SUPPORTED = 8;
-
 class PhaserPlugin : public InternalPlugin, public UidHelper<PhaserPlugin>
 {
 public:
@@ -53,7 +51,7 @@ private:
     FloatParameterValue* _amount;
 
     bw_phaser_coeffs _phaser_coeffs;
-    std::array<bw_phaser_state, MAX_CHANNELS_SUPPORTED> _phaser_states;
+    std::array<bw_phaser_state, MAX_TRACK_CHANNELS> _phaser_states;
 };
 
 }// namespace phaser_plugin

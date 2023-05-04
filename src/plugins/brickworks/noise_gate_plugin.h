@@ -28,8 +28,6 @@
 namespace sushi {
 namespace noise_gate_plugin {
 
-constexpr int MAX_CHANNELS_SUPPORTED = 8;
-
 class NoiseGatePlugin : public InternalPlugin, public UidHelper<NoiseGatePlugin>
 {
 public:
@@ -54,7 +52,7 @@ private:
     FloatParameterValue* _release;
 
     bw_noise_gate_coeffs _noise_gate_coeffs;
-    std::array<bw_noise_gate_state, MAX_CHANNELS_SUPPORTED> _noise_gate_states;
+    std::array<bw_noise_gate_state, MAX_TRACK_CHANNELS> _noise_gate_states;
 };
 
 }// namespace noise_gate_plugin

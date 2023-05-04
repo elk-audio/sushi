@@ -28,8 +28,6 @@
 namespace sushi {
 namespace wah_plugin {
 
-constexpr int MAX_CHANNELS_SUPPORTED = 8;
-
 class WahPlugin : public InternalPlugin, public UidHelper<WahPlugin>
 {
 public:
@@ -51,7 +49,7 @@ private:
     FloatParameterValue* _wah;
 
     bw_wah_coeffs _wah_coeffs;
-    std::array<bw_wah_state, MAX_CHANNELS_SUPPORTED> _wah_states;
+    std::array<bw_wah_state, MAX_TRACK_CHANNELS> _wah_states;
 };
 
 }// namespace wah_plugin

@@ -28,8 +28,6 @@
 namespace sushi {
 namespace tremolo_plugin {
 
-constexpr int MAX_CHANNELS_SUPPORTED = 8;
-
 class TremoloPlugin : public InternalPlugin, public UidHelper<TremoloPlugin>
 {
 public:
@@ -52,7 +50,7 @@ private:
     FloatParameterValue* _amount;
 
     bw_trem_coeffs _trem_coeffs;
-    std::array<bw_trem_state, MAX_CHANNELS_SUPPORTED> _trem_states;
+    std::array<bw_trem_state, MAX_TRACK_CHANNELS> _trem_states;
 };
 
 }// namespace tremolo_plugin

@@ -32,8 +32,8 @@ constexpr float MINUS_3DB = 0.7071067811865476f;
 
 CompressorPlugin::CompressorPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
-    _max_input_channels = MAX_CHANNELS_SUPPORTED;
-    _max_output_channels = MAX_CHANNELS_SUPPORTED;
+    _max_input_channels = MAX_TRACK_CHANNELS;
+    _max_output_channels = MAX_TRACK_CHANNELS;
     Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
 
@@ -82,7 +82,7 @@ void CompressorPlugin::set_enabled(bool enabled)
 {
     Processor::set_enabled(enabled);
     bw_comp_reset_coeffs(&_compressor_coeffs);
-    for (int i = 0; i < MAX_CHANNELS_SUPPORTED; i++)
+    for (int i = 0; i < MAX_TRACK_CHANNELS; i++)
     {
         bw_comp_reset_state(&_compressor_coeffs, &_compressor_state[i]);
     }

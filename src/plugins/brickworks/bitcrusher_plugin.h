@@ -29,8 +29,6 @@
 namespace sushi {
 namespace bitcrusher_plugin {
 
-constexpr int MAX_CHANNELS_SUPPORTED = 8;
-
 class BitcrusherPlugin : public InternalPlugin, public UidHelper<BitcrusherPlugin>
 {
 public:
@@ -55,7 +53,7 @@ private:
 
     bw_sr_reduce_coeffs _sr_reduce_coeffs;
     bw_bd_reduce_coeffs _bd_reduce_coeffs;
-    std::array<bw_sr_reduce_state, MAX_CHANNELS_SUPPORTED> _sr_reduce_states;
+    std::array<bw_sr_reduce_state, MAX_TRACK_CHANNELS> _sr_reduce_states;
 };
 
 }// namespace bitcrusher_plugin

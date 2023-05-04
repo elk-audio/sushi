@@ -29,8 +29,6 @@
 namespace sushi {
 namespace clip_plugin {
 
-constexpr int MAX_CHANNELS_SUPPORTED = 8;
-
 class ClipPlugin : public InternalPlugin, public UidHelper<ClipPlugin>
 {
 public:
@@ -55,11 +53,11 @@ private:
     bw_clip_coeffs _clip_coeffs;
     bw_src_int_coeffs _src_up_coeffs;
     bw_src_int_coeffs _src_down_coeffs;
-    std::array<bw_clip_state, MAX_CHANNELS_SUPPORTED>   _clip_states;
-    std::array<bw_src_int_state, MAX_CHANNELS_SUPPORTED> _src_up_states;
-    std::array<bw_src_int_state, MAX_CHANNELS_SUPPORTED> _src_down_states;
+    std::array<bw_clip_state, MAX_TRACK_CHANNELS>   _clip_states;
+    std::array<bw_src_int_state, MAX_TRACK_CHANNELS> _src_up_states;
+    std::array<bw_src_int_state, MAX_TRACK_CHANNELS> _src_down_states;
 
-    ChunkSampleBuffer _tmp_buf{MAX_CHANNELS_SUPPORTED};
+    ChunkSampleBuffer _tmp_buf{MAX_TRACK_CHANNELS};
 };
 
 }// namespace clip_plugin

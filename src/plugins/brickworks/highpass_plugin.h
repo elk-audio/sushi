@@ -28,8 +28,6 @@
 namespace sushi {
 namespace highpass_plugin {
 
-constexpr int MAX_CHANNELS_SUPPORTED = 8;
-
 class HighPassPlugin : public InternalPlugin, public UidHelper<HighPassPlugin>
 {
 public:
@@ -51,7 +49,7 @@ private:
     FloatParameterValue* _frequency;
 
     bw_hp1_coeffs _hp1_coeffs;
-    std::array<bw_hp1_state, MAX_CHANNELS_SUPPORTED> _hp1_states;
+    std::array<bw_hp1_state, MAX_TRACK_CHANNELS> _hp1_states;
 };
 
 }// namespace highpass_plugin

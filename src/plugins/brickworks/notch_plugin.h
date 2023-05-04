@@ -28,8 +28,6 @@
 namespace sushi {
 namespace notch_plugin {
 
-constexpr int MAX_CHANNELS_SUPPORTED = 8;
-
 class NotchPlugin : public InternalPlugin, public UidHelper<NotchPlugin>
 {
 public:
@@ -52,7 +50,7 @@ private:
     FloatParameterValue* _Q;
 
     bw_notch_coeffs _notch_coeffs;
-    std::array<bw_notch_state, MAX_CHANNELS_SUPPORTED> _notch_states;
+    std::array<bw_notch_state, MAX_TRACK_CHANNELS> _notch_states;
 };
 
 }// namespace notch_plugin

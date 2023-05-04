@@ -36,8 +36,8 @@ constexpr size_t DELAY_LINE_MEMALIGN = 32;
 
 CombPlugin::CombPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
-    _max_input_channels = MAX_CHANNELS_SUPPORTED;
-    _max_output_channels = MAX_CHANNELS_SUPPORTED;
+    _max_input_channels = MAX_TRACK_CHANNELS;
+    _max_output_channels = MAX_TRACK_CHANNELS;
     Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
 
@@ -71,7 +71,7 @@ CombPlugin::CombPlugin(HostControl host_control) : InternalPlugin(host_control)
 
 CombPlugin::~CombPlugin()
 {
-    for (int i = 0; i < MAX_CHANNELS_SUPPORTED; i++)
+    for (int i = 0; i < MAX_TRACK_CHANNELS; i++)
     {
         if (_delay_mem_areas[i])
         {
@@ -89,7 +89,7 @@ ProcessorReturnCode CombPlugin::init(float sample_rate)
     // The Brickworks VST3 example does alloc/dealloc of the delay lines
     // at every change of setEnabled, but since we're not changing the delay values
     // we can do everything here instead
-    for (int i = 0; i < MAX_CHANNELS_SUPPORTED; i++)
+    for (int i = 0; i < MAX_TRACK_CHANNELS; i++)
     {
         auto memret = posix_memalign(&_delay_mem_areas[i], DELAY_LINE_MEMALIGN, bw_comb_mem_req(&_comb_coeffs));
         if (memret != 0)
@@ -111,7 +111,7 @@ void CombPlugin::set_enabled(bool enabled)
 {
     Processor::set_enabled(enabled);
     bw_comb_reset_coeffs(&_comb_coeffs);
-    for (int i = 0; i < MAX_CHANNELS_SUPPORTED; i++)
+    for (int i = 0; i < MAX_TRACK_CHANNELS; i++)
     {
         bw_comb_reset_state(&_comb_coeffs, &_comb_states[i]);
     }

@@ -28,8 +28,6 @@
 namespace sushi {
 namespace multi_filter_plugin {
 
-constexpr int MAX_CHANNELS_SUPPORTED = 8;
-
 class MultiFilterPlugin : public InternalPlugin, public UidHelper<MultiFilterPlugin>
 {
 public:
@@ -56,7 +54,7 @@ private:
     FloatParameterValue* _highpass_coeff;
 
     bw_mm2_coeffs _mm2_coeffs;
-    std::array<bw_mm2_state, MAX_CHANNELS_SUPPORTED> _mm2_states;
+    std::array<bw_mm2_state, MAX_TRACK_CHANNELS> _mm2_states;
 };
 
 }// namespace multi_filter_plugin

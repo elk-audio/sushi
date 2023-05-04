@@ -28,8 +28,6 @@
 namespace sushi {
 namespace comb_plugin {
 
-constexpr int MAX_CHANNELS_SUPPORTED = 8;
-
 class CombPlugin : public InternalPlugin, public UidHelper<CombPlugin>
 {
 public:
@@ -55,8 +53,8 @@ private:
     FloatParameterValue* _fb_coeff;
 
     bw_comb_coeffs _comb_coeffs;
-    std::array<bw_comb_state, MAX_CHANNELS_SUPPORTED>   _comb_states;
-    std::array<void*, MAX_CHANNELS_SUPPORTED> _delay_mem_areas{nullptr};
+    std::array<bw_comb_state, MAX_TRACK_CHANNELS>   _comb_states;
+    std::array<void*, MAX_TRACK_CHANNELS> _delay_mem_areas{nullptr};
 };
 
 }// namespace comb_plugin

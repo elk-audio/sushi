@@ -31,8 +31,8 @@ constexpr auto DEFAULT_LABEL = "MultiFilter";
 
 MultiFilterPlugin::MultiFilterPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
-    _max_input_channels = MAX_CHANNELS_SUPPORTED;
-    _max_output_channels = MAX_CHANNELS_SUPPORTED;
+    _max_input_channels = MAX_TRACK_CHANNELS;
+    _max_output_channels = MAX_TRACK_CHANNELS;
     Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
 
@@ -86,7 +86,7 @@ void MultiFilterPlugin::set_enabled(bool enabled)
 {
     Processor::set_enabled(enabled);
     bw_mm2_reset_coeffs(&_mm2_coeffs);
-    for (int i = 0; i < MAX_CHANNELS_SUPPORTED; i++)
+    for (int i = 0; i < MAX_TRACK_CHANNELS; i++)
     {
         bw_mm2_reset_state(&_mm2_coeffs, &_mm2_states[i], 0.0f);
     }

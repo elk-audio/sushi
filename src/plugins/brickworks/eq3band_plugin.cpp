@@ -32,8 +32,8 @@ constexpr auto DEFAULT_LABEL = "3-band Equalizer";
 
 Eq3bandPlugin::Eq3bandPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
-    _max_input_channels = MAX_CHANNELS_SUPPORTED;
-    _max_output_channels = MAX_CHANNELS_SUPPORTED;
+    _max_input_channels = MAX_TRACK_CHANNELS;
+    _max_output_channels = MAX_TRACK_CHANNELS;
     Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
 
@@ -110,7 +110,7 @@ void Eq3bandPlugin::set_enabled(bool enabled)
     bw_ls2_reset_coeffs(&_ls2_coeffs);
     bw_peak_reset_coeffs(&_peak_coeffs);
     bw_hs2_reset_coeffs(&_hs2_coeffs);
-    for (int i = 0; i < MAX_CHANNELS_SUPPORTED; i++)
+    for (int i = 0; i < MAX_TRACK_CHANNELS; i++)
     {
         bw_ls2_reset_state(&_ls2_coeffs, &_ls2_states[i], 0.0f);
         bw_peak_reset_state(&_peak_coeffs, &_peak_states[i], 0.0f);

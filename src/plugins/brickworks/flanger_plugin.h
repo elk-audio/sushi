@@ -28,8 +28,6 @@
 namespace sushi {
 namespace flanger_plugin {
 
-constexpr int MAX_CHANNELS_SUPPORTED = 8;
-
 class FlangerPlugin : public InternalPlugin, public UidHelper<FlangerPlugin>
 {
 public:
@@ -52,8 +50,8 @@ private:
     FloatParameterValue* _amount;
 
     bw_chorus_coeffs _chorus_coeffs;
-    std::array<bw_chorus_state, MAX_CHANNELS_SUPPORTED> _chorus_states;
-    std::array<void*, MAX_CHANNELS_SUPPORTED> _delay_mem_areas{nullptr};
+    std::array<bw_chorus_state, MAX_TRACK_CHANNELS> _chorus_states;
+    std::array<void*, MAX_TRACK_CHANNELS> _delay_mem_areas{nullptr};
 };
 
 }// namespace flanger_plugin

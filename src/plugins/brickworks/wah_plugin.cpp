@@ -31,8 +31,8 @@ constexpr auto DEFAULT_LABEL = "Wah";
 
 WahPlugin::WahPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
-    _max_input_channels = MAX_CHANNELS_SUPPORTED;
-    _max_output_channels = MAX_CHANNELS_SUPPORTED;
+    _max_input_channels = MAX_TRACK_CHANNELS;
+    _max_output_channels = MAX_TRACK_CHANNELS;
     Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
 
@@ -61,7 +61,7 @@ void WahPlugin::set_enabled(bool enabled)
 {
     Processor::set_enabled(enabled);
     bw_wah_reset_coeffs(&_wah_coeffs);
-    for (int i = 0; i < MAX_CHANNELS_SUPPORTED; i++)
+    for (int i = 0; i < MAX_TRACK_CHANNELS; i++)
     {
         bw_wah_reset_state(&_wah_coeffs, &_wah_states[i]);
     }

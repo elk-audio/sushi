@@ -31,8 +31,8 @@ constexpr auto DEFAULT_LABEL = "Bitcrusher";
 
 BitcrusherPlugin::BitcrusherPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
-    _max_input_channels = MAX_CHANNELS_SUPPORTED;
-    _max_output_channels = MAX_CHANNELS_SUPPORTED;
+    _max_input_channels = MAX_TRACK_CHANNELS;
+    _max_output_channels = MAX_TRACK_CHANNELS;
     Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
 
@@ -60,7 +60,7 @@ void BitcrusherPlugin::set_enabled(bool enabled)
 {
     Processor::set_enabled(enabled);
     bw_bd_reduce_reset_coeffs(&_bd_reduce_coeffs);
-    for (int i = 0; i < MAX_CHANNELS_SUPPORTED; i++)
+    for (int i = 0; i < MAX_TRACK_CHANNELS; i++)
     {
         bw_sr_reduce_reset_state(&_sr_reduce_coeffs, &_sr_reduce_states[i]);
     }

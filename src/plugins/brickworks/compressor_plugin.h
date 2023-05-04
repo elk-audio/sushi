@@ -28,8 +28,6 @@
 namespace sushi {
 namespace compressor_plugin {
 
-constexpr int MAX_CHANNELS_SUPPORTED = 8;
-
 class CompressorPlugin : public InternalPlugin, public UidHelper<CompressorPlugin>
 {
 public:
@@ -55,7 +53,7 @@ private:
     FloatParameterValue* _gain;
 
     bw_comp_coeffs _compressor_coeffs;
-    std::array<bw_comp_state, MAX_CHANNELS_SUPPORTED> _compressor_state;
+    std::array<bw_comp_state, MAX_TRACK_CHANNELS> _compressor_state;
 };
 
 }// namespace compressor_plugin

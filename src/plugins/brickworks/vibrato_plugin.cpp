@@ -38,8 +38,8 @@ constexpr float VIBRATO_AMOUNT_SCALE = 0.0025f;
 
 VibratoPlugin::VibratoPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
-    _max_input_channels = MAX_CHANNELS_SUPPORTED;
-    _max_output_channels = MAX_CHANNELS_SUPPORTED;
+    _max_input_channels = MAX_TRACK_CHANNELS;
+    _max_output_channels = MAX_TRACK_CHANNELS;
     Processor::set_name(PLUGIN_UID);
     Processor::set_label(DEFAULT_LABEL);
 
@@ -62,7 +62,7 @@ VibratoPlugin::VibratoPlugin(HostControl host_control) : InternalPlugin(host_con
 
 VibratoPlugin::~VibratoPlugin()
 {
-    for (int i = 0; i < MAX_CHANNELS_SUPPORTED; i++)
+    for (int i = 0; i < MAX_TRACK_CHANNELS; i++)
     {
         if (_delay_mem_areas[i])
         {
@@ -84,7 +84,7 @@ ProcessorReturnCode VibratoPlugin::init(float sample_rate)
     // The Brickworks VST3 example does alloc/dealloc of the delay lines
     // at every change of setEnabled, but since we're not changing the delay values
     // we can do everything here instead
-    for (int i = 0; i < MAX_CHANNELS_SUPPORTED; i++)
+    for (int i = 0; i < MAX_TRACK_CHANNELS; i++)
     {
         auto memret = posix_memalign(&_delay_mem_areas[i], DELAY_LINE_MEMALIGN, bw_chorus_mem_req(&_chorus_coeffs));
         if (memret != 0)
@@ -106,7 +106,7 @@ void VibratoPlugin::set_enabled(bool enabled)
 {
     Processor::set_enabled(enabled);
     bw_chorus_reset_coeffs(&_chorus_coeffs);
-    for (int i = 0; i < MAX_CHANNELS_SUPPORTED; i++)
+    for (int i = 0; i < MAX_TRACK_CHANNELS; i++)
     {
         bw_chorus_reset_state(&_chorus_coeffs, &_chorus_states[i]);
     }

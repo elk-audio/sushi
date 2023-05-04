@@ -30,8 +30,6 @@
 namespace sushi {
 namespace eq3band_plugin {
 
-constexpr int MAX_CHANNELS_SUPPORTED = 8;
-
 class Eq3bandPlugin : public InternalPlugin, public UidHelper<Eq3bandPlugin>
 {
 public:
@@ -61,11 +59,11 @@ private:
     FloatParameterValue* _highshelf_q;
 
     bw_ls2_coeffs _ls2_coeffs;
-    std::array<bw_ls2_state, MAX_CHANNELS_SUPPORTED> _ls2_states;
+    std::array<bw_ls2_state, MAX_TRACK_CHANNELS> _ls2_states;
     bw_peak_coeffs _peak_coeffs;
-    std::array<bw_peak_state, MAX_CHANNELS_SUPPORTED> _peak_states;
+    std::array<bw_peak_state, MAX_TRACK_CHANNELS> _peak_states;
     bw_hs2_coeffs _hs2_coeffs;
-    std::array<bw_hs2_state, MAX_CHANNELS_SUPPORTED> _hs2_states;
+    std::array<bw_hs2_state, MAX_TRACK_CHANNELS> _hs2_states;
 };
 
 }// namespace eq3band_plugin
