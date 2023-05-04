@@ -56,7 +56,7 @@ private:
     FloatParameterValue* _highpass_coeff;
 
     bw_mm2_coeffs _mm2_coeffs;
-    bw_mm2_state _mm2_states[MAX_CHANNELS_SUPPORTED];
+    std::array<bw_mm2_state, MAX_CHANNELS_SUPPORTED> _mm2_states;
 };
 
 }// namespace multi_filter_plugin

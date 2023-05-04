@@ -51,7 +51,7 @@ private:
     FloatParameterValue* _wah;
 
     bw_wah_coeffs _wah_coeffs;
-    bw_wah_state _wah_states[MAX_CHANNELS_SUPPORTED];
+    std::array<bw_wah_state, MAX_CHANNELS_SUPPORTED> _wah_states;
 };
 
 }// namespace wah_plugin

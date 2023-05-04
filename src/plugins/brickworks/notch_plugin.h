@@ -52,7 +52,7 @@ private:
     FloatParameterValue* _Q;
 
     bw_notch_coeffs _notch_coeffs;
-    bw_notch_state  _notch_states[MAX_CHANNELS_SUPPORTED];
+    std::array<bw_notch_state, MAX_CHANNELS_SUPPORTED> _notch_states;
 };
 
 }// namespace notch_plugin

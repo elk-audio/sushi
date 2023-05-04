@@ -55,7 +55,7 @@ private:
     FloatParameterValue* _gain;
 
     bw_comp_coeffs _compressor_coeffs;
-    bw_comp_state _compressor_state[MAX_CHANNELS_SUPPORTED];
+    std::array<bw_comp_state, MAX_CHANNELS_SUPPORTED> _compressor_state;
 };
 
 }// namespace compressor_plugin

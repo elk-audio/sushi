@@ -51,7 +51,7 @@ private:
     FloatParameterValue* _frequency;
 
     bw_hp1_coeffs _hp1_coeffs;
-    bw_hp1_state _hp1_states[MAX_CHANNELS_SUPPORTED];
+    std::array<bw_hp1_state, MAX_CHANNELS_SUPPORTED> _hp1_states;
 };
 
 }// namespace highpass_plugin

@@ -52,8 +52,8 @@ private:
     FloatParameterValue* _amount;
 
     bw_chorus_coeffs _chorus_coeffs;
-    bw_chorus_state _chorus_states[MAX_CHANNELS_SUPPORTED];
-    void* _delay_mem_areas[MAX_CHANNELS_SUPPORTED]{nullptr};
+    std::array<bw_chorus_state, MAX_CHANNELS_SUPPORTED> _chorus_states;
+    std::array<void*, MAX_CHANNELS_SUPPORTED> _delay_mem_areas{nullptr};
 };
 
 }// namespace flanger_plugin

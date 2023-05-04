@@ -55,7 +55,7 @@ private:
 
     bw_sr_reduce_coeffs _sr_reduce_coeffs;
     bw_bd_reduce_coeffs _bd_reduce_coeffs;
-    bw_sr_reduce_state  _sr_reduce_states[MAX_CHANNELS_SUPPORTED];
+    std::array<bw_sr_reduce_state, MAX_CHANNELS_SUPPORTED> _sr_reduce_states;
 };
 
 }// namespace bitcrusher_plugin

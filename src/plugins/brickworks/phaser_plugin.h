@@ -53,7 +53,7 @@ private:
     FloatParameterValue* _amount;
 
     bw_phaser_coeffs _phaser_coeffs;
-    bw_phaser_state _phaser_states[MAX_CHANNELS_SUPPORTED];
+    std::array<bw_phaser_state, MAX_CHANNELS_SUPPORTED> _phaser_states;
 };
 
 }// namespace phaser_plugin

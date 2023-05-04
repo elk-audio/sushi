@@ -60,12 +60,12 @@ private:
     FloatParameterValue* _highshelf_gain;
     FloatParameterValue* _highshelf_q;
 
-    bw_ls2_coeffs   _ls2_coeffs;
-    bw_ls2_state    _ls2_states[MAX_CHANNELS_SUPPORTED];
-    bw_peak_coeffs  _peak_coeffs;
-    bw_peak_state   _peak_states[MAX_CHANNELS_SUPPORTED];
-    bw_hs2_coeffs   _hs2_coeffs;
-    bw_hs2_state    _hs2_states[MAX_CHANNELS_SUPPORTED];
+    bw_ls2_coeffs _ls2_coeffs;
+    std::array<bw_ls2_state, MAX_CHANNELS_SUPPORTED> _ls2_states;
+    bw_peak_coeffs _peak_coeffs;
+    std::array<bw_peak_state, MAX_CHANNELS_SUPPORTED> _peak_states;
+    bw_hs2_coeffs _hs2_coeffs;
+    std::array<bw_hs2_state, MAX_CHANNELS_SUPPORTED> _hs2_states;
 };
 
 }// namespace eq3band_plugin

@@ -55,9 +55,9 @@ private:
     bw_satur_coeffs _saturation_coeffs;
     bw_src_int_coeffs _src_up_coeffs;
     bw_src_int_coeffs _src_down_coeffs;
-    bw_satur_state  _saturation_states[MAX_CHANNELS_SUPPORTED];
-    bw_src_int_state _src_up_states[MAX_CHANNELS_SUPPORTED];
-    bw_src_int_state _src_down_states[MAX_CHANNELS_SUPPORTED];
+    std::array<bw_satur_state, MAX_CHANNELS_SUPPORTED> _saturation_states;
+    std::array<bw_src_int_state, MAX_CHANNELS_SUPPORTED> _src_up_states;
+    std::array<bw_src_int_state, MAX_CHANNELS_SUPPORTED> _src_down_states;
 
     ChunkSampleBuffer _tmp_buf{MAX_CHANNELS_SUPPORTED};
 };

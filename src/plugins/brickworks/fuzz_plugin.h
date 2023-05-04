@@ -55,9 +55,9 @@ private:
     bw_fuzz_coeffs _fuzz_coeffs;
     bw_src_int_coeffs _src_up_coeffs;
     bw_src_int_coeffs _src_down_coeffs;
-    bw_fuzz_state   _fuzz_states[MAX_CHANNELS_SUPPORTED];
-    bw_src_int_state _src_up_states[MAX_CHANNELS_SUPPORTED];
-    bw_src_int_state _src_down_states[MAX_CHANNELS_SUPPORTED];
+    std::array<bw_fuzz_state, MAX_CHANNELS_SUPPORTED> _fuzz_states;
+    std::array<bw_src_int_state, MAX_CHANNELS_SUPPORTED> _src_up_states;
+    std::array<bw_src_int_state, MAX_CHANNELS_SUPPORTED> _src_down_states;
 
     ChunkSampleBuffer _tmp_buf{MAX_CHANNELS_SUPPORTED};
 };
