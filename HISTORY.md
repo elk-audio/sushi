@@ -2,11 +2,24 @@
 
 New features:
   * Added Apple CoreAudio frontend
-  * Added support for using the 3.3 Twine version, which adds functionality for setting threads to real-time, and joining workgroups.
- 
+  * Support for aggregate devices
+  * Wave Streamer plugin
+  * TWINE updated to 0.4.0 with workgroup support
+  * Rapidjson updated to latest master branch
+  * Optimised State changes for VST3 plugins
+  * Crash logging with Sentry
+  * Device dump now includes sample rate and buffer size support
+
+Fixes:
+  * LV2 worker request space too small
+  * LV2 logging not handled correctly
+  * Incorrect velocity scaling on Midi output from LV2 plugins
+  * VST3 plugin initialization order fix
+  * Parameter notification fix
+
 Breaking changes:
-  * The argument --dump-portaudio-devs is changed to --dump-audio-devices and now requires a frontend to be specified as well (--coreaudio or --portaudio).
-  * Now, if Sushi fails to set the priority of threads to real-time, and to join workgroups, on macOS, it will exit with an error, instead of continuing to run with the threads' performance settings in an unknown state.
+  * The argument --dump-portaudio-devs is changed to --dump-audio-devices and now requires a frontend to be specified (--coreaudio or --portaudio).
+  * Failure to set priority and/or workgroup on MacOS will cause Sushi to exit.
 
 ## 1.0.0
 
