@@ -5,7 +5,9 @@
 
 #include "test_utils/engine_mockup.h"
 #include "library/lv2/lv2_state.cpp"
-#include "library/lv2/lv2_features.cpp"
+
+#include "spdlog/fmt/bundled/core.h"
+#include "spdlog/fmt/bundled/format.h"
 
 // Needed for unit tests to access private utility methods in lv2_wrapper.
 #define private public
@@ -16,6 +18,12 @@
 #include "library/lv2/lv2_model.cpp"
 #include "library/lv2/lv2_worker.cpp"
 #include "library/lv2/lv2_control.cpp"
+
+// For testing the LV2Log feature, override the logger macro to write to a local variable instead
+#undef SUSHI_LOG_DEBUG
+std::array<char, 1024> log_buffer;
+#define SUSHI_LOG_DEBUG(fmt_str, ...) ::fmt::format_to(log_buffer.data(), fmt_str, __VA_ARGS__);
+#include "library/lv2/lv2_features.cpp"
 
 using namespace sushi;
 using namespace sushi::lv2;
@@ -72,12 +80,12 @@ class TestLv2Wrapper : public ::testing::Test
 protected:
     using ::testing::Test::SetUp; // Hide error of hidden overload of virtual function in clang when signatures differ but the name is the same
     TestLv2Wrapper()
-    {
-    }
+    {}
 
     ProcessorReturnCode SetUp(const std::string& plugin_URI)
     {
         auto mockup = _host_control.make_host_control_mockup(TEST_SAMPLE_RATE);
+        _host_control._transport.set_time(Time(0), 0);
         _world = std::make_shared<LilvWorldWrapper>();
         bool world_created = _world->create_world();
         EXPECT_TRUE(world_created);
@@ -102,10 +110,12 @@ protected:
 
     void TearDown()
     {
-        _module_under_test = nullptr;
+        _module_under_test.reset();
     }
 
     RtSafeRtEventFifo _fifo;
+
+
 
     HostControlMockup _host_control;
     std::shared_ptr<LilvWorldWrapper> _world;
@@ -223,6 +233,7 @@ TEST_F(TestLv2Wrapper, TestBypassProcessing)
 
 TEST_F(TestLv2Wrapper, TestMidiEventInputAndOutput)
 {
+    // Use a plugin that doubles midi notes a fifth up for testing
     auto ret = SetUp("http://lv2plug.in/plugins/eg-fifths");
     ASSERT_EQ(ProcessorReturnCode::OK, ret);
 
@@ -231,33 +242,36 @@ TEST_F(TestLv2Wrapper, TestMidiEventInputAndOutput)
     ChunkSampleBuffer in_buffer(2);
     ChunkSampleBuffer out_buffer(2);
 
-    _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 0, 60, 1.0f));
-    _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 0, 60, 0.0f));
+    _module_under_test->process_event(RtEvent::make_note_on_event(0, 0, 1, 60, 1.0f));
+    _module_under_test->process_event(RtEvent::make_note_off_event(0, 0, 2, 60, 0.5f));
     _module_under_test->process_audio(in_buffer, out_buffer);
 
     RtEvent e;
-    bool got_event = _fifo.pop(e);
-    ASSERT_TRUE(got_event);
+    ASSERT_TRUE(_fifo.pop(e));
+    EXPECT_EQ(_module_under_test->id(), e.processor_id());
 
-    ASSERT_EQ(_module_under_test->id(), e.processor_id());
+    EXPECT_EQ(RtEventType::NOTE_ON, e.type());
+    EXPECT_EQ(1, e.keyboard_event()->channel());
+    EXPECT_EQ(60, e.keyboard_event()->note());
+    EXPECT_FLOAT_EQ(1.0f, e.keyboard_event()->velocity());
 
-    ASSERT_EQ(RtEventType::NOTE_ON, e.type());
-    ASSERT_EQ(60, e.keyboard_event()->note());
+    ASSERT_TRUE(_fifo.pop(e));
+    EXPECT_EQ(RtEventType::NOTE_ON, e.type());
+    EXPECT_EQ(1, e.keyboard_event()->channel());
+    EXPECT_EQ(67, e.keyboard_event()->note());
+    EXPECT_FLOAT_EQ(1.0f, e.keyboard_event()->velocity());
 
-    _fifo.pop(e);
+    ASSERT_TRUE(_fifo.pop(e));
+    EXPECT_EQ(RtEventType::NOTE_OFF, e.type());
+    EXPECT_EQ(2, e.keyboard_event()->channel());
+    EXPECT_EQ(60, e.keyboard_event()->note());
+    EXPECT_NEAR(0.5f, e.keyboard_event()->velocity(), 0.01);
 
-    ASSERT_EQ(RtEventType::NOTE_ON, e.type());
-    ASSERT_EQ(67, e.keyboard_event()->note());
-
-    _fifo.pop(e);
-
-    ASSERT_EQ(RtEventType::NOTE_OFF, e.type());
-    ASSERT_EQ(60, e.keyboard_event()->note());
-
-    _fifo.pop(e);
-
-    ASSERT_EQ(RtEventType::NOTE_OFF, e.type());
-    ASSERT_EQ(67, e.keyboard_event()->note());
+    ASSERT_TRUE(_fifo.pop(e));
+    EXPECT_EQ(RtEventType::NOTE_OFF, e.type());
+    EXPECT_EQ(2, e.keyboard_event()->channel());
+    EXPECT_EQ(67, e.keyboard_event()->note());
+    EXPECT_NEAR(0.5f, e.keyboard_event()->velocity(), 0.01);
 
     ASSERT_TRUE(_fifo.empty());
 }
@@ -463,6 +477,7 @@ TEST_F(TestLv2Wrapper, TestSynth)
     ASSERT_TRUE(_module_under_test->supports_programs());
     ASSERT_EQ(52, _module_under_test->program_count());
     ASSERT_EQ(0, _module_under_test->current_program());
+
     ASSERT_EQ("http://drobilla.net/plugins/mda/presets#JX10-303-saw-bass", _module_under_test->current_program_name());
     auto[status, program_name] = _module_under_test->program_name(2);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
@@ -587,6 +602,19 @@ TEST_F(TestLv2Wrapper, TestBinaryStateSaving)
 
     // Check the value has reverted to the previous value
     EXPECT_FLOAT_EQ(prev_value, _module_under_test->parameter_value(desc->id()).second);
+}
+
+TEST_F(TestLv2Wrapper, TestLv2Logging)
+{
+    auto ret = SetUp("http://lv2plug.in/plugins/eg-amp");
+    ASSERT_EQ(ProcessorReturnCode::OK, ret);
+
+    log_buffer.fill('\0');
+    auto model= _module_under_test->_model.get();
+
+    // Note that LV2Log uses old style printf-formatting
+    lv2_printf(static_cast<void*>(model), model->urids().log_Error, "logged from %s%i", "lv", 2);
+    EXPECT_STREQ("LV2 Error: logged from lv2", log_buffer.data());
 }
 
 #endif //SUSHI_BUILD_WITH_LV2_MDA_TESTS

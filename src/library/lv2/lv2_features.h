@@ -68,7 +68,7 @@ Port* port_by_symbol(Model* model, const char* sym);
 int lv2_vprintf(LV2_Log_Handle handle,
             LV2_URID type,
             const char *fmt,
-            va_list ap);
+            va_list args);
 
 int lv2_printf(LV2_Log_Handle handle,
            LV2_URID type,

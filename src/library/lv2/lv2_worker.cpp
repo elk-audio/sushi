@@ -52,13 +52,16 @@ LV2_Worker_Status Worker::schedule(LV2_Worker_Schedule_Handle handle, uint32_t s
         Lv2FifoItem request;
         request.size = size;
 
-        if (size > WORKER_REQUEST_SIZE)
+        if (size > request.block.size())
         {
             return LV2_WORKER_ERR_NO_SPACE;
         }
 
         memcpy(request.block.data(), data, size);
-        worker->requests().push(request);
+        if (!worker->requests().push(request))
+        {
+            return LV2_WORKER_ERR_NO_SPACE;
+        }
         wrapper->request_worker_callback(&LV2_Wrapper::worker_callback);
     }
     else

@@ -26,8 +26,8 @@
 namespace sushi {
 namespace lv2 {
 
-constexpr int WORKER_FIFO_SIZE = 128;
-constexpr int WORKER_REQUEST_SIZE = 64;
+constexpr int WORKER_FIFO_SIZE = 16;
+constexpr int WORKER_REQUEST_SIZE = 1024;
 
 struct Lv2FifoItem
 {

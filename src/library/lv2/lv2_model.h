@@ -290,7 +290,7 @@ private:
     HostFeatures _features;
     std::array<const LV2_Feature*, FEATURE_LIST_SIZE> _feature_list;
 
-    uint32_t _position;
+    uint32_t _position{0};
     float _bpm{0};
     bool _rolling{false};
 
