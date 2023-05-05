@@ -1,7 +1,7 @@
 # Only use spaces to indent your .yml configuration.
 # -----
 # You can specify a custom docker image from Docker Hub as your build environment.
-image: ubuntu:22.10
+image: ubuntu:22.04
 
 pipelines:
   default:
@@ -9,7 +9,8 @@ pipelines:
         name: Build sushi + tests
 
         caches:
-          - vcpkgcache
+          - vcpkg
+
         script:
           # Prepare system.
           - apt-get update -y
@@ -27,24 +28,18 @@ pipelines:
           # Prepare dependencies
           # Rewrite the relative submodule url as bitbucket doesn't handle relative paths correctly
           - sed -i 's/url = \.\.\(.*\)/url = git@bitbucket.org:'$BITBUCKET_TEAM'\1/g' .gitmodules
-          # Optimise a bit by only load sub-submodules where needed
-          - git submodule update --init
-          - cd third-party/link
-          - git submodule update --init
-          - cd ../vst3sdk/
-          - git submodule update --init
-          - cd ../.. 
+          - git submodule update --init --recursive
           # Set test data dir (for running unit test manually)
           - export SUSHI_TEST_DATA_DIR=$PWD/test/data
           # Boostrap vcpkg
-          - export VCPKG_BINARY_SOURCES="clear;files,$(pwd)/cachevcpkg,readwrite"
+          - export VCPKG_BINARY_SOURCES="clear;files,$(pwd)/vcpkgcache,readwrite"
           - ./third-party/vcpkg/bootstrap-vcpkg.sh
           - mkdir build
           - cd build
           - cmake -DCMAKE_TOOLCHAIN_FILE=../third-party/vcpkg/scripts/buildsystems/vcpkg.cmake -DWITH_XENOMAI=FALSE -DWITH_JACK=TRUE -DWITH_VST2=OFF -DWITH_LV2=ON -DWITH_LV2_MDA_TESTS=ON -DTWINE_WITH_XENOMAI=OFF ..
 
           # Build multiple configuration and run unit tests
-          # Build sushi and unit tests with default options
+          # Build sushi and unit tests with default options and default buffer size (64 samples)
           - make sushi -j4
           - make unit_tests -j4
           # Run unit tests with some tests test disabled
@@ -83,7 +78,7 @@ pipelines:
 
 definitions:
   caches:
-    vcpkgcache: cachevcpkg
+    vcpkg: vcpkgcache
 
   variables:
     - name: BUILD_CORES
