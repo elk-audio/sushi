@@ -1,6 +1,6 @@
 #Licensing information
 
-All SUSHI code is Copyright © 2017-2023 [Elk Audio AB] (“Elk”) and is licensed under the [https://www.gnu.org/licenses/agpl-3.0.en.html](GNU Affero General Public License v.3) (“AGPLv3”). Such SUSHI code is considered the “Program” within the meaning of the AGPLv3.
+All SUSHI code is Copyright © 2017-2023 [Elk Audio AB], formerly [Modern Ancient Instruments Networked AB] (“Elk”) and is licensed under the [https://www.gnu.org/licenses/agpl-3.0.en.html](GNU Affero General Public License v.3) (“AGPLv3”). Such SUSHI code is considered the “Program” within the meaning of the AGPLv3.
 
 Loading plugins or libraries into the Program, or statically or dynamically linking or interfacing other applications, plugins, or libraries with the Program, including through a network API, is making a combined work based on the Program. Thus, the AGPLv3 covers the entire combination. You may therefore propagate, convey, or make available over a network, this combined work only in full compliance with the AGPLv3, including compliance with the obligation to provide the Corresponding Source (as that term is defined and used in the AGPLv3) for this entire combination.
 
