@@ -28,7 +28,14 @@
 namespace sushi {
 std::ostream& operator<<(std::ostream& out, const rapidjson::Document& document);
 
-std::pair<bool, std::string> load_config_file(const std::string& path);
+/**
+ * Reads the file passed in through the path argument.
+ * Returns true, and the contents on read success.
+ * Or false and an empty string on failure.
+ * @param path The absolut path to the file.
+ * @return status, and file content on success.
+ */
+std::pair<bool, std::string> read_json_file(const std::string& path);
 
 }
 

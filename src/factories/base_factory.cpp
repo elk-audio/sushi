@@ -89,7 +89,7 @@ Status BaseFactory::_configure_from_file(SushiOptions& options)
 {
     bool status;
 
-    std::tie(status, options.json_string) = load_config_file(options.config_filename);
+    std::tie(status, options.json_string) = read_json_file (options.config_filename);
 
     if (!status)
     {

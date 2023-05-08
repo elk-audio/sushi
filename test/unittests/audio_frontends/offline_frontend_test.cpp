@@ -134,7 +134,7 @@ TEST_F(TestOfflineFrontend, TestAddSequencerEvents)
     std::string json_data;
     bool load_file_status;
 
-    std::tie(load_file_status, json_data) = load_config_file(test_config_file);
+    std::tie(load_file_status, json_data) = read_json_file (test_config_file);
 
     jsonconfig::JsonConfigurator configurator(&_engine,
                                               &_midi_dispatcher,

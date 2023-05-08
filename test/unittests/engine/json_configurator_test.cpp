@@ -49,7 +49,7 @@ protected:
         std::string json_data;
         bool status;
 
-        std::tie(status, json_data) = sushi::load_config_file(_path);
+        std::tie(status, json_data) = sushi::read_json_file (_path);
 
         _module_under_test = std::make_unique<JsonConfigurator>(&_engine,
                                                                 &_midi_dispatcher,

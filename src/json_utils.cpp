@@ -33,7 +33,7 @@
 
 namespace sushi {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("loadconfigfile");
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("json_file_reading");
 
 std::ostream& operator<<(std::ostream& out, const rapidjson::Document& document)
 {
@@ -43,12 +43,12 @@ std::ostream& operator<<(std::ostream& out, const rapidjson::Document& document)
     return out;
 }
 
-std::pair<bool, std::string> load_config_file(const std::string& path)
+std::pair<bool, std::string> read_json_file(const std::string& path)
 {
     std::ifstream config_file(path);
     if (!config_file.good())
     {
-        SUSHI_LOG_ERROR("Invalid file path passed to Json config file {}", path);
+        SUSHI_LOG_ERROR("Invalid file path passed to Json file {}", path);
         return {false, {}};
     }
 
