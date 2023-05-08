@@ -57,7 +57,7 @@ AudioGraph::AudioGraph(int cpu_cores,
 
     if (_cores > 1)
     {
-        twine::apple::AppleMultiThreadData apple_data = nullptr;
+        twine::apple::AppleMultiThreadData apple_data;
 #ifdef SUSHI_APPLE_THREADING
         apple_data.chunk_size = AUDIO_CHUNK_SIZE;
         apple_data.current_sample_rate = sample_rate;
@@ -65,6 +65,8 @@ AudioGraph::AudioGraph(int cpu_cores,
         {
             apple_data.device_name = device_name.value();
         }
+#else
+        apple_data = nullptr;
 #endif
 
         _worker_pool = twine::WorkerPool::create_worker_pool(_cores,
