@@ -142,5 +142,5 @@ You will need to define this if you want to run the unit test explicitly, e.g. w
 ## License
 Sushi is licensed under Affero General Public License (“AGPLv3”). See [LICENSE](LICENSE.md) document for the full details of the license. For contributing code to Sushi, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm, Sweden.
+Copyright 2017-2023 Elk Audio AB, Stockholm, Sweden.
 
