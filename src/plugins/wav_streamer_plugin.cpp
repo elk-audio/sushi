@@ -226,6 +226,7 @@ void WavStreamerPlugin::process_event(const RtEvent& event)
             }
             else if (typed_event->param_id() == _seek_parameter->descriptor()->id())
             {
+                _seek_in_process = true;
                 request_non_rt_task(set_seek_callback);
             }
             break;
@@ -248,10 +249,14 @@ void WavStreamerPlugin::process_audio([[maybe_unused]] const ChunkSampleBuffer& 
 
     if (_current_block && _bypass_manager.should_process() && _mode != sushi::wav_streamer_plugin::StreamingMode::STOPPED)
     {
-        float gain_value = _gain_parameter->processed_value();
-
         if (_mode == StreamingMode::PLAYING || _mode == StreamingMode::STARTING)
         {
+            float gain_value = _gain_parameter->processed_value();
+            if (_seek_in_process)
+            {
+                gain_value = 0.0f;
+            }
+
             _gain_smoother.set(gain_value);
             _exp_gain_smoother.set(gain_value);
         }
@@ -472,6 +477,7 @@ bool WavStreamerPlugin::_load_new_block()
         else // Block is stale due to seek or new file
         {
             _current_block_pos = 0.0f;
+            _seek_in_process = false;
             if (prev_block)
             {
                 async_delete(prev_block);
@@ -534,7 +540,7 @@ void WavStreamerPlugin::_update_position_display(bool looping)
         {
             position = std::fmod(_file_pos / _file_length, 1.0f);
         }
-        else // The last block will contain a bit of silence at the end, let position stay at 1.0
+        else // The last block will contain a bit of silence at the end, don't let position go past 1.0
         {
             position = std::clamp(_file_pos / _file_length, 0.0f, 1.0f);
         }
@@ -589,7 +595,7 @@ void WavStreamerPlugin::_handle_fades(ChunkSampleBuffer& buffer)
     {
         buffer.apply_gain(_gain_smoother.value());
     }
-    else // Ramp because start/stop or gain parameter changed
+    else // Ramp because start/stop, gain parameter changed or quick down/up fade due to seeking
     {
         float start;
         float end;

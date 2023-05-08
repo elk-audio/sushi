@@ -170,6 +170,7 @@ private:
     float _file_pos{0};
 
     int _seek_update_count{0};
+    bool _seek_in_process{false};
 
     memory_relaxed_aquire_release::CircularFifo<AudioBlock*, QUEUE_SIZE> _block_queue;
 };
