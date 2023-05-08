@@ -20,6 +20,8 @@
 
 #include <iostream>
 
+#include <fstream>
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wtype-limits"
 #include "rapidjson/ostreamwrapper.h"
@@ -27,7 +29,11 @@
 #include "rapidjson/document.h"
 #pragma GCC diagnostic pop
 
+#include "sushi/logging.h"
+
 namespace sushi {
+
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("loadconfigfile");
 
 std::ostream& operator<<(std::ostream& out, const rapidjson::Document& document)
 {
@@ -36,5 +42,21 @@ std::ostream& operator<<(std::ostream& out, const rapidjson::Document& document)
     document.Accept(writer);
     return out;
 }
+
+std::pair<bool, std::string> load_config_file(const std::string& path)
+{
+    std::ifstream config_file(path);
+    if (!config_file.good())
+    {
+        SUSHI_LOG_ERROR("Invalid file path passed to JsonConfigurator {}", path);
+        return {false, {}};
+    }
+
+    // Iterate through every char in file and store in the string
+    std::string config_file_contents((std::istreambuf_iterator<char>(config_file)), std::istreambuf_iterator<char>());
+
+    return {true, config_file_contents};
+}
+
 
 }

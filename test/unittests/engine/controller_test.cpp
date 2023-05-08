@@ -6,6 +6,8 @@
 #include "test_utils/test_utils.h"
 #include "test_utils/audio_frontend_mockup.h"
 
+#include "sushi/json_utils.h"
+
 /* Currently testing Controller as a complete class
  * eventually we might want to test the individual
  * controller interfaces separately */
@@ -28,9 +30,9 @@ const std::string TEST_FILE = "config.json";
 class ControllerTest : public ::testing::Test
 {
 protected:
-    ControllerTest() {}
+    ControllerTest() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         _engine.set_audio_input_channels(ENGINE_CHANNELS);
         _engine.set_audio_output_channels(ENGINE_CHANNELS);
@@ -47,10 +49,15 @@ protected:
     }
 
     std::string _path{test_utils::get_data_dir_path() + TEST_FILE};
+    std::string _json_data{sushi::load_config_file(_path).second};
     AudioEngine _engine{TEST_SAMPLE_RATE};
     midi_dispatcher::MidiDispatcher _midi_dispatcher{_engine.event_dispatcher()};
     AudioFrontendMockup  _audio_frontend;
-    jsonconfig::JsonConfigurator _configurator{&_engine, &_midi_dispatcher, _engine.processor_container(), _path};
+    jsonconfig::JsonConfigurator _configurator{&_engine,
+                                               &_midi_dispatcher,
+                                               _engine.processor_container(),
+                                               _json_data};
+
     std::unique_ptr<control::SushiControl> _module_under_test;
 };
 

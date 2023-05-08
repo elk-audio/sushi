@@ -79,6 +79,8 @@ int main(int argc, char* argv[])
 
     SushiOptions options;
 
+    options.config_source = sushi::ConfigurationSource::FILE;
+
     auto option_status = parse_options(argc, argv, options);
     if (option_status == ParseStatus::ERROR)
     {

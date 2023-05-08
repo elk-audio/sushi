@@ -80,10 +80,10 @@ public:
     JsonConfigurator(engine::BaseEngine* engine,
                      midi_dispatcher::MidiDispatcher* midi_dispatcher,
                      const engine::BaseProcessorContainer* processor_container,
-                     const std::string& path) : _engine(engine),
-                                                _midi_dispatcher(midi_dispatcher),
-                                                _processor_container(processor_container),
-                                                _document_path(path) {}
+                     const std::string& json_string) : _engine(engine),
+                                                       _midi_dispatcher(midi_dispatcher),
+                                                       _processor_container(processor_container),
+                                                       _json_string(json_string) {}
 
     ~JsonConfigurator() = default;
 
@@ -157,7 +157,7 @@ public:
 private:
     /**
      * @brief Helper function to retrieve a particular section of the json configuration
-     * @param section Jsonsection to denote which section is to be validated.
+     * @param section JsonSection to denote which section is to be validated.
      * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
      */
     std::pair<JsonConfigReturnStatus, const rapidjson::Value&> _parse_section(JsonSection section);
@@ -204,14 +204,14 @@ private:
      */
     static bool _validate_against_schema(rapidjson::Value& config, JsonSection section);
 
-    JsonConfigReturnStatus _load_data();
+    JsonConfigReturnStatus _load_data(const std::string& data);
 
     engine::BaseEngine* _engine;
     midi_dispatcher::MidiDispatcher* _midi_dispatcher;
     control_frontend::OSCFrontend* _osc_frontend {nullptr};
     const engine::BaseProcessorContainer* _processor_container;
 
-    std::string _document_path;
+    std::string _json_string;
     rapidjson::Document _json_data;
 };
 

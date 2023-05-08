@@ -27,6 +27,9 @@
 
 namespace sushi {
 std::ostream& operator<<(std::ostream& out, const rapidjson::Document& document);
+
+std::pair<bool, std::string> load_config_file(const std::string& path);
+
 }
 
 #endif // SUSHI_JSON_UTILS_H

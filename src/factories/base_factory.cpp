@@ -19,6 +19,7 @@
 #include "engine/json_configurator.h"
 
 #include "concrete_sushi.h"
+#include "sushi/json_utils.h"
 
 namespace sushi::internal {
 
@@ -70,11 +71,15 @@ void BaseFactory::_instantiate_subsystems(SushiOptions& options)
 
     _midi_dispatcher = std::make_unique<midi_dispatcher::MidiDispatcher>(_engine->event_dispatcher());
 
-    if (options.use_input_config_file)
+    if (options.config_source == ConfigurationSource::FILE)
     {
         _status = _configure_from_file(options);
     }
-    else
+    else if (options.config_source == ConfigurationSource::JSON_STRING)
+    {
+        _status = _configure_from_json(options);
+    }
+    else if (options.config_source == ConfigurationSource::DEFAULT)
     {
         _status = _configure_with_defaults(options);
     }
@@ -82,19 +87,28 @@ void BaseFactory::_instantiate_subsystems(SushiOptions& options)
 
 Status BaseFactory::_configure_from_file(SushiOptions& options)
 {
+    bool status;
+
+    std::tie(status, options.json_string) = load_config_file(options.config_filename);
+
+    if (!status)
+    {
+        return Status::FAILED_INVALID_FILE_PATH;
+    }
+
+    return _configure_from_json(options);
+}
+
+Status BaseFactory::_configure_from_json(SushiOptions& options)
+{
     auto configurator = std::make_unique<jsonconfig::JsonConfigurator>(_engine.get(),
-                                                                       _midi_dispatcher.get(),
-                                                                       _engine->processor_container(),
-                                                                       options.config_filename);
+                                                                        _midi_dispatcher.get(),
+                                                                        _engine->processor_container(),
+                                                                        options.json_string);
 
     auto [control_config_status, control_config] = configurator->load_control_config();
     if (control_config_status != jsonconfig::JsonConfigReturnStatus::OK)
     {
-        if (control_config_status == jsonconfig::JsonConfigReturnStatus::INVALID_FILE)
-        {
-            return Status::FAILED_INVALID_FILE_PATH;
-        }
-
         return Status::FAILED_INVALID_CONFIGURATION_FILE;
     }
 
@@ -131,8 +145,8 @@ Status BaseFactory::_configure_with_defaults(SushiOptions& options)
 }
 
 Status BaseFactory::_configure_engine(SushiOptions& options,
-                                          const jsonconfig::ControlConfig& control_config,
-                                          jsonconfig::JsonConfigurator* configurator)
+                                      const jsonconfig::ControlConfig& control_config,
+                                      jsonconfig::JsonConfigurator* configurator)
 {
     auto status = _setup_audio_frontend(options, control_config);
 

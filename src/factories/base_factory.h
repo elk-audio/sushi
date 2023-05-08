@@ -26,7 +26,6 @@
 namespace sushi::internal {
 
 namespace engine {
-class JsonConfigurator;
 class AudioEngine;
 class Controller;
 }
@@ -79,6 +78,7 @@ protected:
     void _instantiate_subsystems(SushiOptions& options);
 
     Status _configure_from_file(SushiOptions& options);
+    Status _configure_from_json(SushiOptions& options);
     Status _configure_with_defaults(SushiOptions& options);
 
     Status _configure_engine(SushiOptions& options,

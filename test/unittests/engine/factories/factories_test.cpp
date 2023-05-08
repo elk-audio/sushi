@@ -76,17 +76,17 @@ using namespace sushi::internal;
 class ReactiveFactoryTest : public ::testing::Test
 {
 protected:
-    ReactiveFactoryTest() {}
+    ReactiveFactoryTest() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         options.config_filename = "NONE";
-        options.use_input_config_file = false;
+        options.config_source = ConfigurationSource::DEFAULT;
 
         _path = test_utils::get_data_dir_path();
     }
 
-    void TearDown() {}
+    void TearDown() override {}
 
     SushiOptions options;
 
@@ -98,7 +98,7 @@ protected:
 TEST_F(ReactiveFactoryTest, TestReactiveFactoryWithDefaultConfig)
 {
     options.config_filename = "NONE";
-    options.use_input_config_file = false;
+    options.config_source = ConfigurationSource::DEFAULT;
 
     auto [sushi, status] = _reactive_factory.new_instance(options);
 
@@ -132,7 +132,7 @@ TEST_F(ReactiveFactoryTest, TestPassiveFactoryWithConfigFile)
     _path.append("config_single_stereo.json");
 
     options.config_filename = _path;
-    options.use_input_config_file = true;
+    options.config_source = ConfigurationSource::FILE;
 
     auto [sushi, status] = _reactive_factory.new_instance(options);
 
@@ -171,7 +171,7 @@ protected:
     void SetUp()
     {
         options.config_filename = "NONE";
-        options.use_input_config_file = false;
+        options.config_source = ConfigurationSource::DEFAULT;
 
         _path = test_utils::get_data_dir_path();
     }
@@ -188,7 +188,7 @@ protected:
 TEST_F(OfflineFactoryTest, TestOfflineFactoryWithDefaultConfig)
 {
     options.config_filename = "NONE";
-    options.use_input_config_file = false;
+    options.config_source = ConfigurationSource::DEFAULT;
 
     auto [sushi, status] = _offline_factory.new_instance(options);
 
@@ -218,7 +218,7 @@ TEST_F(OfflineFactoryTest, TestOfflineFactoryWithConfigFile)
     _path.append("config.json");
 
     options.config_filename = _path;
-    options.use_input_config_file = true;
+    options.config_source = ConfigurationSource::FILE;
 
     auto [sushi, status] = _offline_factory.new_instance(options);
 
@@ -251,9 +251,9 @@ TEST_F(OfflineFactoryTest, TestOfflineFactoryWithConfigFile)
 class StandaloneFactoryTest : public ::testing::Test
 {
 protected:
-    StandaloneFactoryTest() {}
+    StandaloneFactoryTest() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         mockPortAudio = new NiceMock<MockPortAudio>();
 
@@ -265,7 +265,7 @@ protected:
         EXPECT_CALL(*mockPortAudio, Pa_OpenStream).WillRepeatedly(Return(init_value));
 
         options.config_filename = "NONE";
-        options.use_input_config_file = false;
+        options.config_source = ConfigurationSource::DEFAULT;
 
         device_info.maxInputChannels = MOCK_CHANNEL_COUNT;
         device_info.maxOutputChannels = MOCK_CHANNEL_COUNT;
@@ -273,7 +273,7 @@ protected:
         _path = test_utils::get_data_dir_path();
     }
 
-    void TearDown()
+    void TearDown() override
     {
         // TODO: Terrible to have a global like this.
         //  This is from portaudio_frontend_test.cpp. But I really don't like the naked global pointer,
@@ -294,7 +294,7 @@ protected:
 TEST_F(StandaloneFactoryTest, TestStandaloneFactoryWithDefaultConfig)
 {
     options.config_filename = "NONE";
-    options.use_input_config_file = false;
+    options.config_source = ConfigurationSource::DEFAULT;
     options.frontend_type = FrontendType::PORTAUDIO;
 
     auto [sushi, status] = _standalone_factory.new_instance(options);
@@ -324,7 +324,7 @@ TEST_F(StandaloneFactoryTest, TestStandaloneFactoryWithConfigFile)
     _path.append("config_single_stereo.json");
 
     options.config_filename = _path;
-    options.use_input_config_file = true;
+    options.config_source = ConfigurationSource::FILE;
     options.frontend_type = FrontendType::PORTAUDIO;
 
     auto [sushi, status] = _standalone_factory.new_instance(options);

@@ -18,9 +18,6 @@
  * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include <fstream>
-#include <filesystem>
-
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wtype-limits"
 #include "rapidjson/error/en.h"
@@ -715,22 +712,23 @@ void JsonConfigurator::set_osc_frontend(control_frontend::OSCFrontend* osc_front
 
 std::pair<JsonConfigReturnStatus, const rapidjson::Value&> JsonConfigurator::_parse_section(JsonSection section)
 {
-    if (_json_data.IsObject() == false)
+    if (!_json_data.IsObject())
     {
-        auto res = _load_data();
+        auto res = _load_data(_json_string);
         if (res != JsonConfigReturnStatus::OK)
         {
             return {res, _json_data};
         }
     }
-    if (_validate_against_schema(_json_data, section) == false)
+
+    if (!_validate_against_schema(_json_data, section))
     {
-        SUSHI_LOG_ERROR("Config file {} does not follow schema: {}", _document_path, (int)section);
+        SUSHI_LOG_ERROR("Config file {} does not follow schema: {}", _json_string, (int)section);
         return {JsonConfigReturnStatus::INVALID_CONFIGURATION, _json_data};
     }
 
     auto name = section_name(section);
-    if (_json_data.HasMember(name) == false)
+    if (!_json_data.HasMember(name))
     {
         SUSHI_LOG_INFO("Config file does not have any \"{}\" definitions", name);
         return {JsonConfigReturnStatus::NOT_DEFINED, _json_data};
@@ -826,6 +824,7 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
         SUSHI_LOG_WARNING("Unrecognised plugin: \"{}\"", data["plugin_name"].GetString());
         return nullptr;
     }
+
     if (json_event["type"] == "parameter_change")
     {
         auto parameter = processor->parameter_from_name(data["parameter_name"].GetString());
@@ -840,6 +839,7 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
                                         data["value"].GetFloat(),
                                         timestamp);
     }
+
     if (json_event["type"] == "property_change")
     {
         auto parameter = processor->parameter_from_name(data["property_name"].GetString());
@@ -853,6 +853,7 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
                                        data["value"].GetString(),
                                        timestamp);
     }
+
     if (json_event["type"] == "note_on")
     {
         return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON,
@@ -862,6 +863,7 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
                                  data["velocity"].GetFloat(),
                                  timestamp);
     }
+
     if (json_event["type"] == "note_off")
     {
         return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF,
@@ -892,7 +894,8 @@ bool JsonConfigurator::_validate_against_schema(rapidjson::Value& config, JsonSe
         rapidjson::StringBuffer string_buffer;
         invalid_config_pointer.Stringify(string_buffer);
         std::string error_node = string_buffer.GetString();
-        if (error_node.empty() == false)
+
+        if (!error_node.empty())
         {
             SUSHI_LOG_ERROR("Schema validation failure at {}", error_node);
         }
@@ -901,26 +904,22 @@ bool JsonConfigurator::_validate_against_schema(rapidjson::Value& config, JsonSe
     return true;
 }
 
-JsonConfigReturnStatus JsonConfigurator::_load_data()
+JsonConfigReturnStatus JsonConfigurator::_load_data(const std::string& data)
 {
-    std::ifstream config_file(_document_path);
-    if (!config_file.good())
-    {
-        SUSHI_LOG_ERROR("Invalid file passed to JsonConfigurator {}", _document_path);
-        return JsonConfigReturnStatus::INVALID_FILE;
-    }
-    //iterate through every char in file and store in the string
-    std::string config_file_contents((std::istreambuf_iterator<char>(config_file)), std::istreambuf_iterator<char>());
-    _json_data.Parse(config_file_contents.c_str());
+    _json_data.Parse(data.c_str());
+
     if (_json_data.HasParseError())
     {
         [[maybe_unused]] int err_offset = _json_data.GetErrorOffset();
         SUSHI_LOG_ERROR("Error parsing JSON config file: {} @ pos {}: \"{}\"",
                        rapidjson::GetParseError_En(_json_data.GetParseError()),
                        err_offset,
-                       config_file_contents.substr(std::max(0, err_offset - ERROR_DISPLAY_CHARS), ERROR_DISPLAY_CHARS)        );
+                       data.substr(std::max(0, err_offset - ERROR_DISPLAY_CHARS),
+                                   ERROR_DISPLAY_CHARS));
+
         return JsonConfigReturnStatus::INVALID_FILE;
     }
+
     return JsonConfigReturnStatus::OK;
 }
 
@@ -985,6 +984,7 @@ JsonConfigReturnStatus JsonConfigurator::_add_plugin(const rapidjson::Value& plu
     std::string plugin_name = plugin_def["name"].GetString();
     PluginType plugin_type;
     std::string type = plugin_def["type"].GetString();
+
     if (type == "internal")
     {
         plugin_type = PluginType::INTERNAL;
@@ -1022,11 +1022,13 @@ JsonConfigReturnStatus JsonConfigurator::_add_plugin(const rapidjson::Value& plu
         }
         return JsonConfigReturnStatus::INVALID_CONFIGURATION;
     }
+
     status = _engine->add_plugin_to_track(plugin_id, track_id);
     if (status != EngineReturnStatus::OK)
     {
         return JsonConfigReturnStatus::INVALID_CONFIGURATION;
     }
+
     SUSHI_LOG_DEBUG("Successfully added Plugin \"{}\" to track: \"{}\"", plugin_name, track_name);
 
     return JsonConfigReturnStatus::OK;

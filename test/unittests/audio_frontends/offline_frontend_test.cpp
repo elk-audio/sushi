@@ -6,7 +6,10 @@
 #include "test_utils/test_utils.h"
 
 #define private public
+
 #include "audio_frontends/offline_frontend.cpp"
+
+#include "json_utils.cpp"
 
 using ::testing::internal::posix::GetEnv;
 
@@ -26,21 +29,21 @@ protected:
     {
     }
 
-    void SetUp()
+    void SetUp() override
     {
         _module_under_test = new OfflineFrontend(&_engine);
         _engine.set_audio_input_channels(AUDIO_CHANNELS);
         _engine.set_audio_output_channels(AUDIO_CHANNELS);
     }
 
-    void TearDown()
+    void TearDown() override
     {
         delete _module_under_test;
     }
 
     EngineMockup _engine{SAMPLE_RATE};
     MidiDispatcher _midi_dispatcher{_engine.event_dispatcher()};
-    OfflineFrontend* _module_under_test;
+    OfflineFrontend* _module_under_test{};
 };
 
 TEST_F(TestOfflineFrontend, TestWavProcessing)
@@ -65,8 +68,9 @@ TEST_F(TestOfflineFrontend, TestWavProcessing)
     _module_under_test->run();
 
     // Read the generated file and verify the result
-    SNDFILE*    output_file;
-    SF_INFO     soundfile_info;
+    SNDFILE* output_file;
+    SF_INFO soundfile_info;
+
     memset(&soundfile_info, 0, sizeof(soundfile_info));
 
     if (! (output_file = sf_open(output_file_name.c_str(), SFM_READ, &soundfile_info)) )
@@ -80,7 +84,7 @@ TEST_F(TestOfflineFrontend, TestWavProcessing)
                                                          &file_buffer[0],
                                                          static_cast<sf_count_t>(AUDIO_CHUNK_SIZE)))) )
     {
-        for (unsigned int n=0; n<(readcount * AUDIO_CHANNELS); n++)
+        for (unsigned int n = 0; n < (readcount * AUDIO_CHANNELS); n++)
         {
             ASSERT_FLOAT_EQ(0.5f, file_buffer[n]);
         }
@@ -126,10 +130,16 @@ TEST_F(TestOfflineFrontend, TestAddSequencerEvents)
     // Initialize with a file containing 0.5 on both channels
     std::string test_config_file = test_utils::get_data_dir_path();
     test_config_file.append("config.json");
+
+    std::string json_data;
+    bool load_file_status;
+
+    std::tie(load_file_status, json_data) = load_config_file(test_config_file);
+
     jsonconfig::JsonConfigurator configurator(&_engine,
                                               &_midi_dispatcher,
                                               _engine.processor_container(),
-                                              test_config_file);
+                                              json_data);
     rapidjson::Document config;
     auto [status, events] = configurator.load_event_list();
     ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, status);

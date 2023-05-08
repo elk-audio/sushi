@@ -42,7 +42,6 @@ class AudioEngine;
 namespace audio_frontend {
 struct BaseAudioFrontendConfiguration;
 class BaseAudioFrontend;
-class ReactiveFrontend;
 }
 
 namespace midi_frontend {
@@ -59,6 +58,13 @@ enum class FrontendType
     XENOMAI_RASPA,
     REACTIVE,
     NONE
+};
+
+enum class ConfigurationSource
+{
+    FILE,
+    JSON_STRING,
+    DEFAULT
 };
 
 /**
@@ -104,8 +110,6 @@ struct SushiOptions
     std::string log_level = std::string(SUSHI_LOG_LEVEL_DEFAULT);
     std::string log_filename = std::string(SUSHI_LOG_FILENAME_DEFAULT);
 
-    bool use_input_config_file = true;
-    std::string config_filename = std::string(SUSHI_JSON_FILENAME_DEFAULT);
     std::string jack_client_name = std::string(SUSHI_JACK_CLIENT_NAME_DEFAULT);
     std::string jack_server_name = std::string("");
     int osc_server_port = SUSHI_OSC_SERVER_PORT_DEFAULT;
@@ -136,6 +140,10 @@ struct SushiOptions
     bool enable_flush_interval = false;
     bool enable_parameter_dump = false;
     std::chrono::seconds log_flush_interval = std::chrono::seconds(0);
+
+    ConfigurationSource config_source = ConfigurationSource::FILE;
+    std::string config_filename = std::string(SUSHI_JSON_FILENAME_DEFAULT);
+    std::string json_string = std::string(SUSHI_JSON_STRING_DEFAULT);
 
     /**
      * Extracts the address string and port number from the grpc_listening_address string.

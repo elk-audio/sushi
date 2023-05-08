@@ -9,6 +9,7 @@
 #include <gmock/gmock-actions.h>
 
 #include "engine/json_configurator.cpp"
+#include "sushi/json_utils.h"
 
 #undef private
 #undef protected
@@ -38,19 +39,25 @@ class TestJsonConfigurator : public ::testing::Test
 protected:
     TestJsonConfigurator() {}
 
-    void SetUp()
+    void SetUp() override
     {
         _engine.set_audio_input_channels(ENGINE_CHANNELS);
         _engine.set_audio_output_channels(ENGINE_CHANNELS);
         _path = test_utils::get_data_dir_path();
         _path.append("config.json");
+
+        std::string json_data;
+        bool status;
+
+        std::tie(status, json_data) = sushi::load_config_file(_path);
+
         _module_under_test = std::make_unique<JsonConfigurator>(&_engine,
                                                                 &_midi_dispatcher,
                                                                 _engine.processor_container(),
-                                                                _path);
+                                                                json_data);
     }
 
-    void TearDown()
+    void TearDown() override
     {
     }
 
