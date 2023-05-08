@@ -143,7 +143,6 @@ WavStreamerPlugin::WavStreamerPlugin(HostControl host_control) : InternalPlugin(
                                                   Direction::AUTOMATABLE,
                                                   new FloatParameterPreProcessor(0.0f, MAX_FADE_TIME.count()));
 
-
     _seek_parameter   = register_float_parameter("seek", "Seek", "",
                                                  0.0f, 0.0f, 1.0f,
                                                  Direction::AUTOMATABLE,
@@ -359,7 +358,8 @@ int WavStreamerPlugin::_read_audio_data()
     bool looping = _loop_parameter->processed_value();
     if (_file)
     {
-        while (!_block_queue.wasFull())
+        int blockcount = MAX_BLOCKS_PER_LOAD;
+        while (!_block_queue.wasFull() && blockcount-- > 0)
         {
             auto block = new AudioBlock;
             block->file_pos = sf_seek(_file, 0, SEEK_CUR);
@@ -469,8 +469,9 @@ bool WavStreamerPlugin::_load_new_block()
             _update_file_length_display();
             break;
         }
-        else // Block is stale
+        else // Block is stale due to seek or new file
         {
+            _current_block_pos = 0.0f;
             if (prev_block)
             {
                 async_delete(prev_block);

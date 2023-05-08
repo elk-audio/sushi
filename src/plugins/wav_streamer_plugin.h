@@ -41,7 +41,8 @@ enum class StreamingMode
 
 // Roughly 2 seconds of stereo audio per block @ 48kHz.
 constexpr ssize_t BLOCKSIZE = 100'000;
-constexpr ssize_t QUEUE_SIZE = 4;
+constexpr ssize_t QUEUE_SIZE = 32;
+constexpr int MAX_BLOCKS_PER_LOAD = 4;
 
 // Extra margin for interpolation
 constexpr size_t PRE_SAMPLES = 1;
