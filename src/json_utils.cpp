@@ -48,7 +48,7 @@ std::pair<bool, std::string> load_config_file(const std::string& path)
     std::ifstream config_file(path);
     if (!config_file.good())
     {
-        SUSHI_LOG_ERROR("Invalid file path passed to JsonConfigurator {}", path);
+        SUSHI_LOG_ERROR("Invalid file path passed to Json config file {}", path);
         return {false, {}};
     }
 
