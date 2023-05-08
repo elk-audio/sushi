@@ -106,7 +106,7 @@ ParseStatus parse_options(int argc, char* argv[], sushi::SushiOptions& options)
                 break;
 
             case OPT_IDX_LOG_FILE:
-                options.log_filename.assign(opt.arg);
+                options.log_file.assign(opt.arg);
                 break;
 
             case OPT_IDX_LOG_FLUSH_INTERVAL:

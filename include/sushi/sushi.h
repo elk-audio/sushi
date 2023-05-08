@@ -60,11 +60,11 @@ enum class FrontendType
     NONE
 };
 
-enum class ConfigurationSource
+enum class ConfigurationSource : int
 {
-    FILE,
-    JSON_STRING,
-    DEFAULT
+    DEFAULT = 0,
+    FILE = 1,
+    JSON_STRING = 2
 };
 
 /**
@@ -108,7 +108,7 @@ struct SushiOptions
     std::string output_filename;
 
     std::string log_level = std::string(SUSHI_LOG_LEVEL_DEFAULT);
-    std::string log_filename = std::string(SUSHI_LOG_FILENAME_DEFAULT);
+    std::string log_file = std::string(SUSHI_LOG_FILE_DEFAULT);
 
     std::string jack_client_name = std::string(SUSHI_JACK_CLIENT_NAME_DEFAULT);
     std::string jack_server_name = std::string("");

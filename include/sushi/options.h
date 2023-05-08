@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #define SUSHI_LOG_LEVEL_DEFAULT "info"
-#define SUSHI_LOG_FILENAME_DEFAULT "/tmp/sushi.log"
+#define SUSHI_LOG_FILE_DEFAULT "/tmp/sushi.log"
 #define SUSHI_JSON_FILENAME_DEFAULT "config.json"
 #define SUSHI_JSON_STRING_DEFAULT "{}"
 #define SUSHI_SAMPLE_RATE_DEFAULT 48000
@@ -195,7 +195,8 @@ const optionparser::Descriptor usage[] =
         "L",
         "log-file",
         SushiArg::NonEmpty,
-        "\t\t-L <filename>, --log-file=<filename> \tSpecify logging file destination [default=" SUSHI_LOG_FILENAME_DEFAULT "]."
+        "\t\t-L <filename>, --log-file=<filename> \tSpecify logging file destination [default=" SUSHI_LOG_FILE_DEFAULT
+      "]."
     },
     {
         OPT_IDX_LOG_FLUSH_INTERVAL,

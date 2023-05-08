@@ -123,13 +123,13 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("concrete_sushi");
 
 void init_logger([[maybe_unused]] const SushiOptions& options)
 {
-    auto ret_code = SUSHI_INITIALIZE_LOGGER(options.log_filename,
-                                             "Logger",
-                                             options.log_level,
-                                             options.enable_flush_interval,
-                                             options.log_flush_interval,
-                                             options.sentry_crash_handler_path,
-                                             options.sentry_dsn);
+    auto ret_code = SUSHI_INITIALIZE_LOGGER(options.log_file,
+                                            "Logger",
+                                            options.log_level,
+                                            options.enable_flush_interval,
+                                            options.log_flush_interval,
+                                            options.sentry_crash_handler_path,
+                                            options.sentry_dsn);
 
     if (ret_code != SUSHI_LOG_ERROR_CODE_OK)
     {
