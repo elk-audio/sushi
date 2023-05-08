@@ -11,10 +11,11 @@
 using namespace sushi;
 using namespace sushi::wav_streamer_plugin;
 
-constexpr float TEST_SAMPLERATE = 44100;
+constexpr float TEST_SAMPLERATE = 48000;
 constexpr int   TEST_CHANNEL_COUNT = 2;
 
 static const std::string SAMPLE_FILE = "Kawai-K11-GrPiano-C4_mono.wav";
+constexpr float SAMPLE_FILE_LENGTH = 1.779546485f;
 
 TEST(TestWaveStreamerPluginInternal, TestGainScaleFunction)
 {
@@ -88,7 +89,8 @@ TEST_F(TestWaveStreamerPlugin, TestWaveLoadingAndPlaying)
     }
 
     // Verify that output parameters are updated
-    EXPECT_NE(0.0f, _module_under_test->parameter_value(len_param_id).second);
+    EXPECT_FLOAT_EQ(SAMPLE_FILE_LENGTH / MAX_FILE_LENGTH, _module_under_test->parameter_value(len_param_id).second);
+    EXPECT_EQ("1.78", _module_under_test->parameter_value_formatted(len_param_id).second);
     EXPECT_NE(0.0f, _module_under_test->parameter_value(pos_param_id).second);
     EXPECT_EQ(1.0f, _module_under_test->parameter_value(playing_param_id).second);
 

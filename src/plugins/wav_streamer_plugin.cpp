@@ -547,7 +547,11 @@ void WavStreamerPlugin::_update_position_display(bool looping)
 
 void WavStreamerPlugin::_update_file_length_display()
 {
-    float length = _file_length / _sample_rate / MAX_FILE_LENGTH;
+    float length = 0.0;
+    if (_file_length > 0.0 && _file_samplerate > 0.0)
+    {
+        length = _file_length / _file_samplerate / MAX_FILE_LENGTH;
+    }
     if (length != _length_parameter->normalized_value())
     {
         set_parameter_and_notify(_length_parameter, length);
