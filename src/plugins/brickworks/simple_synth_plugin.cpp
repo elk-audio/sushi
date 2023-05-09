@@ -23,9 +23,12 @@
 #include <bw_buf.h>
 
 #include "simple_synth_plugin.h"
+#include "logging.h"
 
 namespace sushi {
 namespace simple_synth_plugin {
+
+SUSHI_GET_LOGGER_WITH_MODULE_NAME("simplesynth");
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.simple_synth";
 constexpr auto DEFAULT_LABEL = "Simple synthesizer";
@@ -42,9 +45,9 @@ SimpleSynthPlugin::SimpleSynthPlugin(HostControl host_control) : InternalPlugin(
     _volume = register_float_parameter("volume", "Volume", "dB",
                                        0.0f, -60.0f, 12.0f,
                                        Direction::AUTOMATABLE,
-                                       new dBToLinPreProcessor(-60.0f, 36.0f));
+                                       new dBToLinPreProcessor(-60.0f, 12.0f));
     _portamento = register_float_parameter("portamento", "Portamento time", "sec",
-                                           0.0f, 0.0f, 1.0f,
+                                           0.01f, 0.0f, 1.0f,
                                            Direction::AUTOMATABLE,
                                            new FloatParameterPreProcessor(0.0f, 1.0f));
     _pulse_width = register_float_parameter("pulse_width", "Pulse width", "",
@@ -81,12 +84,12 @@ SimpleSynthPlugin::SimpleSynthPlugin(HostControl host_control) : InternalPlugin(
 
 ProcessorReturnCode SimpleSynthPlugin::init(float sample_rate)
 {
-	bw_phase_gen_init(&_phase_gen_coeffs);
-	bw_osc_pulse_init(&_osc_pulse_coeffs);
-	bw_svf_init(&_svf_coeffs);
-	bw_env_gen_init(&_env_gen_coeffs);
+    bw_phase_gen_init(&_phase_gen_coeffs);
+    bw_osc_pulse_init(&_osc_pulse_coeffs);
+    bw_svf_init(&_svf_coeffs);
+    bw_env_gen_init(&_env_gen_coeffs);
 
-	bw_osc_pulse_set_antialiasing(&_osc_pulse_coeffs, 1);
+    bw_osc_pulse_set_antialiasing(&_osc_pulse_coeffs, 1);
 
     configure(sample_rate);
 
@@ -95,10 +98,10 @@ ProcessorReturnCode SimpleSynthPlugin::init(float sample_rate)
 
 void SimpleSynthPlugin::configure(float sample_rate)
 {
-	bw_phase_gen_set_sample_rate(&_phase_gen_coeffs, sample_rate);
-	bw_osc_pulse_set_sample_rate(&_osc_pulse_coeffs, sample_rate);
-	bw_svf_set_sample_rate(&_svf_coeffs, sample_rate);
-	bw_env_gen_set_sample_rate(&_env_gen_coeffs, sample_rate);
+    bw_phase_gen_set_sample_rate(&_phase_gen_coeffs, sample_rate);
+    bw_osc_pulse_set_sample_rate(&_osc_pulse_coeffs, sample_rate);
+    bw_svf_set_sample_rate(&_svf_coeffs, sample_rate);
+    bw_env_gen_set_sample_rate(&_env_gen_coeffs, sample_rate);
 
     return;
 }
@@ -106,47 +109,38 @@ void SimpleSynthPlugin::configure(float sample_rate)
 void SimpleSynthPlugin::set_enabled(bool enabled)
 {
     Processor::set_enabled(enabled);
-	bw_phase_gen_reset_coeffs(&_phase_gen_coeffs);
-	bw_phase_gen_reset_state(&_phase_gen_coeffs, &_phase_gen_state, 0.0f);
-	bw_osc_pulse_reset_coeffs(&_osc_pulse_coeffs);
-	bw_osc_filt_reset_state(&_osc_filt_state);
-	bw_svf_reset_coeffs(&_svf_coeffs);
-	bw_svf_reset_state(&_svf_coeffs, &_svf_state, 0.0f);
-	bw_env_gen_reset_coeffs(&_env_gen_coeffs);
-	bw_env_gen_reset_state(&_env_gen_coeffs, &_env_gen_state);
-    _active_note = -1;
-    _start_offset = 0;
-    _stop_offset = AUDIO_CHUNK_SIZE;
+    bw_phase_gen_reset_coeffs(&_phase_gen_coeffs);
+    bw_phase_gen_reset_state(&_phase_gen_coeffs, &_phase_gen_state, 0.0f);
+    bw_osc_pulse_reset_coeffs(&_osc_pulse_coeffs);
+    bw_osc_filt_reset_state(&_osc_filt_state);
+    bw_svf_reset_coeffs(&_svf_coeffs);
+    bw_svf_reset_state(&_svf_coeffs, &_svf_state, 0.0f);
+    bw_env_gen_reset_coeffs(&_env_gen_coeffs);
+    bw_env_gen_reset_state(&_env_gen_coeffs, &_env_gen_state);
+    for (int i = 0; i < MAX_MIDI_NOTE; i++)
+    {
+        _held_notes[i] = false;
+    }
+    _highest_held_note = -1;
 }
 
 
 void SimpleSynthPlugin::process_event(const RtEvent& event)
 {
+    // Just forward everything to the process() callback with a FIFO,
+    // to correctly handle sample-accurate events
     switch (event.type())
     {
         case RtEventType::NOTE_ON:
-        {
-            if (_bypassed)
-            {
-                break;
-            }
-
-            auto key_event = event.keyboard_event();
-            _active_note = key_event->note();
-            _gate = true;
-            _start_offset = event.sample_offset();
-            break;
-        }
         case RtEventType::NOTE_OFF:
         {
             if (_bypassed)
             {
                 break;
             }
-            auto key_event = event.keyboard_event();
-            if (key_event->note() == _active_note)
+            if (!_event_fifo.push(event))
             {
-                _stop_offset = event.sample_offset();
+                SUSHI_LOG_ERROR("Internal queue full while processing event");
             }
             break;
         }
@@ -178,33 +172,80 @@ void SimpleSynthPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */, 
     bw_env_gen_set_sustain(&_env_gen_coeffs, _sustain->processed_value());
     bw_env_gen_set_release(&_env_gen_coeffs, _release->processed_value());
 
-    _render_loop(0, _start_offset);
-    if (_gate)
+    int previous_offset = 0;
+    while (!_event_fifo.empty())
     {
-        bw_env_gen_set_gate(&_env_gen_coeffs, 1);
-        // the Brickworks example also had a master tuning parameter to change the 440.0Hz, skipped here
-        float note_freq = A4_FREQUENCY * bw_pow2f_3(NOTE2FREQ_SCALE * (_active_note - A4_NOTENUM));
-		bw_phase_gen_set_frequency(&_phase_gen_coeffs, note_freq);
+        RtEvent event;
+        _event_fifo.pop(event);
+        int next_offset = event.sample_offset();
+        // we're assuming that events are received in order,
+        // if that's not the case simply drop the event
+        if (next_offset < previous_offset)
+        {
+            SUSHI_LOG_WARNING("Dropping unordered event of type {} with sample offset {}",
+                              event.type(), event.sample_offset());
+            continue;
+        }
+        _render_loop(previous_offset, next_offset);
+
+        auto key_event = event.keyboard_event();
+        int note = key_event->note();
+        switch (key_event->type())
+        {
+        case RtEventType::NOTE_ON:
+        {
+            SUSHI_LOG_DEBUG("Note ON, num. {}, vel. {}",
+                            note, key_event->velocity());
+            bw_env_gen_set_gate(&_env_gen_coeffs, 1);
+            _change_active_note(note);
+            _held_notes[note] = true;
+            _highest_held_note = std::max(_highest_held_note, note);
+            break;
+        }
+
+        case RtEventType::NOTE_OFF:
+        {
+            SUSHI_LOG_DEBUG("Note OFF, num. {}, vel. {}",
+                            note, key_event->velocity());
+            _held_notes[note] = false;
+            // if there are other held notes, switch to the highest one
+            _highest_held_note = MAX_MIDI_NOTE - 1;
+            while (!_held_notes[_highest_held_note] && (_highest_held_note >= 0))
+            {
+                _highest_held_note--;
+            }
+            if (_highest_held_note >= 0)
+            {
+                _change_active_note(_highest_held_note);
+            }
+            else
+            {
+                bw_env_gen_set_gate(&_env_gen_coeffs, 0);
+            }
+            break;
+        }
+
+        default:
+            SUSHI_LOG_WARNING("Unexpected event type passed to process(): {}", key_event->type());
+
+        }
+        previous_offset = next_offset;
     }
-    else
-    {
-        bw_env_gen_set_gate(&_env_gen_coeffs, 0);
-    }
-    _render_loop(_start_offset, (_stop_offset - _start_offset));
-    // the following is only met if we received a NoteOFF event
-    if (_stop_offset < AUDIO_CHUNK_SIZE)
-    {
-        bw_env_gen_set_gate(&_env_gen_coeffs, 0);
-        _gate = false;
-        _render_loop(_stop_offset, (AUDIO_CHUNK_SIZE - _stop_offset));
-        _stop_offset = AUDIO_CHUNK_SIZE;
-    }
+
+    _render_loop(previous_offset, AUDIO_CHUNK_SIZE);
 
     if (!_bypassed)
     {
         float gain = _volume->processed_value();
         out_buffer.add_with_gain(_render_buffer, gain);
     }
+}
+
+void SimpleSynthPlugin::_change_active_note(int notenum)
+{
+    // the Brickworks example also had a master tuning parameter to change the 440.0Hz, skipped here
+    float note_freq = A4_FREQUENCY * bw_pow2f_3(NOTE2FREQ_SCALE * (notenum - A4_NOTENUM));
+    bw_phase_gen_set_frequency(&_phase_gen_coeffs, note_freq);
 }
 
 void SimpleSynthPlugin::_render_loop(int offset, int n)

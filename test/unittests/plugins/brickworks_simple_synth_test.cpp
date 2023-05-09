@@ -72,6 +72,23 @@ TEST_F(TestSimpleSynthPlugin, TestProcessing)
     test_utils::assert_buffer_value(0.0f, out_buffer);
 }
 
+TEST_F(TestSimpleSynthPlugin, TestNoteOnandOffSameCallback)
+{
+    ChunkSampleBuffer in_buffer(TEST_CHANNEL_COUNT);
+    ChunkSampleBuffer out_buffer(TEST_CHANNEL_COUNT);
+
+    RtEvent note_on = RtEvent::make_note_on_event(0, 0, 0, 60, 1.0f);
+    _module_under_test->process_event(note_on);
+    RtEvent note_off = RtEvent::make_note_off_event(0, 1, 0, 60, 1.0f);
+    _module_under_test->process_event(note_off);
+    note_on = RtEvent::make_note_on_event(0, 2, 0, 60, 1.0f);
+    _module_under_test->process_event(note_on);
+
+    _module_under_test->process_event(note_on);
+    _module_under_test->process_audio(in_buffer, out_buffer);
+    test_utils::assert_buffer_non_null(out_buffer);
+}
+
 TEST_F(TestSimpleSynthPlugin, TestNoNaNsUnderStress)
 {
     // just go crazy with NoteONs + parameter changes and verify that no NaNs are generated

@@ -59,6 +59,7 @@ SET(TEST_FILES
     unittests/library/rt_event_test.cpp
     unittests/library/id_generator_test.cpp
     unittests/library/simple_fifo_test.cpp
+    unittests/library/fixed_stack_test.cpp
 )
 
 set(TEST_HELPER_FILES ${TEST_HELPER_FILES}

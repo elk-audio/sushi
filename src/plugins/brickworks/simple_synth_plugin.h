@@ -21,6 +21,8 @@
 #ifndef SUSHI_SIMPLE_SYNTH_PLUGIN_H
 #define SUSHI_SIMPLE_SYNTH_PLUGIN_H
 
+#include <array>
+
 #include <bw_math.h>
 #include <bw_phase_gen.h>
 #include <bw_osc_pulse.h>
@@ -30,9 +32,12 @@
 #include <bw_gain.h>
 
 #include "library/internal_plugin.h"
+#include "library/rt_event_fifo.h"
 
 namespace sushi {
 namespace simple_synth_plugin {
+
+constexpr int MAX_MIDI_NOTE = 128;
 
 
 class SimpleSynthPlugin : public InternalPlugin, public UidHelper<SimpleSynthPlugin>
@@ -57,6 +62,8 @@ public:
 private:
     void _render_loop(int offset, int n);
 
+    void _change_active_note(int notenum);
+
     ChunkSampleBuffer _render_buffer{1};
     ChunkSampleBuffer _aux_buffer{1};
 
@@ -70,19 +77,18 @@ private:
     FloatParameterValue* _sustain;
     FloatParameterValue* _release;
 
-    bool _gate;
-    int _active_note{0};
-    int _start_offset{0};
-    int _stop_offset{AUDIO_CHUNK_SIZE};
+    bw_phase_gen_coeffs _phase_gen_coeffs;
+    bw_phase_gen_state  _phase_gen_state;
+    bw_osc_pulse_coeffs _osc_pulse_coeffs;
+    bw_osc_filt_state   _osc_filt_state;
+    bw_svf_coeffs       _svf_coeffs;
+    bw_svf_state        _svf_state;
+    bw_env_gen_coeffs   _env_gen_coeffs;
+    bw_env_gen_state    _env_gen_state;
 
-	bw_phase_gen_coeffs	_phase_gen_coeffs;
-	bw_phase_gen_state	_phase_gen_state;
-	bw_osc_pulse_coeffs	_osc_pulse_coeffs;
-	bw_osc_filt_state	_osc_filt_state;
-	bw_svf_coeffs		_svf_coeffs;
-	bw_svf_state		_svf_state;
-	bw_env_gen_coeffs	_env_gen_coeffs;
-	bw_env_gen_state	_env_gen_state;
+    RtSafeRtEventFifo _event_fifo;
+    std::array<bool, MAX_MIDI_NOTE> _held_notes{false};
+    int _highest_held_note{-1};
 };
 
 }// namespace simple_synth_plugin
