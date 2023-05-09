@@ -49,7 +49,7 @@ protected:
     }
 
     std::string _path{test_utils::get_data_dir_path() + TEST_FILE};
-    std::string _json_data{ sushi::read_json_file (_path).second};
+    std::string _json_data{ sushi::read_json_file (_path).value()};
     AudioEngine _engine{TEST_SAMPLE_RATE};
     midi_dispatcher::MidiDispatcher _midi_dispatcher{_engine.event_dispatcher()};
     AudioFrontendMockup  _audio_frontend;

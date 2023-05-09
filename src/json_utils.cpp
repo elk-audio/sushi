@@ -43,19 +43,19 @@ std::ostream& operator<<(std::ostream& out, const rapidjson::Document& document)
     return out;
 }
 
-std::pair<bool, std::string> read_json_file(const std::string& path)
+std::optional<std::string> read_json_file(const std::string& path)
 {
     std::ifstream config_file(path);
     if (!config_file.good())
     {
         SUSHI_LOG_ERROR("Invalid file path passed to Json file {}", path);
-        return {false, {}};
+        return std::nullopt;
     }
 
     // Iterate through every char in file and store in the string
     std::string config_file_contents((std::istreambuf_iterator<char>(config_file)), std::istreambuf_iterator<char>());
 
-    return {true, config_file_contents};
+    return config_file_contents;
 }
 
 

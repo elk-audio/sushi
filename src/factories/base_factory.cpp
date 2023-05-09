@@ -87,14 +87,14 @@ void BaseFactory::_instantiate_subsystems(SushiOptions& options)
 
 Status BaseFactory::_configure_from_file(SushiOptions& options)
 {
-    bool status;
+    auto config = read_json_file (options.config_filename);
 
-    std::tie(status, options.json_string) = read_json_file (options.config_filename);
-
-    if (!status)
+    if (!config)
     {
         return Status::FAILED_INVALID_FILE_PATH;
     }
+
+    options.json_string = config.value();
 
     return _configure_from_json(options);
 }

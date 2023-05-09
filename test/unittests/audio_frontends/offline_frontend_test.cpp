@@ -131,15 +131,12 @@ TEST_F(TestOfflineFrontend, TestAddSequencerEvents)
     std::string test_config_file = test_utils::get_data_dir_path();
     test_config_file.append("config.json");
 
-    std::string json_data;
-    bool load_file_status;
-
-    std::tie(load_file_status, json_data) = read_json_file (test_config_file);
+    auto json_data = read_json_file (test_config_file);
 
     jsonconfig::JsonConfigurator configurator(&_engine,
                                               &_midi_dispatcher,
                                               _engine.processor_container(),
-                                              json_data);
+                                              json_data.value());
     rapidjson::Document config;
     auto [status, events] = configurator.load_event_list();
     ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, status);

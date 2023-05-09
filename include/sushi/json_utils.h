@@ -22,6 +22,7 @@
 #define SUSHI_JSON_UTILS_H
 
 #include <iostream>
+#include <optional>
 
 #include "rapidjson/document.h"
 
@@ -33,9 +34,9 @@ std::ostream& operator<<(std::ostream& out, const rapidjson::Document& document)
  * Returns true, and the contents on read success.
  * Or false and an empty string on failure.
  * @param path The absolut path to the file.
- * @return status, and file content on success.
+ * @return file content on success - nullopt on failure
  */
-std::pair<bool, std::string> read_json_file(const std::string& path);
+std::optional<std::string> read_json_file(const std::string& path);
 
 }
 
