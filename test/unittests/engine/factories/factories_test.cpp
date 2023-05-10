@@ -81,7 +81,7 @@ protected:
     void SetUp() override
     {
         options.config_filename = "NONE";
-        options.config_source = ConfigurationSource::DEFAULT;
+        options.config_source = ConfigurationSource::NONE;
 
         _path = test_utils::get_data_dir_path();
     }
@@ -98,7 +98,7 @@ protected:
 TEST_F(ReactiveFactoryTest, TestReactiveFactoryWithDefaultConfig)
 {
     options.config_filename = "NONE";
-    options.config_source = ConfigurationSource::DEFAULT;
+    options.config_source = ConfigurationSource::NONE;
 
     auto [sushi, status] = _reactive_factory.new_instance(options);
 
@@ -171,7 +171,7 @@ protected:
     void SetUp()
     {
         options.config_filename = "NONE";
-        options.config_source = ConfigurationSource::DEFAULT;
+        options.config_source = ConfigurationSource::NONE;
 
         _path = test_utils::get_data_dir_path();
     }
@@ -188,7 +188,7 @@ protected:
 TEST_F(OfflineFactoryTest, TestOfflineFactoryWithDefaultConfig)
 {
     options.config_filename = "NONE";
-    options.config_source = ConfigurationSource::DEFAULT;
+    options.config_source = ConfigurationSource::NONE;
 
     auto [sushi, status] = _offline_factory.new_instance(options);
 
@@ -265,7 +265,7 @@ protected:
         EXPECT_CALL(*mockPortAudio, Pa_OpenStream).WillRepeatedly(Return(init_value));
 
         options.config_filename = "NONE";
-        options.config_source = ConfigurationSource::DEFAULT;
+        options.config_source = ConfigurationSource::NONE;
 
         device_info.maxInputChannels = MOCK_CHANNEL_COUNT;
         device_info.maxOutputChannels = MOCK_CHANNEL_COUNT;
@@ -294,7 +294,7 @@ protected:
 TEST_F(StandaloneFactoryTest, TestStandaloneFactoryWithDefaultConfig)
 {
     options.config_filename = "NONE";
-    options.config_source = ConfigurationSource::DEFAULT;
+    options.config_source = ConfigurationSource::NONE;
     options.frontend_type = FrontendType::PORTAUDIO;
 
     auto [sushi, status] = _standalone_factory.new_instance(options);

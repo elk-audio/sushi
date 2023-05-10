@@ -62,7 +62,7 @@ enum class FrontendType
 
 enum class ConfigurationSource : int
 {
-    DEFAULT = 0,
+    NONE = 0,
     FILE = 1,
     JSON_STRING = 2
 };

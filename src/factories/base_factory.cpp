@@ -79,7 +79,7 @@ void BaseFactory::_instantiate_subsystems(SushiOptions& options)
     {
         _status = _configure_from_json(options);
     }
-    else if (options.config_source == ConfigurationSource::DEFAULT)
+    else if (options.config_source == ConfigurationSource::NONE)
     {
         _status = _configure_with_defaults(options);
     }
