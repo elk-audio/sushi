@@ -94,6 +94,10 @@ set(TEST_DEPENDENCIES "")
 # Build options      #
 ######################
 
+if (APPLE)
+    set(TEST_COMPILE_DEFINITIONS ${TEST_COMPILE_DEFINITIONS} -DSUSHI_APPLE_THREADING)
+endif()
+
 # Build Test plugin, needed for dynamic library loading unit tests
 # Adapted from https://github.com/gmoe/vst-cmake
 
