@@ -555,6 +555,7 @@ set(SOURCE_FILES
     src/plugins/brickworks/highpass_plugin.cpp
     src/plugins/brickworks/clip_plugin.cpp
     src/plugins/brickworks/fuzz_plugin.cpp
+    src/plugins/brickworks/dist_plugin.cpp
     src/plugins/brickworks/simple_synth_plugin.cpp
     src/audio_frontends/offline_frontend.cpp)
 
