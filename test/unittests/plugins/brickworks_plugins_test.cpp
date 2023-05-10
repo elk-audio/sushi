@@ -32,6 +32,7 @@
 #include "plugins/brickworks/clip_plugin.cpp"
 #include "plugins/brickworks/fuzz_plugin.cpp"
 #include "plugins/brickworks/dist_plugin.cpp"
+#include "plugins/brickworks/drive_plugin.cpp"
 
 using namespace sushi;
 
@@ -203,6 +204,7 @@ BRICKWORKS_PLUGIN_TEST_CASES(Clip, "sushi.brickworks.clip", "Clip", 1.0e-2f)
 BRICKWORKS_PLUGIN_TEST_CASES(CombDelay,"sushi.brickworks.comb_delay", "Comb Delay", 1.0e-4f)
 BRICKWORKS_PLUGIN_TEST_CASES(Compressor, "sushi.brickworks.compressor", "Compressor", 1.0e-4f)
 BRICKWORKS_PLUGIN_TEST_CASES(Dist, "sushi.brickworks.dist", "Distortion", 1.0e-2f)
+BRICKWORKS_PLUGIN_TEST_CASES(Drive, "sushi.brickworks.drive", "Drive", 1.0e-2f)
 BRICKWORKS_PLUGIN_TEST_CASES(Eq3band, "sushi.brickworks.eq3band", "3-band Equalizer", 1.0e-4f)
 BRICKWORKS_PLUGIN_TEST_CASES(Flanger, "sushi.brickworks.flanger", "Flanger", 1.0e-4f)
 BRICKWORKS_PLUGIN_TEST_CASES(Fuzz, "sushi.brickworks.fuzz", "Fuzz", 1.0e-2f)

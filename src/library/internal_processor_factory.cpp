@@ -50,6 +50,7 @@
 #include "plugins/brickworks/clip_plugin.h"
 #include "plugins/brickworks/fuzz_plugin.h"
 #include "plugins/brickworks/dist_plugin.h"
+#include "plugins/brickworks/drive_plugin.h"
 #include "plugins/brickworks/combdelay_plugin.h"
 #include "plugins/brickworks/notch_plugin.h"
 #include "plugins/brickworks/simple_synth_plugin.h"
@@ -120,6 +121,7 @@ InternalProcessorFactory::InternalProcessorFactory() : _send_return_factory(std:
     _add(std::make_unique<InternalFactory<clip_plugin::ClipPlugin>>());
     _add(std::make_unique<InternalFactory<fuzz_plugin::FuzzPlugin>>());
     _add(std::make_unique<InternalFactory<dist_plugin::DistPlugin>>());
+    _add(std::make_unique<InternalFactory<drive_plugin::DrivePlugin>>());
     _add(std::make_unique<InternalFactory<simple_synth_plugin::SimpleSynthPlugin>>());
 }
 
