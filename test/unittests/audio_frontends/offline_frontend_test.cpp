@@ -131,7 +131,7 @@ TEST_F(TestOfflineFrontend, TestAddSequencerEvents)
     std::string test_config_file = test_utils::get_data_dir_path();
     test_config_file.append("config.json");
 
-    auto json_data = read_json_file (test_config_file);
+    auto json_data = read_file(test_config_file);
 
     jsonconfig::JsonConfigurator configurator(&_engine,
                                               &_midi_dispatcher,

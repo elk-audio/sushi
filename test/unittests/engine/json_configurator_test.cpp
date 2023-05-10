@@ -46,7 +46,7 @@ protected:
         _path = test_utils::get_data_dir_path();
         _path.append("config.json");
 
-        auto json_data = sushi::read_json_file(_path);
+        auto json_data = sushi::read_file(_path);
 
         _module_under_test = std::make_unique<JsonConfigurator>(&_engine,
                                                                 &_midi_dispatcher,

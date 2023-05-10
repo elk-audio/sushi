@@ -87,7 +87,7 @@ void BaseFactory::_instantiate_subsystems(SushiOptions& options)
 
 Status BaseFactory::_configure_from_file(SushiOptions& options)
 {
-    auto config = read_json_file (options.config_filename);
+    auto config = read_file(options.config_filename);
 
     if (!config)
     {

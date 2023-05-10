@@ -36,7 +36,7 @@ std::ostream& operator<<(std::ostream& out, const rapidjson::Document& document)
  * @param path The absolut path to the file.
  * @return file content on success - nullopt on failure
  */
-std::optional<std::string> read_json_file(const std::string& path);
+std::optional<std::string> read_file(const std::string& path);
 
 }
 
