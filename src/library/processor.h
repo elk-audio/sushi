@@ -547,12 +547,6 @@ private:
     std::unordered_map<GateKey, GateOutConnection> _outgoing_gate_connections;
 };
 
-constexpr std::chrono::duration<float, std::ratio<1,1>> BYPASS_RAMP_TIME = std::chrono::milliseconds(10);
-
-static int chunks_to_ramp(float sample_rate)
-{
-    return static_cast<int>(std::floor(std::max(1.0f, (sample_rate * BYPASS_RAMP_TIME.count() / AUDIO_CHUNK_SIZE))));
-}
 
 /**
  * @brief Convenience class to encapsulate the bypass state logic and when to ramp audio up
@@ -566,6 +560,12 @@ public:
     BypassManager() = default;
     explicit BypassManager(bool bypassed_by_default) :
             _state(bypassed_by_default? BypassState::BYPASSED : BypassState::NOT_BYPASSED) {}
+
+    explicit BypassManager(bool bypassed_by_default, int ramp_time_ms) :
+            BypassManager(bypassed_by_default)
+    {
+        _ramp_time = std::chrono::milliseconds(ramp_time_ms);
+    }
 
     /**
      * @brief Check whether or not bypass is enabled
@@ -583,13 +583,13 @@ public:
         if (bypass_enabled && this->bypassed() == false)
         {
             _state = BypassState::RAMPING_DOWN;
-            _ramp_chunks = chunks_to_ramp(sample_rate);
+            _ramp_chunks = _chunks_to_ramp(sample_rate);
             _ramp_count = _ramp_chunks;
         }
         if (bypass_enabled == false && this->bypassed())
         {
             _state = BypassState::RAMPING_UP;
-            _ramp_chunks = chunks_to_ramp(sample_rate);
+            _ramp_chunks = _chunks_to_ramp(sample_rate);
             _ramp_count = 0;
         }
     }
@@ -634,6 +634,11 @@ public:
     std::pair<float, float> get_ramp();
 
 private:
+    int _chunks_to_ramp(float sample_rate)
+    {
+        return static_cast<int>(std::floor(std::max(1.0f, (sample_rate * _ramp_time.count() / AUDIO_CHUNK_SIZE))));
+    }
+
     enum class BypassState
     {
         NOT_BYPASSED,
@@ -643,6 +648,7 @@ private:
     };
 
     BypassState _state{BypassState::NOT_BYPASSED};
+    std::chrono::duration<float, std::ratio<1,1>> _ramp_time{std::chrono::milliseconds(10)};
     int _ramp_chunks{0};
     int _ramp_count{0};
 };
