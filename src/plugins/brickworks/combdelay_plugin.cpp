@@ -18,7 +18,6 @@
  * @copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include <cstdlib>
 #include <cassert>
 
 #include "combdelay_plugin.h"
@@ -28,10 +27,6 @@ namespace comb_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.comb_delay";
 constexpr auto DEFAULT_LABEL = "Comb Delay";
-
-// just a little more margin than the default 16 on most platform
-// to take better advantage of AVX etc. when supported by the compiler
-constexpr size_t DELAY_LINE_MEMALIGN = 32;
 
 
 CombPlugin::CombPlugin(HostControl host_control) : InternalPlugin(host_control)
@@ -69,35 +64,12 @@ CombPlugin::CombPlugin(HostControl host_control) : InternalPlugin(host_control)
     assert(_fb_coeff);
 }
 
-CombPlugin::~CombPlugin()
-{
-    for (int i = 0; i < MAX_TRACK_CHANNELS; i++)
-    {
-        if (_delay_mem_areas[i])
-        {
-            free(_delay_mem_areas[i]);
-        }
-    }
-}
-
 ProcessorReturnCode CombPlugin::init(float sample_rate)
 {
     // Default values taken from Brickworks example fx_comb
     bw_comb_init(&_comb_coeffs, 1.0f);
     configure(sample_rate);
 
-    // The Brickworks VST3 example does alloc/dealloc of the delay lines
-    // at every change of setEnabled, but since we're not changing the delay values
-    // we can do everything here instead
-    for (int i = 0; i < MAX_TRACK_CHANNELS; i++)
-    {
-        auto memret = posix_memalign(&_delay_mem_areas[i], DELAY_LINE_MEMALIGN, bw_comb_mem_req(&_comb_coeffs));
-        if (memret != 0)
-        {
-            return ProcessorReturnCode::MEMORY_ERROR;
-        }
-        bw_comb_mem_set(&_comb_states[i], _delay_mem_areas[i]);
-    }
     return ProcessorReturnCode::OK;
 }
 
@@ -111,6 +83,11 @@ void CombPlugin::set_enabled(bool enabled)
 {
     Processor::set_enabled(enabled);
     bw_comb_reset_coeffs(&_comb_coeffs);
+    for (int i = 0; i < MAX_TRACK_CHANNELS; i++)
+    {
+        _delay_mem_areas[i].reserve(bw_comb_mem_req(&_comb_coeffs));
+        bw_comb_mem_set(&_comb_states[i], _delay_mem_areas[i].data());
+    }
     for (int i = 0; i < MAX_TRACK_CHANNELS; i++)
     {
         bw_comb_reset_state(&_comb_coeffs, &_comb_states[i]);

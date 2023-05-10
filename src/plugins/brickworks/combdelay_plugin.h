@@ -18,6 +18,8 @@
  * @copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
+#include <vector>
+
 #ifndef COMBDELAY_PLUGIN_H
 #define COMBDELAY_PLUGIN_H
 
@@ -33,7 +35,7 @@ class CombPlugin : public InternalPlugin, public UidHelper<CombPlugin>
 public:
     CombPlugin(HostControl hostControl);
 
-    ~CombPlugin();
+    ~CombPlugin() = default;
 
     virtual ProcessorReturnCode init(float sample_rate) override;
 
@@ -53,8 +55,8 @@ private:
     FloatParameterValue* _fb_coeff;
 
     bw_comb_coeffs _comb_coeffs;
-    std::array<bw_comb_state, MAX_TRACK_CHANNELS>   _comb_states;
-    std::array<void*, MAX_TRACK_CHANNELS> _delay_mem_areas{nullptr};
+    std::array<bw_comb_state, MAX_TRACK_CHANNELS> _comb_states;
+    std::array<std::vector<std::byte>, MAX_TRACK_CHANNELS> _delay_mem_areas;
 };
 
 }// namespace comb_plugin

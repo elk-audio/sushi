@@ -18,7 +18,6 @@
  * @copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include <cstdlib>
 #include <cassert>
 
 #include "vibrato_plugin.h"
@@ -28,10 +27,6 @@ namespace vibrato_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.vibrato";
 constexpr auto DEFAULT_LABEL = "Vibrato";
-
-// just a little more margin than the default 16 on most platform
-// to take better advantage of AVX etc. when supported by the compiler
-constexpr size_t DELAY_LINE_MEMALIGN = 32;
 
 constexpr float VIBRATO_AMOUNT_SCALE = 0.0025f;
 
@@ -60,17 +55,6 @@ VibratoPlugin::VibratoPlugin(HostControl host_control) : InternalPlugin(host_con
     assert(_amount);
 }
 
-VibratoPlugin::~VibratoPlugin()
-{
-    for (int i = 0; i < MAX_TRACK_CHANNELS; i++)
-    {
-        if (_delay_mem_areas[i])
-        {
-            free(_delay_mem_areas[i]);
-        }
-    }
-}
-
 ProcessorReturnCode VibratoPlugin::init(float sample_rate)
 {
     // Default values taken from Brickworks example fx_vibrato
@@ -81,18 +65,6 @@ ProcessorReturnCode VibratoPlugin::init(float sample_rate)
     bw_chorus_set_coeff_fb(&_chorus_coeffs, -0.7071f);
     configure(sample_rate);
 
-    // The Brickworks VST3 example does alloc/dealloc of the delay lines
-    // at every change of setEnabled, but since we're not changing the delay values
-    // we can do everything here instead
-    for (int i = 0; i < MAX_TRACK_CHANNELS; i++)
-    {
-        auto memret = posix_memalign(&_delay_mem_areas[i], DELAY_LINE_MEMALIGN, bw_chorus_mem_req(&_chorus_coeffs));
-        if (memret != 0)
-        {
-            return ProcessorReturnCode::MEMORY_ERROR;
-        }
-        bw_chorus_mem_set(&_chorus_states[i], _delay_mem_areas[i]);
-    }
     return ProcessorReturnCode::OK;
 }
 
@@ -106,6 +78,11 @@ void VibratoPlugin::set_enabled(bool enabled)
 {
     Processor::set_enabled(enabled);
     bw_chorus_reset_coeffs(&_chorus_coeffs);
+    for (int i = 0; i < MAX_TRACK_CHANNELS; i++)
+    {
+        _delay_mem_areas[i].reserve(bw_chorus_mem_req(&_chorus_coeffs));
+        bw_chorus_mem_set(&_chorus_states[i], _delay_mem_areas[i].data());
+    }
     for (int i = 0; i < MAX_TRACK_CHANNELS; i++)
     {
         bw_chorus_reset_state(&_chorus_coeffs, &_chorus_states[i]);

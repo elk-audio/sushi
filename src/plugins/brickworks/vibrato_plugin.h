@@ -21,6 +21,8 @@
 #ifndef VIBRATO_PLUGIN_H
 #define VIBRATO_PLUGIN_H
 
+#include <vector>
+
 #include <bw_chorus.h>
 
 #include "library/internal_plugin.h"
@@ -33,7 +35,7 @@ class VibratoPlugin : public InternalPlugin, public UidHelper<VibratoPlugin>
 public:
     VibratoPlugin(HostControl hostControl);
 
-    ~VibratoPlugin();
+    ~VibratoPlugin() = default;
 
     virtual ProcessorReturnCode init(float sample_rate) override;
 
@@ -51,7 +53,7 @@ private:
 
     bw_chorus_coeffs _chorus_coeffs;
     std::array<bw_chorus_state, MAX_TRACK_CHANNELS> _chorus_states;
-    std::array<void*, MAX_TRACK_CHANNELS> _delay_mem_areas{nullptr};
+    std::array<std::vector<std::byte>, MAX_TRACK_CHANNELS> _delay_mem_areas;
 };
 
 }// namespace vibrato_plugin
