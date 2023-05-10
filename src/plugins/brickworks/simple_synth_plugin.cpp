@@ -182,8 +182,8 @@ void SimpleSynthPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */, 
         // if that's not the case simply drop the event
         if (next_offset < previous_offset)
         {
-            SUSHI_LOG_WARNING("Dropping unordered event of type {} with sample offset {}",
-                              event.type(), event.sample_offset());
+            SUSHI_LOG_DEBUG("Dropping unordered event of type {} with sample offset {}",
+                            event.type(), event.sample_offset());
             continue;
         }
         _render_loop(previous_offset, next_offset);
@@ -226,7 +226,7 @@ void SimpleSynthPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */, 
         }
 
         default:
-            SUSHI_LOG_WARNING("Unexpected event type passed to process(): {}", key_event->type());
+            SUSHI_LOG_DEBUG("Unexpected event type passed to process(): {}", key_event->type());
 
         }
         previous_offset = next_offset;
