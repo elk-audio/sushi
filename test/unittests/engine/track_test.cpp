@@ -238,7 +238,7 @@ TEST_F(TrackTest, TestMute)
     // Enable mute and run
     auto mute_event = RtEvent::make_parameter_change_event(0, 0, mute_param->id(), 1.0);
     _module_under_test.process_event(mute_event);
-    for (int i = 0; i <= TEST_SAMPLE_RATE / AUDIO_CHUNK_SIZE / (1000 / GAIN_SMOOTHING_TIME.count()); ++i)
+    for (int i = 0; i <= TEST_SAMPLE_RATE / AUDIO_CHUNK_SIZE / (500 / GAIN_SMOOTHING_TIME.count()); ++i)
     {
         test_utils::fill_sample_buffer(in_bus, 1.0f);
         _module_under_test.render();
