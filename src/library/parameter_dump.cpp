@@ -18,7 +18,7 @@
  * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#include "sushi/json_utils.h"
+#include "sushi/utils.h"
 
 #include "sushi/parameter_dump.h"
 

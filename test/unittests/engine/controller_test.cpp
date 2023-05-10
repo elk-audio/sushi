@@ -6,7 +6,7 @@
 #include "test_utils/test_utils.h"
 #include "test_utils/audio_frontend_mockup.h"
 
-#include "sushi/json_utils.h"
+#include "sushi/utils.h"
 
 /* Currently testing Controller as a complete class
  * eventually we might want to test the individual

@@ -9,7 +9,7 @@
 
 #include "audio_frontends/offline_frontend.cpp"
 
-#include "json_utils.cpp"
+#include "utils.cpp"
 
 using ::testing::internal::posix::GetEnv;
 

@@ -19,7 +19,7 @@
 #include "engine/json_configurator.h"
 
 #include "concrete_sushi.h"
-#include "sushi/json_utils.h"
+#include "sushi/utils.h"
 
 namespace sushi::internal {
 

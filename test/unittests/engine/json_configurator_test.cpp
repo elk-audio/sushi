@@ -9,7 +9,7 @@
 #include <gmock/gmock-actions.h>
 
 #include "engine/json_configurator.cpp"
-#include "sushi/json_utils.h"
+#include "sushi/utils.h"
 
 #undef private
 #undef protected

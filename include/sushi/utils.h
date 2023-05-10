@@ -18,8 +18,8 @@
  * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
-#ifndef SUSHI_JSON_UTILS_H
-#define SUSHI_JSON_UTILS_H
+#ifndef SUSHI_UTILS_H
+#define SUSHI_UTILS_H
 
 #include <iostream>
 #include <optional>
@@ -40,5 +40,5 @@ std::optional<std::string> read_file(const std::string& path);
 
 }
 
-#endif // SUSHI_JSON_UTILS_H
+#endif // SUSHI_UTILS_H
 

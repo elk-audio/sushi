@@ -453,7 +453,7 @@ endif()
 
 set(SOURCE_FILES
     src/logging.cpp
-    src/json_utils.cpp
+    src/utils.cpp
     src/audio_frontends/base_audio_frontend.cpp
     src/concrete_sushi.cpp
     src/audio_frontends/offline_frontend.cpp

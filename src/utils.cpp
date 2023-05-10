@@ -58,5 +58,4 @@ std::optional<std::string> read_file(const std::string& path)
     return config_file_contents;
 }
 
-
 }
