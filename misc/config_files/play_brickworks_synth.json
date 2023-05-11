@@ -1,0 +1,65 @@
+{
+    "host_config" : {
+        "samplerate" : 48000,
+        "tempo" : 140.0,
+        "playing_mode" : "playing"
+    },
+    "tracks" : [
+        {
+            "name" : "main",
+            "channels" : 2,
+            "inputs" : [],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "uid" : "sushi.testing.step_sequencer",
+                    "name" : "sequencer",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.brickworks.simple_synth",
+                    "name" : "synth",
+                    "type" : "internal"
+                }
+            ]
+        }
+    ],
+    "midi" : {
+        "track_connections" : [
+            {
+                "port" : 0,
+                "channel" : "all",
+                "track" : "main",
+                "raw_midi" : false
+            }
+        ]
+    },
+    "initial_state" : [
+        {
+            "processor" : "sequencer",
+            "parameters" : {
+                "pitch_1" : 0.41666666666666674,
+                "pitch_2" : 0.5,
+                "pitch_3" : 0.5625,
+                "pitch_4" : 0.6458333333333334,
+                "pitch_5" : 0.6666666666666667,
+                "pitch_6" : 0.6458333333333334,
+                "pitch_7" : 0.5625,
+                "pitch_0" : 0.5,
+                "step_0" : 1.0,
+                "step_1" : 1.0,
+                "step_2" : 1.0,
+                "step_3" : 1.0,
+                "step_4" : 1.0,
+                "step_5" : 1.0,
+                "step_6" : 1.0,
+                "step_7" : 1.0
+            }
+        }
+    ]
+}
