@@ -72,13 +72,35 @@ void NotchPlugin::set_enabled(bool enabled)
     }
 }
 
+void NotchPlugin::set_bypassed(bool bypassed)
+{
+    _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
+}
+
+void NotchPlugin::process_event(const RtEvent& event)
+{
+    switch (event.type())
+    {
+    case RtEventType::SET_BYPASS:
+    {
+        bool bypassed = static_cast<bool>(event.processor_command_event()->value());
+        _bypass_manager.set_bypass(bypassed, _sample_rate);
+        break;
+    }
+
+    default:
+        InternalPlugin::process_event(event);
+        break;
+    }
+}
+
 void NotchPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
     /* Update parameter values */
     bw_notch_set_cutoff(&_notch_coeffs, _frequency->processed_value());
     bw_notch_set_Q(&_notch_coeffs, _Q->processed_value());
 
-    if (!_bypassed)
+    if (_bypass_manager.should_process())
     {
         const float* in_channel_ptrs[_current_input_channels];
         float* out_channel_ptrs[_current_input_channels];
@@ -97,6 +119,12 @@ void NotchPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleB
                 *out_channel_ptrs[i]++ = bw_notch_process1(&_notch_coeffs, &_notch_states[i],
                                                             *in_channel_ptrs[i]++);
             }
+        }
+        if (_bypass_manager.should_ramp())
+        {
+            _bypass_manager.crossfade_output(in_buffer, out_buffer,
+                                             _current_input_channels,
+                                             _current_output_channels);
         }
     }
     else

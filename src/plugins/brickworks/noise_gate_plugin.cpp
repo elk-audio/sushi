@@ -82,6 +82,28 @@ void NoiseGatePlugin::set_enabled(bool enabled)
     }
 }
 
+void NoiseGatePlugin::set_bypassed(bool bypassed)
+{
+    _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
+}
+
+void NoiseGatePlugin::process_event(const RtEvent& event)
+{
+    switch (event.type())
+    {
+    case RtEventType::SET_BYPASS:
+    {
+        bool bypassed = static_cast<bool>(event.processor_command_event()->value());
+        _bypass_manager.set_bypass(bypassed, _sample_rate);
+        break;
+    }
+
+    default:
+        InternalPlugin::process_event(event);
+        break;
+    }
+}
+
 void NoiseGatePlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
     /* Update parameter values */
@@ -94,7 +116,7 @@ void NoiseGatePlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSam
     bw_noise_gate_set_attack_tau(&_noise_gate_coeffs, _attack->processed_value());
     bw_noise_gate_set_release_tau(&_noise_gate_coeffs, _release->processed_value());
 
-    if (!_bypassed)
+    if (_bypass_manager.should_process())
     {
         const float* in_channel_ptrs[_current_input_channels];
         float* out_channel_ptrs[_current_input_channels];
@@ -114,6 +136,12 @@ void NoiseGatePlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSam
                 *out_channel_ptrs[i]++ = bw_noise_gate_process1(&_noise_gate_coeffs, &_noise_gate_states[i],
                                                                 x, x);
             }
+        }
+        if (_bypass_manager.should_ramp())
+        {
+            _bypass_manager.crossfade_output(in_buffer, out_buffer,
+                                             _current_input_channels,
+                                             _current_output_channels);
         }
     }
     else

@@ -49,10 +49,11 @@ BitcrusherPlugin::BitcrusherPlugin(HostControl host_control) : InternalPlugin(ho
     assert(_bit_depth);
 }
 
-ProcessorReturnCode BitcrusherPlugin::init(float /*sample_rate*/)
+ProcessorReturnCode BitcrusherPlugin::init(float sample_rate)
 {
     bw_sr_reduce_init(&_sr_reduce_coeffs);
     bw_bd_reduce_init(&_bd_reduce_coeffs);
+    configure(sample_rate);
     return ProcessorReturnCode::OK;
 }
 
@@ -66,13 +67,35 @@ void BitcrusherPlugin::set_enabled(bool enabled)
     }
 }
 
+void BitcrusherPlugin::set_bypassed(bool bypassed)
+{
+    _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
+}
+
+void BitcrusherPlugin::process_event(const RtEvent& event)
+{
+    switch (event.type())
+    {
+    case RtEventType::SET_BYPASS:
+    {
+        bool bypassed = static_cast<bool>(event.processor_command_event()->value());
+        _bypass_manager.set_bypass(bypassed, _sample_rate);
+        break;
+    }
+
+    default:
+        InternalPlugin::process_event(event);
+        break;
+    }
+}
+
 void BitcrusherPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
     /* Update parameter values */
     bw_sr_reduce_set_ratio(&_sr_reduce_coeffs, _samplerate_ratio->processed_value());
     bw_bd_reduce_set_bit_depth(&_bd_reduce_coeffs, _bit_depth->processed_value());
 
-    if (!_bypassed)
+    if (_bypass_manager.should_process())
     {
         for (int i = 0; i < _current_input_channels; i++)
         {
@@ -82,6 +105,12 @@ void BitcrusherPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSa
             bw_bd_reduce_process(&_bd_reduce_coeffs,
                                  out_buffer.channel(i), out_buffer.channel(i),
                                  AUDIO_CHUNK_SIZE);
+        }
+        if (_bypass_manager.should_ramp())
+        {
+            _bypass_manager.crossfade_output(in_buffer, out_buffer,
+                                             _current_input_channels,
+                                             _current_output_channels);
         }
     }
     else

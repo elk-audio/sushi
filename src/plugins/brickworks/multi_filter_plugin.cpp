@@ -92,6 +92,28 @@ void MultiFilterPlugin::set_enabled(bool enabled)
     }
 }
 
+void MultiFilterPlugin::set_bypassed(bool bypassed)
+{
+    _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
+}
+
+void MultiFilterPlugin::process_event(const RtEvent& event)
+{
+    switch (event.type())
+    {
+    case RtEventType::SET_BYPASS:
+    {
+        bool bypassed = static_cast<bool>(event.processor_command_event()->value());
+        _bypass_manager.set_bypass(bypassed, _sample_rate);
+        break;
+    }
+
+    default:
+        InternalPlugin::process_event(event);
+        break;
+    }
+}
+
 void MultiFilterPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
     /* Update parameter values */
@@ -102,7 +124,7 @@ void MultiFilterPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkS
     bw_mm2_set_coeff_bp(&_mm2_coeffs, _bandpass_coeff->processed_value());
     bw_mm2_set_coeff_hp(&_mm2_coeffs, _highpass_coeff->processed_value());
 
-    if (!_bypassed)
+    if (_bypass_manager.should_process())
     {
         const float* in_channel_ptrs[_current_input_channels];
         float* out_channel_ptrs[_current_input_channels];
@@ -121,6 +143,12 @@ void MultiFilterPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkS
                 *out_channel_ptrs[i]++ = bw_mm2_process1(&_mm2_coeffs, &_mm2_states[i],
                                                          *in_channel_ptrs[i]++);
             }
+        }
+        if (_bypass_manager.should_ramp())
+        {
+            _bypass_manager.crossfade_output(in_buffer, out_buffer,
+                                             _current_input_channels,
+                                             _current_output_channels);
         }
     }
     else

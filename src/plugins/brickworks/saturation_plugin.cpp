@@ -76,13 +76,35 @@ void SaturationPlugin::set_enabled(bool enabled)
     }
 }
 
+void SaturationPlugin::set_bypassed(bool bypassed)
+{
+    _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
+}
+
+void SaturationPlugin::process_event(const RtEvent& event)
+{
+    switch (event.type())
+    {
+    case RtEventType::SET_BYPASS:
+    {
+        bool bypassed = static_cast<bool>(event.processor_command_event()->value());
+        _bypass_manager.set_bypass(bypassed, _sample_rate);
+        break;
+    }
+
+    default:
+        InternalPlugin::process_event(event);
+        break;
+    }
+}
+
 void SaturationPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
     /* Update parameter values */
     bw_satur_set_bias(&_saturation_coeffs, _bias->processed_value());
     bw_satur_set_gain(&_saturation_coeffs, _gain->processed_value());
 
-    if (!_bypassed)
+    if (_bypass_manager.should_process())
     {
         bw_satur_update_coeffs_ctrl(&_saturation_coeffs);
         int n = 0;
@@ -114,6 +136,12 @@ void SaturationPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSa
                                    _tmp_buf.channel(i), out_buffer.channel(i) + n, frames_upsample);
             }
             n += frames_left;
+        }
+        if (_bypass_manager.should_ramp())
+        {
+            _bypass_manager.crossfade_output(in_buffer, out_buffer,
+                                             _current_input_channels,
+                                             _current_output_channels);
         }
     }
     else

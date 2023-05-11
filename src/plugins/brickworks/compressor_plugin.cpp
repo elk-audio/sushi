@@ -88,6 +88,28 @@ void CompressorPlugin::set_enabled(bool enabled)
     }
 }
 
+void CompressorPlugin::set_bypassed(bool bypassed)
+{
+    _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
+}
+
+void CompressorPlugin::process_event(const RtEvent& event)
+{
+    switch (event.type())
+    {
+    case RtEventType::SET_BYPASS:
+    {
+        bool bypassed = static_cast<bool>(event.processor_command_event()->value());
+        _bypass_manager.set_bypass(bypassed, _sample_rate);
+        break;
+    }
+
+    default:
+        InternalPlugin::process_event(event);
+        break;
+    }
+}
+
 void CompressorPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
     /* Update parameter values */
@@ -97,7 +119,7 @@ void CompressorPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSa
     bw_comp_set_release_tau(&_compressor_coeffs, _release->processed_value());
     bw_comp_set_gain_dB(&_compressor_coeffs, _gain->processed_value());
 
-    if (!_bypassed)
+    if (_bypass_manager.should_process())
     {
         const float* in_channel_ptrs[_current_input_channels];
         float* out_channel_ptrs[_current_input_channels];
@@ -124,6 +146,12 @@ void CompressorPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSa
                 *out_channel_ptrs[i]++ = bw_comp_process1(&_compressor_coeffs, &_compressor_state[i],
                                                           input_samples[i], control_sig);
             }
+        }
+        if (_bypass_manager.should_ramp())
+        {
+            _bypass_manager.crossfade_output(in_buffer, out_buffer,
+                                             _current_input_channels,
+                                             _current_output_channels);
         }
     }
     else

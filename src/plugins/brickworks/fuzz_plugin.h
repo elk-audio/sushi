@@ -42,11 +42,18 @@ public:
 
     void set_enabled(bool enabled) override;
 
+    void set_bypassed(bool bypassed) override;
+
+    void process_event(const RtEvent& event) override;
+
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
     static std::string_view static_uid();
 
 private:
+    BypassManager _bypass_manager;
+    float _sample_rate{0};
+
     FloatParameterValue* _fuzz;
     FloatParameterValue* _volume;
 

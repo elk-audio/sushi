@@ -43,11 +43,18 @@ public:
 
     void set_enabled(bool enabled) override;
 
+    void set_bypassed(bool bypassed) override;
+
+    void process_event(const RtEvent& event) override;
+
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
     static std::string_view static_uid();
 
 private:
+    BypassManager _bypass_manager{false, 100};
+    float _sample_rate{0};
+
     FloatParameterValue* _ff_delay;
     FloatParameterValue* _fb_delay;
     FloatParameterValue* _blend;

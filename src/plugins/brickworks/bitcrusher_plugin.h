@@ -38,16 +38,25 @@ public:
 
     virtual ProcessorReturnCode init(float sample_rate) override;
 
-    void configure(float /*sample_rate*/) override
-    {}
+    void configure(float sample_rate) override
+    {
+        _sample_rate = sample_rate;
+    }
 
     void set_enabled(bool enabled) override;
+
+    void set_bypassed(bool bypassed) override;
+
+    void process_event(const RtEvent& event) override;
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
     static std::string_view static_uid();
 
 private:
+    BypassManager _bypass_manager;
+    float _sample_rate{0};
+
     FloatParameterValue* _samplerate_ratio;
     IntParameterValue* _bit_depth;
 
