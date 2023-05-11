@@ -31,11 +31,11 @@ namespace wah_plugin {
 class WahPlugin : public InternalPlugin, public UidHelper<WahPlugin>
 {
 public:
-    WahPlugin(HostControl hostControl);
+    explicit WahPlugin(HostControl hostControl);
 
-    ~WahPlugin() = default;
+    ~WahPlugin() override = default;
 
-    virtual ProcessorReturnCode init(float sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
 
     void configure(float sample_rate) override;
 

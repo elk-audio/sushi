@@ -14,8 +14,7 @@
  */
 
 /**
- * @brief 3-band equalizer f
- * rom Brickworks library
+ * @brief 3-band equalizer from Brickworks library
  * @copyright 2017-2023 Elk Audio AB, Stockholm
  */
 

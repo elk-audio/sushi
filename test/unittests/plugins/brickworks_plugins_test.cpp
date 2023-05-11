@@ -246,7 +246,7 @@ protected:
         _rand_gen.seed(1234);
     }
 
-    void SetUp()
+    void SetUp() override
     {
         _module_under_test = std::make_unique<bitcrusher_plugin::BitcrusherPlugin>(_host_control.make_host_control_mockup());
         ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);

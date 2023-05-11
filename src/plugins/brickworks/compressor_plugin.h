@@ -31,11 +31,11 @@ namespace compressor_plugin {
 class CompressorPlugin : public InternalPlugin, public UidHelper<CompressorPlugin>
 {
 public:
-    CompressorPlugin(HostControl hostControl);
+    explicit CompressorPlugin(HostControl hostControl);
 
-    ~CompressorPlugin() = default;
+    ~CompressorPlugin() override = default;
 
-    virtual ProcessorReturnCode init(float sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
 
     void configure(float sample_rate) override;
 

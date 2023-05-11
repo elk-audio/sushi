@@ -31,11 +31,11 @@ namespace tremolo_plugin {
 class TremoloPlugin : public InternalPlugin, public UidHelper<TremoloPlugin>
 {
 public:
-    TremoloPlugin(HostControl hostControl);
+    explicit TremoloPlugin(HostControl hostControl);
 
-    ~TremoloPlugin() = default;
+    ~TremoloPlugin() override = default;
 
-    virtual ProcessorReturnCode init(float sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
 
     void configure(float sample_rate) override;
 

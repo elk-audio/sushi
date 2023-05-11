@@ -111,7 +111,7 @@ void HighPassPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSamp
             for (int i = 0; i < _current_input_channels; i++)
             {
                 *out_channel_ptrs[i]++ = bw_hp1_process1(&_hp1_coeffs, &_hp1_states[i],
-                                                            *in_channel_ptrs[i]++);
+                                                         *in_channel_ptrs[i]++);
             }
         }
     }

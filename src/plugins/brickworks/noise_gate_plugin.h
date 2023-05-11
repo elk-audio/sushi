@@ -31,11 +31,11 @@ namespace noise_gate_plugin {
 class NoiseGatePlugin : public InternalPlugin, public UidHelper<NoiseGatePlugin>
 {
 public:
-    NoiseGatePlugin(HostControl hostControl);
+    explicit NoiseGatePlugin(HostControl hostControl);
 
-    ~NoiseGatePlugin() = default;
+    ~NoiseGatePlugin() override = default;
 
-    virtual ProcessorReturnCode init(float sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
 
     void configure(float sample_rate) override;
 

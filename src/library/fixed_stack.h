@@ -73,7 +73,7 @@ public:
      *
      * @return Stack length
      */
-    int size() const
+    [[nodiscard]] int size() const
     {
         return (_head + 1);
     }
@@ -81,7 +81,7 @@ public:
     /**
      * @brief Check if stack is empty
      */
-    bool empty() const
+    [[nodiscard]] bool empty() const
     {
         return (_head == -1);
     }
@@ -89,7 +89,7 @@ public:
     /**
      * @brief Check if stack is full
      */
-    bool full() const
+    [[nodiscard]] bool full() const
     {
         return (_head == (storage_capacity-1));
     }

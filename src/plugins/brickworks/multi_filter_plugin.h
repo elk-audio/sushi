@@ -31,11 +31,11 @@ namespace multi_filter_plugin {
 class MultiFilterPlugin : public InternalPlugin, public UidHelper<MultiFilterPlugin>
 {
 public:
-    MultiFilterPlugin(HostControl hostControl);
+    explicit MultiFilterPlugin(HostControl hostControl);
 
-    ~MultiFilterPlugin() = default;
+    ~MultiFilterPlugin() override = default;
 
-    virtual ProcessorReturnCode init(float sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
 
     void configure(float sample_rate) override;
 

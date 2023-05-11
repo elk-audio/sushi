@@ -32,11 +32,11 @@ namespace drive_plugin {
 class DrivePlugin : public InternalPlugin, public UidHelper<DrivePlugin>
 {
 public:
-    DrivePlugin(HostControl hostControl);
+    explicit DrivePlugin(HostControl hostControl);
 
-    ~DrivePlugin() = default;
+    ~DrivePlugin() override = default;
 
-    virtual ProcessorReturnCode init(float sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
 
     void configure(float sample_rate) override;
 

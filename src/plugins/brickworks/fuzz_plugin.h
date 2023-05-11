@@ -32,11 +32,11 @@ namespace fuzz_plugin {
 class FuzzPlugin : public InternalPlugin, public UidHelper<FuzzPlugin>
 {
 public:
-    FuzzPlugin(HostControl hostControl);
+    explicit FuzzPlugin(HostControl hostControl);
 
-    ~FuzzPlugin() = default;
+    ~FuzzPlugin() override = default;
 
-    virtual ProcessorReturnCode init(float sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
 
     void configure(float sample_rate) override;
 

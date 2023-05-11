@@ -32,11 +32,11 @@ namespace clip_plugin {
 class ClipPlugin : public InternalPlugin, public UidHelper<ClipPlugin>
 {
 public:
-    ClipPlugin(HostControl hostControl);
+    explicit ClipPlugin(HostControl hostControl);
 
-    ~ClipPlugin() = default;
+    ~ClipPlugin() override = default;
 
-    virtual ProcessorReturnCode init(float sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
 
     void configure(float sample_rate) override;
 

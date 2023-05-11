@@ -31,11 +31,11 @@ namespace highpass_plugin {
 class HighPassPlugin : public InternalPlugin, public UidHelper<HighPassPlugin>
 {
 public:
-    HighPassPlugin(HostControl hostControl);
+    explicit HighPassPlugin(HostControl hostControl);
 
-    ~HighPassPlugin() = default;
+    ~HighPassPlugin() override = default;
 
-    virtual ProcessorReturnCode init(float sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
 
     void configure(float sample_rate) override;
 

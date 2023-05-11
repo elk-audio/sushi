@@ -33,11 +33,11 @@ namespace eq3band_plugin {
 class Eq3bandPlugin : public InternalPlugin, public UidHelper<Eq3bandPlugin>
 {
 public:
-    Eq3bandPlugin(HostControl hostControl);
+    explicit Eq3bandPlugin(HostControl hostControl);
 
-    ~Eq3bandPlugin() = default;
+    ~Eq3bandPlugin() override = default;
 
-    virtual ProcessorReturnCode init(float sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
 
     void configure(float sample_rate) override;
 

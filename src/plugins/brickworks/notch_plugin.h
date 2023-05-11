@@ -31,11 +31,11 @@ namespace notch_plugin {
 class NotchPlugin : public InternalPlugin, public UidHelper<NotchPlugin>
 {
 public:
-    NotchPlugin(HostControl hostControl);
+    explicit NotchPlugin(HostControl hostControl);
 
-    ~NotchPlugin() = default;
+    ~NotchPlugin() override = default;
 
-    virtual ProcessorReturnCode init(float sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
 
     void configure(float sample_rate) override;
 

@@ -33,11 +33,11 @@ namespace vibrato_plugin {
 class VibratoPlugin : public InternalPlugin, public UidHelper<VibratoPlugin>
 {
 public:
-    VibratoPlugin(HostControl hostControl);
+    explicit VibratoPlugin(HostControl hostControl);
 
-    ~VibratoPlugin() = default;
+    ~VibratoPlugin() override = default;
 
-    virtual ProcessorReturnCode init(float sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
 
     void configure(float sample_rate) override;
 

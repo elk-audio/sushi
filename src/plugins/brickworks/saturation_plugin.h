@@ -32,11 +32,11 @@ namespace saturation_plugin {
 class SaturationPlugin : public InternalPlugin, public UidHelper<SaturationPlugin>
 {
 public:
-    SaturationPlugin(HostControl hostControl);
+    explicit SaturationPlugin(HostControl hostControl);
 
-    ~SaturationPlugin() = default;
+    ~SaturationPlugin() override = default;
 
-    virtual ProcessorReturnCode init(float sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
 
     void configure(float sample_rate) override;
 

@@ -33,11 +33,11 @@ namespace chorus_plugin {
 class ChorusPlugin : public InternalPlugin, public UidHelper<ChorusPlugin>
 {
 public:
-    ChorusPlugin(HostControl hostControl);
+    explicit ChorusPlugin(HostControl hostControl);
 
-    ~ChorusPlugin() = default;
+    ~ChorusPlugin() override = default;
 
-    virtual ProcessorReturnCode init(float sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
 
     void configure(float sample_rate) override;
 

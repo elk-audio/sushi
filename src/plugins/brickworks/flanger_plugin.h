@@ -33,11 +33,11 @@ namespace flanger_plugin {
 class FlangerPlugin : public InternalPlugin, public UidHelper<FlangerPlugin>
 {
 public:
-    FlangerPlugin(HostControl hostControl);
+    explicit FlangerPlugin(HostControl hostControl);
 
-    ~FlangerPlugin() = default;
+    ~FlangerPlugin() override = default;
 
-    virtual ProcessorReturnCode init(float sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
 
     void configure(float sample_rate) override;
 

@@ -43,11 +43,11 @@ constexpr int MAX_MIDI_NOTE = 128;
 class SimpleSynthPlugin : public InternalPlugin, public UidHelper<SimpleSynthPlugin>
 {
 public:
-    SimpleSynthPlugin(HostControl host_control);
+    explicit SimpleSynthPlugin(HostControl host_control);
 
-    ~SimpleSynthPlugin() = default;
+    ~SimpleSynthPlugin() override = default;
 
-    virtual ProcessorReturnCode init(float sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
 
     void configure(float sample_rate) override;
 

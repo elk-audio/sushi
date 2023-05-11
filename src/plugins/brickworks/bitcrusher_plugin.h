@@ -32,11 +32,11 @@ namespace bitcrusher_plugin {
 class BitcrusherPlugin : public InternalPlugin, public UidHelper<BitcrusherPlugin>
 {
 public:
-    BitcrusherPlugin(HostControl hostControl);
+    explicit BitcrusherPlugin(HostControl hostControl);
 
-    ~BitcrusherPlugin() = default;
+    ~BitcrusherPlugin() override = default;
 
-    virtual ProcessorReturnCode init(float sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
 
     void configure(float sample_rate) override
     {

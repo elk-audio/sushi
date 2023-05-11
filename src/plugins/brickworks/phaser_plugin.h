@@ -31,11 +31,11 @@ namespace phaser_plugin {
 class PhaserPlugin : public InternalPlugin, public UidHelper<PhaserPlugin>
 {
 public:
-    PhaserPlugin(HostControl hostControl);
+    explicit PhaserPlugin(HostControl hostControl);
 
-    ~PhaserPlugin() = default;
+    ~PhaserPlugin() override = default;
 
-    virtual ProcessorReturnCode init(float sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
 
     void configure(float sample_rate) override;
 

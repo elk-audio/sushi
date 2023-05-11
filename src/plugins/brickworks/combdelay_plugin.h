@@ -33,11 +33,11 @@ namespace comb_plugin {
 class CombPlugin : public InternalPlugin, public UidHelper<CombPlugin>
 {
 public:
-    CombPlugin(HostControl hostControl);
+    explicit CombPlugin(HostControl hostControl);
 
-    ~CombPlugin() = default;
+    ~CombPlugin() override = default;
 
-    virtual ProcessorReturnCode init(float sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
 
     void configure(float sample_rate) override;
 

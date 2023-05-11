@@ -32,11 +32,11 @@ namespace dist_plugin {
 class DistPlugin : public InternalPlugin, public UidHelper<DistPlugin>
 {
 public:
-    DistPlugin(HostControl hostControl);
+    explicit DistPlugin(HostControl hostControl);
 
-    ~DistPlugin() = default;
+    ~DistPlugin() override = default;
 
-    virtual ProcessorReturnCode init(float sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
 
     void configure(float sample_rate) override;
 
