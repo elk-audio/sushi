@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Set of compact and performance oriented events for use in the realtime part.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
 #ifndef SUSHI_RT_EVENTS_H
@@ -29,6 +29,7 @@
 #include "library/types.h"
 #include "library/time.h"
 #include "library/connection_types.h"
+#include "library/midi_decoder.h"
 
 namespace sushi {
 
@@ -885,11 +886,15 @@ public:
         return &_delete_data_event;
     }
 
-
     /* Factory functions for constructing events */
     static RtEvent make_note_on_event(ObjectId target, int offset, int channel, int note, float velocity)
     {
         return make_keyboard_event(RtEventType::NOTE_ON, target, offset, channel, note, velocity);
+    }
+
+    static RtEvent make_note_on_event(ObjectId target, int offset, midi::NoteOnMessage msg)
+    {
+        return make_keyboard_event(RtEventType::NOTE_ON, target, offset, msg.channel, msg.note, msg.velocity / midi::MAX_VALUE_F);
     }
 
     static RtEvent make_note_off_event(ObjectId target, int offset, int channel, int note, float velocity)
@@ -897,9 +902,19 @@ public:
         return make_keyboard_event(RtEventType::NOTE_OFF, target, offset, channel, note, velocity);
     }
 
+    static RtEvent make_note_off_event(ObjectId target, int offset, midi::NoteOffMessage msg)
+    {
+        return make_keyboard_event(RtEventType::NOTE_OFF, target, offset, msg.channel, msg.note, msg.velocity / midi::MAX_VALUE_F);
+    }
+
     static RtEvent make_note_aftertouch_event(ObjectId target, int offset, int channel, int note, float velocity)
     {
         return make_keyboard_event(RtEventType::NOTE_AFTERTOUCH, target, offset, channel, note, velocity);
+    }
+
+    static RtEvent make_note_aftertouch_event(ObjectId target, int offset, midi::PolyKeyPressureMessage msg)
+    {
+        return make_keyboard_event(RtEventType::NOTE_AFTERTOUCH, target, offset, msg.channel, msg.note, msg.pressure / midi::MAX_VALUE_F);
     }
 
     static RtEvent make_keyboard_event(RtEventType type, ObjectId target, int offset, int channel, int note, float velocity)
@@ -913,14 +928,29 @@ public:
         return make_keyboard_common_event(RtEventType::AFTERTOUCH, target, offset, channel, value);
     }
 
+    static RtEvent make_aftertouch_event(ObjectId target, int offset, midi::ChannelPressureMessage msg)
+    {
+        return make_keyboard_common_event(RtEventType::AFTERTOUCH, target, offset, msg.channel, msg.pressure / midi::MAX_VALUE_F);
+    }
+
     static RtEvent make_pitch_bend_event(ObjectId target, int offset, int channel, float value)
     {
         return make_keyboard_common_event(RtEventType::PITCH_BEND, target, offset, channel, value);
     }
 
+    static RtEvent make_pitch_bend_event(ObjectId target, int offset, midi::PitchBendMessage msg)
+    {
+        return make_keyboard_common_event(RtEventType::PITCH_BEND, target, offset, msg.channel, (msg.value / static_cast<float>(midi::PITCH_BEND_MIDDLE)) - 1.0f);
+    }
+
     static RtEvent make_kb_modulation_event(ObjectId target, int offset, int channel, float value)
     {
         return make_keyboard_common_event(RtEventType::MODULATION, target, offset, channel, value);
+    }
+
+    static RtEvent make_kb_modulation_event(ObjectId target, int offset, midi::ControlChangeMessage msg)
+    {
+        return make_keyboard_common_event(RtEventType::MODULATION, target, offset, msg.channel, msg.value / midi::MAX_VALUE_F);
     }
 
     static RtEvent make_keyboard_common_event(RtEventType type, ObjectId target, int offset, int channel, float value)

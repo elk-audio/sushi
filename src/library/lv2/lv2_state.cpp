@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -75,6 +75,8 @@ std::string State::program_name(int program_index)
 void State::populate_program_list()
 {
     _load_programs(populate_preset_list, nullptr);
+    // The order of preset names coming from Livl seems to be quite random at times
+    std::sort(_program_names.begin(), _program_names.end());
 }
 
 void State::save(const char* dir)

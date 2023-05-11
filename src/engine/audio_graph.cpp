@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -16,7 +16,7 @@
 /**
  * @brief Wrapper around the list of tracks used for rt processing and its associated
  *        multicore management
- * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
 #include "audio_graph.h"
@@ -65,6 +65,8 @@ AudioGraph::AudioGraph(int cpu_cores,
         {
             apple_data.device_name = device_name.value();
         }
+#else
+        apple_data = nullptr;
 #endif
 
         _worker_pool = twine::WorkerPool::create_worker_pool(_cores,

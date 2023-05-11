@@ -1,6 +1,6 @@
 /**
  * @brief Mock object for MidiFrontend
- * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
 #ifndef SUSHI_MOCK_MIDI_FRONTEND_H

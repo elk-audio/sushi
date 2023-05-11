@@ -1,6 +1,6 @@
 /**
  * @brief Helper and utility functions for unit tests
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
 #ifndef SUSHI_TEST_UTILS_H

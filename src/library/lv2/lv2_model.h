@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @Brief LV2 plugin host Model - initializes and holds the LV2 model for each plugin instance.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
 #ifndef SUSHI_LV2_MODEL_H
@@ -290,7 +290,7 @@ private:
     HostFeatures _features;
     std::array<const LV2_Feature*, FEATURE_LIST_SIZE> _feature_list;
 
-    uint32_t _position;
+    uint32_t _position{0};
     float _bpm{0};
     bool _rolling{false};
 
