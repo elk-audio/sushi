@@ -16,6 +16,8 @@ Fixes:
   * Incorrect velocity scaling on Midi output from LV2 plugins
   * VST3 plugin initialization order fix
   * Parameter notification fix
+  * Incorrect file length display in WaveStreamer plugin
+  * Seek precision fix in WaveStreamer plugin
 
 Breaking changes:
   * The argument --dump-portaudio-devs is changed to --dump-audio-devices and now requires a frontend to be specified (--coreaudio or --portaudio).
