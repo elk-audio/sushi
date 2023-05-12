@@ -561,10 +561,10 @@ public:
     explicit BypassManager(bool bypassed_by_default) :
             _state(bypassed_by_default? BypassState::BYPASSED : BypassState::NOT_BYPASSED) {}
 
-    explicit BypassManager(bool bypassed_by_default, int ramp_time_ms) :
+    explicit BypassManager(bool bypassed_by_default, std::chrono::milliseconds ramp_time) :
             BypassManager(bypassed_by_default)
     {
-        _ramp_time = std::chrono::milliseconds(ramp_time_ms);
+        _ramp_time = ramp_time;
     }
 
     /**

@@ -52,7 +52,7 @@ public:
     static std::string_view static_uid();
 
 private:
-    BypassManager _bypass_manager{false, 100};
+    BypassManager _bypass_manager{false, std::chrono::milliseconds(100)};
     float _sample_rate{0};
 
     FloatParameterValue* _rate;

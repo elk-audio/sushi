@@ -174,7 +174,7 @@ class TestBypassManager : public ::testing::Test
 protected:
     TestBypassManager() {}
 
-    BypassManager _module_under_test{false, TEST_BYPASS_TIME_MS};
+    BypassManager _module_under_test{false, std::chrono::milliseconds(TEST_BYPASS_TIME_MS)};
 };
 
 TEST_F(TestBypassManager, TestOperation)
@@ -198,19 +198,19 @@ TEST_F(TestBypassManager, TestOperation)
 
 TEST_F(TestBypassManager, TestSetBypassRampTime)
 {
-    int chunks_in_10ms = (TEST_SAMPLE_RATE * TEST_BYPASS_TIME_MS * 0.001) / AUDIO_CHUNK_SIZE;
+    int expected_chunks = (TEST_SAMPLE_RATE * TEST_BYPASS_TIME_MS * 0.001) / AUDIO_CHUNK_SIZE;
 
     // With some sample rate and buffer size combinations this is false.
-    if (chunks_in_10ms <= 0)
+    if (expected_chunks <= 0)
     {
         // But also in those cases, we want to test with at least one chunk.
-        chunks_in_10ms = 1;
+        expected_chunks = 1;
     }
 
     // ... Because chunks_to_rap returns a minimum of 1.
     int to_ramp = _module_under_test._chunks_to_ramp(TEST_SAMPLE_RATE);
 
-    EXPECT_EQ(chunks_in_10ms, to_ramp);
+    EXPECT_EQ(expected_chunks, to_ramp);
 }
 
 TEST_F(TestBypassManager, TestRamping)
