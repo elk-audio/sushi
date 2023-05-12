@@ -1,0 +1,35 @@
+{
+    "host_config" : {
+        "samplerate" : 48000,
+        "tempo_sync" : "internal",
+        "playing_mode" : "playing"
+    },
+    "tracks" : [
+        {
+            "name" : "main",
+            "channels" : 2,
+            "inputs" : [],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "uid" : "sushi.testing.wav_streamer",
+                    "name" : "streamer",
+                    "type" : "internal"
+                }
+            ]
+        }
+    ],
+    "initial_state" : [
+        {
+            "processor" : "streamer",
+            "properties" : {
+                "file" : "/home/mind/music/wave_file.wav"
+            }
+        }
+    ]
+}
