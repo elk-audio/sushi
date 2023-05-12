@@ -79,6 +79,7 @@ void HighPassPlugin::process_event(const RtEvent& event)
     case RtEventType::SET_BYPASS:
     {
         bool bypassed = static_cast<bool>(event.processor_command_event()->value());
+        InternalPlugin::set_bypassed(bypassed);
         _bypass_manager.set_bypass(bypassed, _sample_rate);
         break;
     }
