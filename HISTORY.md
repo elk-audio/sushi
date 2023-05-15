@@ -1,4 +1,4 @@
-## Unreleased
+## 1.1.0
 
 New features:
   * Added Apple CoreAudio frontend
