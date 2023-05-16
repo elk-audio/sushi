@@ -16,6 +16,8 @@ SET(TEST_FILES
     unittests/plugins/control_to_cv_plugin_test.cpp
     unittests/plugins/cv_to_control_plugin_test.cpp
     unittests/plugins/plugins_test.cpp
+    unittests/plugins/brickworks_plugins_test.cpp
+    unittests/plugins/brickworks_simple_synth_test.cpp
     unittests/plugins/sample_player_plugin_test.cpp
     unittests/plugins/send_return_test.cpp
     unittests/plugins/step_sequencer_test.cpp
@@ -57,6 +59,7 @@ SET(TEST_FILES
     unittests/library/rt_event_test.cpp
     unittests/library/id_generator_test.cpp
     unittests/library/simple_fifo_test.cpp
+    unittests/library/fixed_stack_test.cpp
 )
 
 set(TEST_HELPER_FILES ${TEST_HELPER_FILES}

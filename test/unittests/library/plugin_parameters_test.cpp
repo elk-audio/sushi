@@ -35,6 +35,27 @@ TEST_F(TestLinTodBPreProcessor, TestProcessing)
     EXPECT_NEAR(-12.04f, _module_under_test.process_to_plugin(_module_under_test.to_domain(0.025f)), test_utils::DECIBEL_ERROR);
 }
 
+class TestCubicWarpPreProcessor : public ::testing::Test
+{
+protected:
+    TestCubicWarpPreProcessor() {}
+
+    CubicWarpPreProcessor _module_under_test{20.0f, 20'000.0f};
+};
+
+TEST_F(TestCubicWarpPreProcessor, TestProcessing)
+{
+    EXPECT_NEAR(20.0f, _module_under_test.process_to_plugin(_module_under_test.to_domain(0.0f)), 1.0e-6);
+    EXPECT_NEAR(2'517.5f, _module_under_test.process_to_plugin(_module_under_test.to_domain(0.5f)), 1.0e-6);
+    EXPECT_NEAR(20'000.0f, _module_under_test.process_to_plugin(_module_under_test.to_domain(1.0f)), 1.0e-6);
+}
+
+TEST_F(TestCubicWarpPreProcessor, TestIdentity)
+{
+    EXPECT_NEAR(0.5f, _module_under_test.to_normalized(_module_under_test.process_to_plugin(_module_under_test.to_domain(0.5f))), 1.0e-6);
+}
+
+
 /*
  * Templated testing is difficult since we want to test with different values for each type
  * Therefore we test each type separately.

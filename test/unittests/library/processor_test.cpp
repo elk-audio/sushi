@@ -15,6 +15,8 @@ using namespace sushi;
 
 constexpr float TEST_SAMPLE_RATE = 44100;
 
+constexpr int TEST_BYPASS_TIME_MS = 13;
+
 /* Implement dummies of virtual methods to we can instantiate a test class */
 class ProcessorTest : public Processor
 {
@@ -166,29 +168,13 @@ TEST_F(TestProcessor, TestGateOutput)
     EXPECT_TRUE(event.gate_event()->value());
 }
 
-TEST(TestProcessorUtils, TestSetBypassRampTime)
-{
-    int chunks_in_10ms = (TEST_SAMPLE_RATE * 0.01) / AUDIO_CHUNK_SIZE;
-
-    // With some sample rate and buffer size combinations this is false.
-    if (chunks_in_10ms <= 0)
-    {
-        // But also in those cases, we want to test with at least one chunk.
-        chunks_in_10ms = 1;
-    }
-
-    // ... Because chunks_to_rap returns a minimum of 1.
-    int to_ramp = chunks_to_ramp(TEST_SAMPLE_RATE);
-
-    EXPECT_EQ(chunks_in_10ms, to_ramp);
-}
 
 class TestBypassManager : public ::testing::Test
 {
 protected:
     TestBypassManager() {}
 
-    BypassManager _module_under_test{false};
+    BypassManager _module_under_test{false, std::chrono::milliseconds(TEST_BYPASS_TIME_MS)};
 };
 
 TEST_F(TestBypassManager, TestOperation)
@@ -210,9 +196,26 @@ TEST_F(TestBypassManager, TestOperation)
     EXPECT_TRUE(_module_under_test.should_ramp());
 }
 
+TEST_F(TestBypassManager, TestSetBypassRampTime)
+{
+    int expected_chunks = (TEST_SAMPLE_RATE * TEST_BYPASS_TIME_MS * 0.001) / AUDIO_CHUNK_SIZE;
+
+    // With some sample rate and buffer size combinations this is false.
+    if (expected_chunks <= 0)
+    {
+        // But also in those cases, we want to test with at least one chunk.
+        expected_chunks = 1;
+    }
+
+    // ... Because chunks_to_rap returns a minimum of 1.
+    int to_ramp = _module_under_test._chunks_to_ramp(TEST_SAMPLE_RATE);
+
+    EXPECT_EQ(expected_chunks, to_ramp);
+}
+
 TEST_F(TestBypassManager, TestRamping)
 {
-    int chunks_in_ramp = (TEST_SAMPLE_RATE * 0.01) / AUDIO_CHUNK_SIZE;
+    int chunks_in_ramp = (TEST_SAMPLE_RATE * TEST_BYPASS_TIME_MS * 0.001) / AUDIO_CHUNK_SIZE;
 
     // With some sample rate and buffer size combinations this is false.
     if (chunks_in_ramp <= 0)
@@ -260,7 +263,7 @@ TEST_F(TestBypassManager, TestRamping)
 
 TEST_F(TestBypassManager, TestCrossfade)
 {
-    int chunks_in_ramp = (TEST_SAMPLE_RATE * 0.01) / AUDIO_CHUNK_SIZE;
+    int chunks_in_ramp = (TEST_SAMPLE_RATE * TEST_BYPASS_TIME_MS * 0.001) / AUDIO_CHUNK_SIZE;
     ChunkSampleBuffer buffer(2);
     ChunkSampleBuffer bypass_buffer(2);
     test_utils::fill_sample_buffer(buffer, 2.0f);

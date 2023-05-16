@@ -32,6 +32,28 @@
 #include "plugins/send_return_factory.h"
 #include "plugins/sample_delay_plugin.h"
 #include "plugins/stereo_mixer_plugin.h"
+#include "plugins/brickworks/compressor_plugin.h"
+#include "plugins/brickworks/bitcrusher_plugin.h"
+#include "plugins/brickworks/wah_plugin.h"
+#include "plugins/brickworks/eq3band_plugin.h"
+#include "plugins/brickworks/phaser_plugin.h"
+#include "plugins/brickworks/chorus_plugin.h"
+#include "plugins/brickworks/vibrato_plugin.h"
+#include "plugins/brickworks/flanger_plugin.h"
+#include "plugins/brickworks/combdelay_plugin.h"
+#include "plugins/brickworks/saturation_plugin.h"
+#include "plugins/brickworks/noise_gate_plugin.h"
+#include "plugins/brickworks/tremolo_plugin.h"
+#include "plugins/brickworks/notch_plugin.h"
+#include "plugins/brickworks/multi_filter_plugin.h"
+#include "plugins/brickworks/highpass_plugin.h"
+#include "plugins/brickworks/clip_plugin.h"
+#include "plugins/brickworks/fuzz_plugin.h"
+#include "plugins/brickworks/dist_plugin.h"
+#include "plugins/brickworks/drive_plugin.h"
+#include "plugins/brickworks/combdelay_plugin.h"
+#include "plugins/brickworks/notch_plugin.h"
+#include "plugins/brickworks/simple_synth_plugin.h"
 
 namespace sushi {
 
@@ -81,6 +103,26 @@ InternalProcessorFactory::InternalProcessorFactory() : _send_return_factory(std:
     _add(std::make_unique<InternalFactory<mono_summing_plugin::MonoSummingPlugin>>());
     _add(std::make_unique<InternalFactory<sample_delay_plugin::SampleDelayPlugin>>());
     _add(std::make_unique<InternalFactory<stereo_mixer_plugin::StereoMixerPlugin>>());
+    _add(std::make_unique<InternalFactory<compressor_plugin::CompressorPlugin>>());
+    _add(std::make_unique<InternalFactory<bitcrusher_plugin::BitcrusherPlugin>>());
+    _add(std::make_unique<InternalFactory<wah_plugin::WahPlugin>>());
+    _add(std::make_unique<InternalFactory<eq3band_plugin::Eq3bandPlugin>>());
+    _add(std::make_unique<InternalFactory<phaser_plugin::PhaserPlugin>>());
+    _add(std::make_unique<InternalFactory<chorus_plugin::ChorusPlugin>>());
+    _add(std::make_unique<InternalFactory<vibrato_plugin::VibratoPlugin>>());
+    _add(std::make_unique<InternalFactory<flanger_plugin::FlangerPlugin>>());
+    _add(std::make_unique<InternalFactory<comb_plugin::CombPlugin>>());
+    _add(std::make_unique<InternalFactory<saturation_plugin::SaturationPlugin>>());
+    _add(std::make_unique<InternalFactory<noise_gate_plugin::NoiseGatePlugin>>());
+    _add(std::make_unique<InternalFactory<tremolo_plugin::TremoloPlugin>>());
+    _add(std::make_unique<InternalFactory<notch_plugin::NotchPlugin>>());
+    _add(std::make_unique<InternalFactory<multi_filter_plugin::MultiFilterPlugin>>());
+    _add(std::make_unique<InternalFactory<highpass_plugin::HighPassPlugin>>());
+    _add(std::make_unique<InternalFactory<clip_plugin::ClipPlugin>>());
+    _add(std::make_unique<InternalFactory<fuzz_plugin::FuzzPlugin>>());
+    _add(std::make_unique<InternalFactory<dist_plugin::DistPlugin>>());
+    _add(std::make_unique<InternalFactory<drive_plugin::DrivePlugin>>());
+    _add(std::make_unique<InternalFactory<simple_synth_plugin::SimpleSynthPlugin>>());
 }
 
 std::pair<ProcessorReturnCode, std::shared_ptr<Processor>>

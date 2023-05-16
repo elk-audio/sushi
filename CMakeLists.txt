@@ -538,6 +538,26 @@ set(SOURCE_FILES
     src/plugins/wav_writer_plugin.cpp
     src/plugins/mono_summing_plugin.cpp
     src/plugins/stereo_mixer_plugin.cpp
+    src/plugins/brickworks/compressor_plugin.cpp
+    src/plugins/brickworks/bitcrusher_plugin.cpp
+    src/plugins/brickworks/wah_plugin.cpp
+    src/plugins/brickworks/eq3band_plugin.cpp
+    src/plugins/brickworks/phaser_plugin.cpp
+    src/plugins/brickworks/chorus_plugin.cpp
+    src/plugins/brickworks/vibrato_plugin.cpp
+    src/plugins/brickworks/flanger_plugin.cpp
+    src/plugins/brickworks/combdelay_plugin.cpp
+    src/plugins/brickworks/saturation_plugin.cpp
+    src/plugins/brickworks/noise_gate_plugin.cpp
+    src/plugins/brickworks/tremolo_plugin.cpp
+    src/plugins/brickworks/notch_plugin.cpp
+    src/plugins/brickworks/multi_filter_plugin.cpp
+    src/plugins/brickworks/highpass_plugin.cpp
+    src/plugins/brickworks/clip_plugin.cpp
+    src/plugins/brickworks/fuzz_plugin.cpp
+    src/plugins/brickworks/dist_plugin.cpp
+    src/plugins/brickworks/drive_plugin.cpp
+    src/plugins/brickworks/simple_synth_plugin.cpp
     src/audio_frontends/offline_frontend.cpp)
 
 add_executable(sushi MACOSX_BUNDLE
@@ -561,7 +581,9 @@ set(INCLUDE_DIRS ${INCLUDE_DIRS}
                  "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
                  "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"
                  "${PROJECT_SOURCE_DIR}/third-party/vst3sdk"
-                 "${PROJECT_SOURCE_DIR}/third-party/link/include")
+                 "${PROJECT_SOURCE_DIR}/third-party/link/include"
+                 "${PROJECT_SOURCE_DIR}/third-party/brickworks/include"
+)
 
 #################################
 #  Linked libraries             #

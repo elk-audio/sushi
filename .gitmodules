@@ -29,3 +29,6 @@
 [submodule "rpc_interface/protos"]
 	path = rpc_interface/protos
 	url = ../sushi-grpc-api
+[submodule "third-party/brickworks"]
+	path = third-party/brickworks
+	url = https://github.com/sdangelo/brickworks/
