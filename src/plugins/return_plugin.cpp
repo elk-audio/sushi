@@ -131,6 +131,7 @@ void ReturnPlugin::process_event(const RtEvent& event)
         case RtEventType::SET_BYPASS:
         {
             bool bypassed = static_cast<bool>(event.processor_command_event()->value());
+            Processor::set_bypassed(bypassed);
             _bypass_manager.set_bypass(bypassed, _sample_rate);
             break;
         }
