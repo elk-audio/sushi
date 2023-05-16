@@ -143,7 +143,6 @@ WavStreamerPlugin::WavStreamerPlugin(HostControl host_control) : InternalPlugin(
                                                   Direction::AUTOMATABLE,
                                                   new FloatParameterPreProcessor(0.0f, MAX_FADE_TIME.count()));
 
-
     _seek_parameter   = register_float_parameter("seek", "Seek", "",
                                                  0.0f, 0.0f, 1.0f,
                                                  Direction::AUTOMATABLE,
@@ -227,6 +226,7 @@ void WavStreamerPlugin::process_event(const RtEvent& event)
             }
             else if (typed_event->param_id() == _seek_parameter->descriptor()->id())
             {
+                _seek_in_process = true;
                 request_non_rt_task(set_seek_callback);
             }
             break;
@@ -249,10 +249,14 @@ void WavStreamerPlugin::process_audio([[maybe_unused]] const ChunkSampleBuffer& 
 
     if (_current_block && _bypass_manager.should_process() && _mode != sushi::wav_streamer_plugin::StreamingMode::STOPPED)
     {
-        float gain_value = _gain_parameter->processed_value();
-
         if (_mode == StreamingMode::PLAYING || _mode == StreamingMode::STARTING)
         {
+            float gain_value = _gain_parameter->processed_value();
+            if (_seek_in_process)
+            {
+                gain_value = 0.0f;
+            }
+
             _gain_smoother.set(gain_value);
             _exp_gain_smoother.set(gain_value);
         }
@@ -359,7 +363,8 @@ int WavStreamerPlugin::_read_audio_data()
     bool looping = _loop_parameter->processed_value();
     if (_file)
     {
-        while (!_block_queue.wasFull())
+        int blockcount = MAX_BLOCKS_PER_LOAD;
+        while (!_block_queue.wasFull() && blockcount-- > 0)
         {
             auto block = new AudioBlock;
             block->file_pos = sf_seek(_file, 0, SEEK_CUR);
@@ -469,8 +474,10 @@ bool WavStreamerPlugin::_load_new_block()
             _update_file_length_display();
             break;
         }
-        else // Block is stale
+        else // Block is stale due to seek or new file
         {
+            _current_block_pos = 0.0f;
+            _seek_in_process = false;
             if (prev_block)
             {
                 async_delete(prev_block);
@@ -533,7 +540,7 @@ void WavStreamerPlugin::_update_position_display(bool looping)
         {
             position = std::fmod(_file_pos / _file_length, 1.0f);
         }
-        else // The last block will contain a bit of silence at the end, let position stay at 1.0
+        else // The last block will contain a bit of silence at the end, don't let position go past 1.0
         {
             position = std::clamp(_file_pos / _file_length, 0.0f, 1.0f);
         }
@@ -547,7 +554,11 @@ void WavStreamerPlugin::_update_position_display(bool looping)
 
 void WavStreamerPlugin::_update_file_length_display()
 {
-    float length = _file_length / _sample_rate / MAX_FILE_LENGTH;
+    float length = 0.0;
+    if (_file_length > 0.0 && _file_samplerate > 0.0)
+    {
+        length = _file_length / _file_samplerate / MAX_FILE_LENGTH;
+    }
     if (length != _length_parameter->normalized_value())
     {
         set_parameter_and_notify(_length_parameter, length);
@@ -584,7 +595,7 @@ void WavStreamerPlugin::_handle_fades(ChunkSampleBuffer& buffer)
     {
         buffer.apply_gain(_gain_smoother.value());
     }
-    else // Ramp because start/stop or gain parameter changed
+    else // Ramp because start/stop, gain parameter changed or quick down/up fade due to seeking
     {
         float start;
         float end;

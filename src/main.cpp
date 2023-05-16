@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Elk Audio AB
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Main entry point to Sushi
- * @copyright 2017-2022 Elk Audio AB, Stockholm
+ * @copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
 #include <vector>
@@ -68,7 +68,7 @@ enum class FrontendType
 
 void print_sushi_headline()
 {
-    std::cout << "SUSHI - Copyright 2017-2022 Elk, Stockholm" << std::endl;
+    std::cout << "SUSHI - Copyright 2017-2023 Elk Audio AB, Stockholm" << std::endl;
     std::cout << "SUSHI is licensed under the Affero GPL 3.0. Source code is available at github.com/elk-audio" << std::endl;
 }
 
