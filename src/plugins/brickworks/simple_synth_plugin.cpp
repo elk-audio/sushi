@@ -173,10 +173,10 @@ void SimpleSynthPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */, 
     bw_env_gen_set_release(&_env_gen_coeffs, _release->processed_value());
 
     int previous_offset = 0;
-    while (!_event_fifo.empty())
+    RtEvent event;
+
+    while (_event_fifo.pop(event))
     {
-        RtEvent event;
-        _event_fifo.pop(event);
         int next_offset = event.sample_offset();
         // we're assuming that events are received in order,
         // if that's not the case simply drop the event

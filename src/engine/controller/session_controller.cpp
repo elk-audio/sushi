@@ -382,6 +382,11 @@ void SessionController::_restore_tracks(std::vector<ext::TrackState> tracks)
                 {
                     std::tie(status, track_id) = _engine->create_track(track.name, track.channels);
                 }
+                break;
+
+            default:
+                track_id = 0;
+                status = EngineReturnStatus::INVALID_TRACK;
         }
 
         auto track_instance = _processors->mutable_track(track_id);
