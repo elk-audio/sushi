@@ -16,7 +16,7 @@ SET(TEST_FILES
     unittests/plugins/control_to_cv_plugin_test.cpp
     unittests/plugins/cv_to_control_plugin_test.cpp
     unittests/plugins/plugins_test.cpp
-    unittests/plugins/brickworks_plugins_test.cpp
+    unittests/plugins/external_plugins_test.cpp
     unittests/plugins/brickworks_simple_synth_test.cpp
     unittests/plugins/sample_player_plugin_test.cpp
     unittests/plugins/send_return_test.cpp
@@ -69,6 +69,7 @@ set(TEST_HELPER_FILES ${TEST_HELPER_FILES}
     ${PROJECT_SOURCE_DIR}/src/library/lv2/lv2_processor_factory.cpp
     ${PROJECT_SOURCE_DIR}/src/library/vst2x/vst2x_processor_factory.cpp
     ${PROJECT_SOURCE_DIR}/src/library/vst3x/vst3x_processor_factory.cpp
+    ${FREEVERB_SOURCES}
 )
 
 set(INCLUDE_DIRS ${INCLUDE_DIRS}

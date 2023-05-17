@@ -33,6 +33,7 @@
 #include "plugins/brickworks/fuzz_plugin.cpp"
 #include "plugins/brickworks/dist_plugin.cpp"
 #include "plugins/brickworks/drive_plugin.cpp"
+#include "plugins/freeverb_plugin.cpp"
 
 using namespace sushi;
 
@@ -181,55 +182,58 @@ void test_fx_plugin_instantiation(const std::string& uid,
 // but then it's hard to figure out what is failing.
 // Use a macro to automatically expand one-line into the four test cases
 
-#define BRICKWORKS_PLUGIN_TEST_CASES(testlabel, plugin_uid, plugin_label, error_margin)\
-    TEST(TestBrickworksFxPlugins, testlabel##Instantiation)\
+#define EXTERNAL_PLUGIN_TEST_CASES(testlabel, plugin_uid, plugin_label, error_margin)\
+    TEST(TestExternalPlugins, testlabel##Instantiation)\
     {\
         test_fx_plugin_instantiation(plugin_uid, plugin_label);\
     }\
-    TEST(TestBrickworksPlugins, testlabel##SilenceInSilenceOut)\
+    TEST(TestExternalPlugins, testlabel##SilenceInSilenceOut)\
     {\
         test_fx_plugin_silencein_silenceout(plugin_uid, error_margin);\
     }\
-    TEST(TestBrickworksPlugins, testlabel##NoiseInNotNan)\
+    TEST(TestExternalPlugins, testlabel##NoiseInNotNan)\
     {\
         test_fx_plugin_noisein_notnan(plugin_uid);\
     }\
-    TEST(TestBrickworksPlugins, testlabel##BuffersDontOverflow)\
+    TEST(TestExternalPlugins, testlabel##BuffersDontOverflow)\
     {\
         test_fx_plugin_buffers_not_overflow(plugin_uid);\
     }
 
-BRICKWORKS_PLUGIN_TEST_CASES(Chorus, "sushi.brickworks.chorus", "Chorus", 1.0e-4)
-BRICKWORKS_PLUGIN_TEST_CASES(Clip, "sushi.brickworks.clip", "Clip", 1.0e-2f)
-BRICKWORKS_PLUGIN_TEST_CASES(CombDelay,"sushi.brickworks.comb_delay", "Comb Delay", 1.0e-4f)
-BRICKWORKS_PLUGIN_TEST_CASES(Compressor, "sushi.brickworks.compressor", "Compressor", 1.0e-4f)
-BRICKWORKS_PLUGIN_TEST_CASES(Dist, "sushi.brickworks.dist", "Distortion", 1.0e-2f)
-BRICKWORKS_PLUGIN_TEST_CASES(Drive, "sushi.brickworks.drive", "Drive", 1.0e-2f)
-BRICKWORKS_PLUGIN_TEST_CASES(Eq3band, "sushi.brickworks.eq3band", "3-band Equalizer", 1.0e-4f)
-BRICKWORKS_PLUGIN_TEST_CASES(Flanger, "sushi.brickworks.flanger", "Flanger", 1.0e-4f)
-BRICKWORKS_PLUGIN_TEST_CASES(Fuzz, "sushi.brickworks.fuzz", "Fuzz", 1.0e-2f)
-BRICKWORKS_PLUGIN_TEST_CASES(HighPass, "sushi.brickworks.highpass", "HighPass", 1.0e-4f)
-BRICKWORKS_PLUGIN_TEST_CASES(MultiFilter, "sushi.brickworks.multi_filter", "MultiFilter", 1.0e-4f)
-BRICKWORKS_PLUGIN_TEST_CASES(Notch, "sushi.brickworks.notch", "Notch", 1.0e-4f)
-BRICKWORKS_PLUGIN_TEST_CASES(Phaser, "sushi.brickworks.phaser", "Phaser", 1.0e-4f)
-BRICKWORKS_PLUGIN_TEST_CASES(Saturation, "sushi.brickworks.saturation", "Saturation", 1.0e-2f)
-BRICKWORKS_PLUGIN_TEST_CASES(Tremolo, "sushi.brickworks.tremolo", "Tremolo", 1.0e-4f)
-BRICKWORKS_PLUGIN_TEST_CASES(Vibrato, "sushi.brickworks.vibrato", "Vibrato", 1.0e-4f)
-BRICKWORKS_PLUGIN_TEST_CASES(Wah, "sushi.brickworks.wah", "Wah", 1.0e-4f)
+EXTERNAL_PLUGIN_TEST_CASES(Chorus, "sushi.brickworks.chorus", "Chorus", 1.0e-4)
+EXTERNAL_PLUGIN_TEST_CASES(Clip, "sushi.brickworks.clip", "Clip", 1.0e-2f)
+EXTERNAL_PLUGIN_TEST_CASES(CombDelay,"sushi.brickworks.comb_delay", "Comb Delay", 1.0e-4f)
+EXTERNAL_PLUGIN_TEST_CASES(Compressor, "sushi.brickworks.compressor", "Compressor", 1.0e-4f)
+EXTERNAL_PLUGIN_TEST_CASES(Dist, "sushi.brickworks.dist", "Distortion", 1.0e-2f)
+EXTERNAL_PLUGIN_TEST_CASES(Drive, "sushi.brickworks.drive", "Drive", 1.0e-2f)
+EXTERNAL_PLUGIN_TEST_CASES(Eq3band, "sushi.brickworks.eq3band", "3-band Equalizer", 1.0e-4f)
+EXTERNAL_PLUGIN_TEST_CASES(Flanger, "sushi.brickworks.flanger", "Flanger", 1.0e-4f)
+EXTERNAL_PLUGIN_TEST_CASES(Fuzz, "sushi.brickworks.fuzz", "Fuzz", 1.0e-2f)
+EXTERNAL_PLUGIN_TEST_CASES(HighPass, "sushi.brickworks.highpass", "HighPass", 1.0e-4f)
+EXTERNAL_PLUGIN_TEST_CASES(MultiFilter, "sushi.brickworks.multi_filter", "MultiFilter", 1.0e-4f)
+EXTERNAL_PLUGIN_TEST_CASES(Notch, "sushi.brickworks.notch", "Notch", 1.0e-4f)
+EXTERNAL_PLUGIN_TEST_CASES(Phaser, "sushi.brickworks.phaser", "Phaser", 1.0e-4f)
+EXTERNAL_PLUGIN_TEST_CASES(Saturation, "sushi.brickworks.saturation", "Saturation", 1.0e-2f)
+EXTERNAL_PLUGIN_TEST_CASES(Tremolo, "sushi.brickworks.tremolo", "Tremolo", 1.0e-4f)
+EXTERNAL_PLUGIN_TEST_CASES(Vibrato, "sushi.brickworks.vibrato", "Vibrato", 1.0e-4f)
+EXTERNAL_PLUGIN_TEST_CASES(Wah, "sushi.brickworks.wah", "Wah", 1.0e-4f)
+
+EXTERNAL_PLUGIN_TEST_CASES(Freeverb, "sushi.testing.freeverb", "Freeverb", 1.0e-4f)
+
 
 // the SilenceIn test is tricky for the NoiseGate atm, so we skip it
 
-TEST(TestBrickworksFxPlugins, TestNoiseGateInstantiation)
+TEST(TestExternalPlugins, TestNoiseGateInstantiation)
 {
     test_fx_plugin_instantiation("sushi.brickworks.noise_gate", "Noise gate");
 }
 
-TEST(TestBrickworksFxPlugins, TestNoiseGateNoiseInNotNaN)
+TEST(TestExternalPlugins, TestNoiseGateNoiseInNotNaN)
 {
     test_fx_plugin_noisein_notnan("sushi.brickworks.noise_gate");
 }
 
-TEST(TestBrickworksFxPlugins, TestNoiseGateBuffersDontOverflow)
+TEST(TestExternalPlugins, TestNoiseGateBuffersDontOverflow)
 {
     test_fx_plugin_buffers_not_overflow("sushi.brickworks.noise_gate");
 }
