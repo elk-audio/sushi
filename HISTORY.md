@@ -3,6 +3,7 @@
 New features:
   * Added Apple CoreAudio frontend
   * Support for aggregate devices
+  * Brickworks plugin suite added
   * Wave Streamer plugin
   * TWINE updated to 0.4.0 with workgroup support
   * Rapidjson updated to latest master branch
@@ -18,10 +19,11 @@ Fixes:
   * Parameter notification fix
   * Incorrect file length display in WaveStreamer plugin
   * Seek precision fix in WaveStreamer plugin
+  * Audio channel setup now only called when plugin is disabled
 
 Breaking changes:
   * The argument --dump-portaudio-devs is changed to --dump-audio-devices and now requires a frontend to be specified (--coreaudio or --portaudio).
-  * Failure to set priority and/or workgroup on MacOS will cause Sushi to exit.
+  * Failure to set priority and/or workgroup on macOS will cause Sushi to exit.
 
 ## 1.0.0
 
