@@ -54,7 +54,8 @@ private:
     float _sample_rate{0};
 
     BoolParameterValue*  _freeze;
-    FloatParameterValue* _dry_wet;
+    FloatParameterValue* _dry;
+    FloatParameterValue* _wet;
     FloatParameterValue* _room_size;
     FloatParameterValue* _width;
     FloatParameterValue* _damp;

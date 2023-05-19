@@ -39,6 +39,15 @@ FreeverbPlugin::FreeverbPlugin(HostControl host_control) : InternalPlugin(host_c
 
     _freeze = register_bool_parameter("freeze", "Freeze", "",
                                       false, Direction::AUTOMATABLE);
+    _dry = register_float_parameter("dry", "Dry Level", "",
+                                    1.0f, 0.0f, 1.0f,
+                                    Direction::AUTOMATABLE,
+                                    new FloatParameterPreProcessor(0.0f, 1.0f));
+    _wet = register_float_parameter("wet", "Wet Level", "",
+                                    0.5f, 0.0f, 1.0f,
+                                    Direction::AUTOMATABLE,
+                                    new FloatParameterPreProcessor(0.0f, 1.0f));
+
     _room_size = register_float_parameter("room_size", "Room Size", "",
                                           0.5f, 0.0f, 1.0f,
                                           Direction::AUTOMATABLE,
@@ -51,18 +60,15 @@ FreeverbPlugin::FreeverbPlugin(HostControl host_control) : InternalPlugin(host_c
                                      0.5f, 0.0f, 1.0f,
                                      Direction::AUTOMATABLE,
                                      new FloatParameterPreProcessor(0.0f, 1.0f));
-    _dry_wet = register_float_parameter("dry_wet", "Dry/Wet Mix", "",
-                                        0.5f, 0.0f, 1.0f,
-                                        Direction::AUTOMATABLE,
-                                        new FloatParameterPreProcessor(0.0f, 1.0f));
 
     _reverb_model = std::make_unique<revmodel>();
 
     assert(_freeze);
+    assert(_dry);
+    assert(_wet);
     assert(_room_size);
     assert(_width);
     assert(_damp);
-    assert(_dry_wet);
 }
 
 ProcessorReturnCode FreeverbPlugin::init(float sample_rate)
@@ -122,10 +128,13 @@ void FreeverbPlugin::process_event(const RtEvent& event)
         InternalPlugin::process_event(event);
         auto typed_event = event.parameter_change_event();
         auto value = typed_event->value();
-        if (typed_event->param_id() == _dry_wet->descriptor()->id())
+        if (typed_event->param_id() == _dry->descriptor()->id())
+        {
+            _reverb_model->setdry(value);
+        }
+        else if (typed_event->param_id() == _wet->descriptor()->id())
         {
             _reverb_model->setwet(value);
-            _reverb_model->setdry(1.0f - value);
         }
         else if (typed_event->param_id() == _room_size->descriptor()->id())
         {
