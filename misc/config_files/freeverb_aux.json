@@ -1,0 +1,79 @@
+{
+    "host_config" : {
+        "samplerate" : 48000,
+        "playing_mode" : "playing"
+    },
+    "tracks" : [
+        {
+            "name" : "main",
+            "channels" : 2,
+            "inputs" : [],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "uid" : "sushi.testing.wav_streamer",
+                    "name" : "streamer",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.testing.send",
+                    "name" : "reverb_send",
+                    "type" : "internal"
+                }
+            ]
+        },
+        {
+            "name" : "aux",
+            "channels" : 2,
+            "inputs" : [],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "uid" : "sushi.testing.return",
+                    "name" : "return",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.testing.freeverb",
+                    "name" : "freeverb",
+                    "type" : "internal"
+                }
+            ]
+        }
+    ],
+    "initial_state" : [
+        {
+            "processor" : "reverb_send",
+            "properties" : {
+                "destination_name" : "return"
+            }
+        },
+        {
+            "processor" : "streamer",
+            "properties" : {
+                "file" : "/home/mind/soundfiles/elecguit.wav"
+            },
+            "parameters" : {
+                "playing" : 1,
+                "loop" : 1
+            }
+        },
+        {
+            "processor" : "freeverb",
+            "parameters" : {
+                "dry" : 0,
+                "wet" : 1
+            }
+        }
+    ]
+}
