@@ -106,6 +106,7 @@ void FreeverbPlugin::process_event(const RtEvent& event)
     }
 
     case RtEventType::BOOL_PARAMETER_CHANGE:
+    case RtEventType::FLOAT_PARAMETER_CHANGE:
     {
         InternalPlugin::process_event(event);
         auto typed_event = event.parameter_change_event();
@@ -120,33 +121,25 @@ void FreeverbPlugin::process_event(const RtEvent& event)
                 _reverb_model->setmode(0.0f);
             }
         }
-        break;
-    }
-
-    case RtEventType::FLOAT_PARAMETER_CHANGE:
-    {
-        InternalPlugin::process_event(event);
-        auto typed_event = event.parameter_change_event();
-        auto value = typed_event->value();
-        if (typed_event->param_id() == _dry->descriptor()->id())
+        else if (typed_event->param_id() == _dry->descriptor()->id())
         {
-            _reverb_model->setdry(value);
+            _reverb_model->setdry(_dry->processed_value());
         }
         else if (typed_event->param_id() == _wet->descriptor()->id())
         {
-            _reverb_model->setwet(value);
+            _reverb_model->setwet(_wet->processed_value());
         }
         else if (typed_event->param_id() == _room_size->descriptor()->id())
         {
-            _reverb_model->setroomsize(value);
+            _reverb_model->setroomsize(_room_size->processed_value());
         }
         else if (typed_event->param_id() == _width->descriptor()->id())
         {
-            _reverb_model->setwidth(value);
+            _reverb_model->setwidth(_width->processed_value());
         }
         else if (typed_event->param_id() == _damp->descriptor()->id())
         {
-            _reverb_model->setdamp(value);
+            _reverb_model->setdamp(_damp->processed_value());
         }
         break;
     }

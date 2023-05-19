@@ -596,7 +596,7 @@ set(INCLUDE_DIRS ${INCLUDE_DIRS}
                  "${PROJECT_SOURCE_DIR}/third-party/vst3sdk"
                  "${PROJECT_SOURCE_DIR}/third-party/link/include"
                  "${PROJECT_SOURCE_DIR}/third-party/brickworks/include"
-                 "${PROJECT_SOURCE_DIR}/third-party/freeverb/Components"
+                 "${FREEVERB_DIR}"
 )
 
 
