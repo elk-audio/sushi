@@ -89,20 +89,40 @@ AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration*
         return ret_code;
     }
 
-    if (coreaudio_config->input_device_uid->empty() || coreaudio_config->output_device_uid->empty())
+    std::string input_device_uid;
+    std::string output_device_uid;
+
+    if (coreaudio_config->input_device_uid->empty())
     {
-        SUSHI_LOG_ERROR("Invalid device UID");
-        return AudioFrontendStatus::AUDIO_HW_ERROR;
+        auto input_id = apple_coreaudio::AudioSystemObject::get_default_device_id(true);
+        apple_coreaudio::AudioDevice default_audio_input_device(input_id);
+        input_device_uid = default_audio_input_device.uid();
+        SUSHI_LOG_INFO("Input device not specified, using default: {}", input_device_uid);
+    }
+    else
+    {
+        input_device_uid = coreaudio_config->input_device_uid.value();
+    }
+    if (coreaudio_config->output_device_uid->empty())
+    {
+        auto output_id = apple_coreaudio::AudioSystemObject::get_default_device_id(false);
+        apple_coreaudio::AudioDevice default_audio_output_device(output_id);
+        output_device_uid = default_audio_output_device.uid();
+        SUSHI_LOG_INFO("Output device not specified, using default: {}", output_device_uid);
+    }
+    else
+    {
+        output_device_uid = coreaudio_config->output_device_uid.value();
     }
 
     auto devices = apple_coreaudio::AudioSystemObject::get_audio_devices();
 
-    if (coreaudio_config->input_device_uid == coreaudio_config->output_device_uid)
+    if (input_device_uid == output_device_uid)
     {
         // Input device is same as output device. We're going to open a single device.
 
         AudioObjectID audio_device_id = 0;
-        if (auto* audio_device = device_for_uid(devices, coreaudio_config->output_device_uid.value()))
+        if (auto* audio_device = device_for_uid(devices, output_device_uid))
         {
             audio_device_id = audio_device->get_audio_object_id();
         }
@@ -119,8 +139,8 @@ AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration*
     {
         // Input device is not the same as the output device. Let's create an aggregate device.
 
-        auto* input_audio_device = device_for_uid(devices, coreaudio_config->input_device_uid.value());
-        auto* output_audio_device = device_for_uid(devices, coreaudio_config->output_device_uid.value());
+        auto* input_audio_device = device_for_uid(devices, input_device_uid);
+        auto* output_audio_device = device_for_uid(devices, output_device_uid);
 
         if (input_audio_device == nullptr || output_audio_device == nullptr)
         {
