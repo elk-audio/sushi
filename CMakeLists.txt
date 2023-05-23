@@ -460,6 +460,17 @@ if (${SUSHI_WITH_SENTRY})
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_SENTRY -DSUSHI_SENTRY_DSN="${SUSHI_SENTRY_DSN}")
 endif()
 
+##############
+#  Freeverb  #
+##############
+
+set(FREEVERB_DIR ${PROJECT_SOURCE_DIR}/third-party/freeverb/Components)
+set(FREEVERB_SOURCES ${FREEVERB_DIR}/allpass.cpp
+                     ${FREEVERB_DIR}/comb.cpp
+                     ${FREEVERB_DIR}/revmodel.cpp
+)
+
+
 ####################
 #  Main Target     #
 ####################
@@ -525,6 +536,7 @@ set(SOURCE_FILES
     src/plugins/lfo_plugin.cpp
     src/plugins/passthrough_plugin.cpp
     src/plugins/equalizer_plugin.cpp
+    src/plugins/freeverb_plugin.cpp
     src/plugins/peak_meter_plugin.cpp
     src/plugins/return_plugin.cpp
     src/plugins/sample_player_plugin.cpp
@@ -567,6 +579,7 @@ add_executable(sushi MACOSX_BUNDLE
     "${ADDITIONAL_LV2_SOURCES}"
     "${ADDITIONAL_APPLE_COREAUDIO_SOURCES}"
     "${MIDI_SOURCES}"
+    "${FREEVERB_SOURCES}"
 )
 
 #########################
@@ -583,7 +596,9 @@ set(INCLUDE_DIRS ${INCLUDE_DIRS}
                  "${PROJECT_SOURCE_DIR}/third-party/vst3sdk"
                  "${PROJECT_SOURCE_DIR}/third-party/link/include"
                  "${PROJECT_SOURCE_DIR}/third-party/brickworks/include"
+                 "${FREEVERB_DIR}"
 )
+
 
 #################################
 #  Linked libraries             #
