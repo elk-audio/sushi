@@ -126,16 +126,17 @@ if (SUSHI_WITH_ALSA_MIDI AND SUSHI_WITH_RT_MIDI)
 endif()
 
 if (SUSHI_WITH_RASPA)
-# Determine raspa evl/xenomai variables
-if (${SUSHI_RASPA_FLAVOR} MATCHES "evl")
-    message("Building with Raspa/Twine EVL support")
-    set(TWINE_WITH_EVL ON CACHE BOOL "" FORCE)
-elseif (${SUSHI_RASPA_FLAVOR} MATCHES "xenomai")
-    message("Building with Raspa/Twine Xenomai support")
-    set(TWINE_WITH_XENOMAI ON CACHE BOOL "" FORCE)
-else ()
-    message(FATAL_ERROR "Raspa flavor should be set to xenomai or evl")
-endif()
+    # Determine raspa evl/xenomai variables
+    if (${SUSHI_RASPA_FLAVOR} MATCHES "evl")
+        message("Building with Raspa/Twine EVL support")
+        set(TWINE_WITH_EVL ON CACHE BOOL "" FORCE)
+    elseif (${SUSHI_RASPA_FLAVOR} MATCHES "xenomai")
+        message("Building with Raspa/Twine Xenomai support.")
+        message("Warning Xenomai 3 support is deprecated and will be removed in future versions")
+        set(TWINE_WITH_XENOMAI ON CACHE BOOL "" FORCE)
+    else ()
+        message(FATAL_ERROR "Raspa flavor should be set to xenomai or evl")
+    endif()
 endif()
 
 ###############################
