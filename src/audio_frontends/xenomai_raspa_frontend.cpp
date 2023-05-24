@@ -17,7 +17,7 @@
  * @brief Frontend using Xenomai with RASPA library for XMOS board.
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
-#ifdef SUSHI_BUILD_WITH_XENOMAI
+#ifdef SUSHI_BUILD_WITH_RASPA
 
 #include <cerrno>
 
@@ -33,8 +33,8 @@ namespace audio_frontend {
 /**
  * Ensure version compatibility with raspa library
  */
-constexpr int REQUIRED_RASPA_VER_MAJ = 0;
-constexpr int REQUIRED_RASPA_VER_MIN = 1;
+constexpr int REQUIRED_RASPA_VER_MAJ = 1;
+constexpr int REQUIRED_RASPA_VER_MIN = 0;
 static_assert(REQUIRED_RASPA_VER_MAJ == RASPA_VERSION_MAJ, "Raspa major version mismatch");
 static_assert(REQUIRED_RASPA_VER_MIN == RASPA_VERSION_MIN, "Raspa minor version mismatch");
 
@@ -201,7 +201,7 @@ AudioFrontendStatus XenomaiRaspaFrontend::config_audio_channels(const XenomaiRas
 }; // end namespace audio_frontend
 }; // end namespace sushi
 
-#else // SUSHI_BUILD_WITH_XENOMAI
+#else // SUSHI_BUILD_WITH_RASPA
 
 #include "audio_frontends/xenomai_raspa_frontend.h"
 #include "logging.h"
@@ -219,4 +219,4 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration*)
 }
 }}
 
-#endif // SUSHI_BUILD_WITH_XENOMAI
+#endif // SUSHI_BUILD_WITH_RASPA

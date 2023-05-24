@@ -57,9 +57,13 @@ set(SUSHI_WITH_SENTRY_DEFAULT OFF)
 set(SUSHI_SENTRY_DSN_DEFAULT "--Sentry default DSN is undefined--")
 set(SUSHI_DISABLE_MULTICORE_UNIT_TESTS_DEFAULT OFF)
 
+set(SUSHI_RASPA_FLAVOR_DEFAULT "evl")
+set(TWINE_WITH_XENOMAI_DEFAULT OFF)
+set(TWINE_WITH_EVL_DEFAULT OFF)
+
 if (APPLE)
     # macOS defaults
-    set(SUSHI_WITH_XENOMAI_DEFAULT OFF)
+    set(SUSHI_WITH_RASPA_DEFAULT OFF)
     set(SUSHI_WITH_PORTAUDIO_DEFAULT OFF)
     set(SUSHI_WITH_APPLE_COREAUDIO_DEFAULT ON)
     set(SUSHI_WITH_ALSA_MIDI_DEFAULT OFF)
@@ -70,21 +74,21 @@ if (APPLE)
     set(SUSHI_WITH_UNIT_TESTS_DEFAULT ON)
     set(SUSHI_BUILD_TWINE_DEFAULT ON)
     set(SUSHI_DISABLE_MULTICORE_UNIT_TESTS_DEFAULT ON)
-elseif (DEFINED ENV{OE_CMAKE_TOOLCHAIN_FILE)
+elseif (CMAKE_CROSSCOMPILING)
     # Yocto cross-compilation defaults
-    set(SUSHI_WITH_XENOMAI_DEFAULT ON)
+    set(SUSHI_WITH_RASPA_DEFAULT ON)
     set(SUSHI_WITH_PORTAUDIO_DEFAULT OFF)
     set(SUSHI_WITH_APPLE_COREAUDIO_DEFAULT OFF)
     set(SUSHI_WITH_ALSA_MIDI_DEFAULT ON)
     set(SUSHI_WITH_RT_MIDI_DEFAULT OFF)
     set(SUSHI_WITH_LV2_DEFAULT ON)
-    set(SUSHI_WITH_LV2_MDA_TESTS_DEFAULT ON)
+    set(SUSHI_WITH_LV2_MDA_TESTS_DEFAULT OFF)
     set(SUSHI_WITH_UNIT_TESTS_DEFAULT OFF)
     set(SUSHI_BUILD_TWINE_DEFAULT OFF)
 else()
     # Native Linux defaults
     set(SUSHI_WITH_JACK_DEFAULT ON)
-    set(SUSHI_WITH_XENOMAI_DEFAULT OFF)
+    set(SUSHI_WITH_RASPA_DEFAULT OFF)
     set(SUSHI_WITH_PORTAUDIO_DEFAULT OFF)
     set(SUSHI_WITH_APPLE_COREAUDIO_DEFAULT OFF)
     set(SUSHI_WITH_ALSA_MIDI_DEFAULT ON)
@@ -93,10 +97,9 @@ else()
     set(SUSHI_WITH_LV2_MDA_TESTS_DEFAULT ON)
     set(SUSHI_WITH_UNIT_TESTS_DEFAULT ON)
     set(SUSHI_BUILD_TWINE_DEFAULT ON)
-    set(TWINE_WITH_XENOMAI OFF)
 endif()
 
-option(SUSHI_WITH_XENOMAI "Enable Xenomai support" ${SUSHI_WITH_XENOMAI_DEFAULT})
+option(SUSHI_WITH_RASPA "Enable Raspa (xenomai) support" ${SUSHI_WITH_RASPA_DEFAULT})
 option(SUSHI_WITH_JACK "Enable Jack support" ${SUSHI_WITH_JACK_DEFAULT})
 option(SUSHI_WITH_PORTAUDIO "Enable PortAudio support" ${SUSHI_WITH_PORTAUDIO_DEFAULT})
 option(SUSHI_WITH_APPLE_COREAUDIO "Enable Apple CoreAudio support" ${SUSHI_WITH_APPLE_COREAUDIO_DEFAULT})
@@ -116,11 +119,22 @@ option(SUSHI_SENTRY_DSN "Required Sentry DSN Path" ${SUSHI_SENTRY_DSN_DEFAULT})
 option(SUSHI_DISABLE_MULTICORE_UNIT_TESTS "Disable unit-tests dependent on multi-core processing." ${SUSHI_DISABLE_MULTICORE_UNIT_TESTS_DEFAULT})
 
 set(SUSHI_AUDIO_BUFFER_SIZE ${SUSHI_AUDIO_BUFFER_SIZE_DEFAULT} CACHE STRING "Set internal audio buffer size in frames")
+set(SUSHI_RASPA_FLAVOR ${SUSHI_RASPA_FLAVOR_DEFAULT} CACHE STRING "Set raspa flavor. Options are xenomai or evl")
 
 if (SUSHI_WITH_ALSA_MIDI AND SUSHI_WITH_RT_MIDI)
     message(FATAL_ERROR "Both alsa midi and RtMidi set to on. Use only one midi frontend at a time")
 endif()
 
+# Determine raspa evl/xenomai variables
+if (${SUSHI_RASPA_FLAVOR} MATCHES "evl")
+    message("Building with Raspa/Twine EVL support")
+    set(TWINE_WITH_EVL ON CACHE BOOL "" FORCE)
+elseif (${SUSHI_RASPA_FLAVOR} MATCHES "xenomai")
+    message("Building with Raspa/Twine Xenomai support")
+    set(TWINE_WITH_XENOMAI ON CACHE BOOL "" FORCE)
+else ()
+    message(FATAL_ERROR "Raspa flavor should be set to xenomai or evl")
+endif()
 
 ###############################
 # Sub-directory configuration #
@@ -148,39 +162,52 @@ endif()
 
 add_subdirectory(third-party EXCLUDE_FROM_ALL)
 
-#################
-# Xenomai setup #
-#################
+###############
+# Raspa setup #
+###############
 
-if (${SUSHI_WITH_XENOMAI})
-    message("Building with Xenomai support")
+if (${SUSHI_WITH_RASPA})
 
-    # External libraries:
-    # explicitly link with cobalt lib
-    set(XENOMAI_BASE_DIR "/usr/xenomai" CACHE STRING "xenomai base dir path")
+    find_library(RASPA_LIB
+            NAMES raspa
+            PATHS /usr/lib /usr/local/lib
+            )
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${RASPA_LIB} asound)
+    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_RASPA)
 
     if (NOT "$ENV{CMAKE_SYSROOT}" STREQUAL "")
-        set(CMAKE_SYSROOT "$ENV{CMAKE_SYSROOT}")
-        message("ENV_CMAKE_SYSROOT = " $ENV{CMAKE_SYSROOT})
-    endif()
-    if (NOT "${CMAKE_SYSROOT}" STREQUAL "")
-        set(XENOMAI_BASE_DIR "${CMAKE_SYSROOT}/usr/xenomai")
-        message("XENOMAI_BASE_DIR is " ${XENOMAI_BASE_DIR})
+            set(CMAKE_SYSROOT "$ENV{CMAKE_SYSROOT}")
+            message("ENV_CMAKE_SYSROOT = " $ENV{CMAKE_SYSROOT})
     endif()
 
-    find_library(COBALT_LIB cobalt HINTS ${XENOMAI_BASE_DIR}/lib)
+    # Determine whether to link with evl or cobalt lib
+    if (${SUSHI_RASPA_FLAVOR} MATCHES "xenomai")
 
-    set(TWINE_WITH_XENOMAI ON CACHE BOOL "" FORCE)
-    find_library(RASPA_LIB
-                 NAMES raspa
-                 PATHS /usr/lib /usr/local/lib
-                 )
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound ${RASPA_LIB} ${COBALT_LIB})
+        # External libraries:
+        # explicitly link with cobalt lib
+        set(XENOMAI_BASE_DIR "/usr/xenomai" CACHE STRING "xenomai base dir path")
 
-    # Compile definitions
-    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_XENOMAI)
-else()
-    set(TWINE_WITH_XENOMAI OFF CACHE BOOL "" FORCE)
+        if (NOT "$ENV{CMAKE_SYSROOT}" STREQUAL "")
+            set(CMAKE_SYSROOT "$ENV{CMAKE_SYSROOT}")
+            message("ENV_CMAKE_SYSROOT = " $ENV{CMAKE_SYSROOT})
+        endif()
+    
+        if (NOT "${CMAKE_SYSROOT}" STREQUAL "")
+            set(XENOMAI_BASE_DIR "${CMAKE_SYSROOT}/usr/xenomai")
+            message("XENOMAI_BASE_DIR is " ${XENOMAI_BASE_DIR})
+        endif()
+
+        find_library(COBALT_LIB cobalt HINTS ${XENOMAI_BASE_DIR}/lib)
+        set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${COBALT_LIB})
+
+    elseif (${SUSHI_RASPA_FLAVOR} MATCHES "evl")
+        message("Building with EVL support")
+        find_library(EVL_LIB
+        NAMES evl
+        PATHS /usr/lib /usr/local/lib
+        )
+        set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${EVL_LIB})
+    endif()
 endif()
 
 ##############
@@ -372,8 +399,15 @@ if (${SUSHI_WITH_VST3})
     # Compiler definitions
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_VST3)
 
-    # Triggering mda-vst3 build - used by sample sushi json configurations under misc/config_files.
-    set_target_properties(mda-vst3 PROPERTIES EXCLUDE_FROM_ALL False)
+    
+    # In yocto env / cross compiling scenrarios, this is not needed as mda-vst3 plugins are
+    # built already. Also, this causes an "exec-format" error since the plugins need a specific
+    # method of compilation during cross compilation process.
+    if (NOT CMAKE_CROSSCOMPILING)
+        # Triggering mda-vst3 build - used by sample sushi json configurations under misc/config_files.
+        set_target_properties(mda-vst3 PROPERTIES EXCLUDE_FROM_ALL False)
+    endif()
+
 endif()
 
 #############
@@ -654,7 +688,7 @@ if (APPLE)
     ]] COMPONENT Runtime)
 endif()
 
-install(TARGETS sushi RUNTIME DESTINATION bin, BUNDLE DESTINATION Applications)
+install(TARGETS sushi RUNTIME DESTINATION bin BUNDLE DESTINATION Applications)
 foreach (ITEM ${DOC_FILES_INSTALL})
     install(FILES ${ITEM} DESTINATION share/sushi/doc)
 endforeach()
