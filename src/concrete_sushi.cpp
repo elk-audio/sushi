@@ -111,6 +111,8 @@ std::string to_string(Status status)
             return "Failed to setup the Midi frontend.";
         case Status::FAILED_TO_START_RPC_SERVER:
             return "Failed to start the RPC server.";
+        case Status::SUSHI_ALREADY_STARTED:
+            return "Sushi has already been started";
         case Status::OK:
             return "Ok";
         default:
