@@ -71,6 +71,9 @@ if (${SUSHI_WITH_VST3})
     set(VST_SDK TRUE)
     set(SDK_IDE_PLUGIN_EXAMPLES_FOLDER FOLDER "PlugInExamples")
 
+    # Suppress warnings to keep our build output clean
+    set(VST3_COMPILE_FLAGS "-Wno-unused-parameter -Wno-extra -Wno-deprecated -Wno-cpp -Wno-pointer-bool-conversion -Wno-suggest-override -Wno-format")
+
     if (SMTG_ADD_VST3_PLUGINS_SAMPLES)
         add_subdirectory(vst3sdk/public.sdk/samples/vst)
         set_target_properties(mda-vst3 PROPERTIES COMPILE_FLAGS ${VST3_COMPILE_FLAGS})
@@ -78,8 +81,6 @@ if (${SUSHI_WITH_VST3})
         set_target_properties(adelay PROPERTIES COMPILE_FLAGS ${VST3_COMPILE_FLAGS})
     endif()
 
-    # Suppress warnings to keep our build output clean
-    set(VST3_COMPILE_FLAGS "-Wno-unused-parameter -Wno-extra -Wno-deprecated -Wno-cpp -Wno-pointer-bool-conversion -Wno-suggest-override -Wno-format")
 endif()
 
 #####################################################

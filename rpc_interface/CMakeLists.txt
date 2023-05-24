@@ -11,14 +11,14 @@ find_package(gRPC REQUIRED)
 
 set(PROTOS protos/sushi_rpc.proto)
 
-# In yocto environments, CMAKE_CROSSCOMPILING is set. This if condition is needed
-# as yocto grpc does not include gRPCPluginTargets.cmake when find_package(gRPC REQUIRED)
-# is called. 
-if(CMAKE_CROSSCOMPILING)
+# In yocto environments, yocto grpc does not include gRPCPluginTargets.cmake
+# when find_package(gRPC REQUIRED) is called.
+if(DEFINED ENV{OE_CMAKE_TOOLCHAIN_FILE)
     find_program(_gRPC_CPP_PLUGIN grpc_cpp_plugin)
 else()
-    set(_gRPC_CPP_PLUGIN $<TARGET_FILE:grpc_cpp_plugin>)
+    set(_gRPC_CPP_PLUGIN \$<TARGET_FILE:gRPC::grpc_cpp_plugin>)
 endif()
+
 
 # Intermediate library target with the generated protobuf objects
 add_library(protos-lib OBJECT)

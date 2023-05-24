@@ -74,7 +74,7 @@ if (APPLE)
     set(SUSHI_WITH_UNIT_TESTS_DEFAULT ON)
     set(SUSHI_BUILD_TWINE_DEFAULT ON)
     set(SUSHI_DISABLE_MULTICORE_UNIT_TESTS_DEFAULT ON)
-elseif (CMAKE_CROSSCOMPILING)
+elseif (DEFINED ENV{OE_CMAKE_TOOLCHAIN_FILE)
     # Yocto cross-compilation defaults
     set(SUSHI_WITH_RASPA_DEFAULT ON)
     set(SUSHI_WITH_PORTAUDIO_DEFAULT OFF)
@@ -125,6 +125,7 @@ if (SUSHI_WITH_ALSA_MIDI AND SUSHI_WITH_RT_MIDI)
     message(FATAL_ERROR "Both alsa midi and RtMidi set to on. Use only one midi frontend at a time")
 endif()
 
+if (SUSHI_WITH_RASPA)
 # Determine raspa evl/xenomai variables
 if (${SUSHI_RASPA_FLAVOR} MATCHES "evl")
     message("Building with Raspa/Twine EVL support")
@@ -134,6 +135,7 @@ elseif (${SUSHI_RASPA_FLAVOR} MATCHES "xenomai")
     set(TWINE_WITH_XENOMAI ON CACHE BOOL "" FORCE)
 else ()
     message(FATAL_ERROR "Raspa flavor should be set to xenomai or evl")
+endif()
 endif()
 
 ###############################

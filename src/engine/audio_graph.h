@@ -41,9 +41,18 @@ public:
      * @param max_no_tracks The maximum number of tracks to reserve space for. As
      *                      add() and remove() could be called from an rt thread
      *                      they must not (de)allocate memory-
+     * @param sample_rate The sample_rate - used for calculating audio thread periodicity. Only used on Apple.
+     * @param device_name The Audio Device Name - only used on Apple, and will be unused on other platforms.
+     *                      they must not (de)allocate memory-
      * @param debug_mode_switches Enable xenomai-specific thread debugging
      */
-    AudioGraph(int cpu_cores, int max_no_tracks, bool debug_mode_switches = false);
+    AudioGraph(int cpu_cores,
+               int max_no_tracks,
+               float sample_rate,
+               std::optional<std::string> device_name = std::nullopt,
+               bool debug_mode_switches = false);
+
+    ~AudioGraph() = default;
 
     /**
      * @brief Add a track to the graph. The track will be assigned to a cpu
