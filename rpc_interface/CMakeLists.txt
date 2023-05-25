@@ -13,7 +13,7 @@ set(PROTOS protos/sushi_rpc.proto)
 
 # In yocto environments, yocto grpc does not include gRPCPluginTargets.cmake
 # when find_package(gRPC REQUIRED) is called.
-if(DEFINED ENV{OE_CMAKE_TOOLCHAIN_FILE)
+if(DEFINED ENV{OE_CMAKE_TOOLCHAIN_FILE})
     find_program(_gRPC_CPP_PLUGIN grpc_cpp_plugin)
 else()
     set(_gRPC_CPP_PLUGIN \$<TARGET_FILE:gRPC::grpc_cpp_plugin>)
