@@ -36,12 +36,8 @@ if (${SUSHI_WITH_VST3})
     set(SMTG_ADD_VST3_HOSTING_SAMPLES OFF CACHE BOOL "" FORCE)
     set(SMTG_RUN_VST_VALIDATOR OFF CACHE BOOL "" FORCE)
 
-    # if cross compiling, switch off plugin samples
-    if(CMAKE_CROSSCOMPILING)
-        set(SMTG_ADD_VST3_PLUGINS_SAMPLES OFF CACHE BOOL "" FORCE)
-    else()
-        set(SMTG_ADD_VST3_PLUGINS_SAMPLES ON CACHE BOOL "" FORCE)
-    endif()
+    # VST3 example plugins are needed by unit tests
+    set(SMTG_ADD_VST3_PLUGINS_SAMPLES ON CACHE BOOL "" FORCE)
 
     # Don't install example plugins in ~/.vst3, keep them in the build directory
     set(SMTG_PLUGIN_TARGET_PATH ${CMAKE_CURRENT_BINARY_DIR}/vst3sdk/VST3 CACHE STRING "" FORCE)
