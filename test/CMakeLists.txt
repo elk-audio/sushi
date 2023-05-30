@@ -231,9 +231,14 @@ add_test(unit_tests unit_tests)
 # Environment variable pointing to test/data/ is set so that
 # tests can read it to access data files maintaining an independent out-of-source build
 
-add_custom_target(run_tests ALL
-                  ${CMAKE_COMMAND}
-                  -E env "SUSHI_TEST_DATA_DIR=${PROJECT_SOURCE_DIR}/test/data"
-                  "$<TARGET_FILE:unit_tests>")
-add_dependencies(run_tests unit_tests)
+# Execute tests if we are not cross-compiling
+if(CMAKE_CROSSCOMPILING)
+    message(STATUS "Detected cross-compiling: skipping unit tests run.")
+else()
+    add_custom_target(run_tests ALL
+                      ${CMAKE_COMMAND}
+                      -E env "SUSHI_TEST_DATA_DIR=${PROJECT_SOURCE_DIR}/test/data"
+                      "$<TARGET_FILE:unit_tests>")
+    add_dependencies(run_tests unit_tests)
+endif()
 
