@@ -36,6 +36,11 @@ if (${SUSHI_WITH_VST3})
     set(SMTG_ADD_VST3_HOSTING_SAMPLES OFF CACHE BOOL "" FORCE)
     set(SMTG_RUN_VST_VALIDATOR OFF CACHE BOOL "" FORCE)
 
+    # if cross compiling, switch off the create module info post build step
+    if(CMAKE_CROSSCOMPILING)
+        set(SMTG_CREATE_MODULE_INFO OFF CACHE BOOL "" FORCE)
+    endif()
+
     # VST3 example plugins are needed by unit tests
     set(SMTG_ADD_VST3_PLUGINS_SAMPLES ON CACHE BOOL "" FORCE)
 
