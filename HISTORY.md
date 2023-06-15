@@ -5,7 +5,8 @@ New features:
   * Support for aggregate devices
   * Brickworks plugin suite added
   * Wave Streamer plugin
-  * TWINE updated to 0.4.0 with workgroup support
+  * Freeverb plugin
+  * TWINE updated to 0.4.0 with workgroup and EVL support
   * Rapidjson updated to latest master branch
   * Optimised State changes for VST3 plugins
   * Crash logging with Sentry

@@ -54,7 +54,7 @@ std::tuple<ProcessorReturnCode, ProcessorReturnCode, std::shared_ptr<Processor>>
     HostControlMockup host_control;
     PluginRegistry registry;
 
-    PluginInfo pinfo = { .uid = uid, .type = PluginType::INTERNAL};
+    PluginInfo pinfo = { .uid = uid, .path= "", .type = PluginType::INTERNAL};
 
     auto hc = host_control.make_host_control_mockup(TEST_SAMPLERATE);
     auto [processor_status, plugin] = registry.new_instance(pinfo, hc, TEST_SAMPLERATE);
