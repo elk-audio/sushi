@@ -65,7 +65,8 @@
             },
             "parameters" : {
                 "playing" : 1,
-                "loop" : 1
+                "loop" : 1,
+                "volume" : 0.73
             }
         },
         {
