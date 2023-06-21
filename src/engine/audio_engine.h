@@ -603,8 +603,10 @@ private:
 
     void _route_cv_gate_ins(ControlBuffer& buffer);
 
-    PluginRegistry _plugin_registry;
+    std::unique_ptr<dispatcher::BaseEventDispatcher> _event_dispatcher;
+
     ProcessorContainer _processors;
+    PluginRegistry _plugin_registry;
 
     // Processors in the realtime part indexed by their unique 32 bit id
     // Only to be accessed from the process callback in rt mode.
@@ -636,7 +638,6 @@ private:
     Transport _transport;
     PluginLibrary _plugin_library;
 
-    std::unique_ptr<dispatcher::BaseEventDispatcher> _event_dispatcher;
     HostControl _host_control{nullptr, &_transport, &_plugin_library};
 
     performance::PerformanceTimer _process_timer;

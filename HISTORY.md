@@ -21,6 +21,7 @@ Fixes:
   * Incorrect file length display in WaveStreamer plugin
   * Seek precision fix in WaveStreamer plugin
   * Audio channel setup now only called when plugin is disabled
+  * Send and return crash at exit
 
 Breaking changes:
   * The argument --dump-portaudio-devs is changed to --dump-audio-devices and now requires a frontend to be specified (--coreaudio or --portaudio).
