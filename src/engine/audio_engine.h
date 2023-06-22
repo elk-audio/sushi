@@ -605,8 +605,8 @@ private:
 
     std::unique_ptr<dispatcher::BaseEventDispatcher> _event_dispatcher;
 
-    ProcessorContainer _processors;
     PluginRegistry _plugin_registry;
+    ProcessorContainer _processors;
 
     // Processors in the realtime part indexed by their unique 32 bit id
     // Only to be accessed from the process callback in rt mode.
