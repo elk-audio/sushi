@@ -17,7 +17,7 @@
 
 #include <lilv-0/lilv/lilv.h>
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "lv2_model.h"
 #include "lv2_port.h"
@@ -25,7 +25,7 @@
 
 namespace sushi::internal::lv2 {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 // Callback method - signature as required by Lilv
 static int populate_preset_list(Model* model, const LilvNode *node, const LilvNode* title, void* /*data*/)
@@ -118,7 +118,7 @@ std::vector<std::byte> State::save_binary_state()
         }
         lilv_free(serial_state);
     }
-    SUSHI_LOG_ERROR_IF(serial_state == nullptr, "Failed to get state from plugin");
+    ELKLOG_LOG_ERROR_IF(serial_state == nullptr, "Failed to get state from plugin");
 
     lilv_state_free(state);
     return binary_state;
@@ -148,7 +148,7 @@ void State::_load_programs(PresetSink sink, void* data)
        }
        else
        {
-           SUSHI_LOG_ERROR("Preset {} has no rdfs:label", lilv_node_as_string(lilv_nodes_get(presets, i)));
+           ELKLOG_LOG_ERROR("Preset {} has no rdfs:label", lilv_node_as_string(lilv_nodes_get(presets, i)));
        }
    }
 
@@ -290,7 +290,7 @@ void set_port_value(const char* port_symbol,
 
     if (port == nullptr)
     {
-        SUSHI_LOG_DEBUG("error: Preset port `{}' is missing", port_symbol);
+        ELKLOG_LOG_DEBUG("error: Preset port `{}' is missing", port_symbol);
         return;
     }
 
@@ -316,7 +316,7 @@ void set_port_value(const char* port_symbol,
     }
     else
     {
-        SUSHI_LOG_DEBUG("error: Preset {} value has bad type {}",
+        ELKLOG_LOG_DEBUG("error: Preset {} value has bad type {}",
                 port_symbol,
                 model->get_unmap().unmap(model->get_unmap().handle, type));
 

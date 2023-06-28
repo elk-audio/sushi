@@ -22,14 +22,14 @@
 #include "public.sdk/source/vst/utility/stringconvert.h"
 #include "base/source/fobject.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "vst3x_host_app.h"
 #include "vst3x_wrapper.h"
 
 namespace sushi::internal::vst3 {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("vst3");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("vst3");
 
 constexpr char HOST_NAME[] = "Sushi";
 
@@ -49,14 +49,14 @@ ComponentHandler::ComponentHandler(Vst3xWrapper* wrapper_instance,
 Steinberg::tresult ComponentHandler::performEdit(Steinberg::Vst::ParamID parameter_id,
                                                  Steinberg::Vst::ParamValue normalized_value)
 {
-    SUSHI_LOG_DEBUG("performEdit called, param: {} value: {}", parameter_id, normalized_value);
+    ELKLOG_LOG_DEBUG("performEdit called, param: {} value: {}", parameter_id, normalized_value);
     _wrapper_instance->set_parameter_change(ObjectId(parameter_id), static_cast<float>(normalized_value));
     return Steinberg::kResultOk;
 }
 
 Steinberg::tresult ComponentHandler::restartComponent(Steinberg::int32 flags)
 {
-    SUSHI_LOG_DEBUG("restartComponent called");
+    ELKLOG_LOG_DEBUG("restartComponent called");
     if (flags | (Steinberg::Vst::kParamValuesChanged & Steinberg::Vst::kReloadComponent))
     {
         _host_control->post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
@@ -167,13 +167,13 @@ bool PluginInstance::load_plugin(const std::string& plugin_path, const std::stri
     _module = VST3::Hosting::Module::create(plugin_path, error_msg);
     if (!_module)
     {
-        SUSHI_LOG_ERROR("Failed to load VST3 Module: {}", error_msg);
+        ELKLOG_LOG_ERROR("Failed to load VST3 Module: {}", error_msg);
         return false;
     }
     auto factory = _module->getFactory().get();
     if (!factory)
     {
-        SUSHI_LOG_ERROR("Failed to get PluginFactory, plugin is probably broken");
+        ELKLOG_LOG_ERROR("Failed to get PluginFactory, plugin is probably broken");
         return false;
     }
     Steinberg::PFactoryInfo info;
@@ -192,28 +192,28 @@ bool PluginInstance::load_plugin(const std::string& plugin_path, const std::stri
     auto res = component->initialize(_host_app);
     if (res != Steinberg::kResultOk)
     {
-        SUSHI_LOG_ERROR("Failed to initialize component with error code: {}", res);
+        ELKLOG_LOG_ERROR("Failed to initialize component with error code: {}", res);
         return false;
     }
 
     auto processor = load_processor(component);
     if (!processor)
     {
-        SUSHI_LOG_ERROR("Failed to get processor from component");
+        ELKLOG_LOG_ERROR("Failed to get processor from component");
         return false;
     }
 
     auto controller = load_controller(factory, component);
     if (!controller)
     {
-        SUSHI_LOG_ERROR("Failed to load controller");
+        ELKLOG_LOG_ERROR("Failed to load controller");
         return false;
     }
 
     res = controller->initialize(_host_app);
     if (res != Steinberg::kResultOk)
     {
-        SUSHI_LOG_ERROR("Failed to initialize component with error code: {}", res);
+        ELKLOG_LOG_ERROR("Failed to initialize component with error code: {}", res);
         return false;
     }
 
@@ -226,7 +226,7 @@ bool PluginInstance::load_plugin(const std::string& plugin_path, const std::stri
 
     if (_connect_components() == false)
     {
-        SUSHI_LOG_ERROR("Failed to connect component to editor");
+        ELKLOG_LOG_ERROR("Failed to connect component to editor");
     }
     return true;
 }
@@ -238,14 +238,14 @@ void PluginInstance::_query_extension_interfaces()
     if (res == Steinberg::kResultOk)
     {
         _midi_mapper = midi_mapper;
-        SUSHI_LOG_INFO("Plugin supports Midi Mapping interface");
+        ELKLOG_LOG_INFO("Plugin supports Midi Mapping interface");
     }
     Steinberg::Vst::IUnitInfo* unit_info;
     res = _controller->queryInterface(Steinberg::Vst::IUnitInfo::iid, reinterpret_cast<void**>(&unit_info));
     if (res == Steinberg::kResultOk)
     {
         _unit_info = unit_info;
-        SUSHI_LOG_INFO("Plugin supports Unit Info interface for programs");
+        ELKLOG_LOG_INFO("Plugin supports Unit Info interface for programs");
     }
 }
 
@@ -256,7 +256,7 @@ bool PluginInstance::_connect_components()
 
     if (!component_connection || !controller_connection)
     {
-        SUSHI_LOG_ERROR("Failed to create connection points");
+        ELKLOG_LOG_ERROR("Failed to create connection points");
         return false;
     }
 
@@ -265,13 +265,13 @@ bool PluginInstance::_connect_components()
 
     if (_component_connection->connect(controller_connection) != Steinberg::kResultTrue)
     {
-        SUSHI_LOG_ERROR("Failed to connect component");
+        ELKLOG_LOG_ERROR("Failed to connect component");
     }
     else
     {
         if (_controller_connection->connect(component_connection) != Steinberg::kResultTrue)
         {
-            SUSHI_LOG_ERROR("Failed to connect controller");
+            ELKLOG_LOG_ERROR("Failed to connect controller");
         }
         else
         {
@@ -310,7 +310,7 @@ Steinberg::Vst::IComponent* load_component(Steinberg::IPluginFactory* factory,
     {
         Steinberg::PClassInfo info;
         factory->getClassInfo(i, &info);
-        SUSHI_LOG_INFO("Querying plugin {} of type {}", info.name, info.category);
+        ELKLOG_LOG_INFO("Querying plugin {} of type {}", info.name, info.category);
         if (info.name == plugin_name)
         {
             Steinberg::Vst::IComponent* component;
@@ -318,14 +318,14 @@ Steinberg::Vst::IComponent* load_component(Steinberg::IPluginFactory* factory,
                                                reinterpret_cast<void**>(&component));
             if (res == Steinberg::kResultOk)
             {
-                SUSHI_LOG_INFO("Creating plugin {}", info.name);
+                ELKLOG_LOG_INFO("Creating plugin {}", info.name);
                 return component;
             }
-            SUSHI_LOG_ERROR("Failed to create component with error code: {}", res);
+            ELKLOG_LOG_ERROR("Failed to create component with error code: {}", res);
             return nullptr;
         }
     }
-    SUSHI_LOG_ERROR("No match for plugin {} in factory", plugin_name);
+    ELKLOG_LOG_ERROR("No match for plugin {} in factory", plugin_name);
     return nullptr;
 }
 
@@ -369,7 +369,7 @@ Steinberg::Vst::IEditController* load_controller(Steinberg::IPluginFactory* fact
                 return controller;
             }
         }
-        SUSHI_LOG_ERROR("Failed to create controller with error code: {}", res);
+        ELKLOG_LOG_ERROR("Failed to create controller with error code: {}", res);
     }
     return nullptr;
 }

@@ -20,7 +20,7 @@
 
 #include "vst2x_processor_factory.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #ifdef SUSHI_BUILD_WITH_VST2
 #include "library/vst2x/vst2x_wrapper.h"
@@ -30,7 +30,7 @@ namespace sushi::internal::vst2 {
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-const-variable"
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("Vst2");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("Vst2");
 #pragma GCC diagnostic pop
 
 #ifdef SUSHI_BUILD_WITH_VST2
@@ -51,7 +51,7 @@ std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> Vst2xProcessorFactory
                                                                                                [[maybe_unused]] float sample_rate)
 
 {
-    SUSHI_LOG_ERROR("Sushi was not built with support for VST2 plugins");
+    ELKLOG_LOG_ERROR("Sushi was not built with support for VST2 plugins");
     return {ProcessorReturnCode::UNSUPPORTED_OPERATION, nullptr};
 }
 

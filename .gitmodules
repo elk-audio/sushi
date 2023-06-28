@@ -2,9 +2,6 @@
 	path = third-party/rapidjson
 	url = https://github.com/miloyip/rapidjson.git
 	branch = master
-[submodule "third-party/spdlog"]
-	path = third-party/spdlog
-	url = https://github.com/gabime/spdlog.git
 [submodule "twine"]
 	path = twine
 	url = ../twine.git
@@ -29,3 +26,6 @@
 [submodule "rpc_interface/protos"]
 	path = rpc_interface/protos
 	url = ../sushi-grpc-api
+[submodule "elklog"]
+	path = elklog
+	url = ../elklog.git

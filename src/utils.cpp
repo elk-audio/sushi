@@ -29,11 +29,11 @@
 #include "rapidjson/document.h"
 #pragma GCC diagnostic pop
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 namespace sushi {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("file_reading");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("file_reading");
 
 std::ostream& operator<<(std::ostream& out, const rapidjson::Document& document)
 {
@@ -48,7 +48,7 @@ std::optional<std::string> read_file(const std::string& path)
     std::ifstream config_file(path);
     if (!config_file.good())
     {
-        SUSHI_LOG_ERROR("Invalid path passed to file {}", path);
+        ELKLOG_LOG_ERROR("Invalid path passed to file {}", path);
         return std::nullopt;
     }
 

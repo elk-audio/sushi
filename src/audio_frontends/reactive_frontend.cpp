@@ -22,11 +22,11 @@
 
 #include "reactive_frontend.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 namespace sushi::internal::audio_frontend {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("Reactive audio frontend");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("Reactive audio frontend");
 
 AudioFrontendStatus ReactiveFrontend::init(BaseAudioFrontendConfiguration* config)
 {
@@ -44,14 +44,14 @@ AudioFrontendStatus ReactiveFrontend::init(BaseAudioFrontendConfiguration* confi
     auto status = _engine->set_cv_input_channels(frontend_config->cv_inputs);
     if (status != engine::EngineReturnStatus::OK)
     {
-        SUSHI_LOG_ERROR("Setting {} cv inputs failed", frontend_config->cv_inputs);
+        ELKLOG_LOG_ERROR("Setting {} cv inputs failed", frontend_config->cv_inputs);
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
     status = _engine->set_cv_output_channels(frontend_config->cv_outputs);
     if (status != engine::EngineReturnStatus::OK)
     {
-        SUSHI_LOG_ERROR("Setting {} cv outputs failed", frontend_config->cv_outputs);
+        ELKLOG_LOG_ERROR("Setting {} cv outputs failed", frontend_config->cv_outputs);
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 

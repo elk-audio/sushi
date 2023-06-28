@@ -22,7 +22,7 @@
 #include <csignal>
 #include <condition_variable>
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 #include "sushi/utils.h"
 #include "sushi/parameter_dump.h"
 #include "sushi/portaudio_devices_dump.h"
@@ -33,7 +33,7 @@
 
 using namespace sushi;
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("main");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("main");
 
 bool exit_flag = false;
 
@@ -121,7 +121,7 @@ int main(int argc, char* argv[])
 
     sushi->stop();
 
-    SUSHI_LOG_INFO("Sushi exiting normally!");
+    ELKLOG_LOG_INFO("Sushi exiting normally!");
 
     return 0;
 }

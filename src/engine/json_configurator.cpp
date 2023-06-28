@@ -25,7 +25,7 @@
 #include "rapidjson/schema.h"
 #pragma GCC diagnostic pop
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "json_configurator.h"
 
@@ -34,7 +34,7 @@ namespace sushi::internal::jsonconfig {
 using namespace engine;
 using namespace midi_dispatcher;
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("jsonconfig");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("jsonconfig");
 
 constexpr int ERROR_DISPLAY_CHARS = 50;
 
@@ -155,13 +155,13 @@ JsonConfigReturnStatus JsonConfigurator::load_host_config()
     }
 
     float sample_rate = host_config["samplerate"].GetFloat();
-    SUSHI_LOG_INFO("Setting engine sample rate to {}", sample_rate);
+    ELKLOG_LOG_INFO("Setting engine sample rate to {}", sample_rate);
     _engine->set_sample_rate(sample_rate);
 
     if (host_config.HasMember("tempo"))
     {
         float tempo = host_config["tempo"].GetFloat();
-        SUSHI_LOG_INFO("Setting engine tempo to {}", sample_rate);
+        ELKLOG_LOG_INFO("Setting engine tempo to {}", sample_rate);
         _engine->set_tempo(tempo);
     }
 
@@ -171,7 +171,7 @@ JsonConfigReturnStatus JsonConfigurator::load_host_config()
         int numerator = sig["numerator"].GetInt();
         int denominator = sig["denominator"].GetInt();
 
-        SUSHI_LOG_INFO("Setting engine time signature to {}/{}", numerator, denominator);
+        ELKLOG_LOG_INFO("Setting engine time signature to {}/{}", numerator, denominator);
         _engine->set_time_signature({numerator, denominator});
     }
 
@@ -186,7 +186,7 @@ JsonConfigReturnStatus JsonConfigurator::load_host_config()
         {
             mode = PlayingMode::PLAYING;
         }
-        SUSHI_LOG_INFO("Setting engine playing mode to {}", mode == PlayingMode::PLAYING ? "playing " : "stopped");
+        ELKLOG_LOG_INFO("Setting engine playing mode to {}", mode == PlayingMode::PLAYING ? "playing " : "stopped");
         _engine->set_transport_mode(mode);
     }
 
@@ -209,7 +209,7 @@ JsonConfigReturnStatus JsonConfigurator::load_host_config()
         {
             mode = SyncMode::INTERNAL;
         }
-        SUSHI_LOG_INFO("Setting engine tempo sync mode to {}", mode == SyncMode::ABLETON_LINK? "Ableton Link" : (
+        ELKLOG_LOG_INFO("Setting engine tempo sync mode to {}", mode == SyncMode::ABLETON_LINK? "Ableton Link" : (
                                                                mode == SyncMode::MIDI ? "external Midi" : (
                                                                mode == SyncMode::GATE_INPUT? "Gate input" : "internal")));
         _engine->set_tempo_sync_mode(mode);
@@ -221,19 +221,19 @@ JsonConfigReturnStatus JsonConfigurator::load_host_config()
         if (clip_det.HasMember("inputs"))
         {
             _engine->enable_input_clip_detection(clip_det["inputs"].GetBool());
-            SUSHI_LOG_INFO("Setting engine input clip detection {}", clip_det["inputs"].GetBool() ? "enabled" : "disabled");
+            ELKLOG_LOG_INFO("Setting engine input clip detection {}", clip_det["inputs"].GetBool() ? "enabled" : "disabled");
         }
         if (clip_det.HasMember("outputs"))
         {
             _engine->enable_output_clip_detection(clip_det["outputs"].GetBool());
-            SUSHI_LOG_INFO("Setting engine output clip detection {}", clip_det["outputs"].GetBool() ? "enabled" : "disabled");
+            ELKLOG_LOG_INFO("Setting engine output clip detection {}", clip_det["outputs"].GetBool() ? "enabled" : "disabled");
         }
     }
 
     if (host_config.HasMember("master_limiter"))
     {
         _engine->enable_master_limiter(host_config["master_limiter"].GetBool());
-        SUSHI_LOG_INFO("Enable master limiter set to {}", host_config["master_limiter"].GetBool());
+        ELKLOG_LOG_INFO("Enable master limiter set to {}", host_config["master_limiter"].GetBool());
     }
 
     return JsonConfigReturnStatus::OK;
@@ -296,7 +296,7 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
             const auto track = _processor_container->track(track_name);
             if (track == nullptr)
             {
-                SUSHI_LOG_ERROR("Invalid plugin track \"{}\" for midi "
+                ELKLOG_LOG_ERROR("Invalid plugin track \"{}\" for midi "
                                 "track connection in Json config file.", con["track"].GetString());
                 return JsonConfigReturnStatus::INVALID_TRACK_NAME;
             }
@@ -318,7 +318,7 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
             {
                 if (res == MidiDispatcherStatus::INVALID_MIDI_INPUT)
                 {
-                    SUSHI_LOG_ERROR("Invalid port \"{}\" specified specified for midi "
+                    ELKLOG_LOG_ERROR("Invalid port \"{}\" specified specified for midi "
                                            "channel connections in Json Config file.", con["port"].GetInt());
                     return JsonConfigReturnStatus::INVALID_MIDI_PORT;
                 }
@@ -334,7 +334,7 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
             const auto track = _processor_container->track(track_name);
             if (track == nullptr)
             {
-                SUSHI_LOG_ERROR("Invalid plugin track \"{}\" for midi "
+                ELKLOG_LOG_ERROR("Invalid plugin track \"{}\" for midi "
                                 "track connection in Json config file.", con["track"].GetString());
                 return JsonConfigReturnStatus::INVALID_TRACK_NAME;
             }
@@ -346,13 +346,13 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
             {
                 if (res == MidiDispatcherStatus::INVALID_MIDI_OUTPUT)
                 {
-                    SUSHI_LOG_ERROR("Invalid port \"{}\" specified for midi "
+                    ELKLOG_LOG_ERROR("Invalid port \"{}\" specified for midi "
                                            "channel connections in Json Config file.", con["port"].GetInt());
                     return JsonConfigReturnStatus::INVALID_MIDI_PORT;
                 }
                 else if (res == MidiDispatcherStatus::INVAlID_CHANNEL)
                 {
-                    SUSHI_LOG_ERROR("Invalid channel \"{}\" specified for midi "
+                    ELKLOG_LOG_ERROR("Invalid channel \"{}\" specified for midi "
                                     "channel connections in Json Config file.", con["channel"].GetInt());
                     return JsonConfigReturnStatus::INVALID_MIDI_PORT;
                 }
@@ -368,7 +368,7 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
             const auto processor = _processor_container->processor(processor_name);
             if (processor == nullptr)
             {
-                SUSHI_LOG_ERROR("Invalid plugin \"{}\" for MIDI program change "
+                ELKLOG_LOG_ERROR("Invalid plugin \"{}\" for MIDI program change "
                                 "connection in Json config file.", processor_name);
                 return JsonConfigReturnStatus::INVALID_PLUGIN_NAME;
             }
@@ -380,7 +380,7 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
             {
                 if (res == MidiDispatcherStatus::INVALID_MIDI_INPUT)
                 {
-                    SUSHI_LOG_ERROR("Invalid port \"{}\" specified specified for MIDI program change "
+                    ELKLOG_LOG_ERROR("Invalid port \"{}\" specified specified for MIDI program change "
                                    "channel connections in Json Config file.", con["port"].GetInt());
                     return JsonConfigReturnStatus::INVALID_MIDI_PORT;
                 }
@@ -404,7 +404,7 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
             const auto processor = _processor_container->processor(processor_name);
             if (processor == nullptr)
             {
-                SUSHI_LOG_ERROR("Invalid plugin \"{}\" for MIDI program change "
+                ELKLOG_LOG_ERROR("Invalid plugin \"{}\" for MIDI program change "
                                 "connection in Json config file.", processor_name);
                 return JsonConfigReturnStatus::INVALID_PLUGIN_NAME;
             }
@@ -428,17 +428,17 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
             {
                 if (res == MidiDispatcherStatus::INVALID_MIDI_INPUT)
                 {
-                    SUSHI_LOG_ERROR("Invalid port \"{}\" specified "
+                    ELKLOG_LOG_ERROR("Invalid port \"{}\" specified "
                                            "for midi cc mappings in Json Config file.", cc_map["port"].GetInt());
                     return JsonConfigReturnStatus::INVALID_MIDI_PORT;
                 }
                 if (res == MidiDispatcherStatus::INVALID_PROCESSOR)
                 {
-                    SUSHI_LOG_ERROR("Invalid plugin name \"{}\" specified "
+                    ELKLOG_LOG_ERROR("Invalid plugin name \"{}\" specified "
                                            "for midi cc mappings in Json Config file.", cc_map["plugin_name"].GetString());
                     return JsonConfigReturnStatus::INVALID_TRACK_NAME;
                 }
-                SUSHI_LOG_ERROR("Invalid parameter name \"{}\" specified for plugin \"{}\" for midi cc mappings.",
+                ELKLOG_LOG_ERROR("Invalid parameter name \"{}\" specified for plugin \"{}\" for midi cc mappings.",
                                                                             cc_map["parameter_name"].GetString(),
                                                                             cc_map["plugin_name"].GetString());
                 return JsonConfigReturnStatus::INVALID_PARAMETER;
@@ -453,7 +453,7 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
             auto status = _midi_dispatcher->enable_midi_clock(true, port.GetInt());
             if (status != midi_dispatcher::MidiDispatcherStatus::OK)
             {
-                SUSHI_LOG_ERROR("Failed to enable midi clock output on port {}", port.GetInt());
+                ELKLOG_LOG_ERROR("Failed to enable midi clock output on port {}", port.GetInt());
                 return JsonConfigReturnStatus::INVALID_MIDI_PORT;
             }
         }
@@ -472,7 +472,7 @@ JsonConfigReturnStatus JsonConfigurator::load_osc()
 
     if (!_osc_frontend)
     {
-        SUSHI_LOG_WARNING("OSC not enabled");
+        ELKLOG_LOG_WARNING("OSC not enabled");
         return JsonConfigReturnStatus::INVALID_CONFIGURATION;
     }
 
@@ -487,7 +487,7 @@ JsonConfigReturnStatus JsonConfigurator::load_osc()
         {
             _osc_frontend->set_connect_from_all_parameters(false);
         }
-        SUSHI_LOG_INFO("Broadcasting of all processor parameter state is: {}", enabled ? "enabled" : "disabled");
+        ELKLOG_LOG_INFO("Broadcasting of all processor parameter state is: {}", enabled ? "enabled" : "disabled");
     }
 
     if (osc_config.HasMember("enabled_processor_outputs"))
@@ -498,7 +498,7 @@ JsonConfigReturnStatus JsonConfigurator::load_osc()
             auto res = _osc_frontend->connect_from_processor_parameters(processor_name);
             if (res != true)
             {
-                SUSHI_LOG_ERROR("Failed to enable osc parameter output on processor {}", processor_name);
+                ELKLOG_LOG_ERROR("Failed to enable osc parameter output on processor {}", processor_name);
             }
 
             if (osc_out.HasMember("parameter_blocklist"))
@@ -530,7 +530,7 @@ JsonConfigReturnStatus JsonConfigurator::load_cv_gate()
                                                         cv_in["cv"].GetInt());
             if (res != EngineReturnStatus::OK)
             {
-                SUSHI_LOG_ERROR("Failed to connect cv input {} to parameter {} on processor {}",
+                ELKLOG_LOG_ERROR("Failed to connect cv input {} to parameter {} on processor {}",
                                cv_in["cv"].GetInt(),
                                cv_in["parameter"].GetString(),
                                cv_in["processor"].GetString());
@@ -546,7 +546,7 @@ JsonConfigReturnStatus JsonConfigurator::load_cv_gate()
                                                           cv_out["cv"].GetInt());
             if (res != EngineReturnStatus::OK)
             {
-                SUSHI_LOG_ERROR("Failed to connect cv output {} to parameter {} on processor {}",
+                ELKLOG_LOG_ERROR("Failed to connect cv output {} to parameter {} on processor {}",
                                cv_out["cv"].GetInt(),
                                cv_out["parameter"].GetString(),
                                cv_out["processor"].GetString());
@@ -563,7 +563,7 @@ JsonConfigReturnStatus JsonConfigurator::load_cv_gate()
                                                          gate_in["ppq_ticks"].GetInt());
                 if (res != EngineReturnStatus::OK)
                 {
-                    SUSHI_LOG_ERROR("Failed to set gate {} as sync input", gate_in["gate"].GetInt());
+                    ELKLOG_LOG_ERROR("Failed to set gate {} as sync input", gate_in["gate"].GetInt());
                 }
 
             }
@@ -575,7 +575,7 @@ JsonConfigReturnStatus JsonConfigurator::load_cv_gate()
                                                               gate_in["channel"].GetInt());
                 if (res != EngineReturnStatus::OK)
                 {
-                    SUSHI_LOG_ERROR("Failed to connect gate {} to processor {}",
+                    ELKLOG_LOG_ERROR("Failed to connect gate {} to processor {}",
                                    gate_in["gate"].GetInt(),
                                    gate_in["processor"].GetString());
                 }
@@ -592,7 +592,7 @@ JsonConfigReturnStatus JsonConfigurator::load_cv_gate()
                                                          gate_out["ppq_ticks"].GetInt());
                 if (res != EngineReturnStatus::OK)
                 {
-                    SUSHI_LOG_ERROR("Failed to set gate {} as sync output", gate_out["gate"].GetInt());
+                    ELKLOG_LOG_ERROR("Failed to set gate {} as sync output", gate_out["gate"].GetInt());
                 }
 
             }
@@ -604,7 +604,7 @@ JsonConfigReturnStatus JsonConfigurator::load_cv_gate()
                                                                 gate_out["channel"].GetInt());
                 if (res != EngineReturnStatus::OK)
                 {
-                    SUSHI_LOG_ERROR("Failed to connect gate {} from processor {}",
+                    ELKLOG_LOG_ERROR("Failed to connect gate {} from processor {}",
                                    gate_out["gate"].GetInt(),
                                    gate_out["processor"].GetString());
                 }
@@ -648,7 +648,7 @@ std::pair<JsonConfigReturnStatus, std::vector<Event*>> JsonConfigurator::load_ev
 
 JsonConfigReturnStatus JsonConfigurator::load_initial_state()
 {
-    SUSHI_LOG_DEBUG("Loading initial processor state");
+    ELKLOG_LOG_DEBUG("Loading initial processor state");
 
     auto [status, json_states] = _parse_section(JsonSection::STATE);
     if (status != JsonConfigReturnStatus::OK)
@@ -661,7 +661,7 @@ JsonConfigReturnStatus JsonConfigurator::load_initial_state()
         auto processor = _processor_container->mutable_processor(json_state["processor"].GetString());
         if (!processor)
         {
-            SUSHI_LOG_WARNING("Invalid processor name: \"{}\"", json_state["processor"].GetString());
+            ELKLOG_LOG_WARNING("Invalid processor name: \"{}\"", json_state["processor"].GetString());
             return JsonConfigReturnStatus::INVALID_PLUGIN_NAME;
         }
 
@@ -680,7 +680,7 @@ JsonConfigReturnStatus JsonConfigurator::load_initial_state()
                 auto param = processor->parameter_from_name(parameter.name.GetString());
                 if (!param)
                 {
-                    SUSHI_LOG_WARNING("Invalid parameter name: \"{}\"", parameter.name.GetString());
+                    ELKLOG_LOG_WARNING("Invalid parameter name: \"{}\"", parameter.name.GetString());
                     return JsonConfigReturnStatus::INVALID_PARAMETER;
                 }
                 state.add_parameter_change(param->id(), parameter.value.GetFloat());
@@ -693,7 +693,7 @@ JsonConfigReturnStatus JsonConfigurator::load_initial_state()
                 auto param = processor->parameter_from_name(property.name.GetString());
                 if (!param)
                 {
-                    SUSHI_LOG_WARNING("Invalid property name: \"{}\"", property.name.GetString());
+                    ELKLOG_LOG_WARNING("Invalid property name: \"{}\"", property.name.GetString());
                     return JsonConfigReturnStatus::INVALID_CONFIGURATION;
                 }
                 state.add_property_change(param->id(), property.value.GetString());
@@ -723,14 +723,14 @@ std::pair<JsonConfigReturnStatus, const rapidjson::Value&> JsonConfigurator::_pa
 
     if (!_validate_against_schema(_json_data, section))
     {
-        SUSHI_LOG_ERROR("Config file {} does not follow schema: {}", _json_string, (int)section);
+        ELKLOG_LOG_ERROR("Config file {} does not follow schema: {}", _json_string, (int)section);
         return {JsonConfigReturnStatus::INVALID_CONFIGURATION, _json_data};
     }
 
     auto name = section_name(section);
     if (!_json_data.HasMember(name))
     {
-        SUSHI_LOG_INFO("Config file does not have any \"{}\" definitions", name);
+        ELKLOG_LOG_INFO("Config file does not have any \"{}\" definitions", name);
         return {JsonConfigReturnStatus::NOT_DEFINED, _json_data};
     }
     return {JsonConfigReturnStatus::OK, _json_data[name]};
@@ -764,17 +764,17 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value& tra
 
     if (status == EngineReturnStatus::INVALID_PLUGIN || status == EngineReturnStatus::INVALID_PROCESSOR)
     {
-        SUSHI_LOG_ERROR("Track {} in JSON config file duplicate or invalid name", name);
+        ELKLOG_LOG_ERROR("Track {} in JSON config file duplicate or invalid name", name);
         return JsonConfigReturnStatus::INVALID_TRACK_NAME;
     }
 
     if (status != EngineReturnStatus::OK)
     {
-        SUSHI_LOG_ERROR("Track Name {} failed to create", name);
+        ELKLOG_LOG_ERROR("Track Name {} failed to create", name);
         return JsonConfigReturnStatus::INVALID_CONFIGURATION;
     }
 
-    SUSHI_LOG_DEBUG("Successfully added track \"{}\" to the engine", name);
+    ELKLOG_LOG_DEBUG("Successfully added track \"{}\" to the engine", name);
     if (type == TrackType::REGULAR)
     {
         auto connect_status = _connect_audio_to_track(track_def, name, track_id);
@@ -785,7 +785,7 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value& tra
 
         if (status != EngineReturnStatus::OK)
         {
-            SUSHI_LOG_ERROR("Error connecting track \"{}\" to output bus, error {}", name, static_cast<int>(status));
+            ELKLOG_LOG_ERROR("Error connecting track \"{}\" to output bus, error {}", name, static_cast<int>(status));
             return JsonConfigReturnStatus::INVALID_CONFIGURATION;
         }
     }
@@ -799,7 +799,7 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value& tra
         }
     }
 
-    SUSHI_LOG_DEBUG("Successfully added {} Track {} to the engine", type == TrackType::REGULAR? "" :"Master", name);
+    ELKLOG_LOG_DEBUG("Successfully added {} Track {} to the engine", type == TrackType::REGULAR? "" :"Master", name);
     return JsonConfigReturnStatus::OK;
 }
 
@@ -821,7 +821,7 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
     auto processor = _engine->processor_container()->processor(data["plugin_name"].GetString());
     if (processor == nullptr)
     {
-        SUSHI_LOG_WARNING("Unrecognised plugin: \"{}\"", data["plugin_name"].GetString());
+        ELKLOG_LOG_WARNING("Unrecognised plugin: \"{}\"", data["plugin_name"].GetString());
         return nullptr;
     }
 
@@ -830,7 +830,7 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
         auto parameter = processor->parameter_from_name(data["parameter_name"].GetString());
         if (parameter == nullptr)
         {
-            SUSHI_LOG_WARNING("Unrecognised parameter: {}", data["parameter_name"].GetString());
+            ELKLOG_LOG_WARNING("Unrecognised parameter: {}", data["parameter_name"].GetString());
             return nullptr;
         }
         return new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
@@ -845,7 +845,7 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
         auto parameter = processor->parameter_from_name(data["property_name"].GetString());
         if (parameter == nullptr)
         {
-            SUSHI_LOG_WARNING("Unrecognised property: {}", data["property_name"].GetString());
+            ELKLOG_LOG_WARNING("Unrecognised property: {}", data["property_name"].GetString());
             return nullptr;
         }
         return new PropertyChangeEvent(processor->id(),
@@ -897,7 +897,7 @@ bool JsonConfigurator::_validate_against_schema(rapidjson::Value& config, JsonSe
 
         if (!error_node.empty())
         {
-            SUSHI_LOG_ERROR("Schema validation failure at {}", error_node);
+            ELKLOG_LOG_ERROR("Schema validation failure at {}", error_node);
         }
         return false;
     }
@@ -911,7 +911,7 @@ JsonConfigReturnStatus JsonConfigurator::_load_data(const std::string& data)
     if (_json_data.HasParseError())
     {
         [[maybe_unused]] int err_offset = _json_data.GetErrorOffset();
-        SUSHI_LOG_ERROR("Error parsing JSON config file: {} @ pos {}: \"{}\"",
+        ELKLOG_LOG_ERROR("Error parsing JSON config file: {} @ pos {}: \"{}\"",
                        rapidjson::GetParseError_En(_json_data.GetParseError()),
                        err_offset,
                        data.substr(std::max(0, err_offset - ERROR_DISPLAY_CHARS),
@@ -945,7 +945,7 @@ JsonConfigReturnStatus JsonConfigurator::_connect_audio_to_track(const rapidjson
 
         if (status != EngineReturnStatus::OK)
         {
-            SUSHI_LOG_ERROR("Error connecting input bus to track \"{}\", error {}", track_name, static_cast<int>(status));
+            ELKLOG_LOG_ERROR("Error connecting input bus to track \"{}\", error {}", track_name, static_cast<int>(status));
             return JsonConfigReturnStatus::INVALID_CONFIGURATION;
         }
     }
@@ -968,7 +968,7 @@ JsonConfigReturnStatus JsonConfigurator::_connect_audio_to_track(const rapidjson
 
         if (status != EngineReturnStatus::OK)
         {
-            SUSHI_LOG_ERROR("Error connection track \"{}\" to output bus, error {}", track_name, static_cast<int>(status));
+            ELKLOG_LOG_ERROR("Error connection track \"{}\" to output bus, error {}", track_name, static_cast<int>(status));
             return JsonConfigReturnStatus::INVALID_CONFIGURATION;
         }
     }
@@ -1017,7 +1017,7 @@ JsonConfigReturnStatus JsonConfigurator::_add_plugin(const rapidjson::Value& plu
     {
         if (status == EngineReturnStatus::INVALID_PLUGIN_UID)
         {
-            SUSHI_LOG_ERROR("Invalid plugin uid {} in JSON config file", plugin_uid);
+            ELKLOG_LOG_ERROR("Invalid plugin uid {} in JSON config file", plugin_uid);
             return JsonConfigReturnStatus::INVALID_PLUGIN_PATH;
         }
         return JsonConfigReturnStatus::INVALID_CONFIGURATION;
@@ -1029,7 +1029,7 @@ JsonConfigReturnStatus JsonConfigurator::_add_plugin(const rapidjson::Value& plu
         return JsonConfigReturnStatus::INVALID_CONFIGURATION;
     }
 
-    SUSHI_LOG_DEBUG("Successfully added Plugin \"{}\" to track: \"{}\"", plugin_name, track_name);
+    ELKLOG_LOG_DEBUG("Successfully added Plugin \"{}\" to track: \"{}\"", plugin_name, track_name);
 
     return JsonConfigReturnStatus::OK;
 }

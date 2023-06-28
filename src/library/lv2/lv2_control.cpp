@@ -15,11 +15,11 @@
 
 #include "lv2_control.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 namespace sushi::internal::lv2 {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 ControlID ControlID::new_port_control(Port* port, Model* model, uint32_t index)
 {
@@ -140,7 +140,7 @@ ControlID ControlID::new_property_control(Model* model, const LilvNode* property
 
     if (id.value_type == false)
     {
-        SUSHI_LOG_ERROR("Unknown value type for property {}", lilv_node_as_string(property));
+        ELKLOG_LOG_ERROR("Unknown value type for property {}", lilv_node_as_string(property));
     }
 
     return id;

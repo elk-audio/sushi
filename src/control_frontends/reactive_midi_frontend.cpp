@@ -24,9 +24,9 @@
 
 #include "library/midi_decoder.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("reactive midi frontend");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("reactive midi frontend");
 
 namespace sushi::internal::midi_frontend {
 
@@ -58,7 +58,7 @@ void ReactiveMidiFrontend::receive_midi(int input, MidiDataByte data, Time times
 {
     _receiver->send_midi(input, data, timestamp);
 
-    SUSHI_LOG_DEBUG("Received midi message: [{:x} {:x} {:x} {:x}], port{}, timestamp: {}",
+    ELKLOG_LOG_DEBUG("Received midi message: [{:x} {:x} {:x} {:x}], port{}, timestamp: {}",
                     data[0], data[1], data[2], data[3], input, timestamp.count());
 }
 
@@ -70,7 +70,7 @@ void ReactiveMidiFrontend::send_midi(int output, MidiDataByte data, Time timesta
     }
     else
     {
-        SUSHI_LOG_DEBUG("ReactiveMidiFrontend::send_midi was invoked on a frontend instance,"
+        ELKLOG_LOG_DEBUG("ReactiveMidiFrontend::send_midi was invoked on a frontend instance,"
                         " which has no sending _callback. "
                         "First pass one to the frontend using set_callback(...).");
     }

@@ -27,8 +27,8 @@
 // Options Defaults
 ////////////////////////////////////////////////////////////////////////////////
 
-#define SUSHI_LOG_LEVEL_DEFAULT "info"
-#define SUSHI_LOG_FILE_DEFAULT "/tmp/sushi.log"
+#define ELKLOG_LOG_LEVEL_DEFAULT "info"
+#define ELKLOG_LOG_FILE_DEFAULT "/tmp/sushi.log"
 #define SUSHI_JSON_FILENAME_DEFAULT "config.json"
 #define SUSHI_JSON_STRING_DEFAULT "{}"
 #define SUSHI_SAMPLE_RATE_DEFAULT 48000
@@ -187,7 +187,7 @@ const optionparser::Descriptor usage[] =
         "l",
         "log-level",
         SushiArg::NonEmpty,
-        "\t\t-l <level>, --log-level=<level> \tSpecify minimum logging level, from ('debug', 'info', 'warning', 'error') [default=" SUSHI_LOG_LEVEL_DEFAULT "]."
+        "\t\t-l <level>, --log-level=<level> \tSpecify minimum logging level, from ('debug', 'info', 'warning', 'error') [default=" ELKLOG_LOG_LEVEL_DEFAULT "]."
     },
     {
         OPT_IDX_LOG_FILE,
@@ -195,7 +195,7 @@ const optionparser::Descriptor usage[] =
         "L",
         "log-file",
         SushiArg::NonEmpty,
-        "\t\t-L <filename>, --log-file=<filename> \tSpecify logging file destination [default=" SUSHI_LOG_FILE_DEFAULT
+        "\t\t-L <filename>, --log-file=<filename> \tSpecify logging file destination [default=" ELKLOG_LOG_FILE_DEFAULT
       "]."
     },
     {

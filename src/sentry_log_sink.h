@@ -28,7 +28,7 @@
 #include "spdlog/sinks/base_sink.h"
 #include "sentry.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("sentry");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("sentry");
 
 namespace elk {
 
@@ -53,7 +53,7 @@ public:
 
         if (status != 0)
         {
-            SUSHI_LOG_DEBUG("sentry initialization failed. "
+            ELKLOG_LOG_DEBUG("sentry initialization failed. "
                             "This is usually either because it lacks write access in the database path, "
                             "or because it hasn't received a valid path to the crashpad_handler executable.");
         }

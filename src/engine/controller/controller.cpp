@@ -20,13 +20,13 @@
 
 #include "controller.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 #include "sushi/control_notifications.h"
 
 #include "engine/base_engine.h"
 #include "controller_common.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("controller");
 
 namespace sushi::internal::engine {
 
@@ -268,11 +268,11 @@ void Controller::_completion_callback([[maybe_unused]] Event* event, int status)
 {
     if (status == EventStatus::HANDLED_OK)
     {
-        SUSHI_LOG_DEBUG("Event {}, handled OK", event->id());
+        ELKLOG_LOG_DEBUG("Event {}, handled OK", event->id());
     }
     else
     {
-        SUSHI_LOG_WARNING("Event {} returned with error code: ", event->id(), status);
+        ELKLOG_LOG_WARNING("Event {} returned with error code: ", event->id(), status);
     }
 }
 

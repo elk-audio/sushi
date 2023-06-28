@@ -22,7 +22,7 @@
 
 #include "engine/midi_dispatcher.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "base_event_dispatcher.h"
 #include "base_engine.h"
@@ -30,7 +30,7 @@
 
 namespace sushi::internal::midi_dispatcher {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("midi dispatcher");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("midi dispatcher");
 
 inline Event* make_note_on_event(const InputConnection& c,
                                  const midi::NoteOnMessage& msg,
@@ -177,7 +177,7 @@ MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
     std::scoped_lock lock(_cc_routes_lock);
 
     _cc_routes[midi_input][cc_no][channel].push_back(connection);
-    SUSHI_LOG_INFO("Connected parameter ID \"{}\" "
+    ELKLOG_LOG_INFO("Connected parameter ID \"{}\" "
                            "(cc number \"{}\") to processor ID \"{}\"", parameter_id, cc_no, processor_id);
     return MidiDispatcherStatus::OK;
 }
@@ -208,7 +208,7 @@ MidiDispatcherStatus MidiDispatcher::disconnect_cc_from_parameter(int midi_input
         connection_vector.erase(erase_iterator, connection_vector.end());
     }
 
-    SUSHI_LOG_INFO("Disconnected "
+    ELKLOG_LOG_INFO("Disconnected "
                    "(cc number \"{}\") from processor ID \"{}\"", cc_no, processor_id);
     return MidiDispatcherStatus::OK;
 }
@@ -235,7 +235,7 @@ MidiDispatcherStatus MidiDispatcher::disconnect_all_cc_from_processor(ObjectId p
 
                 connection_vector.erase(erase_iterator, connection_vector.end());
 
-                SUSHI_LOG_DEBUG("Disconnected all CC's from processor ID \"{}\"", processor_id);
+                ELKLOG_LOG_DEBUG("Disconnected all CC's from processor ID \"{}\"", processor_id);
             }
         }
     }
@@ -271,7 +271,7 @@ MidiDispatcherStatus MidiDispatcher::connect_pc_to_processor(int midi_input,
     std::scoped_lock lock(_pc_routes_lock);
 
     _pc_routes[midi_input][channel].push_back(connection);
-    SUSHI_LOG_INFO("Connected program changes from MIDI port \"{}\" to processor id\"{}\"", midi_input, processor_id);
+    ELKLOG_LOG_INFO("Connected program changes from MIDI port \"{}\" to processor id\"{}\"", midi_input, processor_id);
     return MidiDispatcherStatus::OK;
 }
 
@@ -300,7 +300,7 @@ MidiDispatcherStatus MidiDispatcher::disconnect_pc_from_processor(int midi_input
         connection_vector.erase(erase_iterator, connection_vector.end());
     }
 
-    SUSHI_LOG_INFO("Disconnected program changes from MIDI port \"{}\" to processor ID \"{}\"", midi_input, processor_id);
+    ELKLOG_LOG_INFO("Disconnected program changes from MIDI port \"{}\" to processor ID \"{}\"", midi_input, processor_id);
     return MidiDispatcherStatus::OK;
 }
 
@@ -324,7 +324,7 @@ MidiDispatcherStatus MidiDispatcher::disconnect_all_pc_from_processor(ObjectId p
             connection_vector.erase(erase_iterator, connection_vector.end());
         }
     }
-    SUSHI_LOG_DEBUG("Disconnected all PC's from processor ID \"{}\"", processor_id);
+    ELKLOG_LOG_DEBUG("Disconnected all PC's from processor ID \"{}\"", processor_id);
 
     return MidiDispatcherStatus::OK;
 }
@@ -357,7 +357,7 @@ MidiDispatcherStatus MidiDispatcher::connect_kb_to_track(int midi_input,
     std::scoped_lock lock(_kb_routes_in_lock);
 
     _kb_routes_in[midi_input][channel].push_back(connection);
-    SUSHI_LOG_INFO("Connected MIDI port \"{}\" to track ID \"{}\"", midi_input, track_id);
+    ELKLOG_LOG_INFO("Connected MIDI port \"{}\" to track ID \"{}\"", midi_input, track_id);
     return MidiDispatcherStatus::OK;
 }
 
@@ -387,7 +387,7 @@ MidiDispatcherStatus MidiDispatcher::disconnect_kb_from_track(int midi_input,
         connection_vector.erase(erase_iterator, connection_vector.end());
     }
 
-    SUSHI_LOG_INFO("Disconnected MIDI port \"{}\" from track ID \"{}\"", midi_input, track_id);
+    ELKLOG_LOG_INFO("Disconnected MIDI port \"{}\" from track ID \"{}\"", midi_input, track_id);
     return MidiDispatcherStatus::OK;
 }
 
@@ -456,7 +456,7 @@ MidiDispatcherStatus MidiDispatcher::connect_raw_midi_to_track(int midi_input,
     std::scoped_lock lock(_raw_routes_in_lock);
 
     _raw_routes_in[midi_input][channel].push_back(connection);
-    SUSHI_LOG_INFO("Connected MIDI port \"{}\" to track ID \"{}\"", midi_input, track_id);
+    ELKLOG_LOG_INFO("Connected MIDI port \"{}\" to track ID \"{}\"", midi_input, track_id);
     return MidiDispatcherStatus::OK;
 }
 
@@ -485,7 +485,7 @@ MidiDispatcherStatus MidiDispatcher::disconnect_raw_midi_from_track(int midi_inp
         connection_vector.erase(erase_iterator, connection_vector.end());
     }
 
-    SUSHI_LOG_INFO("Disconnected MIDI port \"{}\" from track ID \"{}\"", midi_input, track_id);
+    ELKLOG_LOG_INFO("Disconnected MIDI port \"{}\" from track ID \"{}\"", midi_input, track_id);
     return MidiDispatcherStatus::OK;
 }
 
@@ -513,7 +513,7 @@ MidiDispatcherStatus MidiDispatcher::connect_track_to_output(int midi_output, Ob
     std::scoped_lock lock(_kb_routes_out_lock);
 
     _kb_routes_out[track_id].push_back(connection);
-    SUSHI_LOG_INFO("Connected MIDI from track ID \"{}\" to port \"{}\" with channel {}", track_id, midi_output, channel);
+    ELKLOG_LOG_INFO("Connected MIDI from track ID \"{}\" to port \"{}\" with channel {}", track_id, midi_output, channel);
     return MidiDispatcherStatus::OK;
 }
 
@@ -546,7 +546,7 @@ MidiDispatcherStatus MidiDispatcher::disconnect_track_from_output(int midi_outpu
         connection_vector.erase(erase_iterator, connection_vector.end());
     }
 
-    SUSHI_LOG_INFO("Disconnected MIDI from track ID \"{}\" to port \"{}\" with channel {}", track_id, midi_output, channel);
+    ELKLOG_LOG_INFO("Disconnected MIDI from track ID \"{}\" to port \"{}\" with channel {}", track_id, midi_output, channel);
     return MidiDispatcherStatus::OK;
 }
 
@@ -578,7 +578,7 @@ MidiDispatcherStatus MidiDispatcher::enable_midi_clock(bool enabled, int midi_ou
         _enabled_clock_out[midi_output] = enabled;
         return MidiDispatcherStatus::OK;
     }
-    SUSHI_LOG_ERROR("Failed to {} midi clock for port {}, no such port", enabled? "enable" : "disable", midi_output);
+    ELKLOG_LOG_ERROR("Failed to {} midi clock for port {}, no such port", enabled? "enable" : "disable", midi_output);
     return MidiDispatcherStatus::INVALID_MIDI_OUTPUT;
 }
 
@@ -805,7 +805,7 @@ int MidiDispatcher::process(Event* event)
                     case KeyboardEvent::Subtype::WRAPPED_MIDI:
                         midi_data = typed_event->midi_data();
                 }
-                SUSHI_LOG_DEBUG("Dispatching midi [{:x} {:x} {:x} {:x}], timestamp: {}",
+                ELKLOG_LOG_DEBUG("Dispatching midi [{:x} {:x} {:x} {:x}], timestamp: {}",
                                 midi_data[0], midi_data[1], midi_data[2], midi_data[3], event->time().count());
                 _frontend->send_midi(c.output, midi_data, event->time());
             }
@@ -896,7 +896,7 @@ bool MidiDispatcher::_handle_audio_graph_notification(const AudioGraphNotificati
 
             disconnect_all_pc_from_processor(processor_id);
 
-            SUSHI_LOG_DEBUG("MidiController received a PROCESSOR_DELETED notification for processor {}",
+            ELKLOG_LOG_DEBUG("MidiController received a PROCESSOR_DELETED notification for processor {}",
                             event->processor());
             break;
         }
@@ -944,7 +944,7 @@ bool MidiDispatcher::_handle_audio_graph_notification(const AudioGraphNotificati
                 outputs_found++;
             }
 
-            SUSHI_LOG_DEBUG("MidiController received a TRACK_DELETED notification for track {}", event->track());
+            ELKLOG_LOG_DEBUG("MidiController received a TRACK_DELETED notification for track {}", event->track());
             break;
         }
         default:
@@ -980,7 +980,7 @@ bool MidiDispatcher::_handle_transport_notification(const PlayingModeNotificatio
             {
                 if (_enabled_clock_out[i])
                 {
-                    SUSHI_LOG_DEBUG("Sending midi start message");
+                    ELKLOG_LOG_DEBUG("Sending midi start message");
                     _frontend->send_midi(i, midi::encode_start_message(), event->time());
                 }
             }
@@ -991,7 +991,7 @@ bool MidiDispatcher::_handle_transport_notification(const PlayingModeNotificatio
             {
                 if (_enabled_clock_out[i])
                 {
-                    SUSHI_LOG_DEBUG("Sending midi stop message");
+                    ELKLOG_LOG_DEBUG("Sending midi stop message");
                     _frontend->send_midi(i, midi::encode_stop_message(), event->time());
                 }
             }

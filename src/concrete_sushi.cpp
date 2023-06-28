@@ -24,7 +24,7 @@
 
 #include "concrete_sushi.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "engine/audio_engine.h"
 
@@ -121,22 +121,21 @@ std::string to_string(Status status)
     }
 }
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("concrete_sushi");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("concrete_sushi");
 
 void init_logger([[maybe_unused]] const SushiOptions& options)
 {
-    auto ret_code = SUSHI_INITIALIZE_LOGGER(options.log_file,
+
+    auto ret_code = elklog::StaticLogger::init_logger(options.log_file,
                                             "Logger",
                                             options.log_level,
-                                            options.enable_flush_interval,
-                                            options.log_flush_interval,
-                                            options.sentry_crash_handler_path,
-                                            options.sentry_dsn);
+                                            options.enable_flush_interval? options.log_flush_interval : std::chrono::seconds(0));
 
-    if (ret_code != SUSHI_LOG_ERROR_CODE_OK)
+    if (ret_code != elklog::Status::OK)
     {
-        std::cerr << SUSHI_LOG_GET_ERROR_MESSAGE(ret_code) << ", using default." << std::endl;
+        std::cerr << "Log failure " << ret_code << ", using default." << std::endl;
     }
+    ELKLOG_LOG_INFO("Options: {}, {}", options.enable_flush_interval, options.log_flush_interval.count());
 }
 
 namespace internal {
@@ -183,7 +182,7 @@ Status ConcreteSushi::start()
 
 void ConcreteSushi::stop()
 {
-    SUSHI_LOG_INFO("Stopping Sushi.");
+    ELKLOG_LOG_INFO("Stopping Sushi.");
 
     if (_audio_frontend != nullptr)
     {

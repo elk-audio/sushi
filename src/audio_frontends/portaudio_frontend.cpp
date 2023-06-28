@@ -20,7 +20,7 @@
 
 #ifdef SUSHI_BUILD_WITH_PORTAUDIO
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "portaudio_frontend.h"
 
@@ -28,7 +28,7 @@
 
 namespace sushi::internal::audio_frontend {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("portaudio");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("portaudio");
 
 AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* config)
 {
@@ -51,7 +51,7 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
     int input_device_id = portaudio_config->input_device_id.value_or(Pa_GetDefaultInputDevice());
     if (input_device_id >= device_count)
     {
-        SUSHI_LOG_ERROR("Input device id is out of range");
+        ELKLOG_LOG_ERROR("Input device id is out of range");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     // If there is no available input device the default device will
@@ -64,7 +64,7 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
     int output_device_id = portaudio_config->output_device_id.value_or(Pa_GetDefaultOutputDevice());
     if (output_device_id >= device_count)
     {
-        SUSHI_LOG_ERROR("Output device id is out of range");
+        ELKLOG_LOG_ERROR("Output device id is out of range");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     // If there is no available output device the default device will
@@ -81,10 +81,10 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
     auto channel_conf_result = _configure_audio_channels(portaudio_config);
     if (channel_conf_result != AudioFrontendStatus::OK)
     {
-        SUSHI_LOG_ERROR("Failed to configure audio channels");
+        ELKLOG_LOG_ERROR("Failed to configure audio channels");
         return channel_conf_result;
     }
-    SUSHI_LOG_DEBUG("Setting up port audio with {} inputs {} outputs", _num_total_input_channels, _num_total_output_channels);
+    ELKLOG_LOG_DEBUG("Setting up port audio with {} inputs {} outputs", _num_total_input_channels, _num_total_output_channels);
 
     // Setup device parameters
     PaStreamParameters input_parameters;
@@ -106,12 +106,12 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
     double samplerate = _engine->sample_rate();
     if (_configure_samplerate(&input_parameters, &output_parameters, &samplerate) == false)
     {
-        SUSHI_LOG_ERROR("Failed to configure samplerate");
+        ELKLOG_LOG_ERROR("Failed to configure samplerate");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     if (samplerate != _engine->sample_rate())
     {
-        SUSHI_LOG_WARNING("Failed to use engine samplerate ({}), using {} instead", _engine->sample_rate(), samplerate);
+        ELKLOG_LOG_WARNING("Failed to use engine samplerate ({}), using {} instead", _engine->sample_rate(), samplerate);
         _engine->set_sample_rate(samplerate);
     }
 
@@ -128,7 +128,7 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
                                 static_cast<void*>(this));
     if (err != paNoError)
     {
-        SUSHI_LOG_ERROR("Failed to open stream: {}", Pa_GetErrorText(err));
+        ELKLOG_LOG_ERROR("Failed to open stream: {}", Pa_GetErrorText(err));
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     else
@@ -144,24 +144,24 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
 
     if (_audio_input_channels + _cv_input_channels > 0)
     {
-        SUSHI_LOG_INFO("Connected input channels to {}", _input_device_info->name);
-        SUSHI_LOG_INFO("Input device has {} available channels", _input_device_info->maxInputChannels);
+        ELKLOG_LOG_INFO("Connected input channels to {}", _input_device_info->name);
+        ELKLOG_LOG_INFO("Input device has {} available channels", _input_device_info->maxInputChannels);
     }
     else
     {
-        SUSHI_LOG_DEBUG("No input channels found not connecting to input device");
+        ELKLOG_LOG_DEBUG("No input channels found not connecting to input device");
     }
 
     if (_audio_output_channels + _cv_output_channels > 0)
     {
-        SUSHI_LOG_DEBUG("Connected output channels to {}", _output_device_info->name);
+        ELKLOG_LOG_DEBUG("Connected output channels to {}", _output_device_info->name);
     }
     else
     {
-        SUSHI_LOG_INFO("No output channels found not connecting to output device");
-        SUSHI_LOG_INFO("Output device has {} available channels", _output_device_info->maxOutputChannels);
+        ELKLOG_LOG_INFO("No output channels found not connecting to output device");
+        ELKLOG_LOG_INFO("Output device has {} available channels", _output_device_info->maxOutputChannels);
     }
-    SUSHI_LOG_INFO("Stream started, using input latency {} and output latency {}", stream_info->inputLatency, stream_info->outputLatency);
+    ELKLOG_LOG_INFO("Stream started, using input latency {} and output latency {}", stream_info->inputLatency, stream_info->outputLatency);
 
     return AudioFrontendStatus::OK;
 }
@@ -179,19 +179,19 @@ void PortAudioFrontend::cleanup()
         result = Pa_IsStreamActive(_stream);
         if (result == 1)
         {
-            SUSHI_LOG_INFO("Closing PortAudio stream");
+            ELKLOG_LOG_INFO("Closing PortAudio stream");
             Pa_StopStream(_stream);
         }
         else if ((result != paNoError) && (_engine != nullptr))
         {
-            SUSHI_LOG_WARNING("Error while checking for active stream: {}", Pa_GetErrorText(result));
+            ELKLOG_LOG_WARNING("Error while checking for active stream: {}", Pa_GetErrorText(result));
         }
     }
 
     result = Pa_Terminate();
     if (result != paNoError)
     {
-        SUSHI_LOG_WARNING("Error while terminating Portaudio: {}", Pa_GetErrorText(result));
+        ELKLOG_LOG_WARNING("Error while terminating Portaudio: {}", Pa_GetErrorText(result));
     }
 }
 
@@ -211,7 +211,7 @@ std::optional<int> PortAudioFrontend::devices_count()
     int devices = Pa_GetDeviceCount();
     if (devices < 0)
     {
-        SUSHI_LOG_ERROR("Error querying portaudio devices: {}", devices);
+        ELKLOG_LOG_ERROR("Error querying portaudio devices: {}", devices);
         return std::nullopt;
     }
 
@@ -228,7 +228,7 @@ std::optional<PortaudioDeviceInfo> PortAudioFrontend::device_info(int device_idx
     const PaDeviceInfo* pa_devinfo = Pa_GetDeviceInfo(device_idx);
     if (pa_devinfo == nullptr)
     {
-        SUSHI_LOG_ERROR("Error querying portaudio devices {}", device_idx);
+        ELKLOG_LOG_ERROR("Error querying portaudio devices {}", device_idx);
         return std::nullopt;
     }
 
@@ -250,7 +250,7 @@ std::optional<int> PortAudioFrontend::default_input_device()
     int default_input = Pa_GetDefaultInputDevice();
     if (default_input == paNoDevice)
     {
-        SUSHI_LOG_WARNING("Could not retrieve default input device");
+        ELKLOG_LOG_WARNING("Could not retrieve default input device");
         return std::nullopt;
     }
 
@@ -267,7 +267,7 @@ std::optional<int> PortAudioFrontend::default_output_device()
     int default_output = Pa_GetDefaultOutputDevice();
     if (default_output == paNoDevice)
     {
-        SUSHI_LOG_WARNING("Could not retrieve default output device");
+        ELKLOG_LOG_WARNING("Could not retrieve default output device");
         return std::nullopt;
     }
 
@@ -284,7 +284,7 @@ AudioFrontendStatus PortAudioFrontend::_initialize_portaudio()
     PaError err = Pa_Initialize();
     if (err != paNoError)
     {
-        SUSHI_LOG_ERROR("Error initializing PortAudio: {}", Pa_GetErrorText(err));
+        ELKLOG_LOG_ERROR("Error initializing PortAudio: {}", Pa_GetErrorText(err));
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     return AudioFrontendStatus::OK;
@@ -294,12 +294,12 @@ AudioFrontendStatus PortAudioFrontend::_configure_audio_channels(const PortAudio
 {
     if (_input_device_info == nullptr)
     {
-        SUSHI_LOG_ERROR("Configure audio channels called before input device info was collected");
+        ELKLOG_LOG_ERROR("Configure audio channels called before input device info was collected");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     if (_output_device_info == nullptr)
     {
-        SUSHI_LOG_ERROR("Configure audio channels called before output device info was collected");
+        ELKLOG_LOG_ERROR("Configure audio channels called before output device info was collected");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     _num_total_input_channels = _input_device_info->maxInputChannels;
@@ -309,12 +309,12 @@ AudioFrontendStatus PortAudioFrontend::_configure_audio_channels(const PortAudio
     _cv_output_channels = config->cv_outputs;
     if (_cv_input_channels > _num_total_input_channels)
     {
-        SUSHI_LOG_ERROR("Requested more CV channels than available input channels");
+        ELKLOG_LOG_ERROR("Requested more CV channels than available input channels");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     if (_cv_output_channels > _num_total_output_channels)
     {
-        SUSHI_LOG_ERROR("Requested more CV channels than available output channels");
+        ELKLOG_LOG_ERROR("Requested more CV channels than available output channels");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
@@ -327,13 +327,13 @@ AudioFrontendStatus PortAudioFrontend::_configure_audio_channels(const PortAudio
     auto status = _engine->set_cv_input_channels(_cv_input_channels);
     if (status != engine::EngineReturnStatus::OK)
     {
-        SUSHI_LOG_ERROR("Failed to setup CV input channels");
+        ELKLOG_LOG_ERROR("Failed to setup CV input channels");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     status = _engine->set_cv_output_channels(_cv_output_channels);
     if (status != engine::EngineReturnStatus::OK)
     {
-        SUSHI_LOG_ERROR("Failed to setup CV output channels");
+        ELKLOG_LOG_ERROR("Failed to setup CV output channels");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     return AudioFrontendStatus::OK;
@@ -354,7 +354,7 @@ bool PortAudioFrontend::_configure_samplerate(const PaStreamParameters* input_pa
         result = Pa_IsFormatSupported(input_parameters, output_parameters, sr);
         if (result != 0)
         {
-            SUSHI_LOG_WARNING("Error configuring samplerate {}: {}", sr, Pa_GetErrorText(result));
+            ELKLOG_LOG_WARNING("Error configuring samplerate {}: {}", sr, Pa_GetErrorText(result));
         }
         else
         {
@@ -372,10 +372,10 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
                                                   [[maybe_unused]]PaStreamCallbackFlags status_flags)
 {
     // TODO: Print warning in case of under/overflow using the status_flags when we have rt-safe logging
-    SUSHI_LOG_WARNING_IF(status_flags == paOutputUnderflow, "Detected output underflow in portaudio");
-    SUSHI_LOG_WARNING_IF(status_flags == paOutputOverflow, "Detected output overflow in portaudio");
-    SUSHI_LOG_WARNING_IF(status_flags == paInputUnderflow, "Detected input underflow in portaudio");
-    SUSHI_LOG_WARNING_IF(status_flags == paInputOverflow, "Detected input overflow in portaudio");
+    ELKLOG_LOG_WARNING_IF(status_flags == paOutputUnderflow, "Detected output underflow in portaudio");
+    ELKLOG_LOG_WARNING_IF(status_flags == paOutputOverflow, "Detected output overflow in portaudio");
+    ELKLOG_LOG_WARNING_IF(status_flags == paInputUnderflow, "Detected input underflow in portaudio");
+    ELKLOG_LOG_WARNING_IF(status_flags == paInputOverflow, "Detected input overflow in portaudio");
 
     assert(frame_count == AUDIO_CHUNK_SIZE);
     auto pa_time_elapsed = std::chrono::duration<double>(time_info->currentTime - _time_offset);
@@ -452,18 +452,18 @@ void PortAudioFrontend::_output_interleaved_audio(float* output)
 #endif
 #ifndef SUSHI_BUILD_WITH_PORTAUDIO
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 #include "audio_frontends/portaudio_frontend.h"
 
 namespace sushi::internal::audio_frontend {
 
-SUSHI_GET_LOGGER;
+ELKLOG_GET_LOGGER;
 PortAudioFrontend::PortAudioFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine)
 {}
 AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration*)
 {
     /* The log print needs to be in a cpp file for initialisation order reasons */
-    SUSHI_LOG_ERROR("Sushi was not built with PortAudio support!");
+    ELKLOG_LOG_ERROR("Sushi was not built with PortAudio support!");
     return AudioFrontendStatus::AUDIO_HW_ERROR;
 }
 

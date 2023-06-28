@@ -23,11 +23,11 @@
 
 #include "sample_player_plugin.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 namespace sushi::internal::sample_player_plugin {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("sampleplayer");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("sampleplayer");
 
 constexpr auto PLUGIN_UID = "sushi.testing.sampleplayer";
 constexpr auto DEFAULT_LABEL = "Sample player";
@@ -125,7 +125,7 @@ void SamplePlayerPlugin::process_event(const RtEvent& event)
             }
             bool voice_allocated = false;
             auto key_event = event.keyboard_event();
-            SUSHI_LOG_DEBUG("Sample Player: note ON, num. {}, vel. {}",
+            ELKLOG_LOG_DEBUG("Sample Player: note ON, num. {}, vel. {}",
                             key_event->note(), key_event->velocity());
             for (auto& voice : _voices)
             {
@@ -157,7 +157,7 @@ void SamplePlayerPlugin::process_event(const RtEvent& event)
                 break;
             }
             auto key_event = event.keyboard_event();
-            SUSHI_LOG_DEBUG("Sample Player: note OFF, num. {}, vel. {}",
+            ELKLOG_LOG_DEBUG("Sample Player: note OFF, num. {}, vel. {}",
                             key_event->note(), key_event->velocity());
             for (auto& voice : _voices)
             {
@@ -259,7 +259,7 @@ BlobData SamplePlayerPlugin::_load_sample_file(const std::string& file_name)
     SF_INFO  soundfile_info = {};
     if (! (sample_file = sf_open(file_name.c_str(), SFM_READ, &soundfile_info)))
     {
-        SUSHI_LOG_ERROR("Failed to open sample file: {}", file_name);
+        ELKLOG_LOG_ERROR("Failed to open sample file: {}", file_name);
         return {0, nullptr};
     }
 

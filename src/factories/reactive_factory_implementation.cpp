@@ -15,7 +15,7 @@
 
 #include "reactive_factory_implementation.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "audio_frontends/reactive_frontend.h"
 #include "control_frontends/reactive_midi_frontend.h"
@@ -34,7 +34,7 @@
 
 namespace sushi::internal {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("reactive-factory");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("reactive-factory");
 
 ReactiveFactoryImplementation::ReactiveFactoryImplementation() = default;
 ReactiveFactoryImplementation::~ReactiveFactoryImplementation() = default;
@@ -67,7 +67,7 @@ Status ReactiveFactoryImplementation::_setup_audio_frontend([[maybe_unused]] con
     int cv_inputs = config.cv_inputs.value_or(0);
     int cv_outputs = config.cv_outputs.value_or(0);
 
-    SUSHI_LOG_INFO("Setting up reactive frontend");
+    ELKLOG_LOG_INFO("Setting up reactive frontend");
     _frontend_config = std::make_unique<audio_frontend::ReactiveFrontendConfiguration>(cv_inputs, cv_outputs);
 
     _audio_frontend = std::make_unique<audio_frontend::ReactiveFrontend>(_engine.get());
@@ -129,7 +129,7 @@ Status ReactiveFactoryImplementation::_set_up_control([[maybe_unused]] const Sus
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     _rpc_server = std::make_unique<sushi_rpc::GrpcServer>(options.grpc_listening_address, _engine_controller.get());
-    SUSHI_LOG_INFO("Instantiating gRPC server with address: {}", options.grpc_listening_address);
+    ELKLOG_LOG_INFO("Instantiating gRPC server with address: {}", options.grpc_listening_address);
 #endif
 
     return Status::OK;

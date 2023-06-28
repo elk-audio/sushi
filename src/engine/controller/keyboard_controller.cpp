@@ -20,9 +20,9 @@
 
 #include "keyboard_controller.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("controller");
 
 namespace sushi::internal::engine::controller_impl {
 
@@ -31,7 +31,7 @@ KeyboardController::KeyboardController(BaseEngine* engine) : _event_dispatcher(e
 
 control::ControlStatus KeyboardController::send_note_on(int track_id, int channel, int note, float velocity)
 {
-    SUSHI_LOG_DEBUG("send_note_on called with track {}, note {}, velocity {}", track_id, note, velocity);
+    ELKLOG_LOG_DEBUG("send_note_on called with track {}, note {}, velocity {}", track_id, note, velocity);
     auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, static_cast<ObjectId>(track_id),
                                    channel, note, velocity, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
@@ -40,7 +40,7 @@ control::ControlStatus KeyboardController::send_note_on(int track_id, int channe
 
 control::ControlStatus KeyboardController::send_note_off(int track_id, int channel, int note, float velocity)
 {
-    SUSHI_LOG_DEBUG("send_note_off called with track {}, note {}, velocity {}", track_id, note, velocity);
+    ELKLOG_LOG_DEBUG("send_note_off called with track {}, note {}, velocity {}", track_id, note, velocity);
     auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, static_cast<ObjectId>(track_id),
                                    channel, note, velocity, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
@@ -48,7 +48,7 @@ control::ControlStatus KeyboardController::send_note_off(int track_id, int chann
 
 control::ControlStatus KeyboardController::send_note_aftertouch(int track_id, int channel, int note, float value)
 {
-    SUSHI_LOG_DEBUG("send_note_aftertouch called with track {}, note {}, value {}", track_id, note, value);
+    ELKLOG_LOG_DEBUG("send_note_aftertouch called with track {}, note {}, value {}", track_id, note, value);
     auto event = new KeyboardEvent(KeyboardEvent::Subtype::NOTE_AFTERTOUCH, static_cast<ObjectId>(track_id),
                                    channel, note, value, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
@@ -57,7 +57,7 @@ control::ControlStatus KeyboardController::send_note_aftertouch(int track_id, in
 
 control::ControlStatus KeyboardController::send_aftertouch(int track_id, int channel, float value)
 {
-    SUSHI_LOG_DEBUG("send_aftertouch called with track {} and value {}", track_id, value);
+    ELKLOG_LOG_DEBUG("send_aftertouch called with track {} and value {}", track_id, value);
     auto event = new KeyboardEvent(KeyboardEvent::Subtype::AFTERTOUCH, static_cast<ObjectId>(track_id),
                                    channel, value, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
@@ -66,7 +66,7 @@ control::ControlStatus KeyboardController::send_aftertouch(int track_id, int cha
 
 control::ControlStatus KeyboardController::send_pitch_bend(int track_id, int channel, float value)
 {
-    SUSHI_LOG_DEBUG("send_pitch_bend called with track {} and value {}", track_id, value);
+    ELKLOG_LOG_DEBUG("send_pitch_bend called with track {} and value {}", track_id, value);
     auto event = new KeyboardEvent(KeyboardEvent::Subtype::PITCH_BEND, static_cast<ObjectId>(track_id),
                                    channel, value, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
@@ -75,7 +75,7 @@ control::ControlStatus KeyboardController::send_pitch_bend(int track_id, int cha
 
 control::ControlStatus KeyboardController::send_modulation(int track_id, int channel, float value)
 {
-    SUSHI_LOG_DEBUG("send_modulation called with track {} and value {}", track_id, value);
+    ELKLOG_LOG_DEBUG("send_modulation called with track {} and value {}", track_id, value);
     auto event = new KeyboardEvent(KeyboardEvent::Subtype::MODULATION, static_cast<ObjectId>(track_id),
                                    channel, value, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);

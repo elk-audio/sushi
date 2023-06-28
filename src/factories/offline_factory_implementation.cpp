@@ -15,7 +15,7 @@
 
 #include "offline_factory_implementation.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "engine/audio_engine.h"
 #include "src/concrete_sushi.h"
@@ -31,7 +31,7 @@
 
 namespace sushi::internal {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("offline-factory");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("offline-factory");
 
 OfflineFactoryImplementation::OfflineFactoryImplementation() = default;
 
@@ -57,11 +57,11 @@ Status OfflineFactoryImplementation::_setup_audio_frontend(const SushiOptions& o
     if (options.frontend_type != FrontendType::OFFLINE)
     {
         dummy = true;
-        SUSHI_LOG_INFO("Setting up dummy audio frontend");
+        ELKLOG_LOG_INFO("Setting up dummy audio frontend");
     }
     else
     {
-        SUSHI_LOG_INFO("Setting up offline audio frontend");
+        ELKLOG_LOG_INFO("Setting up offline audio frontend");
     }
 
     _frontend_config = std::make_unique<audio_frontend::OfflineFrontendConfiguration>(options.input_filename,
@@ -97,7 +97,7 @@ Status OfflineFactoryImplementation::_set_up_control([[maybe_unused]] const Sush
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     _rpc_server = std::make_unique<sushi_rpc::GrpcServer>(options.grpc_listening_address, _engine_controller.get());
-    SUSHI_LOG_INFO("Instantiating gRPC server with address: {}", options.grpc_listening_address);
+    ELKLOG_LOG_INFO("Instantiating gRPC server with address: {}", options.grpc_listening_address);
 #endif
 
     return Status::OK;

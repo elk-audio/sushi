@@ -20,11 +20,11 @@
 
 #include <thread>
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "engine/receiver.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("event_receiver");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("event_receiver");
 
 namespace sushi::internal::receiver {
 
@@ -44,7 +44,7 @@ bool AsynchronousEventReceiver::wait_for_response(EventId id, std::chrono::milli
                 if (typed_event->event_id() == id)
                 {
                     auto handled_ok = typed_event->status() == ReturnableRtEvent::EventStatus::HANDLED_OK;
-                    SUSHI_LOG_ERROR_IF(handled_ok == false, "RtEvent with id {} returned with error", id);
+                    ELKLOG_LOG_ERROR_IF(handled_ok == false, "RtEvent with id {} returned with error", id);
                     return handled_ok;
                 }
                 bool status = (typed_event->status() == ReturnableRtEvent::EventStatus::HANDLED_OK);
@@ -63,7 +63,7 @@ bool AsynchronousEventReceiver::wait_for_response(EventId id, std::chrono::milli
         std::this_thread::sleep_for(timeout / MAX_RETRIES);
         retries++;
     }
-    SUSHI_LOG_WARNING("Waiting for RtEvent with id {} timed out", id);
+    ELKLOG_LOG_WARNING("Waiting for RtEvent with id {} timed out", id);
     return false;
 }
 

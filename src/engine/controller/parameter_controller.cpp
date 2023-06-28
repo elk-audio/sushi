@@ -20,11 +20,11 @@
 
 #include "parameter_controller.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "engine/base_engine.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("controller");
 
 namespace sushi::internal::engine::controller_impl {
 
@@ -88,7 +88,7 @@ ParameterController::ParameterController(BaseEngine* engine) : _event_dispatcher
 
 std::pair<control::ControlStatus, std::vector<control::ParameterInfo>> ParameterController::get_processor_parameters(int processor_id) const
 {
-    SUSHI_LOG_DEBUG("get_processor_parameters called with processor {}", processor_id);
+    ELKLOG_LOG_DEBUG("get_processor_parameters called with processor {}", processor_id);
     const auto proc = _processors->processor(processor_id);
     if (proc)
     {
@@ -99,7 +99,7 @@ std::pair<control::ControlStatus, std::vector<control::ParameterInfo>> Parameter
 
 std::pair<control::ControlStatus, std::vector<control::ParameterInfo>> ParameterController::get_track_parameters(int track_id) const
 {
-    SUSHI_LOG_DEBUG("get_track_parameters called with processor {}", track_id);
+    ELKLOG_LOG_DEBUG("get_track_parameters called with processor {}", track_id);
     const auto track = _processors->track(track_id);
     if (track)
     {
@@ -110,7 +110,7 @@ std::pair<control::ControlStatus, std::vector<control::ParameterInfo>> Parameter
 
 std::pair<control::ControlStatus, int> ParameterController::get_parameter_id(int processor_id, const std::string& parameter_name) const
 {
-    SUSHI_LOG_DEBUG("get_parameter_id called with processor {} and parameter {}", processor_id, parameter_name);
+    ELKLOG_LOG_DEBUG("get_parameter_id called with processor {} and parameter {}", processor_id, parameter_name);
     auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
@@ -126,7 +126,7 @@ std::pair<control::ControlStatus, int> ParameterController::get_parameter_id(int
 
 std::pair<control::ControlStatus, control::ParameterInfo> ParameterController::get_parameter_info(int processor_id, int parameter_id) const
 {
-    SUSHI_LOG_DEBUG("get_parameter_info called with processor {} and parameter {}", processor_id, parameter_id);
+    ELKLOG_LOG_DEBUG("get_parameter_info called with processor {} and parameter {}", processor_id, parameter_id);
     control::ParameterInfo info;
     auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor != nullptr)
@@ -151,7 +151,7 @@ std::pair<control::ControlStatus, control::ParameterInfo> ParameterController::g
 
 std::pair<control::ControlStatus, float> ParameterController::get_parameter_value(int processor_id, int parameter_id) const
 {
-    SUSHI_LOG_DEBUG("get_parameter_value called with processor {} and parameter {}", processor_id, parameter_id);
+    ELKLOG_LOG_DEBUG("get_parameter_value called with processor {} and parameter {}", processor_id, parameter_id);
     auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor != nullptr)
     {
@@ -166,7 +166,7 @@ std::pair<control::ControlStatus, float> ParameterController::get_parameter_valu
 
 std::pair<control::ControlStatus, float> ParameterController::get_parameter_value_in_domain(int processor_id, int parameter_id) const
 {
-    SUSHI_LOG_DEBUG("get_parameter_value_normalised called with processor {} and parameter {}", processor_id, parameter_id);
+    ELKLOG_LOG_DEBUG("get_parameter_value_normalised called with processor {} and parameter {}", processor_id, parameter_id);
     auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor != nullptr)
     {
@@ -181,7 +181,7 @@ std::pair<control::ControlStatus, float> ParameterController::get_parameter_valu
 
 std::pair<control::ControlStatus, std::string> ParameterController::get_parameter_value_as_string(int processor_id, int parameter_id) const
 {
-    SUSHI_LOG_DEBUG("get_parameter_value_as_string called with processor {} and parameter {}", processor_id, parameter_id);
+    ELKLOG_LOG_DEBUG("get_parameter_value_as_string called with processor {} and parameter {}", processor_id, parameter_id);
     auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor != nullptr)
     {
@@ -196,7 +196,7 @@ std::pair<control::ControlStatus, std::string> ParameterController::get_paramete
 
 std::pair<control::ControlStatus, std::string> ParameterController::get_property_value(int processor_id, int property_id) const
 {
-    SUSHI_LOG_DEBUG("get_property_value called with processor {} and property {}", processor_id, property_id);
+    ELKLOG_LOG_DEBUG("get_property_value called with processor {} and property {}", processor_id, property_id);
     auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor != nullptr)
     {
@@ -212,7 +212,7 @@ std::pair<control::ControlStatus, std::string> ParameterController::get_property
 control::ControlStatus ParameterController::set_parameter_value(int processor_id, int parameter_id, float value)
 {
     float clamped_value = std::clamp<float>(value, 0.0f, 1.0f);
-    SUSHI_LOG_DEBUG("set_parameter_value called with processor {}, parameter {} and value {}", processor_id, parameter_id, clamped_value);
+    ELKLOG_LOG_DEBUG("set_parameter_value called with processor {}, parameter {} and value {}", processor_id, parameter_id, clamped_value);
     auto event = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
                                           static_cast<ObjectId>(processor_id),
                                           static_cast<ObjectId>(parameter_id),
@@ -225,7 +225,7 @@ control::ControlStatus ParameterController::set_parameter_value(int processor_id
 
 control::ControlStatus ParameterController::set_property_value(int processor_id, int property_id, const std::string& value)
 {
-    SUSHI_LOG_DEBUG("set_property_value called with processor {}, property {} and value {}", processor_id, property_id, value);
+    ELKLOG_LOG_DEBUG("set_property_value called with processor {}, property {} and value {}", processor_id, property_id, value);
     auto event = new PropertyChangeEvent(static_cast<ObjectId>(processor_id),
                                          static_cast<ObjectId>(property_id),
                                          value,
@@ -236,7 +236,7 @@ control::ControlStatus ParameterController::set_property_value(int processor_id,
 
 std::pair<control::ControlStatus, std::vector<control::PropertyInfo>> ParameterController::get_processor_properties(int processor_id) const
 {
-    SUSHI_LOG_DEBUG("get_processor_properties called with processor {}", processor_id);
+    ELKLOG_LOG_DEBUG("get_processor_properties called with processor {}", processor_id);
     const auto proc = _processors->processor(processor_id);
     if (proc)
     {
@@ -247,7 +247,7 @@ std::pair<control::ControlStatus, std::vector<control::PropertyInfo>> ParameterC
 
 std::pair<control::ControlStatus, std::vector<control::PropertyInfo>> ParameterController::get_track_properties(int track_id) const
 {
-    SUSHI_LOG_DEBUG("get_track_properties called with processor {}", track_id);
+    ELKLOG_LOG_DEBUG("get_track_properties called with processor {}", track_id);
     const auto track = _processors->track(track_id);
     if (track)
     {
@@ -258,7 +258,7 @@ std::pair<control::ControlStatus, std::vector<control::PropertyInfo>> ParameterC
 
 std::pair<control::ControlStatus, int> ParameterController::get_property_id(int processor_id, const std::string& property_name) const
 {
-    SUSHI_LOG_DEBUG("get_property_id called with processor {} and property {}", processor_id, property_name);
+    ELKLOG_LOG_DEBUG("get_property_id called with processor {} and property {}", processor_id, property_name);
     auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
@@ -274,7 +274,7 @@ std::pair<control::ControlStatus, int> ParameterController::get_property_id(int 
 
 std::pair<control::ControlStatus, control::PropertyInfo> ParameterController::get_property_info(int processor_id, int property_id) const
 {
-    SUSHI_LOG_DEBUG("get_property_info called with processor {} and parameter {}", processor_id, property_id);
+    ELKLOG_LOG_DEBUG("get_property_info called with processor {} and parameter {}", processor_id, property_id);
     control::PropertyInfo info;
     auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor != nullptr)

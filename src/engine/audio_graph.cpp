@@ -49,7 +49,7 @@ AudioGraph::AudioGraph(int cpu_cores,
     assert(cpu_cores > 0);
     if (_cores > 1)
     {
-        _worker_pool = twine::WorkerPool::create_worker_pool(_cores, DISABLE_DENORMALS, debug_mode_switches);
+        _worker_pool = twine::WorkerPool::create_worker_pool(_cores, nullptr, DISABLE_DENORMALS, debug_mode_switches);
         for (auto& i : _audio_graph)
         {
             _worker_pool->add_worker(external_render_callback, &i);

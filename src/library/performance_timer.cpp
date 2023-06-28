@@ -22,7 +22,7 @@
 
 #include "performance_timer.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 
 namespace sushi::internal::performance {

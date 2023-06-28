@@ -22,7 +22,7 @@
 
 #include <sstream>
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "osc_frontend.h"
 

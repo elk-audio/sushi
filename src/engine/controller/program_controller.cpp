@@ -20,9 +20,9 @@
 
 #include "program_controller.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("controller");
 
 namespace sushi::internal::engine::controller_impl {
 
@@ -33,7 +33,7 @@ ProgramController::ProgramController(BaseEngine* engine) : /* _engine(engine), *
 
 std::pair<control::ControlStatus, int> ProgramController::get_processor_current_program(int processor_id) const
 {
-    SUSHI_LOG_DEBUG("get_processor_current_program called with processor {}", processor_id);
+    ELKLOG_LOG_DEBUG("get_processor_current_program called with processor {}", processor_id);
     auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
@@ -48,7 +48,7 @@ std::pair<control::ControlStatus, int> ProgramController::get_processor_current_
 
 std::pair<control::ControlStatus, std::string> ProgramController::get_processor_current_program_name(int processor_id) const
 {
-    SUSHI_LOG_DEBUG("get_processor_current_program_name called with processor {}", processor_id);
+    ELKLOG_LOG_DEBUG("get_processor_current_program_name called with processor {}", processor_id);
     auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
@@ -63,7 +63,7 @@ std::pair<control::ControlStatus, std::string> ProgramController::get_processor_
 
 std::pair<control::ControlStatus, std::string> ProgramController::get_processor_program_name(int processor_id, int program_id) const
 {
-    SUSHI_LOG_DEBUG("get_processor_program_name called with processor {}", processor_id);
+    ELKLOG_LOG_DEBUG("get_processor_program_name called with processor {}", processor_id);
     auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
@@ -83,7 +83,7 @@ std::pair<control::ControlStatus, std::string> ProgramController::get_processor_
 
 std::pair<control::ControlStatus, std::vector<std::string>> ProgramController::get_processor_programs(int processor_id) const
 {
-    SUSHI_LOG_DEBUG("get_processor_program_name called with processor {}", processor_id);
+    ELKLOG_LOG_DEBUG("get_processor_program_name called with processor {}", processor_id);
     auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor == nullptr)
     {
@@ -103,7 +103,7 @@ std::pair<control::ControlStatus, std::vector<std::string>> ProgramController::g
 
 control::ControlStatus ProgramController::set_processor_program(int processor_id, int program_id)
 {
-    SUSHI_LOG_DEBUG("set_processor_program called with processor {} and program {}", processor_id, program_id);
+    ELKLOG_LOG_DEBUG("set_processor_program called with processor {} and program {}", processor_id, program_id);
     auto event = new ProgramChangeEvent(static_cast<ObjectId>(processor_id), program_id, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
     return control::ControlStatus::OK;

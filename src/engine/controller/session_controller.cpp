@@ -24,13 +24,13 @@
 
 #include "sushi/constants.h"
 #include "sushi/compile_time_settings.h"
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "session_controller.h"
 #include "controller_common.h"
 
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("controller");
 
 namespace sushi::internal::engine::controller_impl {
 
@@ -126,7 +126,7 @@ void SessionController::set_osc_frontend(control_frontend::OSCFrontend* osc_fron
 
 control::SessionState SessionController::save_session() const
 {
-    SUSHI_LOG_DEBUG("save_session called");
+    ELKLOG_LOG_DEBUG("save_session called");
 
     control::SessionState session;
     auto date = time(nullptr);
@@ -142,7 +142,7 @@ control::SessionState SessionController::save_session() const
 
 control::ControlStatus SessionController::restore_session(const control::SessionState& state)
 {
-    SUSHI_LOG_DEBUG("restore_session called");
+    ELKLOG_LOG_DEBUG("restore_session called");
     if (_check_state(state) == false)
     {
         return control::ControlStatus::INVALID_ARGUMENTS;
@@ -154,7 +154,7 @@ control::ControlStatus SessionController::restore_session(const control::Session
         bool realtime = _engine->realtime();
         if (realtime)
         {
-            SUSHI_LOG_DEBUG("Pausing engine");
+            ELKLOG_LOG_DEBUG("Pausing engine");
             _audio_frontend->pause(true);
         }
         _clear_all_tracks();
@@ -166,7 +166,7 @@ control::ControlStatus SessionController::restore_session(const control::Session
 
         if (realtime)
         {
-            SUSHI_LOG_DEBUG("Un-Pausing engine");
+            ELKLOG_LOG_DEBUG("Un-Pausing engine");
             _audio_frontend->pause(false);
         }
         return EventStatus::HANDLED_OK;
@@ -343,13 +343,13 @@ bool SessionController::_check_state(const control::SessionState& state) const
     if (state.engine_state.used_audio_inputs > _engine->audio_input_channels() ||
         state.engine_state.used_audio_outputs > _engine->audio_output_channels())
     {
-        SUSHI_LOG_ERROR("Audio engine doesn't have enough audio channels to restore saved session");
+        ELKLOG_LOG_ERROR("Audio engine doesn't have enough audio channels to restore saved session");
         return false;
     }
     if (state.midi_state.inputs > _midi_dispatcher->get_midi_inputs() ||
         state.midi_state.outputs > _midi_dispatcher->get_midi_outputs())
     {
-        SUSHI_LOG_ERROR("Not enough midi inputs or outputs to restore saved session");
+        ELKLOG_LOG_ERROR("Not enough midi inputs or outputs to restore saved session");
         return false;
     }
     return true;
@@ -387,7 +387,7 @@ void SessionController::_restore_tracks(std::vector<control::TrackState> tracks)
 
         if (status != EngineReturnStatus::OK || !track_instance)
         {
-            SUSHI_LOG_ERROR("Failed to restore track {} with error {}", track.name, static_cast<int>(status));
+            ELKLOG_LOG_ERROR("Failed to restore track {} with error {}", track.name, static_cast<int>(status));
             continue;
         }
 
@@ -405,7 +405,7 @@ void SessionController::_restore_plugin_states(std::vector<control::TrackState> 
         auto track_instance = _processors->mutable_track(track.name);
         if (!track_instance)
         {
-            SUSHI_LOG_ERROR("Track {} not found", track.name);
+            ELKLOG_LOG_ERROR("Track {} not found", track.name);
             continue;
         }
 
@@ -414,7 +414,7 @@ void SessionController::_restore_plugin_states(std::vector<control::TrackState> 
         auto status = track_instance->set_state(&state, false);
         if (status != ProcessorReturnCode::OK)
         {
-            SUSHI_LOG_ERROR("Failed to restore state to track {} with status {}", track.name, status);
+            ELKLOG_LOG_ERROR("Failed to restore state to track {} with status {}", track.name, status);
         }
 
         for (auto& plugin : track.processors)
@@ -422,14 +422,14 @@ void SessionController::_restore_plugin_states(std::vector<control::TrackState> 
             auto instance = _processors->mutable_processor(plugin.name);
             if (!instance)
             {
-                SUSHI_LOG_ERROR("Plugin {} not found", plugin.name);
+                ELKLOG_LOG_ERROR("Plugin {} not found", plugin.name);
                 continue;
             }
             to_internal(&state, &plugin.state);
             status = instance->set_state(&state, false);
             if (status != ProcessorReturnCode::OK)
             {
-                SUSHI_LOG_ERROR("Failed to restore state to track {} with status {}", track.name, status);
+                ELKLOG_LOG_ERROR("Failed to restore state to track {} with status {}", track.name, status);
             }
         }
     }
@@ -450,7 +450,7 @@ void SessionController::_restore_plugin(control::PluginClass plugin, Track* trac
     }
     else
     {
-        SUSHI_LOG_ERROR("Failed to restore plugin {} on track {}", plugin.name, track->name());
+        ELKLOG_LOG_ERROR("Failed to restore plugin {} on track {}", plugin.name, track->name());
     }
 }
 
@@ -458,7 +458,7 @@ void SessionController::_restore_engine(control::EngineState& state)
 {
     if (_engine->sample_rate() != state.sample_rate)
     {
-        SUSHI_LOG_WARNING("Saved session samplerate mismatch({}Hz vs {}Hz", _engine->sample_rate(), state.sample_rate);
+        ELKLOG_LOG_WARNING("Saved session samplerate mismatch({}Hz vs {}Hz", _engine->sample_rate(), state.sample_rate);
     }
     _engine->set_tempo(state.tempo);
     _engine->set_tempo_sync_mode(to_internal(state.sync_mode));
@@ -476,7 +476,7 @@ void SessionController::_restore_engine(control::EngineState& state)
         if (track)
         {
             status = _engine->connect_audio_input_channel(con.engine_channel, con.track_channel, track->id());
-            SUSHI_LOG_ERROR_IF(status != EngineReturnStatus::OK, "Failed to connect channel {} of track {} to engine channel {}",
+            ELKLOG_LOG_ERROR_IF(status != EngineReturnStatus::OK, "Failed to connect channel {} of track {} to engine channel {}",
                                con.track_channel, con.engine_channel, con.track);
         }
     }
@@ -487,7 +487,7 @@ void SessionController::_restore_engine(control::EngineState& state)
         if (track)
         {
             status = _engine->connect_audio_output_channel(con.engine_channel, con.track_channel, track->id());
-            SUSHI_LOG_ERROR_IF(status != EngineReturnStatus::OK, "Failed to connect engine channel {} from channel {} of track",
+            ELKLOG_LOG_ERROR_IF(status != EngineReturnStatus::OK, "Failed to connect engine channel {} from channel {} of track",
                                con.engine_channel, con.track_channel, con.track);
         }
     }
@@ -509,7 +509,7 @@ void SessionController::_restore_midi(control::MidiState& state)
             {
                 status = _midi_dispatcher->connect_kb_to_track(con.port, track->id(), int_from_ext_midi_channel(con.channel));
             }
-            SUSHI_LOG_ERROR_IF(status != midi_dispatcher::MidiDispatcherStatus::OK,
+            ELKLOG_LOG_ERROR_IF(status != midi_dispatcher::MidiDispatcherStatus::OK,
                                "Failed to connect midi kbd to track {}", track->name());
         }
     }
@@ -520,7 +520,7 @@ void SessionController::_restore_midi(control::MidiState& state)
         if (track)
         {
             status = _midi_dispatcher->connect_track_to_output(con.port, track->id(), int_from_ext_midi_channel(con.channel));
-            SUSHI_LOG_ERROR_IF(status != midi_dispatcher::MidiDispatcherStatus::OK,
+            ELKLOG_LOG_ERROR_IF(status != midi_dispatcher::MidiDispatcherStatus::OK,
                                "Failed to connect midi kbd from track {} to output", track->name());
         }
     }
@@ -533,7 +533,7 @@ void SessionController::_restore_midi(control::MidiState& state)
             status = _midi_dispatcher->connect_cc_to_parameter(con.port, processor->id(), con.parameter_id,
                                                                con.cc_number, con.min_range, con.max_range,
                                                                con.relative_mode, int_from_ext_midi_channel(con.channel));
-            SUSHI_LOG_ERROR_IF(status != midi_dispatcher::MidiDispatcherStatus::OK,
+            ELKLOG_LOG_ERROR_IF(status != midi_dispatcher::MidiDispatcherStatus::OK,
                                "Failed to connect midi cc to parameter {} of processor {}", con.parameter_id, processor->id());
         }
     }
@@ -544,7 +544,7 @@ void SessionController::_restore_midi(control::MidiState& state)
         if (processor)
         {
             status = _midi_dispatcher->connect_pc_to_processor(con.port, processor->id(), int_from_ext_midi_channel(con.channel));
-            SUSHI_LOG_ERROR_IF(status != midi_dispatcher::MidiDispatcherStatus::OK,
+            ELKLOG_LOG_ERROR_IF(status != midi_dispatcher::MidiDispatcherStatus::OK,
                                "Failed to connect mid program change to processor {}", processor->name());
         }
     }

@@ -24,11 +24,11 @@
 #include "rt_midi_frontend.h"
 
 #include "sushi/sushi_time.h"
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "library/midi_decoder.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("rtmidi");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("rtmidi");
 
 using RtMidiFunction = std::function<void(double deltatime, std::vector<unsigned char> message, void* user_data)>;
 
@@ -46,10 +46,10 @@ void midi_callback([[maybe_unused]]double deltatime, std::vector<unsigned char>*
         Time timestamp = IMMEDIATE_PROCESS;
         callback_data->receiver->send_midi(callback_data->input_number, midi::to_midi_data_byte(data_buffer, byte_count), timestamp);
 
-        SUSHI_LOG_DEBUG("Received midi message: [{:x} {:x} {:x} {:x}], port{}, timestamp: {}",
+        ELKLOG_LOG_DEBUG("Received midi message: [{:x} {:x} {:x} {:x}], port{}, timestamp: {}",
                          data_buffer[0], data_buffer[1], data_buffer[2], data_buffer[3], callback_data->input_number, timestamp.count());
     }
-    SUSHI_LOG_WARNING_IF(byte_count < 0, "Decoder returned {}", strerror(-byte_count))
+    ELKLOG_LOG_WARNING_IF(byte_count < 0, "Decoder returned {}", strerror(-byte_count))
 }
 
 RtMidiFrontend::RtMidiFrontend(int inputs,
@@ -83,7 +83,7 @@ bool RtMidiFrontend::init()
         }
         catch (RtMidiError& error)
         {
-            SUSHI_LOG_WARNING("Failed to create midi input port for input {}: {}", i, error.getMessage());
+            ELKLOG_LOG_WARNING("Failed to create midi input port for input {}: {}", i, error.getMessage());
             return false;
         }
     }
@@ -97,7 +97,7 @@ bool RtMidiFrontend::init()
         }
         catch (RtMidiError& error)
         {
-            SUSHI_LOG_WARNING("Failed to create midi output port for output {}: {}", i, error.getMessage());
+            ELKLOG_LOG_WARNING("Failed to create midi output port for output {}: {}", i, error.getMessage());
             return false;
         }
     }
@@ -108,7 +108,7 @@ bool RtMidiFrontend::init()
         for (int i = 0; i < _inputs; i++)
         {
             _input_mappings.emplace_back(std::make_tuple(i, i, false));
-            SUSHI_LOG_INFO("Adding default mapping for MIDI input device {}", i);
+            ELKLOG_LOG_INFO("Adding default mapping for MIDI input device {}", i);
         }
     }
     if ( (_outputs > 0) && (_output_midi_ports[0].getPortCount() > 0) &&  (_output_mappings.size() == 0) )
@@ -116,7 +116,7 @@ bool RtMidiFrontend::init()
         for (int i = 0; i < _outputs; i++)
         {
             _output_mappings.emplace_back(std::make_tuple(i, i, false));
-            SUSHI_LOG_INFO("Adding default mapping for MIDI output device {}", i);
+            ELKLOG_LOG_INFO("Adding default mapping for MIDI output device {}", i);
         }
     }
 
@@ -130,18 +130,18 @@ bool RtMidiFrontend::init()
             {
                 input.midi_input.openVirtualPort("Sushi virtual port " + std::to_string(rt_midi_device));
                 input.midi_input.setCallback(midi_callback, static_cast<void*>(&input));
-                SUSHI_LOG_INFO("Midi input {} connected to sushi virtual port {}", sushi_midi_port, rt_midi_device);
+                ELKLOG_LOG_INFO("Midi input {} connected to sushi virtual port {}", sushi_midi_port, rt_midi_device);
             }
             else
             {
                 input.midi_input.openPort(rt_midi_device);
                 input.midi_input.setCallback(midi_callback, static_cast<void*>(&input));
-                SUSHI_LOG_INFO("Midi input {} connected to {}", sushi_midi_port, input.midi_input.getPortName(rt_midi_device));
+                ELKLOG_LOG_INFO("Midi input {} connected to {}", sushi_midi_port, input.midi_input.getPortName(rt_midi_device));
             }
         }
         catch(RtMidiError& error)
         {
-            SUSHI_LOG_WARNING("Failed to connect midi input {} to RtMidi device with index {}: {}", sushi_midi_port, rt_midi_device, error.getMessage());
+            ELKLOG_LOG_WARNING("Failed to connect midi input {} to RtMidi device with index {}: {}", sushi_midi_port, rt_midi_device, error.getMessage());
             return false;
         }
     }
@@ -158,17 +158,17 @@ bool RtMidiFrontend::init()
             if (virtual_port)
             {
                 output.openVirtualPort("Sushi virtual port " + std::to_string(rt_midi_device));
-                SUSHI_LOG_INFO("Midi output {} connected to sushi virtual port {}", sushi_midi_port, rt_midi_device);
+                ELKLOG_LOG_INFO("Midi output {} connected to sushi virtual port {}", sushi_midi_port, rt_midi_device);
             }
             else
             {
                 output.openPort(rt_midi_device);
-                SUSHI_LOG_INFO("Midi output {} connected to {}", sushi_midi_port, output.getPortName(rt_midi_device));
+                ELKLOG_LOG_INFO("Midi output {} connected to {}", sushi_midi_port, output.getPortName(rt_midi_device));
             }
         }
         catch(RtMidiError& error)
         {
-            SUSHI_LOG_WARNING("Failed to connect midi output {} to RtMidi device with index {}: {}", sushi_midi_port, rt_midi_device, error.getMessage());
+            ELKLOG_LOG_WARNING("Failed to connect midi output {} to RtMidi device with index {}: {}", sushi_midi_port, rt_midi_device, error.getMessage());
             return false;
         }
     }

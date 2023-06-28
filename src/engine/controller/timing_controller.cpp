@@ -19,9 +19,9 @@
  */
 
 #include "timing_controller.h"
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("controller");
 
 namespace sushi::internal::engine::controller_impl {
 
@@ -35,52 +35,52 @@ inline control::CpuTimings to_external(performance::ProcessTimings& internal)
 
 bool TimingController::get_timing_statistics_enabled() const
 {
-    SUSHI_LOG_DEBUG("get_timing_statistics_enabled called");
+    ELKLOG_LOG_DEBUG("get_timing_statistics_enabled called");
     return _performance_timer->enabled();
 }
 
 void TimingController::set_timing_statistics_enabled(bool enabled)
 {
-    SUSHI_LOG_DEBUG("set_timing_statistics_enabled called with {}", enabled);
+    ELKLOG_LOG_DEBUG("set_timing_statistics_enabled called with {}", enabled);
     // TODO - do this by events instead.
     _performance_timer->enable(enabled);
 }
 
 std::pair<control::ControlStatus, control::CpuTimings> TimingController::get_engine_timings() const
 {
-    SUSHI_LOG_DEBUG("get_engine_timings called, returning ");
+    ELKLOG_LOG_DEBUG("get_engine_timings called, returning ");
     return _get_timings(engine::ENGINE_TIMING_ID);
 }
 
 std::pair<control::ControlStatus, control::CpuTimings> TimingController::get_track_timings(int track_id) const
 {
-    SUSHI_LOG_DEBUG("get_track_timings called, returning ");
+    ELKLOG_LOG_DEBUG("get_track_timings called, returning ");
     return _get_timings(track_id);
 }
 
 std::pair<control::ControlStatus, control::CpuTimings> TimingController::get_processor_timings(int processor_id) const
 {
-    SUSHI_LOG_DEBUG("get_processor_timings called, returning ");
+    ELKLOG_LOG_DEBUG("get_processor_timings called, returning ");
     return _get_timings(processor_id);
 }
 
 control::ControlStatus TimingController::reset_all_timings()
 {
-    SUSHI_LOG_DEBUG("reset_all_timings called, returning ");
+    ELKLOG_LOG_DEBUG("reset_all_timings called, returning ");
     _performance_timer->clear_all_timings();
     return control::ControlStatus::OK;
 }
 
 control::ControlStatus TimingController::reset_track_timings(int track_id)
 {
-    SUSHI_LOG_DEBUG("reset_track_timings called, returning ");
+    ELKLOG_LOG_DEBUG("reset_track_timings called, returning ");
     auto success =_performance_timer->clear_timings_for_node(track_id);
     return success? control::ControlStatus::OK : control::ControlStatus::NOT_FOUND;
 }
 
 control::ControlStatus TimingController::reset_processor_timings(int processor_id)
 {
-    SUSHI_LOG_DEBUG("reset_processor_timings called, returning ");
+    ELKLOG_LOG_DEBUG("reset_processor_timings called, returning ");
     return reset_track_timings(processor_id);
 }
 

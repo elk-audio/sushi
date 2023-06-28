@@ -20,7 +20,7 @@
 
 #include <algorithm>
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "osc_utils.h"
 #include "osc_frontend.h"
@@ -41,7 +41,7 @@ std::string osc::make_safe_path(std::string name)
 
 namespace control_frontend {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("osc frontend");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("osc frontend");
 
 bool OscState::auto_enable_outputs() const
 {
@@ -252,7 +252,7 @@ OscState OSCFrontend::save_state() const
             {
                 state.add_enabled_outputs(std::string(processor->name()), std::move(enabled_params));
             }
-            SUSHI_LOG_ERROR_IF(!processor, "Processor {}, was not found when saving state");
+            ELKLOG_LOG_ERROR_IF(!processor, "Processor {}, was not found when saving state");
         }
     }
 
@@ -271,7 +271,7 @@ void OSCFrontend::set_state(const OscState& state)
         auto processor = _processor_container->processor(connections.first);
         if (!processor)
         {
-            SUSHI_LOG_ERROR("Processor {} not found when restoring outgoing connections from state");
+            ELKLOG_LOG_ERROR("Processor {} not found when restoring outgoing connections from state");
             continue;
         }
         for (auto param_id : connections.second)
@@ -300,7 +300,7 @@ void OSCFrontend::_connect_from_parameter(const std::string& processor_name,
 
     _outgoing_connections[processor_id][parameter_id] = id_string;
 
-    SUSHI_LOG_DEBUG("Added osc output from parameter {}/{}", processor_name, parameter_name);
+    ELKLOG_LOG_DEBUG("Added osc output from parameter {}/{}", processor_name, parameter_name);
 }
 
 
@@ -342,7 +342,7 @@ OscConnection* OSCFrontend::_connect_kb_to_track(const Processor* processor)
     cb = _osc->add_method(osc_path.c_str(), "sif", osc::OscMethodType::SEND_KEYBOARD_MODULATION_EVENT, connection);
     dupl_conn->callback = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(dupl_conn));
-    SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
+    ELKLOG_LOG_DEBUG("Added osc callback {}", osc_path);
 
     return connection;
 }
@@ -364,7 +364,7 @@ OscConnection* OSCFrontend::_connect_to_bypass_state(const Processor* processor)
     auto cb = _osc->add_method(osc_path.c_str(), "i", osc::OscMethodType::SEND_BYPASS_STATE_EVENT, connection);
     connection->callback = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
-    SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
+    ELKLOG_LOG_DEBUG("Added osc callback {}", osc_path);
     return connection;
 }
 
@@ -384,7 +384,7 @@ OscConnection* OSCFrontend::_connect_to_program_change(const Processor* processo
     auto cb = _osc->add_method(osc_path.c_str(), "i", osc::OscMethodType::SEND_PROGRAM_CHANGE_EVENT, connection);
     connection->callback = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
-    SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
+    ELKLOG_LOG_DEBUG("Added osc callback {}", osc_path);
     return connection;
 }
 
@@ -409,7 +409,7 @@ OscConnection* OSCFrontend::_connect_to_parameter(const std::string& processor_n
     auto cb = _osc->add_method(osc_path.c_str(), "f", osc::OscMethodType::SEND_PARAMETER_CHANGE_EVENT, connection);
     connection->callback = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
-    SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
+    ELKLOG_LOG_DEBUG("Added osc callback {}", osc_path);
 
     return connection;
 }
@@ -435,7 +435,7 @@ OscConnection* OSCFrontend::_connect_to_property(const std::string& processor_na
     auto cb = _osc->add_method(osc_path.c_str(), "s", osc::OscMethodType::SEND_PROPERTY_CHANGE_EVENT, connection);
     connection->callback = cb;
     _connections.push_back(std::unique_ptr<OscConnection>(connection));
-    SUSHI_LOG_DEBUG("Added osc callback {}", osc_path);
+    ELKLOG_LOG_DEBUG("Added osc callback {}", osc_path);
 
     return connection;
 }
@@ -449,7 +449,7 @@ void OSCFrontend::_connect_from_property(const std::string& processor_name,
 
     _outgoing_connections[processor_id][property_id] = id_string;
 
-    SUSHI_LOG_DEBUG("Added osc output from property {}/{}", processor_name, property_name);
+    ELKLOG_LOG_DEBUG("Added osc output from property {}/{}", processor_name, property_name);
 }
 
 void OSCFrontend::_connect_to_parameters_and_properties(const Processor* processor)
@@ -487,7 +487,7 @@ void OSCFrontend::_setup_engine_control()
 
 void OSCFrontend::_completion_callback(Event* event, int return_status)
 {
-    SUSHI_LOG_DEBUG("EngineEvent {} completed with status {}({})", event->id(), return_status == 0 ? "ok" : "failure", return_status);
+    ELKLOG_LOG_DEBUG("EngineEvent {} completed with status {}({})", event->id(), return_status == 0 ? "ok" : "failure", return_status);
 }
 
 void OSCFrontend::_start_server()
@@ -528,7 +528,7 @@ bool OSCFrontend::_remove_processor_connections(ObjectId processor_id)
 
     count += _outgoing_connections.erase(static_cast<ObjectId>(processor_id));
 
-    SUSHI_LOG_ERROR_IF(count == 0, "Failed to remove any connections for processor {}", processor_id)
+    ELKLOG_LOG_ERROR_IF(count == 0, "Failed to remove any connections for processor {}", processor_id)
     return count > 0;
 }
 
@@ -553,7 +553,7 @@ void OSCFrontend::_handle_param_change_notification(const ParameterChangeNotific
         if (param_node != node->second.end())
         {
             _osc->send(param_node->second.c_str(), event->normalized_value());
-            SUSHI_LOG_DEBUG("Sending parameter change from processor: {}, parameter: {}, value: {}",
+            ELKLOG_LOG_DEBUG("Sending parameter change from processor: {}, parameter: {}, value: {}",
                             event->processor_id(), event->parameter_id(), event->normalized_value());
         }
     }
@@ -568,7 +568,7 @@ void OSCFrontend::_handle_property_change_notification(const PropertyChangeNotif
         if (param_node != node->second.end())
         {
             _osc->send(param_node->second.c_str(), event->value());
-            SUSHI_LOG_DEBUG("Sending property change from processor: {}, property: {}, value: {}",
+            ELKLOG_LOG_DEBUG("Sending property change from processor: {}, property: {}, value: {}",
                             event->processor_id(), event->property_id(), event->value());
         }
     }
@@ -592,7 +592,7 @@ void OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
     {
         case AudioGraphNotificationEvent::Action::PROCESSOR_CREATED:
         {
-            SUSHI_LOG_DEBUG("Received a PROCESSOR_CREATED notification for processor {}", event->processor());
+            ELKLOG_LOG_DEBUG("Received a PROCESSOR_CREATED notification for processor {}", event->processor());
             auto processor = _processor_container->processor(event->processor());
             if (processor)
             {
@@ -602,17 +602,17 @@ void OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
                 if(_connect_from_all_parameters && _skip_outputs.count(processor->id()) == false)
                 {
                     connect_from_processor_parameters(processor->name());
-                    SUSHI_LOG_INFO("Connected OSC callbacks to processor {}", processor->id());
+                    ELKLOG_LOG_INFO("Connected OSC callbacks to processor {}", processor->id());
                 }
                 _skip_outputs.erase(processor->id());
             }
-            SUSHI_LOG_ERROR_IF(!processor , "Processor {} not found", event->processor())
+            ELKLOG_LOG_ERROR_IF(!processor , "Processor {} not found", event->processor())
             break;
         }
 
         case AudioGraphNotificationEvent::Action::TRACK_CREATED:
         {
-            SUSHI_LOG_DEBUG("Received a TRACK_ADDED notification for track {}", event->track());
+            ELKLOG_LOG_DEBUG("Received a TRACK_ADDED notification for track {}", event->track());
             auto track = _processor_container->track(event->track());
             if (track)
             {
@@ -622,21 +622,21 @@ void OSCFrontend::_handle_audio_graph_notification(const AudioGraphNotificationE
                 if(_connect_from_all_parameters && _skip_outputs.count(track->id()) == false)
                 {
                     connect_from_processor_parameters(track->name());
-                    SUSHI_LOG_INFO("Connected OSC callbacks to track {}", track->name());
+                    ELKLOG_LOG_INFO("Connected OSC callbacks to track {}", track->name());
                 }
                 _skip_outputs.erase(track->id());
             }
-            SUSHI_LOG_ERROR_IF(!track, "Track {} not found", event->track())
+            ELKLOG_LOG_ERROR_IF(!track, "Track {} not found", event->track())
             break;
         }
 
         case AudioGraphNotificationEvent::Action::PROCESSOR_DELETED:
-            SUSHI_LOG_DEBUG("Received a PROCESSOR_DELETED notification for processor {}", event->processor());
+            ELKLOG_LOG_DEBUG("Received a PROCESSOR_DELETED notification for processor {}", event->processor());
             _remove_processor_connections(event->processor());
             break;
 
         case AudioGraphNotificationEvent::Action::TRACK_DELETED:
-            SUSHI_LOG_DEBUG("Received a TRACK_DELETED notification for processor {}", event->track());
+            ELKLOG_LOG_DEBUG("Received a TRACK_DELETED notification for processor {}", event->track());
             _remove_processor_connections(event->track());
             break;
 

@@ -32,7 +32,7 @@
 #include "twine/twine.h"
 
 #include "sushi/constants.h"
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "library/rt_event.h"
 #include "transport.h"
@@ -76,21 +76,21 @@ public:
 
 #endif
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("transport");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("transport");
 
 void peer_callback([[maybe_unused]] size_t peers)
 {
-    SUSHI_LOG_INFO("Ableton link reports {} peers connected ", peers);
+    ELKLOG_LOG_INFO("Ableton link reports {} peers connected ", peers);
 }
 
 void tempo_callback([[maybe_unused]] double tempo)
 {
-    SUSHI_LOG_DEBUG("Ableton link reports tempo is now {} bpm ", tempo);
+    ELKLOG_LOG_DEBUG("Ableton link reports tempo is now {} bpm ", tempo);
 }
 
 void start_stop_callback([[maybe_unused]] bool playing)
 {
-    SUSHI_LOG_INFO("Ableton link reports {}", playing? "now playing" : "now stopped");
+    ELKLOG_LOG_INFO("Ableton link reports {}", playing? "now playing" : "now stopped");
 }
 
 inline bool valid_time_signature(const TimeSignature& sig)
@@ -237,7 +237,7 @@ void Transport::set_sync_mode(SyncMode mode, bool update_via_event)
 #ifndef SUSHI_BUILD_WITH_ABLETON_LINK
     if (mode == SyncMode::ABLETON_LINK)
     {
-        SUSHI_LOG_INFO("Ableton Link sync mode requested, but sushi was built without Link support");
+        ELKLOG_LOG_INFO("Ableton Link sync mode requested, but sushi was built without Link support");
         return;
     }
 #endif
