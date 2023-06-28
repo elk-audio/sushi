@@ -18,8 +18,8 @@
  * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
  */
 
+#include <optional>
 #include <iostream>
-
 #include <fstream>
 
 #pragma GCC diagnostic push
