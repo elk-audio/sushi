@@ -9,35 +9,38 @@ Test in offline mode with I/O from audio file:
 
     $ sushi -o -i input_file.wav -c config_file.json
 
+Use Coreaudio on macOS for realtime audio, with the default devices:
+
+    $ sushi --coreaudio -c config_file.json
+
 Use JACK for realtime audio:
 
     $ sushi -j -c config_file.json
 
-Use Portaudio for realtime audio, with the default devices:
-
-    $ sushi -a -c config_file.json
-
 With JACK, Sushi creates 8 virtual input and output ports that you can connect to other programs or system outputs.
 
-## Sushi macOS (experimental)
+## Sushi macOS
 Since version 1.0, Sushi can be built natively for macOS as a native binary with all the dependencies statically linked to it.
 
-There is a new Portaudio frontend (selectable with the `-a | --portaudio` command-line option) to interface directly with Portaudio. As an alternative, Jack can be used if it is available on the system.
+There is a new Coreaudio frontend (selectable with the `--coreaudio` command-line option) to interface directly with Coreaudio. As an alternative, a Portaudio frontend is also available (with the `--portaudio` flag).
 
-With Portaudio, you can select other devices than the default with the `--audio-input-device` and `--audio-output-device` options. To find out the right number there, you can launch Sushi with the `--dump-portaudio-devs` to get a list in JSON format printed to stdout.
+With Coreaudio, you can select other devices than the default with the `--audio-input-device-uid` and `--audio-output-device-uid` options. To find out the right number there, you can launch Sushi with the `--dump-portaudio-devs` to get a list in JSON format printed to stdout.
 
 MIDI support is provided through RtMidi and can access directly CoreMidi devices.
 
 LV2 support is currently not available for macOS.
 
+
 ## Example Sushi configuration files in repository
 Under `misc/config_files` in this repository, we have a large variety of example Sushi configuration files.
 
-They all use the mda-vst3 plugins which are built when building Sushi. If you are running one of the prebuilt packages (available on the releases sections on Github), you have everything inside the `sushi` folder there. For example, on macOS you should be able to get a simple working synthesizer with:
+The first one to try to check if everything is running properly, would be this one that uses the internal sequencer & synthesizer to generate a sequence:
 ```
-$ ./sushi -a -c config_files/play_vst3.json
+$ ./sushi --coreaudio -c config_files/play_brickworks_synth.json
 ```
-(on Linux with JACK, replace `-a` with -`j`).
+(on Linux with JACK, replace `--coreaudio` with `--jack`).
+
+Many of the examples use the mda-vst3 plugins which are built when building Sushi. If you are running one of the prebuilt packages (available on the releases sections on Github), you have everything inside the `sushi` folder there. For example, on macOS you should be able to get a simple working synthesizer with:
 
 Otherwise, if you are building from source, the plugins used by the examples can be found under:
 
@@ -52,13 +55,13 @@ $ ./sushi -j -c ../../misc/config_files/play_vst3.json --base-plugin-path VST3/D
 
 Or, from a macOS terminal:
 ```
-$ ./sushi.app/Contents/MacOS/sushi -a -c ../../misc/config_files/play_vst3.json --base-plugin-path VST3/Release
+$ ./sushi --coreaudio -c ../../misc/config_files/play_vst3.json --base-plugin-path VST3/Release
 ```
 
 ## Extra documentation
 Configuration files are used for global host configs, track and plugins configuration, MIDI routing and mapping, events sequencing.
 
-More in-depth documentation is available at the [Elk Audio OS official docs page](https://elk-audio.github.io/elk-docs/html/documents/sushi_overview.html).
+More in-depth documentation is available at the [Elk Audio OS official docs page](https://elk-audio.github.io/elk-docs/docs/html/sushi/sushi_overview.html).
 
 ## Building
 Sushi builds are supported for native Linux systems, Yocto/OE cross-compiling toolchains targeting Elk Audio OS systems, and macOS.
@@ -98,12 +101,11 @@ $ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../third-party/vcpkg/s
 
 This might take some time for the first build since all the vcpkg dependencies will have to be built first.
 
+
 ### Building with Yocto for Elk Audio OS
-Sushi can be built either with the provided [Elk Audio OS SDK](https://github.com/elk-audio/elkpi-sdk), or as part of a [full Elk Audio OS image build with bitbake](https://github.com/elk-audio/elkpi-yocto-layers).
+Sushi can be built either with the provided [Elk Audio OS SDK](https://github.com/elk-audio/elkpi-sdk), or as part of a [full Elk Audio OS image build with bitbake](https://github.com/elk-audio/elk-audio-os-builder).
 
 Follow the instructions in those repositories to set up a cross-compiling SDK and build Sushi for a given target.
-
-Note: Sushi version 1.0 is not currently supported with Elk Audio OS images up to 0.12.0. The most recent supported Yocto version is tagged as `1.0-rc1_yocto_build` in the repository.
 
 ### Useful CMake build options
 Option                                | Value    | Notes
