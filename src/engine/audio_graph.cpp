@@ -49,11 +49,35 @@ AudioGraph::AudioGraph(int cpu_cores,
     assert(cpu_cores > 0);
     if (_cores > 1)
     {
-        _worker_pool = twine::WorkerPool::create_worker_pool(_cores, nullptr, DISABLE_DENORMALS, debug_mode_switches);
-        for (auto& i : _audio_graph)
+        twine::apple::AppleMultiThreadData apple_data;
+#ifdef SUSHI_APPLE_THREADING
+        apple_data.chunk_size = AUDIO_CHUNK_SIZE;
+        apple_data.current_sample_rate = sample_rate;
+        if (device_name.has_value())
         {
-            _worker_pool->add_worker(external_render_callback, &i);
-            i.reserve(max_no_tracks);
+            apple_data.device_name = device_name.value();
+        }
+#endif
+
+        _worker_pool = twine::WorkerPool::create_worker_pool(_cores,
+                                                             apple_data,
+                                                             DISABLE_DENORMALS,
+                                                             debug_mode_switches);
+
+        for (auto& tracks : _audio_graph)
+        {
+            auto status = _worker_pool->add_worker(external_render_callback,
+                                                   &tracks);
+
+            if (status.first != twine::WorkerPoolStatus::OK)
+            {
+#ifdef SUSHI_APPLE_THREADING
+                SUSHI_LOG_ERROR("Failed to start twine worker: {}",  twine::apple::status_to_string(status.second));
+                exit_on_signal(SUSHI_EXIT_SIGNAL);
+#endif
+            }
+
+            tracks.reserve(max_no_tracks);
         }
     }
     else
