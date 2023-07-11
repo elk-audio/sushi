@@ -15,7 +15,7 @@
 
 #include "standalone_factory_implementation.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "engine/audio_engine.h"
 #include "src/concrete_sushi.h"
@@ -41,7 +41,7 @@
 
 namespace sushi::internal {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("standalone-factory");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("standalone-factory");
 
 StandaloneFactoryImplementation::StandaloneFactoryImplementation() = default;
 
@@ -84,7 +84,7 @@ Status
         case FrontendType::JACK:
         {
 #ifdef SUSHI_BUILD_WITH_JACK
-            SUSHI_LOG_INFO("Setting up Jack audio frontend");
+            ELKLOG_LOG_INFO("Setting up Jack audio frontend");
             _frontend_config = std::make_unique<audio_frontend::JackFrontendConfiguration>(options.jack_client_name,
                                                                                            options.jack_server_name,
                                                                                            options.connect_ports,
@@ -97,7 +97,7 @@ Status
         }
         case FrontendType::PORTAUDIO:
         {
-            SUSHI_LOG_INFO("Setting up PortAudio frontend");
+            ELKLOG_LOG_INFO("Setting up PortAudio frontend");
             _frontend_config = std::make_unique<audio_frontend::PortAudioFrontendConfiguration>(options.portaudio_input_device_id,
                                                                                                 options.portaudio_output_device_id,
                                                                                                 options.suggested_input_latency,
@@ -111,7 +111,7 @@ Status
 #ifdef SUSHI_BUILD_WITH_XENOMAI
         case FrontendType::XENOMAI_RASPA:
         {
-            SUSHI_LOG_INFO("Setting up Xenomai RASPA frontend");
+            ELKLOG_LOG_INFO("Setting up Xenomai RASPA frontend");
             _frontend_config = std::make_unique<audio_frontend::XenomaiRaspaFrontendConfiguration>(options.debug_mode_switches,
                                                                                                    cv_inputs,
                                                                                                    cv_outputs);
@@ -123,7 +123,7 @@ Status
         case FrontendType::DUMMY:
         case FrontendType::OFFLINE:
         {
-            SUSHI_LOG_ERROR("Standalone Factory cannot be used to create DUMMY/OFFLINE frontends.");
+            ELKLOG_LOG_ERROR("Standalone Factory cannot be used to create DUMMY/OFFLINE frontends.");
             assert(false);
             break;
         }
@@ -209,7 +209,7 @@ Status StandaloneFactoryImplementation::_set_up_control(const SushiOptions& opti
     if (options.use_grpc)
     {
         _rpc_server = std::make_unique<sushi_rpc::GrpcServer>(options.grpc_listening_address, _engine_controller.get());
-        SUSHI_LOG_INFO("Instantiating gRPC server with address: {}", options.grpc_listening_address);
+        ELKLOG_LOG_INFO("Instantiating gRPC server with address: {}", options.grpc_listening_address);
     }
 #endif
 

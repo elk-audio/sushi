@@ -23,7 +23,7 @@
 
 #include "sushi/portaudio_devices_dump.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "portaudio_frontend.h"
 #include "rapidjson/rapidjson.h"
@@ -31,7 +31,7 @@
 
 namespace sushi {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("portaudio");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("portaudio");
 
 /**
  * @brief Retrieve Portaudio's registered devices information.
@@ -50,7 +50,7 @@ rapidjson::Document generate_portaudio_devices_info_document()
     auto n_devs = frontend.devices_count();
     if ( !n_devs.has_value() || (n_devs.value() <= 0) )
     {
-        SUSHI_LOG_ERROR("No Portaudio devices found");
+        ELKLOG_LOG_ERROR("No Portaudio devices found");
         return document;
     }
 
@@ -61,7 +61,7 @@ rapidjson::Document generate_portaudio_devices_info_document()
         auto devinfo = frontend.device_info(i);
         if (!devinfo.has_value())
         {
-            SUSHI_LOG_ERROR("Could not retrieve device info for Portaudio device with idx: {}", i);
+            ELKLOG_LOG_ERROR("Could not retrieve device info for Portaudio device with idx: {}", i);
             continue;
         }
         auto di = devinfo.value();
@@ -80,7 +80,7 @@ rapidjson::Document generate_portaudio_devices_info_document()
     auto default_input = frontend.default_input_device();
     if (! default_input.has_value() )
     {
-        SUSHI_LOG_ERROR("Could not retrieve Portaudio default input device");
+        ELKLOG_LOG_ERROR("Could not retrieve Portaudio default input device");
     }
     else
     {
@@ -90,7 +90,7 @@ rapidjson::Document generate_portaudio_devices_info_document()
     auto default_output = frontend.default_output_device();
     if (! default_output.has_value() )
     {
-        SUSHI_LOG_ERROR("Could not retrieve Portaudio default output device");
+        ELKLOG_LOG_ERROR("Could not retrieve Portaudio default output device");
     }
     else
     {

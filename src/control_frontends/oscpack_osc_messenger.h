@@ -23,7 +23,7 @@
 #include <sstream>
 #include <iostream>
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "third-party/oscpack/osc/OscReceivedElements.h"
 #include "third-party/oscpack/osc/OscOutboundPacketStream.h"

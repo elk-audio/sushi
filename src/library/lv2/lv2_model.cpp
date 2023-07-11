@@ -20,7 +20,7 @@
 
 #ifdef SUSHI_BUILD_WITH_LV2
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "lv2_model.h"
 #include "lv2_features.h"
@@ -41,7 +41,7 @@ const LV2_Feature static_features[] = {
 
 namespace sushi::internal::lv2 {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 Model::Model(float sample_rate, LV2_Wrapper* wrapper, LilvWorld* world): _sample_rate(sample_rate),
                                                                          _wrapper(wrapper),
@@ -152,7 +152,7 @@ ProcessorReturnCode Model::load_plugin(const LilvPlugin* plugin_handle, double s
 
     if (std::getenv("LV2_PATH") == nullptr)
     {
-        SUSHI_LOG_ERROR("The LV2_PATH environment variable is not set on your system "
+        ELKLOG_LOG_ERROR("The LV2_PATH environment variable is not set on your system "
                         "- this is required for loading LV2 plugins.");
         return ProcessorReturnCode::PLUGIN_INIT_ERROR;
     }
@@ -166,7 +166,7 @@ ProcessorReturnCode Model::load_plugin(const LilvPlugin* plugin_handle, double s
 
     if (_plugin_instance == nullptr)
     {
-        SUSHI_LOG_ERROR("Failed to load LV2 - Plugin entry point not found.");
+        ELKLOG_LOG_ERROR("Failed to load LV2 - Plugin entry point not found.");
         return ProcessorReturnCode::PLUGIN_INIT_ERROR;
     }
 
@@ -194,7 +194,7 @@ ProcessorReturnCode Model::load_plugin(const LilvPlugin* plugin_handle, double s
 
     if (_create_ports(plugin_handle) == false)
     {
-        SUSHI_LOG_ERROR("Failed to allocate ports for LV2 plugin.");
+        ELKLOG_LOG_ERROR("Failed to allocate ports for LV2 plugin.");
         return ProcessorReturnCode::PLUGIN_INIT_ERROR;
     }
 
@@ -238,7 +238,7 @@ bool Model::_create_ports(const LilvPlugin* plugin)
            new_port.flow() != PortFlow::FLOW_OUTPUT &&
            new_port.optional() == false)
         {
-            SUSHI_LOG_ERROR("Mandatory LV2 port has unknown type (neither input nor output)");
+            ELKLOG_LOG_ERROR("Mandatory LV2 port has unknown type (neither input nor output)");
             return false;
         }
 
@@ -248,7 +248,7 @@ bool Model::_create_ports(const LilvPlugin* plugin)
             new_port.type() != PortType::TYPE_EVENT &&
             new_port.optional() == false)
         {
-            SUSHI_LOG_ERROR("Mandatory LV2 port has unknown data type.");
+            ELKLOG_LOG_ERROR("Mandatory LV2 port has unknown data type.");
             return false;
         }
 
@@ -355,7 +355,7 @@ void Model::_create_controls(bool writable)
         }
         else
         {
-            SUSHI_LOG_ERROR("Parameter {} has unknown value type, ignored", lilv_node_as_string(record.node));
+            ELKLOG_LOG_ERROR("Parameter {} has unknown value type, ignored", lilv_node_as_string(record.node));
         }
     }
 
@@ -494,7 +494,7 @@ bool Model::_check_for_required_features(const LilvPlugin* plugin)
 
         if (_feature_is_supported(uri) == false)
         {
-            SUSHI_LOG_ERROR("LV2 feature {} is not supported.", uri);
+            ELKLOG_LOG_ERROR("LV2 feature {} is not supported.", uri);
 
             return false;
         }

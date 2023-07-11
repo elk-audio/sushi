@@ -22,11 +22,11 @@
 
 #include "lv2_features.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 namespace sushi::internal::lv2 {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 Port* port_by_symbol(Model* model, const char* sym)
 {
@@ -54,31 +54,31 @@ int lv2_vprintf(LV2_Log_Handle handle,
 
     if (type == urids.log_Trace && TRACE_OPTION)
     {
-        SUSHI_LOG_DEBUG("LV2 Trace: {}", fmt);
+        ELKLOG_LOG_DEBUG("LV2 Trace: {}", fmt);
     }
     else if (type == urids.log_Error)
     {
-        SUSHI_LOG_DEBUG("LV2 Error: {}", fmt);
+        ELKLOG_LOG_DEBUG("LV2 Error: {}", fmt);
     }
     else if (type == urids.log_Warning)
     {
-        SUSHI_LOG_DEBUG("LV2 Warning: {}", fmt);
+        ELKLOG_LOG_DEBUG("LV2 Warning: {}", fmt);
     }
     else if (type == urids.log_Entry)
     {
-        SUSHI_LOG_DEBUG("LV2 Entry: {}", fmt);
+        ELKLOG_LOG_DEBUG("LV2 Entry: {}", fmt);
     }
     else if (type == urids.log_Note)
     {
-        SUSHI_LOG_DEBUG("LV2 Note: {}", fmt);
+        ELKLOG_LOG_DEBUG("LV2 Note: {}", fmt);
     }
     else if (type == urids.log_log)
     {
-        SUSHI_LOG_DEBUG("LV2 Log: {}", fmt);
+        ELKLOG_LOG_DEBUG("LV2 Log: {}", fmt);
     }
     else
     {
-        SUSHI_LOG_DEBUG("LV2 unknown error: {}", fmt);
+        ELKLOG_LOG_DEBUG("LV2 unknown error: {}", fmt);
     }
 
     return 0;

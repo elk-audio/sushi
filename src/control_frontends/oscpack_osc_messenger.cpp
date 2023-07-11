@@ -15,14 +15,14 @@
 
 #include <sstream>
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "osc_utils.h"
 #include "oscpack_osc_messenger.h"
 
 namespace sushi::internal {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("osc frontend");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("osc frontend");
 
 namespace osc
 {
@@ -70,7 +70,7 @@ bool OscpackOscMessenger::init()
     catch (std::exception& e)
     {
         status = false;
-        SUSHI_LOG_ERROR("OSC transmitter failed instantiating for IP {} and port {}, with message: ",
+        ELKLOG_LOG_ERROR("OSC transmitter failed instantiating for IP {} and port {}, with message: ",
                         _send_ip.c_str(),
                         _send_port,
                         e.what());
@@ -84,7 +84,7 @@ bool OscpackOscMessenger::init()
     catch (std::exception& e)
     {
         status = false;
-        SUSHI_LOG_ERROR("OSC receiver failed instantiating for port {}, with message: ",
+        ELKLOG_LOG_ERROR("OSC receiver failed instantiating for port {}, with message: ",
                         _receive_port,
                         e.what());
     }
@@ -256,7 +256,7 @@ void OscpackOscMessenger::ProcessMessage(const oscpack::ReceivedMessage& m, cons
                 }
                 default:
                 {
-                    SUSHI_LOG_INFO("Unrecognised OSC message received: {}", m.AddressPattern());
+                    ELKLOG_LOG_INFO("Unrecognised OSC message received: {}", m.AddressPattern());
                 }
             }
         }
@@ -264,7 +264,7 @@ void OscpackOscMessenger::ProcessMessage(const oscpack::ReceivedMessage& m, cons
     catch (oscpack::Exception& e)
     {
         // Any parsing errors such as unexpected argument types, or missing arguments get thrown as exceptions.
-        SUSHI_LOG_ERROR("Exception while parsing message: {}: {}", m.AddressPattern(), e.what());
+        ELKLOG_LOG_ERROR("Exception while parsing message: {}: {}", m.AddressPattern(), e.what());
     }
 }
 
@@ -281,7 +281,7 @@ void OscpackOscMessenger::_send_parameter_change_event(const oscpack::ReceivedMe
     auto controller = connection->controller->parameter_controller();
     controller->set_parameter_value(connection->processor, connection->parameter, value);
 
-    SUSHI_LOG_DEBUG("Sending parameter {} on processor {} change to {}.", connection->parameter, connection->processor, value);
+    ELKLOG_LOG_DEBUG("Sending parameter {} on processor {} change to {}.", connection->parameter, connection->processor, value);
 }
 
 void OscpackOscMessenger::_send_property_change_event(const oscpack::ReceivedMessage& m, void* user_data) const
@@ -292,7 +292,7 @@ void OscpackOscMessenger::_send_property_change_event(const oscpack::ReceivedMes
     auto controller = connection->controller->parameter_controller();
     controller->set_property_value(connection->processor, connection->parameter, value);
 
-    SUSHI_LOG_DEBUG("Sending property {} on processor {} change to {}.", connection->parameter, connection->processor, value);
+    ELKLOG_LOG_DEBUG("Sending property {} on processor {} change to {}.", connection->parameter, connection->processor, value);
 }
 
 void OscpackOscMessenger::_send_bypass_state_event(const oscpack::ReceivedMessage& m, void* user_data) const
@@ -305,7 +305,7 @@ void OscpackOscMessenger::_send_bypass_state_event(const oscpack::ReceivedMessag
     auto controller = connection->controller->audio_graph_controller();
     controller->set_processor_bypass_state(connection->processor, isBypassed);
 
-    SUSHI_LOG_DEBUG("Setting processor {} bypass to {}", connection->processor, isBypassed);
+    ELKLOG_LOG_DEBUG("Setting processor {} bypass to {}", connection->processor, isBypassed);
 }
 
 void OscpackOscMessenger::_send_keyboard_note_event(const oscpack::ReceivedMessage& m, void* user_data) const
@@ -333,9 +333,9 @@ void OscpackOscMessenger::_send_keyboard_note_event(const oscpack::ReceivedMessa
     }
     else
     {
-        SUSHI_LOG_WARNING("Unrecognized event: {}.", event);
+        ELKLOG_LOG_WARNING("Unrecognized event: {}.", event);
     }
-    SUSHI_LOG_DEBUG("Sending {} on processor {}.", event, connection->processor);
+    ELKLOG_LOG_DEBUG("Sending {} on processor {}.", event, connection->processor);
 }
 
 void OscpackOscMessenger::_send_keyboard_modulation_event(const oscpack::ReceivedMessage& m, void* user_data) const
@@ -362,9 +362,9 @@ void OscpackOscMessenger::_send_keyboard_modulation_event(const oscpack::Receive
     }
     else
     {
-        SUSHI_LOG_WARNING("Unrecognized event: {}.", event);
+        ELKLOG_LOG_WARNING("Unrecognized event: {}.", event);
     }
-    SUSHI_LOG_DEBUG("Sending {} on processor {}.", event, connection->processor);
+    ELKLOG_LOG_DEBUG("Sending {} on processor {}.", event, connection->processor);
 }
 
 void OscpackOscMessenger::_send_program_change_event(const oscpack::ReceivedMessage& m, void* user_data) const
@@ -376,7 +376,7 @@ void OscpackOscMessenger::_send_program_change_event(const oscpack::ReceivedMess
     auto controller = connection->controller->program_controller();
     controller->set_processor_program(connection->processor, program_id);
 
-    SUSHI_LOG_DEBUG("Sending change to program {}, on processor {}", program_id, connection->processor);
+    ELKLOG_LOG_DEBUG("Sending change to program {}, on processor {}", program_id, connection->processor);
 }
 
 void OscpackOscMessenger::_set_timing_statistics_enabled(const oscpack::ReceivedMessage& m, void* user_data) const
@@ -388,7 +388,7 @@ void OscpackOscMessenger::_set_timing_statistics_enabled(const oscpack::Received
     auto controller = static_cast<control::SushiControl*>(user_data)->timing_controller();
     controller->set_timing_statistics_enabled(is_enabled);
 
-    SUSHI_LOG_DEBUG("Got request to set timing statistics enabled to {}", is_enabled);
+    ELKLOG_LOG_DEBUG("Got request to set timing statistics enabled to {}", is_enabled);
 }
 
 void OscpackOscMessenger::_reset_timing_statistics(const oscpack::ReceivedMessage& m, void* user_data) const
@@ -406,7 +406,7 @@ void OscpackOscMessenger::_reset_timing_statistics(const oscpack::ReceivedMessag
         auto status = timing_ctrl->reset_all_timings();
         if (status != control::ControlStatus::OK)
         {
-            SUSHI_LOG_WARNING("Failed to reset track timings of all tracks and processors");
+            ELKLOG_LOG_WARNING("Failed to reset track timings of all tracks and processors");
         }
     }
     else if (type == "track")
@@ -421,7 +421,7 @@ void OscpackOscMessenger::_reset_timing_statistics(const oscpack::ReceivedMessag
         }
         else
         {
-            SUSHI_LOG_WARNING("No track with name {} available", track_name);
+            ELKLOG_LOG_WARNING("No track with name {} available", track_name);
         }
     }
     else if (type == "processor")
@@ -436,14 +436,14 @@ void OscpackOscMessenger::_reset_timing_statistics(const oscpack::ReceivedMessag
         }
         else
         {
-            SUSHI_LOG_WARNING("No processor with name {} available", processor_name);
+            ELKLOG_LOG_WARNING("No processor with name {} available", processor_name);
         }
     }
     else
     {
-        SUSHI_LOG_WARNING("Unrecognized reset target");
+        ELKLOG_LOG_WARNING("Unrecognized reset target");
     }
-    SUSHI_LOG_DEBUG("Resetting {} timing statistics", output_text);
+    ELKLOG_LOG_DEBUG("Resetting {} timing statistics", output_text);
 }
 
 void OscpackOscMessenger::_set_tempo(const oscpack::ReceivedMessage& m, void* user_data) const
@@ -454,7 +454,7 @@ void OscpackOscMessenger::_set_tempo(const oscpack::ReceivedMessage& m, void* us
     auto controller = static_cast<control::SushiControl*>(user_data)->transport_controller();
     controller->set_tempo(tempo);
 
-    SUSHI_LOG_DEBUG("Got a set tempo request to {} bpm", tempo);
+    ELKLOG_LOG_DEBUG("Got a set tempo request to {} bpm", tempo);
 }
 
 void OscpackOscMessenger::_set_time_signature(const oscpack::ReceivedMessage& m, void* user_data) const
@@ -466,7 +466,7 @@ void OscpackOscMessenger::_set_time_signature(const oscpack::ReceivedMessage& m,
     auto controller = static_cast<control::SushiControl*>(user_data)->transport_controller();
     controller->set_time_signature({numerator, denominator});
 
-    SUSHI_LOG_DEBUG("Got a set time signature to {}/{} request", numerator, denominator);
+    ELKLOG_LOG_DEBUG("Got a set time signature to {}/{} request", numerator, denominator);
 }
 
 void OscpackOscMessenger::_set_playing_mode(const oscpack::ReceivedMessage& m, void* user_data) const
@@ -486,10 +486,10 @@ void OscpackOscMessenger::_set_playing_mode(const oscpack::ReceivedMessage& m, v
     }
     else
     {
-        SUSHI_LOG_INFO("Unrecognised playing mode \"{}\" received", mode_str);
+        ELKLOG_LOG_INFO("Unrecognised playing mode \"{}\" received", mode_str);
     }
 
-    SUSHI_LOG_DEBUG("Got a set playing mode {} request", mode_str);
+    ELKLOG_LOG_DEBUG("Got a set playing mode {} request", mode_str);
 }
 
 void OscpackOscMessenger::_set_tempo_sync_mode(const oscpack::ReceivedMessage& m, void* user_data) const
@@ -513,10 +513,10 @@ void OscpackOscMessenger::_set_tempo_sync_mode(const oscpack::ReceivedMessage& m
     }
     else
     {
-        SUSHI_LOG_INFO("Unrecognised sync mode \"{}\" received", mode_str);
+        ELKLOG_LOG_INFO("Unrecognised sync mode \"{}\" received", mode_str);
     }
 
-    SUSHI_LOG_DEBUG("Got a set sync mode to {} request", mode_str);
+    ELKLOG_LOG_DEBUG("Got a set sync mode to {} request", mode_str);
 }
 
 } // end namespace osc

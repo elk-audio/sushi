@@ -21,7 +21,7 @@
 #include "vst2x_wrapper.h"
 
 #include "twine/twine.h"
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "library/midi_decoder.h"
 
@@ -38,11 +38,11 @@ namespace sushi::internal::vst2 {
 constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = kVstNanosValid | kVstPpqPosValid | kVstTempoValid |
                                                   kVstBarsValid | kVstTimeSigValid;
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("vst2");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("vst2");
 
 Vst2xWrapper::~Vst2xWrapper()
 {
-    SUSHI_LOG_DEBUG("Unloading plugin {}", this->name());
+    ELKLOG_LOG_DEBUG("Unloading plugin {}", this->name());
     _cleanup();
 }
 
@@ -88,7 +88,7 @@ ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
     int enabled = _vst_dispatcher(effCanDo, 0, 0, canDoBypass, 0);
     _can_do_soft_bypass = (enabled == 1);
     _number_of_programs = _plugin_handle->numPrograms;
-    SUSHI_LOG_INFO_IF(enabled, "Plugin supports soft bypass");
+    ELKLOG_LOG_INFO_IF(enabled, "Plugin supports soft bypass");
 
     _has_binary_programs = _plugin_handle->flags &= effFlagsProgramChunks;
 
@@ -132,14 +132,14 @@ void Vst2xWrapper::set_input_channels(int channels)
 {
     Processor::set_input_channels(channels);
     [[maybe_unused]] bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
-    SUSHI_LOG_WARNING_IF(!valid_arr, "Failed to set a valid speaker arrangement")
+    ELKLOG_LOG_WARNING_IF(!valid_arr, "Failed to set a valid speaker arrangement")
 }
 
 void Vst2xWrapper::set_output_channels(int channels)
 {
     Processor::set_output_channels(channels);
     [[maybe_unused]] bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
-    SUSHI_LOG_WARNING_IF(!valid_arr, "Failed to set a valid speaker arrangement")
+    ELKLOG_LOG_WARNING_IF(!valid_arr, "Failed to set a valid speaker arrangement")
 }
 
 
@@ -297,11 +297,11 @@ bool Vst2xWrapper::_register_parameters()
                                                                             nullptr));
         if (param_inserted_ok)
         {
-            SUSHI_LOG_DEBUG("Plugin: {}, registered param: {}", name(), param_name);
+            ELKLOG_LOG_DEBUG("Plugin: {}, registered param: {}", name(), param_name);
         }
         else
         {
-            SUSHI_LOG_ERROR("Plugin: {}, Error while registering param: {}", name(), param_name);
+            ELKLOG_LOG_ERROR("Plugin: {}, Error while registering param: {}", name(), param_name);
         }
         idx++;
     }
@@ -333,7 +333,7 @@ void Vst2xWrapper::process_event(const RtEvent& event)
         {
             if (_vst_midi_events_fifo.push(event) == false)
             {
-                SUSHI_LOG_WARNING("Plugin: {}, MIDI queue Overflow!", name());
+                ELKLOG_LOG_WARNING("Plugin: {}, MIDI queue Overflow!", name());
             }
             break;
         }

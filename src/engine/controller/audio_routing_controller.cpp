@@ -20,9 +20,9 @@
 
 #include "audio_routing_controller.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("controller");
 
 namespace sushi::internal::engine::controller_impl {
 
@@ -36,7 +36,7 @@ inline control::AudioConnection to_external(const AudioConnection& con)
 
 std::vector<control::AudioConnection> AudioRoutingController::get_all_input_connections() const
 {
-    SUSHI_LOG_DEBUG("get_all_input_connections called");
+    ELKLOG_LOG_DEBUG("get_all_input_connections called");
     auto connections = _engine->audio_input_connections();
     std::vector<control::AudioConnection> returns;
     returns.reserve(connections.size());
@@ -49,7 +49,7 @@ std::vector<control::AudioConnection> AudioRoutingController::get_all_input_conn
 
 std::vector<control::AudioConnection> AudioRoutingController::get_all_output_connections() const
 {
-    SUSHI_LOG_DEBUG("get_all_output_connections called");
+    ELKLOG_LOG_DEBUG("get_all_output_connections called");
     auto connections = _engine->audio_output_connections();
     std::vector<control::AudioConnection> returns;
     returns.reserve(connections.size());
@@ -62,7 +62,7 @@ std::vector<control::AudioConnection> AudioRoutingController::get_all_output_con
 
 std::vector<control::AudioConnection> AudioRoutingController::get_input_connections_for_track(int track_id) const
 {
-    SUSHI_LOG_DEBUG("get_input_connections_for_track called with track id {}", track_id);
+    ELKLOG_LOG_DEBUG("get_input_connections_for_track called with track id {}", track_id);
     auto connections = _engine->audio_input_connections();
     std::vector<control::AudioConnection> returns;
     for (const auto& connection : connections)
@@ -77,7 +77,7 @@ std::vector<control::AudioConnection> AudioRoutingController::get_input_connecti
 
 std::vector<control::AudioConnection> AudioRoutingController::get_output_connections_for_track(int track_id) const
 {
-    SUSHI_LOG_DEBUG("get_output_connections_for_track called with track id {}", track_id);
+    ELKLOG_LOG_DEBUG("get_output_connections_for_track called with track id {}", track_id);
     auto connections = _engine->audio_output_connections();
     std::vector<control::AudioConnection> returns;
     for (const auto& connection : connections)
@@ -92,11 +92,11 @@ std::vector<control::AudioConnection> AudioRoutingController::get_output_connect
 
 control::ControlStatus AudioRoutingController::connect_input_channel_to_track(int track_id, int track_channel, int input_channel)
 {
-    SUSHI_LOG_DEBUG("disconnect_output called with track id {}, track_channel {}, input_channel {}", track_id, track_channel, input_channel);
+    ELKLOG_LOG_DEBUG("disconnect_output called with track id {}, track_channel {}, input_channel {}", track_id, track_channel, input_channel);
     auto lambda = [=] () -> int
     {
         auto status = _engine->connect_audio_input_channel(input_channel, track_channel, track_id);
-        SUSHI_LOG_ERROR_IF(status != EngineReturnStatus::OK, "Connecting audio channel {} to channel {} of track id {} failed with error {}",
+        ELKLOG_LOG_ERROR_IF(status != EngineReturnStatus::OK, "Connecting audio channel {} to channel {} of track id {} failed with error {}",
                 input_channel, track_channel, track_id, status)
 
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
@@ -108,11 +108,11 @@ control::ControlStatus AudioRoutingController::connect_input_channel_to_track(in
 
 control::ControlStatus AudioRoutingController::connect_output_channel_to_track(int track_id, int track_channel, int output_channel)
 {
-    SUSHI_LOG_DEBUG("connect_output called with track id {}, track_channel {}, output_channel {}", track_id, track_channel, output_channel);
+    ELKLOG_LOG_DEBUG("connect_output called with track id {}, track_channel {}, output_channel {}", track_id, track_channel, output_channel);
     auto lambda = [=] () -> int
     {
         auto status = _engine->connect_audio_output_channel(output_channel, track_channel, track_id);
-        SUSHI_LOG_ERROR_IF(status != EngineReturnStatus::OK, "Connecting audio channel {} from channel {} of track id {} failed with error {}",
+        ELKLOG_LOG_ERROR_IF(status != EngineReturnStatus::OK, "Connecting audio channel {} from channel {} of track id {} failed with error {}",
                            output_channel, track_channel, track_id, status)
 
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
@@ -124,11 +124,11 @@ control::ControlStatus AudioRoutingController::connect_output_channel_to_track(i
 
 control::ControlStatus AudioRoutingController::disconnect_input(int track_id, int track_channel, int input_channel)
 {
-    SUSHI_LOG_DEBUG("disconnect_input called with track id {}, track_channel {}, input_channel {}", track_id, track_channel, input_channel);
+    ELKLOG_LOG_DEBUG("disconnect_input called with track id {}, track_channel {}, input_channel {}", track_id, track_channel, input_channel);
     auto lambda = [=] () -> int
     {
         auto status = _engine->disconnect_audio_input_channel(input_channel, track_channel, track_id);
-        SUSHI_LOG_ERROR_IF(status != EngineReturnStatus::OK, "Disconnecting audio channel {} to channel {} of track id {} failed with error {}",
+        ELKLOG_LOG_ERROR_IF(status != EngineReturnStatus::OK, "Disconnecting audio channel {} to channel {} of track id {} failed with error {}",
                            input_channel, track_channel, track_id, status)
 
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
@@ -140,11 +140,11 @@ control::ControlStatus AudioRoutingController::disconnect_input(int track_id, in
 
 control::ControlStatus AudioRoutingController::disconnect_output(int track_id, int track_channel, int output_channel)
 {
-    SUSHI_LOG_DEBUG("disconnect_output called with track id {}, track_channel {}, output_channel {}", track_id, track_channel, output_channel);
+    ELKLOG_LOG_DEBUG("disconnect_output called with track id {}, track_channel {}, output_channel {}", track_id, track_channel, output_channel);
     auto lambda = [=] () -> int
     {
         auto status = _engine->disconnect_audio_output_channel(output_channel, track_channel, track_id);
-        SUSHI_LOG_ERROR_IF(status != EngineReturnStatus::OK, "Disconnecting audio channel {} from channel {} of track id {} failed with error {}",
+        ELKLOG_LOG_ERROR_IF(status != EngineReturnStatus::OK, "Disconnecting audio channel {} from channel {} of track id {} failed with error {}",
                            output_channel, track_channel, track_id, status)
 
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
@@ -156,7 +156,7 @@ control::ControlStatus AudioRoutingController::disconnect_output(int track_id, i
 
 control::ControlStatus AudioRoutingController::disconnect_all_inputs_from_track(int track_id)
 {
-    SUSHI_LOG_DEBUG("disconnect_all_inputs_from_track called with track {}", track_id);
+    ELKLOG_LOG_DEBUG("disconnect_all_inputs_from_track called with track {}", track_id);
     auto lambda = [=] () -> int
     {
         auto connections = _engine->audio_input_connections();
@@ -168,7 +168,7 @@ control::ControlStatus AudioRoutingController::disconnect_all_inputs_from_track(
                 auto status = _engine->disconnect_audio_input_channel(connection.engine_channel,
                                                                       connection.track_channel,
                                                                       connection.track);
-                SUSHI_LOG_ERROR_IF(status != EngineReturnStatus::OK, "Disconnecting audio channel {} from channel {} of track id {} failed with error {}",
+                ELKLOG_LOG_ERROR_IF(status != EngineReturnStatus::OK, "Disconnecting audio channel {} from channel {} of track id {} failed with error {}",
                                    connection.engine_channel, connection.track_channel, connection.track, status)
 
                 return_status = status == EngineReturnStatus::OK ? return_status : EventStatus::ERROR;
@@ -183,7 +183,7 @@ control::ControlStatus AudioRoutingController::disconnect_all_inputs_from_track(
 
 control::ControlStatus AudioRoutingController::disconnect_all_outputs_from_track(int track_id)
 {
-    SUSHI_LOG_DEBUG("disconnect_all_outputs_from_track called with track {}", track_id);
+    ELKLOG_LOG_DEBUG("disconnect_all_outputs_from_track called with track {}", track_id);
     auto lambda = [=] () -> int
     {
         auto connections = _engine->audio_output_connections();
@@ -195,7 +195,7 @@ control::ControlStatus AudioRoutingController::disconnect_all_outputs_from_track
                 auto status = _engine->disconnect_audio_output_channel(connection.engine_channel,
                                                                        connection.track_channel,
                                                                        connection.track);
-                SUSHI_LOG_ERROR_IF(status != EngineReturnStatus::OK, "Disconnecting audio channel {} from channel {} of track id {} failed with error {}",
+                ELKLOG_LOG_ERROR_IF(status != EngineReturnStatus::OK, "Disconnecting audio channel {} from channel {} of track id {} failed with error {}",
                                    connection.engine_channel, connection.track_channel, connection.track, status)
                 return_status = status == EngineReturnStatus::OK ? return_status : EventStatus::ERROR;
             }

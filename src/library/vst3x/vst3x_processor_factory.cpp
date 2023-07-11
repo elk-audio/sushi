@@ -20,7 +20,7 @@
 
 #include "vst3x_processor_factory.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #ifdef SUSHI_BUILD_WITH_VST3
 #include "vst3x_host_app.h"
@@ -29,7 +29,7 @@
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-const-variable"
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("Vst3");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("Vst3");
 #pragma GCC diagnostic pop
 
 namespace sushi::internal::vst3 {
@@ -63,7 +63,7 @@ std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> Vst3xProcessorFactory
                                                                                                [[maybe_unused]] HostControl& host_control,
                                                                                                [[maybe_unused]] float sample_rate)
 {
-    SUSHI_LOG_ERROR("Sushi was not built with support for VST3 plugins");
+    ELKLOG_LOG_ERROR("Sushi was not built with support for VST3 plugins");
     return {ProcessorReturnCode::UNSUPPORTED_OPERATION, nullptr};
 }
 

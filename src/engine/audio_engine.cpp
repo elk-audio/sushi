@@ -23,7 +23,7 @@
 #include <functional>
 
 #include "twine/src/twine_internal.h"
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "audio_engine.h"
 
@@ -41,7 +41,7 @@ constexpr int  MAX_AUDIO_CONNECTIONS = MAX_TRACKS * MAX_TRACK_CHANNELS;
 constexpr int  MAX_CV_CONNECTIONS = MAX_ENGINE_CV_IO_PORTS * 10;
 constexpr int  MAX_GATE_CONNECTIONS = MAX_ENGINE_GATE_PORTS * 10;
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("engine");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("engine");
 
 EngineReturnStatus to_engine_status(ProcessorReturnCode processor_status)
 {
@@ -251,7 +251,7 @@ EngineReturnStatus AudioEngine::connect_cv_to_parameter(const std::string& proce
     con.parameter_id = param->id();
     con.cv_id = cv_input_id;
     _cv_in_connections.push_back(con);
-    SUSHI_LOG_INFO("Connected cv input {} to parameter {} on {}", cv_input_id, parameter_name, processor_name);
+    ELKLOG_LOG_INFO("Connected cv input {} to parameter {} on {}", cv_input_id, parameter_name, processor_name);
     return EngineReturnStatus::OK;
 }
 
@@ -278,7 +278,7 @@ EngineReturnStatus AudioEngine::connect_cv_from_parameter(const std::string& pro
     {
         return EngineReturnStatus::ERROR;
     }
-    SUSHI_LOG_INFO("Connected parameter {} on {} to cv output {}", parameter_name, processor_name, cv_output_id);
+    ELKLOG_LOG_INFO("Connected parameter {} on {} to cv output {}", parameter_name, processor_name, cv_output_id);
     return EngineReturnStatus::OK;
 }
 
@@ -302,7 +302,7 @@ EngineReturnStatus AudioEngine::connect_gate_to_processor(const std::string& pro
     con.channel = channel;
     con.gate_id = gate_input_id;
     _gate_in_connections.push_back(con);
-    SUSHI_LOG_INFO("Connected gate input {} to processor {} on channel {}", gate_input_id, processor_name, channel);
+    ELKLOG_LOG_INFO("Connected gate input {} to processor {} on channel {}", gate_input_id, processor_name, channel);
     return EngineReturnStatus::OK;
 }
 
@@ -325,7 +325,7 @@ EngineReturnStatus AudioEngine::connect_gate_from_processor(const std::string& p
     {
         return EngineReturnStatus::ERROR;
     }
-    SUSHI_LOG_INFO("Connected processor {} to gate output {} from channel {}", gate_output_id, processor_name, channel);
+    ELKLOG_LOG_INFO("Connected processor {} to gate output {} from channel {}", gate_output_id, processor_name, channel);
     return EngineReturnStatus::OK;
 }
 
@@ -362,16 +362,16 @@ EngineReturnStatus AudioEngine::_register_processor(std::shared_ptr<Processor> p
 {
     if (name.empty())
     {
-        SUSHI_LOG_ERROR("Plugin name is not specified");
+        ELKLOG_LOG_ERROR("Plugin name is not specified");
         return EngineReturnStatus::INVALID_PLUGIN;
     }
     processor->set_name(name);
     if (_processors.add_processor(processor) == false)
     {
-        SUSHI_LOG_WARNING("Processor with this name already exists");
+        ELKLOG_LOG_WARNING("Processor with this name already exists");
         return EngineReturnStatus::INVALID_PROCESSOR;
     }
-    SUSHI_LOG_DEBUG("Successfully registered processor {}.", name);
+    ELKLOG_LOG_DEBUG("Successfully registered processor {}.", name);
     return EngineReturnStatus::OK;
 }
 
@@ -380,7 +380,7 @@ void AudioEngine::_deregister_processor(Processor* processor)
     assert(processor);
     assert(processor->active_rt_processing() == false);
     _processors.remove_processor(processor->id());
-    SUSHI_LOG_INFO("Successfully de-registered processor {}", processor->name());
+    ELKLOG_LOG_INFO("Successfully de-registered processor {}", processor->name());
 }
 
 bool AudioEngine::_insert_processor_in_realtime_part(Processor* processor)
@@ -390,7 +390,7 @@ bool AudioEngine::_insert_processor_in_realtime_part(Processor* processor)
         /* TODO - When non-rt callbacks for events are ready we can have the
          * rt processor list re-allocated outside the rt domain
          * In the meantime, put a limit on the number of processors */
-        SUSHI_LOG_ERROR("Realtime processor list full");
+        ELKLOG_LOG_ERROR("Realtime processor list full");
         assert(false);
     }
     if (_realtime_processors[processor->id()] != nullptr)
@@ -569,7 +569,7 @@ std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_multibus_track(const
 {
     if (bus_count > MAX_TRACK_BUSES)
     {
-        SUSHI_LOG_ERROR("Invalid number of buses for new track");
+        ELKLOG_LOG_ERROR("Invalid number of buses for new track");
         return {EngineReturnStatus::INVALID_N_CHANNELS, ObjectId(0)};
     }
     auto track = std::make_shared<Track>(_host_control, bus_count, &_process_timer);
@@ -585,7 +585,7 @@ std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_track(const std::str
 {
     if ((channel_count < 0 || channel_count > MAX_TRACK_CHANNELS))
     {
-        SUSHI_LOG_ERROR("Invalid number of channels for new track");
+        ELKLOG_LOG_ERROR("Invalid number of channels for new track");
         return {EngineReturnStatus::INVALID_N_CHANNELS, ObjectId(0)};
     }
     // Only mono and stereo track have a pan parameter
@@ -615,12 +615,12 @@ EngineReturnStatus AudioEngine::delete_track(ObjectId track_id)
     auto track = _processors.mutable_track(track_id);
     if (track == nullptr)
     {
-        SUSHI_LOG_ERROR("Couldn't delete track {}, not found", track_id);
+        ELKLOG_LOG_ERROR("Couldn't delete track {}, not found", track_id);
         return EngineReturnStatus::INVALID_TRACK;
     }
     if (_processors.processors_on_track(track->id()).empty() == false)
     {
-        SUSHI_LOG_ERROR("Couldn't delete track {}, track not empty", track_id);
+        ELKLOG_LOG_ERROR("Couldn't delete track {}, track not empty", track_id);
         return EngineReturnStatus::ERROR;
     }
 
@@ -637,14 +637,14 @@ EngineReturnStatus AudioEngine::delete_track(ObjectId track_id)
         bool deleted = _event_receiver.wait_for_response(delete_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         if (!removed || !deleted)
         {
-            SUSHI_LOG_ERROR("Failed to remove processor {} from processing part", track->name());
+            ELKLOG_LOG_ERROR("Failed to remove processor {} from processing part", track->name());
         }
     }
     else
     {
         _remove_track(track.get());
         [[maybe_unused]] bool removed = _remove_processor_from_realtime_part(track->id());
-        SUSHI_LOG_WARNING_IF(removed == false, "Plugin track {} was not in the audio graph", track_id)
+        ELKLOG_LOG_WARNING_IF(removed == false, "Plugin track {} was not in the audio graph", track_id)
     }
     track->set_enabled(false);
     _processors.remove_track(track->id());
@@ -662,13 +662,13 @@ std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_processor(const Plug
 
     if (processor_status != ProcessorReturnCode::OK)
     {
-        SUSHI_LOG_ERROR("Failed to initialize processor {} with error {}", processor_name, static_cast<int>(processor_status));
+        ELKLOG_LOG_ERROR("Failed to initialize processor {} with error {}", processor_name, static_cast<int>(processor_status));
         return {to_engine_status(processor_status), ObjectId(0)};
     }
     EngineReturnStatus status = _register_processor(processor, processor_name);
     if (status != EngineReturnStatus::OK)
     {
-        SUSHI_LOG_ERROR("Failed to register processor {}", processor_name);
+        ELKLOG_LOG_ERROR("Failed to register processor {}", processor_name);
         return {status, ObjectId(0)};
     }
 
@@ -680,7 +680,7 @@ std::pair<EngineReturnStatus, ObjectId> AudioEngine::create_processor(const Plug
         bool inserted = _event_receiver.wait_for_response(insert_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         if (!inserted)
         {
-            SUSHI_LOG_ERROR("Failed to insert processor {} to processing part", processor_name);
+            ELKLOG_LOG_ERROR("Failed to insert processor {} to processing part", processor_name);
             _deregister_processor(processor.get());
             return {EngineReturnStatus::INVALID_PROCESSOR, ObjectId(0)};
         }
@@ -704,20 +704,20 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
     auto track = _processors.mutable_track(track_id);
     if (track == nullptr)
     {
-        SUSHI_LOG_ERROR("Track {} not found", track_id);
+        ELKLOG_LOG_ERROR("Track {} not found", track_id);
         return EngineReturnStatus::INVALID_TRACK;
     }
 
     auto plugin = _processors.mutable_processor(plugin_id);
     if (plugin == nullptr)
     {
-        SUSHI_LOG_ERROR("Plugin {} not found", plugin_id);
+        ELKLOG_LOG_ERROR("Plugin {} not found", plugin_id);
         return EngineReturnStatus::INVALID_PLUGIN;
     }
 
     if (plugin->active_rt_processing())
     {
-        SUSHI_LOG_ERROR("Plugin {} is already active on a track");
+        ELKLOG_LOG_ERROR("Plugin {} is already active on a track");
         return EngineReturnStatus::ERROR;
     }
 
@@ -733,7 +733,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
         bool added = _event_receiver.wait_for_response(add_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         if (added == false)
         {
-            SUSHI_LOG_ERROR("Failed to add processor {} to track {}", plugin->name(), track->name());
+            ELKLOG_LOG_ERROR("Failed to add processor {} to track {}", plugin->name(), track->name());
             return EngineReturnStatus::INVALID_PROCESSOR;
         }
     }
@@ -775,13 +775,13 @@ EngineReturnStatus AudioEngine::remove_plugin_from_track(ObjectId plugin_id, Obj
         auto remove_event = RtEvent::make_remove_processor_from_track_event(plugin_id, track_id);
         _send_control_event(remove_event);
         [[maybe_unused]] bool remove_ok = _event_receiver.wait_for_response(remove_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
-        SUSHI_LOG_ERROR_IF(remove_ok == false, "Failed to remove/delete processor {} from processing part", plugin_id)
+        ELKLOG_LOG_ERROR_IF(remove_ok == false, "Failed to remove/delete processor {} from processing part", plugin_id)
     }
     else
     {
         if (!track->remove(plugin->id()))
         {
-            SUSHI_LOG_ERROR("Failed to remove processor {} from track_id {}", plugin_id, track_id);
+            ELKLOG_LOG_ERROR("Failed to remove processor {} from track_id {}", plugin_id, track_id);
             return EngineReturnStatus::ERROR;
         }
     }
@@ -809,7 +809,7 @@ EngineReturnStatus AudioEngine::delete_plugin(ObjectId plugin_id)
     }
     if (processor->active_rt_processing())
     {
-        SUSHI_LOG_ERROR("Cannot delete processor {}, active on track", processor->name());
+        ELKLOG_LOG_ERROR("Cannot delete processor {}, active on track", processor->name());
         return EngineReturnStatus::ERROR;
     }
     if (realtime())
@@ -818,7 +818,7 @@ EngineReturnStatus AudioEngine::delete_plugin(ObjectId plugin_id)
         auto delete_event = RtEvent::make_remove_processor_event(processor->id());
         _send_control_event(delete_event);
         [[maybe_unused]] bool delete_ok = _event_receiver.wait_for_response(delete_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
-        SUSHI_LOG_ERROR_IF(delete_ok == false, "Failed to remove/delete processor {} from processing part", plugin_id)
+        ELKLOG_LOG_ERROR_IF(delete_ok == false, "Failed to remove/delete processor {} from processing part", plugin_id)
     }
     else
     {
@@ -855,7 +855,7 @@ EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, std
         bool added = _event_receiver.wait_for_response(add_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
         if (!inserted || !added)
         {
-            SUSHI_LOG_ERROR("Failed to insert/add track {} to processing part", name);
+            ELKLOG_LOG_ERROR("Failed to insert/add track {} to processing part", name);
             return EngineReturnStatus::INVALID_PROCESSOR;
         }
     }
@@ -864,20 +864,20 @@ EngineReturnStatus AudioEngine::_register_new_track(const std::string& name, std
         if (_add_track(track.get()) == false)
         {
 
-            SUSHI_LOG_ERROR_IF(track->type() == TrackType::REGULAR, "Error adding track {}, max number of tracks reached", track->name());
-            SUSHI_LOG_ERROR_IF(track->type() == TrackType::PRE, "Error adding track {}, Only one pre track allowed", track->name());
-            SUSHI_LOG_ERROR_IF(track->type() == TrackType::POST, "Error adding track {}, Only one post track allowed", track->name());
+            ELKLOG_LOG_ERROR_IF(track->type() == TrackType::REGULAR, "Error adding track {}, max number of tracks reached", track->name());
+            ELKLOG_LOG_ERROR_IF(track->type() == TrackType::PRE, "Error adding track {}, Only one pre track allowed", track->name());
+            ELKLOG_LOG_ERROR_IF(track->type() == TrackType::POST, "Error adding track {}, Only one post track allowed", track->name());
             return EngineReturnStatus::ERROR;
         }
         if (_insert_processor_in_realtime_part(track.get()) == false)
         {
-            SUSHI_LOG_ERROR("Error adding track {}", track->name());
+            ELKLOG_LOG_ERROR("Error adding track {}", track->name());
             return EngineReturnStatus::ERROR;
         }
     }
     if (_processors.add_track(track))
     {
-        SUSHI_LOG_INFO("Track {} successfully added to engine", name);
+        ELKLOG_LOG_INFO("Track {} successfully added to engine", name);
         _event_dispatcher->post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::TRACK_CREATED,
                                                                       0,
                                                                       track->id(),
@@ -951,16 +951,16 @@ EngineReturnStatus AudioEngine::_connect_audio_channel(int engine_channel,
         if (added == false)
         {
             storage.remove(con, false);
-            SUSHI_LOG_ERROR("Failed to insert audio connection in realtime thread");
+            ELKLOG_LOG_ERROR("Failed to insert audio connection in realtime thread");
         }
     }
     else if (added == false)
     {
-        SUSHI_LOG_ERROR("Max number of {} audio connections reached", direction == Direction::INPUT ? "input" : "output");
+        ELKLOG_LOG_ERROR("Max number of {} audio connections reached", direction == Direction::INPUT ? "input" : "output");
         return EngineReturnStatus::ERROR;
     }
 
-    SUSHI_LOG_INFO("Connected engine {} {} to channel {} of track \"{}\"",
+    ELKLOG_LOG_INFO("Connected engine {} {} to channel {} of track \"{}\"",
                         direction == Direction::INPUT ? "input" : "output", engine_channel, track_channel, track_id);
     return EngineReturnStatus::OK;
 }
@@ -988,15 +988,15 @@ EngineReturnStatus AudioEngine::_disconnect_audio_channel(int engine_channel,
                                                      RtEvent::make_remove_audio_output_connection_event(con);
         _send_control_event(event);
         removed = _event_receiver.wait_for_response(event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
-        SUSHI_LOG_ERROR_IF(removed == false, "Failed to remove audio connection in realtime thread")
+        ELKLOG_LOG_ERROR_IF(removed == false, "Failed to remove audio connection in realtime thread")
     }
     else if (removed == false)
     {
-        SUSHI_LOG_ERROR("Failed to remove {} audio connection", direction == Direction::INPUT ? "input" : "output");
+        ELKLOG_LOG_ERROR("Failed to remove {} audio connection", direction == Direction::INPUT ? "input" : "output");
         return EngineReturnStatus::ERROR;
     }
 
-    SUSHI_LOG_INFO("Removed {} audio connection from channel {} of track \"{}\" and engine channel {}",
+    ELKLOG_LOG_INFO("Removed {} audio connection from channel {} of track \"{}\" and engine channel {}",
                          direction == Direction::INPUT ? "input" : "output", track_channel, track->name(), engine_channel);
     return EngineReturnStatus::OK;
 }
@@ -1184,13 +1184,13 @@ void AudioEngine::update_timings()
                 auto timings = _process_timer.timings_for_node(id);
                 if (timings.has_value())
                 {
-                    SUSHI_LOG_INFO("Processor: {} ({}), avg: {}%, min: {}%, max: {}%", id, processor->name(),
+                    ELKLOG_LOG_INFO("Processor: {} ({}), avg: {}%, min: {}%, max: {}%", id, processor->name(),
                                    timings->avg_case * 100.0f, timings->min_case * 100.0f, timings->max_case * 100.0f);
                 }
             }
             if (engine_timings.has_value())
             {
-                SUSHI_LOG_INFO("Engine total: avg: {}%, min: {}%, max: {}%",
+                ELKLOG_LOG_INFO("Engine total: avg: {}%, min: {}%, max: {}%",
                                engine_timings->avg_case * 100.0f, engine_timings->min_case * 100.0f, engine_timings->max_case * 100.0f);
             }
             _log_timing_print_counter = 0;
@@ -1271,7 +1271,7 @@ void AudioEngine::print_timings_to_file(const std::string& filename)
     file.open(filename, std::ios_base::out);
     if (!file.is_open())
     {
-        SUSHI_LOG_WARNING("Couldn't write timings to file");
+        ELKLOG_LOG_WARNING("Couldn't write timings to file");
         return;
     }
     file.setf(std::ios::left);

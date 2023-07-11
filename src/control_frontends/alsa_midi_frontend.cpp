@@ -23,12 +23,12 @@
 
 #include <alsa/seq_event.h>
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "alsa_midi_frontend.h"
 #include "library/midi_decoder.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("alsamidi");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("alsamidi");
 
 namespace sushi::internal::midi_frontend {
 
@@ -51,7 +51,7 @@ int create_port(snd_seq_t* seq, int queue, const std::string& name, bool is_inpu
 
     if (port < 0)
     {
-        SUSHI_LOG_ERROR("Error opening ALSA MIDI port {}: {}", name, strerror(-port));
+        ELKLOG_LOG_ERROR("Error opening ALSA MIDI port {}: {}", name, strerror(-port));
         return port;
     }
 
@@ -66,10 +66,10 @@ int create_port(snd_seq_t* seq, int queue, const std::string& name, bool is_inpu
     int alsamidi_ret = snd_seq_set_port_info(seq, port, port_info);
     if (alsamidi_ret < 0)
     {
-        SUSHI_LOG_ERROR("Couldn't set output port time configuration on port {}: {}", name, strerror(-alsamidi_ret));
+        ELKLOG_LOG_ERROR("Couldn't set output port time configuration on port {}: {}", name, strerror(-alsamidi_ret));
         return alsamidi_ret;
     }
-    SUSHI_LOG_INFO("Created Alsa Midi port {}", name);
+    ELKLOG_LOG_INFO("Created Alsa Midi port {}", name);
     return port;
 }
 
@@ -108,14 +108,14 @@ bool AlsaMidiFrontend::init()
     auto alsamidi_ret = snd_seq_open(&_seq_handle, "default", SND_SEQ_OPEN_DUPLEX, 0);
     if (alsamidi_ret < 0)
     {
-        SUSHI_LOG_ERROR("Error opening MIDI port: {}", strerror(-alsamidi_ret));
+        ELKLOG_LOG_ERROR("Error opening MIDI port: {}", strerror(-alsamidi_ret));
         return false;
     }
 
     alsamidi_ret = snd_seq_set_client_name(_seq_handle, CLIENT_NAME);
     if (alsamidi_ret < 0)
     {
-        SUSHI_LOG_ERROR("Error setting client name: {}", strerror(-alsamidi_ret));
+        ELKLOG_LOG_ERROR("Error setting client name: {}", strerror(-alsamidi_ret));
         return false;
     }
 
@@ -124,7 +124,7 @@ bool AlsaMidiFrontend::init()
     alsamidi_ret = snd_seq_start_queue(_seq_handle, _queue, nullptr);
     if (alsamidi_ret < 0)
     {
-        SUSHI_LOG_ERROR("Error setting up event queue {}", strerror(-alsamidi_ret));
+        ELKLOG_LOG_ERROR("Error setting up event queue {}", strerror(-alsamidi_ret));
         return false;
     }
 
@@ -136,19 +136,19 @@ bool AlsaMidiFrontend::init()
     alsamidi_ret = snd_midi_event_new(ALSA_EVENT_MAX_SIZE, &_input_parser);
     if (alsamidi_ret < 0)
     {
-        SUSHI_LOG_ERROR("Error creating MIDI Input RtEvent Parser: {}", strerror(-alsamidi_ret));
+        ELKLOG_LOG_ERROR("Error creating MIDI Input RtEvent Parser: {}", strerror(-alsamidi_ret));
         return false;
     }
     alsamidi_ret = snd_midi_event_new(ALSA_EVENT_MAX_SIZE, &_output_parser);
     if (alsamidi_ret < 0)
     {
-        SUSHI_LOG_ERROR("Error creating MIDI Output RtEvent Parser: {}", strerror(-alsamidi_ret));
+        ELKLOG_LOG_ERROR("Error creating MIDI Output RtEvent Parser: {}", strerror(-alsamidi_ret));
         return false;
     }
     alsamidi_ret = snd_seq_nonblock(_seq_handle, 1);
     if (alsamidi_ret < 0)
     {
-        SUSHI_LOG_ERROR("Setting non-blocking mode failed: {}", strerror(-alsamidi_ret));
+        ELKLOG_LOG_ERROR("Setting non-blocking mode failed: {}", strerror(-alsamidi_ret));
         return false;
     }
 
@@ -157,7 +157,7 @@ bool AlsaMidiFrontend::init()
 
     if (alsamidi_ret < 0 )
     {
-        SUSHI_LOG_ERROR("Failed to set sequencer to use queue: {}", strerror(-alsamidi_ret));
+        ELKLOG_LOG_ERROR("Failed to set sequencer to use queue: {}", strerror(-alsamidi_ret));
         return false;
     }
 
@@ -174,7 +174,7 @@ void AlsaMidiFrontend::run()
         _running = true;
         _worker = std::thread(&AlsaMidiFrontend::_poll_function, this);
     }
-    SUSHI_LOG_INFO_IF(_inputs == 0, "No of midi inputs is 0, not starting read thread")
+    ELKLOG_LOG_INFO_IF(_inputs == 0, "No of midi inputs is 0, not starting read thread")
 }
 
 void AlsaMidiFrontend::stop()
@@ -211,12 +211,12 @@ void AlsaMidiFrontend::_poll_function()
                             Time timestamp = timestamped ? _to_sushi_time(&ev->time.time) : IMMEDIATE_PROCESS;
                             _receiver->send_midi(input->second, midi::to_midi_data_byte(data_buffer, byte_count), timestamp);
 
-                            SUSHI_LOG_DEBUG("Received midi message: [{:x} {:x} {:x} {:x}], port{}, timestamp: {}",
+                            ELKLOG_LOG_DEBUG("Received midi message: [{:x} {:x} {:x} {:x}], port{}, timestamp: {}",
                                             data_buffer[0], data_buffer[1], data_buffer[2], data_buffer[3], input->second, timestamp.count());
 
                         }
                     }
-                    SUSHI_LOG_WARNING_IF(byte_count < 0, "Decoder returned {}", strerror(-byte_count))
+                    ELKLOG_LOG_WARNING_IF(byte_count < 0, "Decoder returned {}", strerror(-byte_count))
                 }
                 snd_seq_free_event(ev);
             }
@@ -230,7 +230,7 @@ void AlsaMidiFrontend::send_midi(int output, MidiDataByte data, [[maybe_unused]]
     snd_seq_ev_clear(&ev);
     [[maybe_unused]] auto bytes = snd_midi_event_encode(_output_parser, data.data(), data.size(), &ev);
 
-    SUSHI_LOG_INFO_IF(bytes <= 0, "Failed to encode event: {} {}", strerror(-bytes), ev.type)
+    ELKLOG_LOG_INFO_IF(bytes <= 0, "Failed to encode event: {} {}", strerror(-bytes), ev.type)
 
     snd_seq_ev_set_source(&ev, _output_midi_ports[output]);
     snd_seq_ev_set_subs(&ev);
@@ -239,7 +239,7 @@ void AlsaMidiFrontend::send_midi(int output, MidiDataByte data, [[maybe_unused]]
     bytes = snd_seq_event_output(_seq_handle, &ev);
     snd_seq_drain_output(_seq_handle);
 
-    SUSHI_LOG_WARNING_IF(bytes <= 0, "Event output returned: {}, type {}", strerror(-bytes), ev.type)
+    ELKLOG_LOG_WARNING_IF(bytes <= 0, "Event output returned: {}, type {}", strerror(-bytes), ev.type)
 }
 
 bool AlsaMidiFrontend::_init_time()
@@ -251,7 +251,7 @@ bool AlsaMidiFrontend::_init_time()
     int alsamidi_ret = snd_seq_get_queue_status(_seq_handle, _queue, queue_status);
     if (alsamidi_ret < 0)
     {
-        SUSHI_LOG_ERROR("Couldn't get queue status {}", strerror(-alsamidi_ret));
+        ELKLOG_LOG_ERROR("Couldn't get queue status {}", strerror(-alsamidi_ret));
         return false;
     }
     start_time = snd_seq_queue_status_get_real_time(queue_status);

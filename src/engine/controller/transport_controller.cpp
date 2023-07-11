@@ -20,11 +20,11 @@
 
 #include "transport_controller.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "controller_common.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("controller");
 
 namespace sushi::internal::engine::controller_impl {
 
@@ -35,45 +35,45 @@ TransportController::TransportController(engine::BaseEngine* engine) : _engine(e
 
 float TransportController::get_samplerate() const
 {
-    SUSHI_LOG_DEBUG("get_samplerate called");
+    ELKLOG_LOG_DEBUG("get_samplerate called");
     return _engine->sample_rate();
 }
 
 control::PlayingMode TransportController::get_playing_mode() const
 {
-    SUSHI_LOG_DEBUG("get_playing_mode called");
+    ELKLOG_LOG_DEBUG("get_playing_mode called");
     return to_external(_transport->playing_mode());
 }
 
 void TransportController::set_playing_mode(control::PlayingMode playing_mode)
 {
-    SUSHI_LOG_DEBUG("set_playing_mode called");
+    ELKLOG_LOG_DEBUG("set_playing_mode called");
     auto event = new SetEnginePlayingModeStateEvent(to_internal(playing_mode), IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
 }
 
 control::SyncMode TransportController::get_sync_mode() const
 {
-    SUSHI_LOG_DEBUG("get_sync_mode called");
+    ELKLOG_LOG_DEBUG("get_sync_mode called");
     return to_external(_transport->sync_mode());
 }
 
 void TransportController::set_sync_mode(control::SyncMode sync_mode)
 {
-    SUSHI_LOG_DEBUG("set_sync_mode called");
+    ELKLOG_LOG_DEBUG("set_sync_mode called");
     auto event = new SetEngineSyncModeEvent(to_internal(sync_mode), IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
 }
 
 float TransportController::get_tempo() const
 {
-    SUSHI_LOG_DEBUG("get_tempo called");
+    ELKLOG_LOG_DEBUG("get_tempo called");
     return _transport->current_tempo();
 }
 
 control::ControlStatus TransportController::set_tempo(float tempo)
 {
-    SUSHI_LOG_DEBUG("set_tempo called with tempo {}", tempo);
+    ELKLOG_LOG_DEBUG("set_tempo called with tempo {}", tempo);
     auto event = new SetEngineTempoEvent(tempo, IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
     return control::ControlStatus::OK;
@@ -81,13 +81,13 @@ control::ControlStatus TransportController::set_tempo(float tempo)
 
 control::TimeSignature TransportController::get_time_signature() const
 {
-    SUSHI_LOG_DEBUG("get_time_signature called");
+    ELKLOG_LOG_DEBUG("get_time_signature called");
     return to_external(_transport->time_signature());
 }
 
 control::ControlStatus TransportController::set_time_signature(control::TimeSignature signature)
 {
-    SUSHI_LOG_DEBUG("set_time_signature called with signature {}/{}", signature.numerator, signature.denominator);
+    ELKLOG_LOG_DEBUG("set_time_signature called with signature {}/{}", signature.numerator, signature.denominator);
     auto event = new SetEngineTimeSignatureEvent(to_internal(signature), IMMEDIATE_PROCESS);
     _event_dispatcher->post_event(event);
     return control::ControlStatus::OK;

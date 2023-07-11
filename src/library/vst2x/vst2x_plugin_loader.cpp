@@ -54,11 +54,11 @@
 #include "vst2x_plugin_loader.h"
 #include "vst2x_host_callback.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 namespace sushi::internal::vst2 {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("vst2");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("vst2");
 
 #if defined(__linux__)
 
@@ -66,14 +66,14 @@ LibraryHandle PluginLoader::get_library_handle_for_plugin(const std::string& plu
 {
     if (! std::filesystem::exists(plugin_absolute_path))
     {
-        SUSHI_LOG_ERROR("Plugin path not found: {}", plugin_absolute_path);
+        ELKLOG_LOG_ERROR("Plugin path not found: {}", plugin_absolute_path);
         return nullptr;
     }
     void *libraryHandle = dlopen(plugin_absolute_path.c_str(), RTLD_NOW | RTLD_LOCAL);
 
     if (libraryHandle == nullptr)
     {
-        SUSHI_LOG_ERROR("Could not open library, {}", dlerror());
+        ELKLOG_LOG_ERROR("Could not open library, {}", dlerror());
         return nullptr;
     }
 
@@ -101,7 +101,7 @@ AEffect* PluginLoader::load_plugin(LibraryHandle library_handle)
         entryPoint.entryPointVoidPtr = dlsym(library_handle, "main");
         if (entryPoint.entryPointVoidPtr == nullptr)
         {
-              SUSHI_LOG_ERROR("Couldn't get a pointer to plugin's main()");
+              ELKLOG_LOG_ERROR("Couldn't get a pointer to plugin's main()");
               return nullptr;
         }
     }
@@ -115,7 +115,7 @@ void PluginLoader::close_library_handle(LibraryHandle library_handle)
 {
     if (dlclose(library_handle) != 0)
     {
-        SUSHI_LOG_WARNING("Could not safely close plugin, possible resource leak");
+        ELKLOG_LOG_WARNING("Could not safely close plugin, possible resource leak");
     }
 }
 
@@ -126,7 +126,7 @@ LibraryHandle PluginLoader::get_library_handle_for_plugin(const std::string& plu
     CFBundleRef bundle_handle;
     if (! std::filesystem::exists(plugin_absolute_path))
     {
-        SUSHI_LOG_ERROR("Plugin path not found: {}", plugin_absolute_path);
+        ELKLOG_LOG_ERROR("Plugin path not found: {}", plugin_absolute_path);
         return nullptr;
     }
     bundle_url = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault,
@@ -138,7 +138,7 @@ LibraryHandle PluginLoader::get_library_handle_for_plugin(const std::string& plu
 
     if (bundle_handle == nullptr)
     {
-        SUSHI_LOG_ERROR("Could not open bundle");
+        ELKLOG_LOG_ERROR("Could not open bundle");
         return nullptr;
     }
     return (LibraryHandle)bundle_handle;
@@ -168,7 +168,7 @@ AEffect* PluginLoader::load_plugin(LibraryHandle library_handle)
             entryPoint.entryPointVoidPtr = CFBundleGetFunctionPointerForName ((CFBundleRef)library_handle, CFSTR("main"));
             if (entryPoint.entryPointVoidPtr == nullptr)
             {
-              SUSHI_LOG_ERROR("Couldn't get a pointer to plugin's main()");
+              ELKLOG_LOG_ERROR("Couldn't get a pointer to plugin's main()");
               return nullptr;
             }
         }
@@ -190,7 +190,7 @@ void PluginLoader::close_library_handle(LibraryHandle library_handle)
         CFBundleUnloadExecutable((CFBundleRef)library_handle);
         if (CFBundleIsExecutableLoaded((CFBundleRef)library_handle))
         {
-            SUSHI_LOG_WARNING("Could not safely close plugin, possible resource leak");
+            ELKLOG_LOG_WARNING("Could not safely close plugin, possible resource leak");
         }
     }
     if (CFGetRetainCount(library_handle) > 0)

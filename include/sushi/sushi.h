@@ -109,8 +109,8 @@ struct SushiOptions
     std::string input_filename;
     std::string output_filename;
 
-    std::string log_level = std::string(SUSHI_LOG_LEVEL_DEFAULT);
-    std::string log_file = std::string(SUSHI_LOG_FILE_DEFAULT);
+    std::string log_level = std::string(ELKLOG_LOG_LEVEL_DEFAULT);
+    std::string log_file = std::string(ELKLOG_LOG_FILE_DEFAULT);
 
     std::string jack_client_name = std::string(SUSHI_JACK_CLIENT_NAME_DEFAULT);
     std::string jack_server_name = std::string("");

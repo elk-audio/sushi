@@ -139,20 +139,26 @@ if (${SUSHI_BUILD_TWINE})
     add_subdirectory(twine)
 
     if (${SUSHI_TWINE_STATIC})
-        set(TWINE_LIB twine_static)
+        set(TWINE_LIB twine::twine_static)
     else()
-        set(TWINE_LIB twine)
+        set(TWINE_LIB twine::twine)
     endif()
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${TWINE_LIB})
 else()
-    find_path(TWINE_PATH NAMES "twine/twine.h")
-    find_library(TWINE_LIB
-            NAMES twine
-            PATHS /usr/lib /usr/local/lib
-    )
+    find_package(twine 0.4)
     set(INCLUDE_DIRS ${INCLUDE_DIRS} ${TWINE_PATH})
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${twine_lib})
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${TWINE_LIB})
 endif()
+
+set(ELKLOG_WITH_UNIT_TESTS OFF CACHE BOOL "")
+set(ELKLOG_USE_INCLUDED_TWINE OFF CACHE BOOL "")
+set(ELKLOG_WITH_EXAMPLES OFF CACHE BOOL "")
+set(ELKLOG_MULTITHREADED_RT_LOGGING OFF CACHE BOOL "")
+set(ELKLOG_FILE_SIZE 10000000 CACHE STRING "")
+set(ELKLOG_RT_MESSAGE_SIZE 2048 CACHE STRING "")
+set(ELKLOG_RT_QUEUE_SIZE 1024 CACHE STRING "")
+
+add_subdirectory(elklog)
 
 add_subdirectory(third-party EXCLUDE_FROM_ALL)
 
@@ -452,7 +458,6 @@ endif()
 ####################
 
 set(SOURCE_FILES
-    src/logging.cpp
     src/utils.cpp
     src/audio_frontends/base_audio_frontend.cpp
     src/concrete_sushi.cpp
@@ -570,8 +575,8 @@ set(COMMON_LIBRARIES
     pthread
     dl
     fifo
-    spdlog::spdlog
     oscpack
+    elklog
     ${TWINE_LIB}
 )
 

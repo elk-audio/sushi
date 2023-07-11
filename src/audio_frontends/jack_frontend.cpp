@@ -21,14 +21,14 @@
 #ifdef SUSHI_BUILD_WITH_JACK
 #include <jack/midiport.h>
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "jack_frontend.h"
 #include "audio_frontend_internals.h"
 
 namespace sushi::internal::audio_frontend {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("jack audio");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("jack audio");
 
 AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration* config)
 {
@@ -45,14 +45,14 @@ AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration* config)
     auto status = _engine->set_cv_input_channels(jack_config->cv_inputs);
     if (status != engine::EngineReturnStatus::OK)
     {
-        SUSHI_LOG_ERROR("Setting {} cv inputs failed", jack_config->cv_inputs);
+        ELKLOG_LOG_ERROR("Setting {} cv inputs failed", jack_config->cv_inputs);
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     _no_cv_input_ports = jack_config->cv_inputs;
     status = _engine->set_cv_output_channels(jack_config->cv_outputs);
     if (status != engine::EngineReturnStatus::OK)
     {
-        SUSHI_LOG_ERROR("Setting {} cv outputs failed", jack_config->cv_outputs);
+        ELKLOG_LOG_ERROR("Setting {} cv outputs failed", jack_config->cv_outputs);
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     _no_cv_output_ports = jack_config->cv_outputs;
@@ -75,7 +75,7 @@ void JackFrontend::run()
     int status = jack_activate(_client);
     if (status != 0)
     {
-        SUSHI_LOG_ERROR("Failed to activate Jack client, error {}.", status);
+        ELKLOG_LOG_ERROR("Failed to activate Jack client, error {}.", status);
     }
     if (_autoconnect_ports)
     {
@@ -90,44 +90,44 @@ AudioFrontendStatus JackFrontend::setup_client(const std::string& client_name,
     jack_options_t options = JackNullOption;
     if (!server_name.empty())
     {
-        SUSHI_LOG_ERROR("Using option JackServerName");
+        ELKLOG_LOG_ERROR("Using option JackServerName");
         options = JackServerName;
     }
     _client = jack_client_open(client_name.c_str(), options, &jack_status, server_name.c_str());
     if (_client == nullptr)
     {
-        SUSHI_LOG_ERROR("Failed to open Jack server, error: {}.", jack_status);
+        ELKLOG_LOG_ERROR("Failed to open Jack server, error: {}.", jack_status);
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     /* Set process callback function */
     int ret = jack_set_process_callback(_client, rt_process_callback, this);
     if (ret != 0)
     {
-        SUSHI_LOG_ERROR("Failed to set Jack callback function, error: {}.", ret);
+        ELKLOG_LOG_ERROR("Failed to set Jack callback function, error: {}.", ret);
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     ret = jack_set_latency_callback(_client, latency_callback, this);
     if (ret != 0)
     {
-        SUSHI_LOG_ERROR("Failed to set latency callback function, error: {}.", ret);
+        ELKLOG_LOG_ERROR("Failed to set latency callback function, error: {}.", ret);
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     auto status = setup_sample_rate();
     if (status != AudioFrontendStatus::OK)
     {
-        SUSHI_LOG_ERROR("Failed to setup sample rate handling");
+        ELKLOG_LOG_ERROR("Failed to setup sample rate handling");
         return status;
     }
     status = setup_ports();
     if (status != AudioFrontendStatus::OK)
     {
-        SUSHI_LOG_ERROR("Failed to setup ports");
+        ELKLOG_LOG_ERROR("Failed to setup ports");
         return status;
     }
     status = setup_cv_ports();
     if (status != AudioFrontendStatus::OK)
     {
-        SUSHI_LOG_ERROR("Failed to setup cv ports");
+        ELKLOG_LOG_ERROR("Failed to setup cv ports");
         return status;
     }
     return AudioFrontendStatus::OK;
@@ -138,14 +138,14 @@ AudioFrontendStatus JackFrontend::setup_sample_rate()
     _sample_rate = jack_get_sample_rate(_client);
     if (std::lround(_sample_rate) != _engine->sample_rate())
     {
-        SUSHI_LOG_WARNING("Sample rate mismatch between engine ({}) and jack ({}), setting to {}",
+        ELKLOG_LOG_WARNING("Sample rate mismatch between engine ({}) and jack ({}), setting to {}",
                           _engine->sample_rate(), _sample_rate, _sample_rate);
         _engine->set_sample_rate(_sample_rate);
     }
     auto status = jack_set_sample_rate_callback(_client, samplerate_callback, this);
     if (status != 0)
     {
-        SUSHI_LOG_WARNING("Setting sample rate callback failed with error {}", status);
+        ELKLOG_LOG_WARNING("Setting sample rate callback failed with error {}", status);
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     return AudioFrontendStatus::OK;
@@ -163,7 +163,7 @@ AudioFrontendStatus JackFrontend::setup_ports()
                                    0);
         if (port == nullptr)
         {
-            SUSHI_LOG_ERROR("Failed to open Jack output port {}.", port_no - 1);
+            ELKLOG_LOG_ERROR("Failed to open Jack output port {}.", port_no - 1);
             return AudioFrontendStatus::AUDIO_HW_ERROR;
         }
     }
@@ -177,7 +177,7 @@ AudioFrontendStatus JackFrontend::setup_ports()
                                    0);
         if (port == nullptr)
         {
-            SUSHI_LOG_ERROR("Failed to open Jack input port {}.", port_no - 1);
+            ELKLOG_LOG_ERROR("Failed to open Jack input port {}.", port_no - 1);
             return AudioFrontendStatus::AUDIO_HW_ERROR;
         }
     }
@@ -196,7 +196,7 @@ AudioFrontendStatus JackFrontend::setup_cv_ports()
                                                  0);
         if (_cv_input_ports[i] == nullptr)
         {
-            SUSHI_LOG_ERROR("Failed to open Jack cv input port {}.", i);
+            ELKLOG_LOG_ERROR("Failed to open Jack cv input port {}.", i);
             return AudioFrontendStatus::AUDIO_HW_ERROR;
         }
     }
@@ -209,7 +209,7 @@ AudioFrontendStatus JackFrontend::setup_cv_ports()
                                                   0);
         if (_cv_output_ports[i] == nullptr)
         {
-            SUSHI_LOG_ERROR("Failed to open Jack cv output port {}.", i);
+            ELKLOG_LOG_ERROR("Failed to open Jack cv output port {}.", i);
             return AudioFrontendStatus::AUDIO_HW_ERROR;
         }
     }
@@ -224,7 +224,7 @@ AudioFrontendStatus JackFrontend::connect_ports()
     const char** out_ports = jack_get_ports(_client, nullptr, nullptr, JackPortIsPhysical|JackPortIsInput);
     if (out_ports == nullptr)
     {
-        SUSHI_LOG_ERROR("Failed to get ports from Jack.");
+        ELKLOG_LOG_ERROR("Failed to get ports from Jack.");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     for (int id = 0; id < static_cast<int>(_input_ports.size()); ++id)
@@ -234,7 +234,7 @@ AudioFrontendStatus JackFrontend::connect_ports()
             int ret = jack_connect(_client, jack_port_name(_output_ports[id]), out_ports[id]);
             if (ret != 0)
             {
-                SUSHI_LOG_WARNING("Failed to connect out port {}, error {}.", jack_port_name(_output_ports[id]), id);
+                ELKLOG_LOG_WARNING("Failed to connect out port {}, error {}.", jack_port_name(_output_ports[id]), id);
             }
         }
     }
@@ -244,7 +244,7 @@ AudioFrontendStatus JackFrontend::connect_ports()
     const char** in_ports = jack_get_ports(_client, nullptr, nullptr, JackPortIsPhysical|JackPortIsOutput);
     if (in_ports == nullptr)
     {
-        SUSHI_LOG_ERROR("Failed to get ports from Jack.");
+        ELKLOG_LOG_ERROR("Failed to get ports from Jack.");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     for (int id = 0; id < static_cast<int>(_input_ports.size()); ++id)
@@ -254,7 +254,7 @@ AudioFrontendStatus JackFrontend::connect_ports()
             int ret = jack_connect(_client, jack_port_name(_input_ports[id]), in_ports[id]);
             if (ret != 0)
             {
-                SUSHI_LOG_WARNING("Failed to connect port {}, error {}.", jack_port_name(_input_ports[id]), id);
+                ELKLOG_LOG_WARNING("Failed to connect port {}, error {}.", jack_port_name(_input_ports[id]), id);
             }
         }
     }
@@ -269,7 +269,7 @@ int JackFrontend::internal_process_callback(jack_nframes_t framecount)
     set_flush_denormals_to_zero();
     if (framecount < 64 || framecount % 64)
     {
-        SUSHI_LOG_CRITICAL("Chunk size not a multiple of AUDIO_CHUNK_SIZE. Skipping.");
+        ELKLOG_LOG_WARNING("Chunk size not a multiple of AUDIO_CHUNK_SIZE. Skipping.");
         return 0;
     }
     jack_nframes_t 	current_frames{0};
@@ -278,7 +278,7 @@ int JackFrontend::internal_process_callback(jack_nframes_t framecount)
     float           period_usec{0.0};
     if (jack_get_cycle_times(_client, &current_frames, &current_usecs, &next_usecs, &period_usec) > 0)
     {
-        SUSHI_LOG_ERROR("Error getting time from jack frontend");
+        ELKLOG_LOG_ERROR("Error getting time from jack frontend");
     }
     if (_start_frame == 0 && current_frames > 0)
     {
@@ -309,7 +309,7 @@ int JackFrontend::internal_samplerate_callback(jack_nframes_t sample_rate)
      * requested if the interface doesn't support it. */
     if (_sample_rate != sample_rate)
     {
-        SUSHI_LOG_DEBUG("Received a sample rate change from Jack ({})", sample_rate);
+        ELKLOG_LOG_DEBUG("Received a sample rate change from Jack ({})", sample_rate);
         _engine->set_sample_rate(sample_rate);
         _sample_rate = sample_rate;
     }
@@ -333,7 +333,7 @@ void JackFrontend::internal_latency_callback(jack_latency_callback_mode_t mode)
         }
         Time latency = std::chrono::microseconds((sample_latency * 1'000'000) / _sample_rate);
         _engine->set_output_latency(latency);
-        SUSHI_LOG_INFO("Updated output latency: {} samples, {} ms", sample_latency, latency.count() / 1000.0f);
+        ELKLOG_LOG_INFO("Updated output latency: {} samples, {} ms", sample_latency, latency.count() / 1000.0f);
     }
 }
 
@@ -382,20 +382,20 @@ void inline JackFrontend::process_audio(jack_nframes_t start_frame, jack_nframes
 
 #ifndef SUSHI_BUILD_WITH_JACK
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "audio_frontends/jack_frontend.h"
 
 namespace sushi::internal::audio_frontend {
 
-SUSHI_GET_LOGGER;
+ELKLOG_GET_LOGGER;
 
 JackFrontend::JackFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
 
 AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration*)
 {
     /* The log print needs to be in a cpp file for initialisation order reasons */
-    SUSHI_LOG_ERROR("Sushi was not built with Jack support!");
+    ELKLOG_LOG_ERROR("Sushi was not built with Jack support!");
     return AudioFrontendStatus::AUDIO_HW_ERROR;
 }
 

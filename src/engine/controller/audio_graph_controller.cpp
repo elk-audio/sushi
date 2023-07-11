@@ -21,9 +21,9 @@
 #include "audio_graph_controller.h"
 
 #include "library/processor_state.h"
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("controller");
 
 namespace sushi::internal::engine::controller_impl {
 
@@ -54,7 +54,7 @@ AudioGraphController::AudioGraphController(BaseEngine* engine) : _engine(engine)
 
 std::vector<control::ProcessorInfo> AudioGraphController::get_all_processors() const
 {
-    SUSHI_LOG_DEBUG("get_all_processors called");
+    ELKLOG_LOG_DEBUG("get_all_processors called");
     auto processors = _processors->all_processors();
     std::vector<control::ProcessorInfo> returns;
     returns.reserve(processors.size());
@@ -68,7 +68,7 @@ std::vector<control::ProcessorInfo> AudioGraphController::get_all_processors() c
 
 std::vector<control::TrackInfo> AudioGraphController::get_all_tracks() const
 {
-    SUSHI_LOG_DEBUG("get_tracks called");
+    ELKLOG_LOG_DEBUG("get_tracks called");
     auto tracks = _processors->all_tracks();
     std::vector<control::TrackInfo> returns;
     returns.reserve(tracks.size());
@@ -82,7 +82,7 @@ std::vector<control::TrackInfo> AudioGraphController::get_all_tracks() const
 
 std::pair<control::ControlStatus, int> AudioGraphController::get_track_id(const std::string& track_name) const
 {
-    SUSHI_LOG_DEBUG("get_track_id called with track {}", track_name);
+    ELKLOG_LOG_DEBUG("get_track_id called with track {}", track_name);
 
     auto track = _processors->track(track_name);
     if (track)
@@ -94,7 +94,7 @@ std::pair<control::ControlStatus, int> AudioGraphController::get_track_id(const 
 
 std::pair<control::ControlStatus, control::TrackInfo> AudioGraphController::get_track_info(int track_id) const
 {
-    SUSHI_LOG_DEBUG("get_track_info called with track {}", track_id);
+    ELKLOG_LOG_DEBUG("get_track_info called with track {}", track_id);
     control::TrackInfo info;
     const auto& tracks = _processors->all_tracks();
     auto track = std::find_if(tracks.cbegin(), tracks.cend(),
@@ -110,7 +110,7 @@ std::pair<control::ControlStatus, control::TrackInfo> AudioGraphController::get_
 
 std::pair<control::ControlStatus, std::vector<control::ProcessorInfo>> AudioGraphController::get_track_processors(int track_id) const
 {
-    SUSHI_LOG_DEBUG("get_track_processors called for track: {}", track_id);
+    ELKLOG_LOG_DEBUG("get_track_processors called for track: {}", track_id);
     const auto& tracks = _processors->processors_on_track(track_id);
     std::vector<control::ProcessorInfo> infos;
     if (tracks.empty() && _processors->processor_exists(track_id) == false)
@@ -126,7 +126,7 @@ std::pair<control::ControlStatus, std::vector<control::ProcessorInfo>> AudioGrap
 
 std::pair<control::ControlStatus, int> AudioGraphController::get_processor_id(const std::string& processor_name) const
 {
-    SUSHI_LOG_DEBUG("get_processor_id called with processor {}", processor_name);
+    ELKLOG_LOG_DEBUG("get_processor_id called with processor {}", processor_name);
     auto processor = _processors->processor(processor_name);
     if (processor)
     {
@@ -137,7 +137,7 @@ std::pair<control::ControlStatus, int> AudioGraphController::get_processor_id(co
 
 std::pair<control::ControlStatus, control::ProcessorInfo> AudioGraphController::get_processor_info(int processor_id) const
 {
-    SUSHI_LOG_DEBUG("get_processor_info called with processor {}", processor_id);
+    ELKLOG_LOG_DEBUG("get_processor_info called with processor {}", processor_id);
 
     auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor)
@@ -149,7 +149,7 @@ std::pair<control::ControlStatus, control::ProcessorInfo> AudioGraphController::
 
 std::pair<control::ControlStatus, bool> AudioGraphController::get_processor_bypass_state(int processor_id) const
 {
-    SUSHI_LOG_DEBUG("get_processor_bypass_state called with processor {}", processor_id);
+    ELKLOG_LOG_DEBUG("get_processor_bypass_state called with processor {}", processor_id);
     auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor)
     {
@@ -160,7 +160,7 @@ std::pair<control::ControlStatus, bool> AudioGraphController::get_processor_bypa
 
 std::pair<control::ControlStatus, control::ProcessorState> AudioGraphController::get_processor_state(int processor_id) const
 {
-    SUSHI_LOG_DEBUG("get_processor_state called with processor {}", processor_id);
+    ELKLOG_LOG_DEBUG("get_processor_state called with processor {}", processor_id);
     control::ProcessorState state;
     auto processor = _processors->processor(static_cast<ObjectId>(processor_id));
     if (processor)
@@ -189,7 +189,7 @@ std::pair<control::ControlStatus, control::ProcessorState> AudioGraphController:
 
 control::ControlStatus AudioGraphController::set_processor_state(int processor_id, const control::ProcessorState& state)
 {
-    SUSHI_LOG_DEBUG("set_processor_state called with processor id {}", processor_id);
+    ELKLOG_LOG_DEBUG("set_processor_state called with processor id {}", processor_id);
     auto internal_state = std::make_unique<ProcessorState>();
     to_internal(internal_state.get(), &state);
 
@@ -201,11 +201,11 @@ control::ControlStatus AudioGraphController::set_processor_state(int processor_i
         auto processor = _processors->mutable_processor(static_cast<ObjectId>(processor_id));
         if (processor)
         {
-            SUSHI_LOG_DEBUG("Setting state on processor {} with realtime {}", processor->name(), realtime? "enabled" : "disabled");
+            ELKLOG_LOG_DEBUG("Setting state on processor {} with realtime {}", processor->name(), realtime? "enabled" : "disabled");
             processor->set_state(state.get(), realtime);
             return EventStatus::HANDLED_OK;
         }
-        SUSHI_LOG_ERROR("Processor {} not found", processor_id);
+        ELKLOG_LOG_ERROR("Processor {} not found", processor_id);
         return EventStatus::ERROR;
     };
 
@@ -216,7 +216,7 @@ control::ControlStatus AudioGraphController::set_processor_state(int processor_i
 
 control::ControlStatus AudioGraphController::set_processor_bypass_state(int processor_id, bool bypass_enabled)
 {
-    SUSHI_LOG_DEBUG("set_processor_bypass_state called with {} and processor {}", bypass_enabled, processor_id);
+    ELKLOG_LOG_DEBUG("set_processor_bypass_state called with {} and processor {}", bypass_enabled, processor_id);
     auto processor = _processors->mutable_processor(static_cast<ObjectId>(processor_id));
     if (processor)
     {
@@ -228,7 +228,7 @@ control::ControlStatus AudioGraphController::set_processor_bypass_state(int proc
 
 control::ControlStatus AudioGraphController::create_track(const std::string& name, int channels)
 {
-    SUSHI_LOG_DEBUG("create_track called with name {} and {} channels", name, channels);
+    ELKLOG_LOG_DEBUG("create_track called with name {} and {} channels", name, channels);
 
     auto lambda = [=] () -> int
     {
@@ -243,7 +243,7 @@ control::ControlStatus AudioGraphController::create_track(const std::string& nam
 
 control::ControlStatus AudioGraphController::create_multibus_track(const std::string& name, int buses)
 {
-    SUSHI_LOG_DEBUG("create_multibus_track called with name {} and {} buses ", name, buses);
+    ELKLOG_LOG_DEBUG("create_multibus_track called with name {} and {} buses ", name, buses);
     auto lambda = [=] () -> int
     {
         auto [status, track_id] = _engine->create_multibus_track(name, buses);
@@ -257,7 +257,7 @@ control::ControlStatus AudioGraphController::create_multibus_track(const std::st
 
 control::ControlStatus AudioGraphController::create_pre_track(const std::string& name)
 {
-    SUSHI_LOG_DEBUG("create_pre_track called with name {}", name);
+    ELKLOG_LOG_DEBUG("create_pre_track called with name {}", name);
     auto lambda = [=] () -> int
     {
         auto [status, track_id] = _engine->create_pre_track(name);
@@ -271,7 +271,7 @@ control::ControlStatus AudioGraphController::create_pre_track(const std::string&
 
 control::ControlStatus AudioGraphController::create_post_track(const std::string& name)
 {
-    SUSHI_LOG_DEBUG("create_post_track called with name {}", name);
+    ELKLOG_LOG_DEBUG("create_post_track called with name {}", name);
     auto lambda = [=] () -> int
     {
         auto [status, track_id] = _engine->create_post_track(name);
@@ -288,7 +288,7 @@ control::ControlStatus AudioGraphController::move_processor_on_track(int process
                                                                  int dest_track_id,
                                                                  std::optional<int> before_processor_id)
 {
-    SUSHI_LOG_DEBUG("move_processor_on_track called with processor id {}, source track id and {} dest track id {}",
+    ELKLOG_LOG_DEBUG("move_processor_on_track called with processor id {}, source track id and {} dest track id {}",
                     processor_id, source_track_id, dest_track_id);
     auto lambda = [=] () -> int
     {
@@ -300,7 +300,7 @@ control::ControlStatus AudioGraphController::move_processor_on_track(int process
             // Normally controllers aren't supposed to do this kind of pre-check as is results in
             // double look ups of Processor and Track objects. But given the amount of work needed to
             // restore a failed insertion, this is justified in this case
-            SUSHI_LOG_ERROR("Processor or dest track not found");
+            ELKLOG_LOG_ERROR("Processor or dest track not found");
             return EventStatus::ERROR;
         }
 
@@ -313,7 +313,7 @@ control::ControlStatus AudioGraphController::move_processor_on_track(int process
         status = _engine->add_plugin_to_track(processor_id, dest_track_id, before_processor_id);
         if (status != engine::EngineReturnStatus::OK)
         {
-            SUSHI_LOG_ERROR("Failed to move processor {} from track {} to track {} with error {}, reverting",
+            ELKLOG_LOG_ERROR("Failed to move processor {} from track {} to track {} with error {}, reverting",
                              processor_id, source_track_id, dest_track_id, static_cast<int>(status));
 
             // If the insertion operation failed, we must put the processor back in the source track
@@ -327,7 +327,7 @@ control::ControlStatus AudioGraphController::move_processor_on_track(int process
             }
 
             [[maybe_unused]] auto replace_status = _engine->add_plugin_to_track(processor_id, source_track_id, position);
-            SUSHI_LOG_WARNING_IF(replace_status != engine::EngineReturnStatus::OK,
+            ELKLOG_LOG_WARNING_IF(replace_status != engine::EngineReturnStatus::OK,
                                  "Failed to replace processor {} on track {}", processor_id, source_track_id)
 
         }
@@ -346,7 +346,7 @@ control::ControlStatus AudioGraphController::create_processor_on_track(const std
                                                                    int track_id,
                                                                    std::optional<int> before_processor_id)
 {
-    SUSHI_LOG_DEBUG("create_processor_on_track called with name {}, uid {} from {} on track {}",
+    ELKLOG_LOG_DEBUG("create_processor_on_track called with name {}, uid {} from {} on track {}",
                                                                     name, uid, file, track_id);
     auto lambda = [=] () -> int
     {
@@ -361,11 +361,11 @@ control::ControlStatus AudioGraphController::create_processor_on_track(const std
             return EventStatus::ERROR;
         }
 
-        SUSHI_LOG_DEBUG("Adding plugin {} to track {}", name, track_id);
+        ELKLOG_LOG_DEBUG("Adding plugin {} to track {}", name, track_id);
         status = _engine->add_plugin_to_track(plugin_id, track_id, before_processor_id);
         if (status != engine::EngineReturnStatus::OK)
         {
-            SUSHI_LOG_ERROR("Failed to load plugin {} to track {}, destroying plugin", plugin_id, track_id);
+            ELKLOG_LOG_ERROR("Failed to load plugin {} to track {}, destroying plugin", plugin_id, track_id);
             _engine->delete_plugin(plugin_id);
         }
 
@@ -379,7 +379,7 @@ control::ControlStatus AudioGraphController::create_processor_on_track(const std
 
 control::ControlStatus AudioGraphController::delete_processor_from_track(int processor_id, int track_id)
 {
-    SUSHI_LOG_DEBUG("delete processor_from_track called with processor id {} and track id {}",
+    ELKLOG_LOG_DEBUG("delete processor_from_track called with processor id {} and track id {}",
                     processor_id, track_id);
     auto lambda = [=] () -> int
     {
@@ -398,7 +398,7 @@ control::ControlStatus AudioGraphController::delete_processor_from_track(int pro
 
 control::ControlStatus AudioGraphController::delete_track(int track_id)
 {
-    SUSHI_LOG_DEBUG("delete_track called with id {}", track_id);
+    ELKLOG_LOG_DEBUG("delete_track called with id {}", track_id);
     auto lambda = [=] () -> int
     {
         auto track = _processors->track(track_id);
@@ -411,7 +411,7 @@ control::ControlStatus AudioGraphController::delete_track(int track_id)
         // Remove processors starting with the last, more efficient
         for (auto p = processors.rbegin(); p != processors.rend(); ++p)
         {
-            SUSHI_LOG_DEBUG("Removing plugin {} from track: {}", (*p)->name(), track->name());
+            ELKLOG_LOG_DEBUG("Removing plugin {} from track: {}", (*p)->name(), track->name());
             auto status = _engine->remove_plugin_from_track((*p)->id(), track_id);
             if (status == engine::EngineReturnStatus::OK)
             {
@@ -419,7 +419,7 @@ control::ControlStatus AudioGraphController::delete_track(int track_id)
             }
             if (status != engine::EngineReturnStatus::OK)
             {
-                SUSHI_LOG_ERROR("Failed to remove plugin {} from track {}", (*p)->name(), track->name());
+                ELKLOG_LOG_ERROR("Failed to remove plugin {} from track {}", (*p)->name(), track->name());
             }
         }
         auto status = _engine->delete_track(track_id);

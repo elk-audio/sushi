@@ -15,21 +15,21 @@
 
 #include "plugin_library.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include <filesystem>
 
 namespace sushi::internal::engine {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("plugin_library");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("plugin_library");
 
 void PluginLibrary::set_base_plugin_path(const std::string& path)
 {
     _base_plugin_path = path;
-    SUSHI_LOG_WARNING_IF(_base_plugin_path != path,
+    ELKLOG_LOG_WARNING_IF(_base_plugin_path != path,
                          "Overriding previously defined base plugin path: {} with: {}",
                          _base_plugin_path, path);
-    SUSHI_LOG_INFO("Setting base plugin path to: {}", _base_plugin_path);
+    ELKLOG_LOG_INFO("Setting base plugin path to: {}", _base_plugin_path);
 }
 
 std::string PluginLibrary::to_absolute_path(const std::string& path)

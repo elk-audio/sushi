@@ -23,11 +23,11 @@
 #include "send_plugin.h"
 
 #include "sushi/constants.h"
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "return_plugin.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("send_plugin");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("send_plugin");
 
 namespace sushi::internal::send_plugin {
 
@@ -197,7 +197,7 @@ void SendPlugin::_change_return_destination(const std::string& dest_name)
     }
     else
     {
-        SUSHI_LOG_WARNING("Return plugin {} not found", dest_name);
+        ELKLOG_LOG_WARNING("Return plugin {} not found", dest_name);
     }
 }
 

@@ -20,7 +20,7 @@
 
 #include "midi_controller.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "controller_common.h"
 

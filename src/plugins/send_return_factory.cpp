@@ -20,7 +20,7 @@
 
 #include "send_return_factory.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
 #include "send_plugin.h"
 #include "return_plugin.h"
@@ -29,7 +29,7 @@ namespace sushi::internal {
 
 SendReturnFactory::SendReturnFactory() = default;
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("send_ret_factory");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("send_ret_factory");
 
 send_plugin::SendPlugin* SendReturnFactory::get_send()
 {
@@ -48,7 +48,7 @@ return_plugin::ReturnPlugin* SendReturnFactory::lookup_return_plugin(const std::
             break;
         }
     }
-    SUSHI_LOG_INFO("Looked up return plugin {}, {}", name, instance? "found" : "not found");
+    ELKLOG_LOG_INFO("Looked up return plugin {}, {}", name, instance? "found" : "not found");
     return instance;
 }
 

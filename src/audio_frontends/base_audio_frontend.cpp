@@ -20,9 +20,9 @@
 
 #include "base_audio_frontend.h"
 
-#include "sushi/logging.h"
+#include "elklog/static_logger.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("audio_frontend");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("audio_frontend");
 
 namespace sushi::internal::audio_frontend {
 
@@ -35,7 +35,7 @@ AudioFrontendStatus BaseAudioFrontend::init(BaseAudioFrontendConfiguration* conf
     }
     catch (const std::exception& e)
     {
-        SUSHI_LOG_ERROR("Failed to instantiate RtConditionVariable ({})", e.what());
+        ELKLOG_LOG_ERROR("Failed to instantiate RtConditionVariable ({})", e.what());
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     return AudioFrontendStatus::OK;
