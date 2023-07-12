@@ -232,7 +232,7 @@ void SimpleSynthPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */, 
         previous_offset = next_offset;
     }
 
-    _render_loop(previous_offset, AUDIO_CHUNK_SIZE);
+    _render_loop(previous_offset, AUDIO_CHUNK_SIZE - previous_offset);
 
     if (!_bypassed)
     {
