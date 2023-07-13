@@ -61,7 +61,7 @@ $ ./sushi --coreaudio -c ../../misc/config_files/play_vst3.json --base-plugin-pa
 ## Extra documentation
 Configuration files are used for global host configs, track and plugins configuration, MIDI routing and mapping, events sequencing.
 
-More in-depth documentation is available at the [Elk Audio OS official docs page](https://elk-audio.github.io/elk-docs/docs/html/sushi/sushi_overview.html).
+More in-depth documentation is available at the [Elk Audio OS official docs page](https://elk-audio.github.io/elk-docs/html/sushi/index.html).
 
 ## Building
 Sushi builds are supported for native Linux systems, Yocto/OE cross-compiling toolchains targeting Elk Audio OS systems, and macOS.
