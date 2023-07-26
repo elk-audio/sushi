@@ -2,7 +2,7 @@
 #define SUSHI_AUDIO_GRAPH_H
 
 /*
- * Copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -10,16 +10,16 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
  * @brief Wrapper around the list of tracks used for rt processing and its associated
  *        multicore management
- * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
 #include <vector>

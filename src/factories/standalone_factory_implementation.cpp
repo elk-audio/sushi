@@ -1,17 +1,23 @@
 /*
-* Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
-*
-* SUSHI is free software: you can redistribute it and/or modify it under the terms of
-* the GNU Affero General Public License as published by the Free Software Foundation,
-* either version 3 of the License, or (at your option) any later version.
-*
-* SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-* PURPOSE. See the GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License along with
-* SUSHI. If not, see http://www.gnu.org/licenses/
-*/
+ * Copyright 2017-2023 Elk Audio AB
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE. See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI. If not, see http://www.gnu.org/licenses/
+ */
+
+/**
+ * @brief Concrete implementation of the Sushi factory for standalone use.
+ *        This is a PIMPL class of sorts, used inside standalone_factory.
+ * @copyright 2017-2023 Elk Audio AB, Stockholm
+ */
 
 #include "standalone_factory_implementation.h"
 
@@ -55,7 +61,7 @@ std::pair<std::unique_ptr<Sushi>, Status> StandaloneFactoryImplementation::new_i
 
     // TODO: TEST THAT BUILDING WITH XENOMAI WORKS!
 
-#ifdef SUSHI_BUILD_WITH_XENOMAI
+#ifdef SUSHI_BUILD_WITH_RASPA
     auto raspa_status = audio_frontend::XenomaiRaspaFrontend::global_init();
     if (raspa_status < 0)
     {

@@ -1,22 +1,22 @@
 /*
-* Copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk
-*
-* SUSHI is free software: you can redistribute it and/or modify it under the terms of
-* the GNU Affero General Public License as published by the Free Software Foundation,
-* either version 3 of the License, or (at your option) any later version.
-*
-* SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-* PURPOSE. See the GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License along with
-* SUSHI. If not, see http://www.gnu.org/licenses/
-*/
+ * Copyright 2017-2023 Elk Audio AB
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE. See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI. If not, see http://www.gnu.org/licenses/
+ */
 
 /**
-* @brief Tools for Sushi if it is enclosed in a standalone host.
-* @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
-*/
+ * @brief Tools for Sushi if it is enclosed in a standalone host.
+ * @copyright 2017-2023 Elk Audio AB, Stockholm
+ */
 
 #ifndef SUSHI_TERMINAL_UTILITIES_H
 #define SUSHI_TERMINAL_UTILITIES_H
@@ -37,7 +37,7 @@ enum class ParseStatus
 
 void print_sushi_headline()
 {
-    std::cout << "SUSHI - Copyright 2017-2022 Elk, Stockholm" << std::endl;
+    std::cout << "SUSHI - Copyright 2017-2023 Elk Audio AB, Stockholm" << std::endl;
     std::cout << "SUSHI is licensed under the Affero GPL 3.0. Source code is available at github.com/elk-audio" << std::endl;
 }
 

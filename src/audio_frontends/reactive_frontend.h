@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
  /**
  * @brief Reactive frontend to process audio from a callback through a host application.
- * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
 #ifndef SUSHI_REACTIVE_FRONTEND_H
