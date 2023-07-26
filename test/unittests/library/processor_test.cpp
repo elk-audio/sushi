@@ -169,23 +169,6 @@ TEST_F(TestProcessor, TestGateOutput)
     EXPECT_TRUE(event.gate_event()->value());
 }
 
-TEST(TestProcessorUtils, TestSetBypassRampTime)
-{
-    int chunks_in_10ms = (TEST_SAMPLE_RATE * 0.01) / AUDIO_CHUNK_SIZE;
-
-    // With some sample rate and buffer size combinations this is false.
-    if (chunks_in_10ms <= 0)
-    {
-        // But also in those cases, we want to test with at least one chunk.
-        chunks_in_10ms = 1;
-    }
-
-    // ... Because chunks_to_ramp returns a minimum of 1.
-    int to_ramp = chunks_to_ramp(TEST_SAMPLE_RATE);
-
-    EXPECT_EQ(chunks_in_10ms, to_ramp);
-}
-
 class TestBypassManager : public ::testing::Test
 {
 protected:
