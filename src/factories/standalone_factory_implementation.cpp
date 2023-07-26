@@ -108,6 +108,20 @@ Status
             _audio_frontend = std::make_unique<audio_frontend::PortAudioFrontend>(_engine.get());
             break;
         }
+
+        case FrontendType::APPLE_COREAUDIO:
+        {
+            ELKLOG_LOG_INFO("Setting up Apple CoreAudio frontend");
+
+            _frontend_config = std::make_unique<audio_frontend::AppleCoreAudioFrontendConfiguration>(options.apple_coreaudio_input_device_uid,
+                                                                                                     options.apple_coreaudio_output_device_uid,
+                                                                                                     cv_inputs,
+                                                                                                     cv_outputs);
+
+            _audio_frontend = std::make_unique<audio_frontend::AppleCoreAudioFrontend>(_engine.get());
+            break;
+        }
+
 #ifdef SUSHI_BUILD_WITH_XENOMAI
         case FrontendType::XENOMAI_RASPA:
         {

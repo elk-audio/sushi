@@ -142,6 +142,10 @@ ParseStatus parse_options(int argc, char* argv[], sushi::SushiOptions& options)
                 options.frontend_type = FrontendType::PORTAUDIO;
                 break;
 
+            case OPT_IDX_USE_APPLE_COREAUDIO:
+                options.frontend_type = FrontendType::APPLE_COREAUDIO;
+                break;
+
             case OPT_IDX_AUDIO_INPUT_DEVICE:
                 options.portaudio_input_device_id = atoi(opt.arg);
                 break;

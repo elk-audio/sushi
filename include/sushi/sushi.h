@@ -55,6 +55,7 @@ enum class FrontendType
     DUMMY,
     JACK,
     PORTAUDIO,
+    APPLE_COREAUDIO,
     XENOMAI_RASPA,
     REACTIVE,
     NONE
@@ -119,6 +120,10 @@ struct SushiOptions
     std::string osc_send_ip = SUSHI_OSC_SEND_IP_DEFAULT;
     std::optional<int> portaudio_input_device_id = std::nullopt;
     std::optional<int> portaudio_output_device_id = std::nullopt;
+    std::optional<std::string> apple_coreaudio_input_device_uid = std::nullopt;
+    std::optional<std::string> apple_coreaudio_output_device_uid = std::nullopt;
+
+    std::optional<std::string> device_name = std::nullopt;
 
     float suggested_input_latency = SUSHI_PORTAUDIO_INPUT_LATENCY_DEFAULT;
     float suggested_output_latency = SUSHI_PORTAUDIO_OUTPUT_LATENCY_DEFAULT;

@@ -21,6 +21,9 @@
 #include "concrete_sushi.h"
 #include "sushi/utils.h"
 
+#include "audio_frontends/portaudio_frontend.h"
+#include "audio_frontends/apple_coreaudio_frontend.h"
+
 namespace sushi::internal {
 
 BaseFactory::BaseFactory() = default;
@@ -55,9 +58,37 @@ std::unique_ptr<Sushi> BaseFactory::_make_sushi()
 
 void BaseFactory::_instantiate_subsystems(SushiOptions& options)
 {
+
+#ifdef SUSHI_APPLE_THREADING
+    switch (options.frontend_type)
+    {
+#ifdef SUSHI_BUILD_WITH_PORTAUDIO
+        case FrontendType::PORTAUDIO:
+        {
+            options.device_name = sushi::internal::audio_frontend::get_portaudio_output_device_name(options.portaudio_output_device_id);
+            break;
+        }
+#endif
+
+#ifdef SUSHI_BUILD_WITH_APPLE_COREAUDIO
+        case FrontendType::APPLE_COREAUDIO:
+        {
+            options.device_name = sushi::internal::audio_frontend::get_coreaudio_output_device_name(options.apple_coreaudio_output_device_uid);
+            break;
+        }
+#endif
+        default:
+        {
+            options.device_name = std::nullopt;
+        }
+    }
+#endif
+
     _engine = std::make_unique<engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT,
                                                     options.rt_cpu_cores,
-                                                    options.debug_mode_switches);
+                                                    options.device_name,
+                                                    options.debug_mode_switches,
+                                                    nullptr);
 
     if (!options.base_plugin_path.empty())
     {
