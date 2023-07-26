@@ -148,14 +148,14 @@ std::unique_ptr<Sushi> start_sushi(SushiOptions options)
 {
     std::unique_ptr<FactoryInterface> factory;
 
-    if (options.frontend_type == FrontendType::DUMMY
-        || options.frontend_type == FrontendType::OFFLINE)
+    if (options.frontend_type == FrontendType::DUMMY ||
+        options.frontend_type == FrontendType::OFFLINE)
     {
         factory = std::make_unique<OfflineFactory>();
     }
-    else if (options.frontend_type == FrontendType::JACK
-             || options.frontend_type == FrontendType::XENOMAI_RASPA
-             || options.frontend_type == FrontendType::PORTAUDIO)
+    else if (options.frontend_type == FrontendType::JACK ||
+             options.frontend_type == FrontendType::XENOMAI_RASPA ||
+             options.frontend_type == FrontendType::PORTAUDIO)
     {
         factory = std::make_unique<StandaloneFactory>();
     }

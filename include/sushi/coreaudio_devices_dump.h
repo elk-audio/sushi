@@ -24,7 +24,7 @@ namespace sushi {
 
 /**
  * @brief Retrieve CoreAudio's registered devices information.
- *        Can be queried before instantiating an actual PortaudioFrontend
+ *        Can be queried before instantiating an actual CoreAudioFrontend
  *
  * @return Device information list in JSON format
  */
