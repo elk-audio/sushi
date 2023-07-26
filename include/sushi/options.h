@@ -477,3 +477,5 @@ const optionparser::Descriptor usage[] =
 };
 
 } // end namespace sushi
+
+#endif // SUSHI_OPTIONS_H
