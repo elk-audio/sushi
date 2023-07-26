@@ -18,7 +18,7 @@
 #include <Foundation/NSString.h>
 #include <Foundation/NSDictionary.h>
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("AppleCoreAudio");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("AppleCoreAudio");
 
 namespace apple_coreaudio {
 
@@ -40,13 +40,13 @@ public:
 
         if (!is_aggregate_device())
         {
-            SUSHI_LOG_ERROR("AudioDevice is not an aggregate");
+            ELKLOG_LOG_ERROR("AudioDevice is not an aggregate");
             return;
         }
 
         if (sub_devices.size() < 2)
         {
-            SUSHI_LOG_ERROR("Not enough sub devices available");
+            ELKLOG_LOG_ERROR("Not enough sub devices available");
             return;
         }
 
@@ -110,7 +110,7 @@ bool apple_coreaudio::AudioDevice::start_io(apple_coreaudio::AudioDevice::AudioC
                                 kAudioObjectPropertyScopeGlobal,
                                 kAudioObjectPropertyElementMain}))
     {
-        SUSHI_LOG_ERROR("Failed to install property listener for sample rate change");
+        ELKLOG_LOG_ERROR("Failed to install property listener for sample rate change");
     }
 
     return true;
@@ -192,7 +192,7 @@ int apple_coreaudio::AudioDevice::num_channels(bool for_input) const
 
     if (get_property_data(pa, data_size, audio_buffer_list) != data_size)
     {
-        SUSHI_LOG_ERROR("Invalid data returned");
+        ELKLOG_LOG_ERROR("Invalid data returned");
         return -1;
     }
 
@@ -204,7 +204,7 @@ int apple_coreaudio::AudioDevice::num_channels(bool for_input) const
     auto selected_stream_index = for_input ? _selected_input_stream_index : _selected_output_stream_index;
     if (selected_stream_index >= audio_buffer_list->mNumberBuffers)
     {
-        SUSHI_LOG_ERROR("Invalid stream index");
+        ELKLOG_LOG_ERROR("Invalid stream index");
         return -1;
     }
 
@@ -212,7 +212,7 @@ int apple_coreaudio::AudioDevice::num_channels(bool for_input) const
 
     if (channel_count > std::numeric_limits<int>::max())
     {
-        SUSHI_LOG_ERROR("Integer overflow");
+        ELKLOG_LOG_ERROR("Integer overflow");
         return -1;
     }
 
@@ -329,7 +329,7 @@ UInt32 apple_coreaudio::AudioDevice::stream_latency(UInt32 stream_index, bool fo
 
     if (stream_index >= stream_ids.size())
     {
-        SUSHI_LOG_ERROR("Stream for index {} does not exist", stream_index);
+        ELKLOG_LOG_ERROR("Stream for index {} does not exist", stream_index);
         return 0;
     }
 
@@ -454,14 +454,14 @@ std::unique_ptr<apple_coreaudio::AudioDevice> apple_coreaudio::AudioDevice::crea
 
     if (input_device.is_aggregate_device())
     {
-        SUSHI_LOG_ERROR("Input device \"{}\" is an aggregate device which cannot be part of another aggregate device",
+        ELKLOG_LOG_ERROR("Input device \"{}\" is an aggregate device which cannot be part of another aggregate device",
                         input_device.name());
         return nullptr;
     }
 
     if (output_device.is_aggregate_device())
     {
-        SUSHI_LOG_ERROR("Output device \"{}\" is an aggregate device which cannot be part of another aggregate device",
+        ELKLOG_LOG_ERROR("Output device \"{}\" is an aggregate device which cannot be part of another aggregate device",
                         output_device.name());
         return nullptr;
     }
@@ -490,7 +490,7 @@ std::unique_ptr<apple_coreaudio::AudioDevice> apple_coreaudio::AudioDevice::crea
     OSStatus status = AudioHardwareCreateAggregateDevice((CFDictionaryRef) description, &aggregate_device_id);
     if (status != noErr)
     {
-        SUSHI_LOG_ERROR("Failed to create aggregate device");
+        ELKLOG_LOG_ERROR("Failed to create aggregate device");
         return nullptr;
     }
 

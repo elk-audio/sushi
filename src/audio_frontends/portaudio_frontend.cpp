@@ -49,7 +49,7 @@ std::optional<std::string> get_portaudio_output_device_name(std::optional<int> p
 
     if (!device_info.has_value())
     {
-        SUSHI_LOG_ERROR("Could not retrieve device info for Portaudio device with idx: {}", device_index);
+        ELKLOG_LOG_ERROR("Could not retrieve device info for Portaudio device with idx: {}", device_index);
         return std::nullopt;
     }
 

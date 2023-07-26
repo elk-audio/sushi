@@ -23,10 +23,8 @@
 #include <bw_buf.h>
 
 #include "simple_synth_plugin.h"
-#include "logging.h"
 
-namespace sushi {
-namespace simple_synth_plugin {
+#include "elklog/static_logger.h"
 
 namespace sushi::internal::simple_synth_plugin {
 
@@ -143,7 +141,7 @@ void SimpleSynthPlugin::process_event(const RtEvent& event)
             }
             if (!_event_fifo.push(event))
             {
-                SUSHI_LOG_ERROR("Internal queue full while processing event");
+                ELKLOG_LOG_ERROR("Internal queue full while processing event");
             }
             break;
         }
@@ -185,8 +183,8 @@ void SimpleSynthPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */, 
         // if that's not the case simply drop the event
         if (next_offset < previous_offset)
         {
-            SUSHI_LOG_DEBUG("Dropping unordered event of type {} with sample offset {}",
-                            event.type(), event.sample_offset());
+            ELKLOG_LOG_DEBUG("Dropping unordered event of type {} with sample offset {}",
+                             event.type(), event.sample_offset());
             continue;
         }
         _render_loop(previous_offset, next_offset);
@@ -197,8 +195,8 @@ void SimpleSynthPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */, 
         {
         case RtEventType::NOTE_ON:
         {
-            SUSHI_LOG_DEBUG("Note ON, num. {}, vel. {}",
-                            note, key_event->velocity());
+            ELKLOG_LOG_DEBUG("Note ON, num. {}, vel. {}",
+                             note, key_event->velocity());
             bw_env_gen_set_gate(&_env_gen_coeffs, 1);
             _change_active_note(note);
             _held_notes[note] = true;
@@ -208,7 +206,7 @@ void SimpleSynthPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */, 
 
         case RtEventType::NOTE_OFF:
         {
-            SUSHI_LOG_DEBUG("Note OFF, num. {}, vel. {}",
+            ELKLOG_LOG_DEBUG("Note OFF, num. {}, vel. {}",
                             note, key_event->velocity());
             _held_notes[note] = false;
             // if there are other held notes, switch to the highest one
@@ -229,7 +227,7 @@ void SimpleSynthPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */, 
         }
 
         default:
-            SUSHI_LOG_DEBUG("Unexpected event type passed to process(): {}", key_event->type());
+            ELKLOG_LOG_DEBUG("Unexpected event type passed to process(): {}", key_event->type());
 
         }
         previous_offset = next_offset;

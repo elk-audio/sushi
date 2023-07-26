@@ -19,11 +19,12 @@
  */
 
 #include "plugins/wav_streamer_plugin.h"
-#include "logging.h"
 
-namespace sushi::wav_streamer_plugin {
+#include "elklog/static_logger.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("wav_player");
+namespace sushi::internal::wav_streamer_plugin {
+
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("wav_player");
 
 constexpr auto PLUGIN_UID = "sushi.testing.wav_streamer";
 constexpr auto DEFAULT_LABEL = "Wav Streamer";
@@ -338,7 +339,7 @@ bool WavStreamerPlugin::_open_audio_file(const std::string& path)
             str_error = sf_strerror(nullptr);
         }
         InternalPlugin::set_property_value(FILE_PROPERTY_ID, "Error: " + str_error);
-        SUSHI_LOG_ERROR("Failed to load audio file: {}, error: {}", path, str_error);
+        ELKLOG_LOG_ERROR("Failed to load audio file: {}, error: {}", path, str_error);
         return false;
     }
 
@@ -346,7 +347,7 @@ bool WavStreamerPlugin::_open_audio_file(const std::string& path)
     _file_length = static_cast<float>(_file_info.frames);
     // The file length parameter will be updated from the audio thread
 
-    SUSHI_LOG_INFO("Opened file: {}, {} channels, {} frames, {} Hz", path, _file_info.channels, _file_info.frames, _file_info.samplerate);
+    ELKLOG_LOG_INFO("Opened file: {}, {} channels, {} frames, {} Hz", path, _file_info.channels, _file_info.frames, _file_info.samplerate);
     return true;
 }
 
@@ -572,7 +573,7 @@ void WavStreamerPlugin::_set_seek()
     if (_file)
     {
         float pos = _seek_parameter->normalized_value();
-        SUSHI_LOG_DEBUG("Setting seek to {}", pos);
+        ELKLOG_LOG_DEBUG("Setting seek to {}", pos);
         sf_seek(_file, static_cast<sf_count_t>(std::floor(pos * _file_length)), SEEK_SET);
         _file_idx +=1;
     }

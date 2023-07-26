@@ -22,7 +22,7 @@
 #define SUSHI_APPLE_COREAUDIO_DEVICE_H
 
 
-#include "logging.h"
+#include "elklog/static_logger.h"
 #include "apple_coreaudio_object.h"
 
 namespace apple_coreaudio {

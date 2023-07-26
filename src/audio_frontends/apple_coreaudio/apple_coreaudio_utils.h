@@ -29,28 +29,28 @@
 /**
  * Helper macro to log OSStatus errors in a consistent and convenient way.
  */
-#define CA_LOG_IF_ERROR(command)                                         \
-    do                                                                   \
-    {                                                                    \
-        OSStatus result = command;                                       \
-        if (result != kAudioHardwareNoError)                             \
-        {                                                                \
-            SUSHI_LOG_ERROR("{} returned error : {}", #command, result); \
-        }                                                                \
+#define CA_LOG_IF_ERROR(command)                                          \
+    do                                                                    \
+    {                                                                     \
+        OSStatus result = command;                                        \
+        if (result != kAudioHardwareNoError)                              \
+        {                                                                 \
+            ELKLOG_LOG_ERROR("{} returned error : {}", #command, result); \
+        }                                                                 \
     } while (false)
 
 /**
  * Helper macro to return with a value when the OSStatus indicates an error.
  */
-#define CA_RETURN_IF_ERROR(command, return_value)                        \
-    do                                                                   \
-    {                                                                    \
-        OSStatus result = command;                                       \
-        if (result != kAudioHardwareNoError)                             \
-        {                                                                \
-            SUSHI_LOG_ERROR("{} returned error : {}", #command, result); \
-            return return_value;                                         \
-        }                                                                \
+#define CA_RETURN_IF_ERROR(command, return_value)                         \
+    do                                                                    \
+    {                                                                     \
+        OSStatus result = command;                                        \
+        if (result != kAudioHardwareNoError)                              \
+        {                                                                 \
+            ELKLOG_LOG_ERROR("{} returned error : {}", #command, result); \
+            return return_value;                                          \
+        }                                                                 \
     } while (false)
 
 /**

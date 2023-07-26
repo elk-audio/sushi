@@ -20,9 +20,9 @@
 #include "library/lv2/lv2_control.cpp"
 
 // For testing the LV2Log feature, override the logger macro to write to a local variable instead
-#undef SUSHI_LOG_DEBUG
+#undef ELKLOG_LOG_DEBUG
 std::array<char, 1024> log_buffer;
-#define SUSHI_LOG_DEBUG(fmt_str, ...) ::fmt::format_to(log_buffer.data(), fmt_str, __VA_ARGS__);
+#define ELKLOG_LOG_DEBUG(fmt_str, ...) ::fmt::format_to(log_buffer.data(), fmt_str, __VA_ARGS__);
 #include "library/lv2/lv2_features.cpp"
 
 using namespace sushi;

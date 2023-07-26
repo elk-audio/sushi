@@ -20,10 +20,12 @@
  */
 
 #include "audio_graph.h"
-#include "logging.h"
-#include "exit_control.h"
+#include "elklog/static_logger.h"
+
 
 namespace sushi::internal::engine {
+
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("audio graph");
 
 constexpr bool DISABLE_DENORMALS = true;
 
@@ -78,8 +80,7 @@ AudioGraph::AudioGraph(int cpu_cores,
             if (status.first != twine::WorkerPoolStatus::OK)
             {
 #ifdef SUSHI_APPLE_THREADING
-                SUSHI_LOG_ERROR("Failed to start twine worker: {}",  twine::apple::status_to_string(status.second));
-                exit_on_signal(SUSHI_EXIT_SIGNAL);
+                ELKLOG_LOG_ERROR("Failed to start twine worker: {}",  twine::apple::status_to_string(status.second));
 #endif
             }
 
