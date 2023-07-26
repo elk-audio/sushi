@@ -25,7 +25,6 @@
 
 #include <memory>
 
-#include "json_utils.h"
 #include "base_audio_frontend.h"
 #include "apple_coreaudio/apple_coreaudio_object.h"
 #include "apple_coreaudio/apple_coreaudio_device.h"
@@ -66,8 +65,6 @@ public:
 
     bool start_io();
     bool stop_io();
-
-    static rapidjson::Document generate_devices_info_document();
 
 private:
     std::unique_ptr<apple_coreaudio::AudioDevice> _audio_device;

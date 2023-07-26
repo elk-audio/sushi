@@ -26,7 +26,6 @@
 #include "elklog/static_logger.h"
 
 #include "portaudio_frontend.h"
-#include "rapidjson/rapidjson.h"
 
 
 namespace sushi {
