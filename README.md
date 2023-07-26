@@ -162,6 +162,10 @@ You will need to define this if you want to run the unit test explicitly, e.g. w
 
 `$ export SUSHI_TEST_DATA_DIR=/path/to/sushi/repo/test/data`
 
+Moreover, the battery of tests for VST3 plugin support, build and use the example plugins of the VST3 SDK.
+While the automated tests running as part of the build find these plugins automatically, when running the `unit_tests` binary manually, you may need to set the working directory to: `/path/to/sushi/build_folder_name/test`,
+for the path to resolve correctly.
+
 ## License
 Sushi is licensed under Affero General Public License (“AGPLv3”). See [LICENSE](LICENSE.md) document for the full details of the license. For contributing code to Sushi, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
