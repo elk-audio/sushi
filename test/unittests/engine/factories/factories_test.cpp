@@ -166,9 +166,9 @@ TEST_F(ReactiveFactoryTest, TestPassiveFactoryWithConfigFile)
 class OfflineFactoryTest : public ::testing::Test
 {
 protected:
-    OfflineFactoryTest() {}
+    OfflineFactoryTest() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         options.config_filename = "NONE";
         options.config_source = ConfigurationSource::NONE;
@@ -176,7 +176,7 @@ protected:
         _path = test_utils::get_data_dir_path();
     }
 
-    void TearDown() {}
+    void TearDown() override {}
 
     SushiOptions options;
 
@@ -293,9 +293,21 @@ protected:
 
 TEST_F(StandaloneFactoryTest, TestStandaloneFactoryWithDefaultConfig)
 {
+    auto expected_name = "a_device";
+    PaDeviceInfo device_info;
+    device_info.maxInputChannels = 1;
+    device_info.maxOutputChannels = 1;
+    device_info.name = expected_name;
+
+    EXPECT_CALL(*mockPortAudio, Pa_GetDeviceInfo)
+    .WillOnce(Return(&device_info))
+    .WillOnce(Return(&device_info))
+    .WillOnce(Return(&device_info));
+
     options.config_filename = "NONE";
     options.config_source = ConfigurationSource::NONE;
     options.frontend_type = FrontendType::PORTAUDIO;
+    options.device_name = expected_name;
 
     auto [sushi, status] = _standalone_factory.new_instance(options);
 
@@ -321,11 +333,23 @@ TEST_F(StandaloneFactoryTest, TestStandaloneFactoryWithDefaultConfig)
 
 TEST_F(StandaloneFactoryTest, TestStandaloneFactoryWithConfigFile)
 {
+    auto expected_name = "a_device";
+    PaDeviceInfo device_info;
+    device_info.maxInputChannels = 2;
+    device_info.maxOutputChannels = 2;
+    device_info.name = expected_name;
+
+    EXPECT_CALL(*mockPortAudio, Pa_GetDeviceInfo)
+    .WillOnce(Return(&device_info))
+    .WillOnce(Return(&device_info))
+    .WillOnce(Return(&device_info));
+
     _path.append("config_single_stereo.json");
 
     options.config_filename = _path;
     options.config_source = ConfigurationSource::FILE;
     options.frontend_type = FrontendType::PORTAUDIO;
+    options.device_name = expected_name;
 
     auto [sushi, status] = _standalone_factory.new_instance(options);
 
