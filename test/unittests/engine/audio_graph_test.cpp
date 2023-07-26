@@ -7,7 +7,6 @@
 #define private public
 #define protected public
 
-#include "exit_control.cpp"
 #include "engine/audio_graph.cpp"
 #include "test_utils/host_control_mockup.h"
 
