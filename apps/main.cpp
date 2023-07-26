@@ -36,21 +36,35 @@ using namespace sushi;
 
 ELKLOG_GET_LOGGER_WITH_MODULE_NAME("main");
 
+/**
+ * These are used for signalling that Sushi should exit, from across threads.
+ * In main(), Sushi waits on this condition variable to exit.
+ */
 bool exit_flag = false;
+std::condition_variable exit_notifier;
 
 bool exit_condition()
 {
     return exit_flag;
 }
 
-std::condition_variable exit_notifier;
-
-void signal_handler([[maybe_unused]] int sig)
+/**
+ *  By invoking this method, you can signal to Sushi to exit,
+ *  either through passing it to the standard signal(...) method,
+ *  or through calling it directly in the code, e.g. when coming upon an unrecoverable error.
+ *  When invoking this, Sushi will still wind down, cleanly close allocated resources, and flush logs.
+ * @param sig the signal, e.g. SIGINT, SIGTERM.
+ */
+void exit_on_signal([[maybe_unused]] int sig)
 {
     exit_flag = true;
     exit_notifier.notify_one();
 }
 
+/**
+ * If the error encountered is so severe as to require immediate exit, invoke this, instead of exit_on_signal.
+ * @param message
+ */
 void error_exit(const std::string& message, sushi::Status status)
 {
     std::cerr << message << std::endl;
@@ -72,8 +86,8 @@ void pipe_signal_handler([[maybe_unused]] int sig)
 
 int main(int argc, char* argv[])
 {
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
+    signal(SIGINT, exit_on_signal);
+    signal(SIGTERM, exit_on_signal);
     signal(SIGPIPE, pipe_signal_handler);
 
     // option_parser accepts arguments excluding program name,
