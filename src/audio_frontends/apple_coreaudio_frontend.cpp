@@ -421,9 +421,8 @@ void AppleCoreAudioFrontend::_copy_output_buffer_to_interleaved_buffer(float* ou
 
 #ifndef SUSHI_BUILD_WITH_APPLE_COREAUDIO
 #include "apple_coreaudio_frontend.h"
-#include "logging.h"
 
-SUSHI_GET_LOGGER;
+ELKLOG_GET_LOGGER;
 
 namespace sushi::audio_frontend {
 
