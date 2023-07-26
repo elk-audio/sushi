@@ -103,7 +103,7 @@ rapidjson::Document generate_portaudio_devices_info_document()
     return document;
 }
 
-} // end namespace sushi::internal
+} // end namespace sushi
 
 #endif // SUSHI_PORTAUDIO_DEVICES_DUMP_H
 

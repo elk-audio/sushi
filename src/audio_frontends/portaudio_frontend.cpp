@@ -43,7 +43,7 @@ std::optional<std::string> get_portaudio_output_device_name(std::optional<int> p
         device_index = Pa_GetDefaultOutputDevice();
     }
 
-    sushi::audio_frontend::PortAudioFrontend frontend {nullptr};
+    sushi::internal::audio_frontend::PortAudioFrontend frontend {nullptr};
 
     auto device_info = frontend.device_info(device_index);
 

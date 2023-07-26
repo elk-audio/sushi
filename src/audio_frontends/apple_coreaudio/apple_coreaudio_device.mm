@@ -431,7 +431,7 @@ OSStatus apple_coreaudio::AudioDevice::_audio_device_io_proc(AudioObjectID audio
     auto input_frame_count = static_cast<int32_t>(input_data->mBuffers[input_stream_index].mDataByteSize / input_data->mBuffers[input_stream_index].mNumberChannels / sizeof(float));
     auto output_frame_count = static_cast<int32_t>(output_data->mBuffers[output_stream_index].mDataByteSize / output_data->mBuffers[output_stream_index].mNumberChannels / sizeof(float));
 
-    assert(input_frame_count == AUDIO_CHUNK_SIZE);
+    assert(input_frame_count == sushi::AUDIO_CHUNK_SIZE);
     assert(input_frame_count == output_frame_count);
 
     audio_device->_audio_callback->audio_callback(static_cast<const float*>(input_data->mBuffers[input_stream_index].mData),

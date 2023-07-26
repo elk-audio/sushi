@@ -25,7 +25,9 @@
 
 #include "elklog/static_logger.h"
 
-namespace sushi::audio_frontend {
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("AppleCoreAudio");
+
+namespace sushi::internal::audio_frontend {
 
 std::optional<std::string> get_coreaudio_output_device_name(std::optional<std::string> coreaudio_output_device_uid)
 {
@@ -413,7 +415,7 @@ void AppleCoreAudioFrontend::_copy_output_buffer_to_interleaved_buffer(float* ou
     }
 }
 
-} // namespace sushi::audio_frontend
+} // namespace sushi::internal::audio_frontend
 
 #endif // SUSHI_BUILD_WITH_APPLE_COREAUDIO
 

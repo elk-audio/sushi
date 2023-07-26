@@ -33,7 +33,7 @@
 // See AppleCoreAudioFrontend::sample_rate_changed()
 #define EXIT_SUSHI_WHEN_AUDIO_DEVICE_CHANGES_TO_INCOMPATIBLE_SAMPLE_RATE
 
-namespace sushi::audio_frontend {
+namespace sushi::internal::audio_frontend {
 
 [[nodiscard]] std::optional<std::string> get_coreaudio_output_device_name(std::optional<std::string> coreaudio_output_device_uid);
 
@@ -93,7 +93,7 @@ private:
     void sample_rate_changed(double new_sample_rate) override;
 };
 
-} // namespace sushi::audio_frontend
+} // namespace sushi::internal::audio_frontend
 
 #endif // SUSHI_BUILD_WITH_APPLE_COREAUDIO
 

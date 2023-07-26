@@ -36,7 +36,7 @@ constexpr int SUSHI_EXIT_SIGNAL = 32;
  */
 void external_render_callback(void* data)
 {
-    auto tracks = reinterpret_cast<std::vector<sushi::engine::Track*>*>(data);
+    auto tracks = reinterpret_cast<std::vector<sushi::internal::engine::Track*>*>(data);
 
     for (auto track : *tracks)
     {
