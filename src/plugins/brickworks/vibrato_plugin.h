@@ -27,8 +27,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace vibrato_plugin {
+namespace sushi::internal::vibrato_plugin {
 
 class VibratoPlugin : public InternalPlugin, public UidHelper<VibratoPlugin>
 {
@@ -63,6 +62,6 @@ private:
     std::array<std::vector<std::byte>, MAX_TRACK_CHANNELS> _delay_mem_areas;
 };
 
-}// namespace vibrato_plugin
-}// namespace sushi
+} // namespace sushi::internal::vibrato_plugin
+
 #endif // VIBRATO_PLUGIN_H

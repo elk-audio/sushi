@@ -22,8 +22,7 @@
 
 #include "vibrato_plugin.h"
 
-namespace sushi {
-namespace vibrato_plugin {
+namespace sushi::internal::vibrato_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.vibrato";
 constexpr auto DEFAULT_LABEL = "Vibrato";
@@ -159,6 +158,5 @@ std::string_view VibratoPlugin::static_uid()
 }
 
 
-}// namespace vibrato_plugin
-}// namespace sushi
+} // namespace sushi::internal::vibrato_plugin
 

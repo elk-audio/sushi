@@ -22,8 +22,7 @@
 
 #include "noise_gate_plugin.h"
 
-namespace sushi {
-namespace noise_gate_plugin {
+namespace sushi::internal::noise_gate_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.noise_gate";
 constexpr auto DEFAULT_LABEL = "Noise gate";
@@ -157,6 +156,4 @@ std::string_view NoiseGatePlugin::static_uid()
 }
 
 
-}// namespace noise_gate_plugin
-}// namespace sushi
-
+} // namespace sushi::internal::noise_gate_plugin

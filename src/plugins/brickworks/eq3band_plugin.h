@@ -27,8 +27,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace eq3band_plugin {
+namespace sushi::internal::eq3band_plugin {
 
 class Eq3bandPlugin : public InternalPlugin, public UidHelper<Eq3bandPlugin>
 {
@@ -74,6 +73,6 @@ private:
     std::array<bw_hs2_state, MAX_TRACK_CHANNELS> _hs2_states;
 };
 
-}// namespace eq3band_plugin
-}// namespace sushi
+} // namespace sushi::internal::eq3band_plugin
+
 #endif // EQ3BAND_PLUGIN_H

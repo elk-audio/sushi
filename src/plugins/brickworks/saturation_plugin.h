@@ -26,8 +26,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace saturation_plugin {
+namespace sushi::internal::saturation_plugin {
 
 class SaturationPlugin : public InternalPlugin, public UidHelper<SaturationPlugin>
 {
@@ -67,6 +66,6 @@ private:
     ChunkSampleBuffer _tmp_buf{MAX_TRACK_CHANNELS};
 };
 
-}// namespace saturation_plugin
-}// namespace sushi
+} // namespace sushi::internal::saturation_plugin
+
 #endif // SATURATION_PLUGIN_H

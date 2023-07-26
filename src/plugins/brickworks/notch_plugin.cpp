@@ -22,8 +22,7 @@
 
 #include "notch_plugin.h"
 
-namespace sushi {
-namespace notch_plugin {
+namespace sushi::internal::notch_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.notch";
 constexpr auto DEFAULT_LABEL = "Notch";
@@ -140,6 +139,4 @@ std::string_view NotchPlugin::static_uid()
 }
 
 
-}// namespace notch_plugin
-}// namespace sushi
-
+} // namespace sushi::internal::notch_plugin

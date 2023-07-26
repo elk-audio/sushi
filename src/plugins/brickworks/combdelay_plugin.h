@@ -27,8 +27,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace comb_plugin {
+namespace sushi::internal::comb_plugin {
 
 class CombPlugin : public InternalPlugin, public UidHelper<CombPlugin>
 {
@@ -66,6 +65,6 @@ private:
     std::array<std::vector<std::byte>, MAX_TRACK_CHANNELS> _delay_mem_areas;
 };
 
-}// namespace comb_plugin
-}// namespace sushi
+} // namespace sushi::internal::comb_plugin
+
 #endif // COMBDELAY_PLUGIN_H

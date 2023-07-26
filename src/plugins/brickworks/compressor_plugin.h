@@ -25,8 +25,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace compressor_plugin {
+namespace sushi::internal::compressor_plugin {
 
 class CompressorPlugin : public InternalPlugin, public UidHelper<CompressorPlugin>
 {
@@ -63,6 +62,6 @@ private:
     std::array<bw_comp_state, MAX_TRACK_CHANNELS> _compressor_state;
 };
 
-}// namespace compressor_plugin
-}// namespace sushi
+} // namespace sushi::internal::compressor_plugin
+
 #endif // COMPRESSOR_PLUGIN_H

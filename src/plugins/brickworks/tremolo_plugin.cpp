@@ -22,8 +22,7 @@
 
 #include "tremolo_plugin.h"
 
-namespace sushi {
-namespace tremolo_plugin {
+namespace sushi::internal::tremolo_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.tremolo";
 constexpr auto DEFAULT_LABEL = "Tremolo";
@@ -140,6 +139,4 @@ std::string_view TremoloPlugin::static_uid()
 }
 
 
-}// namespace tremolo_plugin
-}// namespace sushi
-
+} // namespace sushi::internal::tremolo_plugin

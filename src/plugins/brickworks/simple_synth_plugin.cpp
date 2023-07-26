@@ -28,7 +28,9 @@
 namespace sushi {
 namespace simple_synth_plugin {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("simplesynth");
+namespace sushi::internal::simple_synth_plugin {
+
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("simplesynth");
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.simple_synth";
 constexpr auto DEFAULT_LABEL = "Simple synthesizer";
@@ -36,6 +38,7 @@ constexpr auto DEFAULT_LABEL = "Simple synthesizer";
 constexpr float A4_FREQUENCY = 440.0f;
 constexpr int A4_NOTENUM = 69;
 constexpr float NOTE2FREQ_SCALE = 5.0f / 60.0f;
+
 
 SimpleSynthPlugin::SimpleSynthPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
@@ -266,5 +269,5 @@ std::string_view SimpleSynthPlugin::static_uid()
     return PLUGIN_UID;
 }
 
-}// namespace simple_synth_plugin
-}// namespace sushi
+
+} // namespace sushi::internal::simple_synth_plugin

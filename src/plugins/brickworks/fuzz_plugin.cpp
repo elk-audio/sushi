@@ -22,8 +22,7 @@
 
 #include "fuzz_plugin.h"
 
-namespace sushi {
-namespace fuzz_plugin {
+namespace sushi::internal::fuzz_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.fuzz";
 constexpr auto DEFAULT_LABEL = "Fuzz";
@@ -156,6 +155,5 @@ std::string_view FuzzPlugin::static_uid()
 }
 
 
-}// namespace fuzz_plugin
-}// namespace sushi
+} // namespace sushi::internal::fuzz_plugin
 

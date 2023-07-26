@@ -22,8 +22,7 @@
 
 #include "dist_plugin.h"
 
-namespace sushi {
-namespace dist_plugin {
+namespace sushi::internal::dist_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.dist";
 constexpr auto DEFAULT_LABEL = "Distortion";
@@ -162,6 +161,6 @@ std::string_view DistPlugin::static_uid()
 }
 
 
-}// namespace dist_plugin
-}// namespace sushi
+} // namespace sushi::internal::dist_plugin
+
 

@@ -25,8 +25,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace noise_gate_plugin {
+namespace sushi::internal::noise_gate_plugin {
 
 class NoiseGatePlugin : public InternalPlugin, public UidHelper<NoiseGatePlugin>
 {
@@ -62,6 +61,6 @@ private:
     std::array<bw_noise_gate_state, MAX_TRACK_CHANNELS> _noise_gate_states;
 };
 
-}// namespace noise_gate_plugin
-}// namespace sushi
+} // namespace sushi::internal::noise_gate_plugin
+
 #endif // NOISE_GATE_PLUGIN_H

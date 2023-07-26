@@ -22,8 +22,7 @@
 
 #include "highpass_plugin.h"
 
-namespace sushi {
-namespace highpass_plugin {
+namespace sushi::internal::highpass_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.highpass";
 constexpr auto DEFAULT_LABEL = "HighPass";
@@ -128,6 +127,5 @@ std::string_view HighPassPlugin::static_uid()
 }
 
 
-}// namespace highpass_plugin
-}// namespace sushi
+} // namespace sushi::internal::highpass_plugin
 

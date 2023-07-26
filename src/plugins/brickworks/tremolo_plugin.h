@@ -25,8 +25,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace tremolo_plugin {
+namespace sushi::internal::tremolo_plugin {
 
 class TremoloPlugin : public InternalPlugin, public UidHelper<TremoloPlugin>
 {
@@ -60,6 +59,6 @@ private:
     std::array<bw_trem_state, MAX_TRACK_CHANNELS> _trem_states;
 };
 
-}// namespace tremolo_plugin
-}// namespace sushi
+} // namespace sushi::internal::tremolo_plugin
+
 #endif // TREMOLO_PLUGIN_H

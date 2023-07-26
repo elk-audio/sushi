@@ -22,8 +22,7 @@
 
 #include "clip_plugin.h"
 
-namespace sushi {
-namespace clip_plugin {
+namespace sushi::internal::clip_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.clip";
 constexpr auto DEFAULT_LABEL = "Clip";
@@ -157,6 +156,5 @@ std::string_view ClipPlugin::static_uid()
 }
 
 
-}// namespace clip_plugin
-}// namespace sushi
+} // namespace sushi::internal::clip_plugin
 

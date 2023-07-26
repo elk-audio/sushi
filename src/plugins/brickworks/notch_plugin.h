@@ -25,8 +25,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace notch_plugin {
+namespace sushi::internal::notch_plugin {
 
 class NotchPlugin : public InternalPlugin, public UidHelper<NotchPlugin>
 {
@@ -60,6 +59,6 @@ private:
     std::array<bw_notch_state, MAX_TRACK_CHANNELS> _notch_states;
 };
 
-}// namespace notch_plugin
-}// namespace sushi
+} // namespace sushi::internal::notch_plugin
+
 #endif // NOTCH_PLUGIN_H

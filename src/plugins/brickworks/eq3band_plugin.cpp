@@ -22,8 +22,7 @@
 
 #include "eq3band_plugin.h"
 
-namespace sushi {
-namespace eq3band_plugin {
+namespace sushi::internal::eq3band_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.eq3band";
 constexpr auto DEFAULT_LABEL = "3-band Equalizer";
@@ -200,6 +199,5 @@ std::string_view Eq3bandPlugin::static_uid()
 }
 
 
-}// namespace eq3band_plugin
-}// namespace sushi
+} // namespace sushi::internal::eq3band_plugin
 

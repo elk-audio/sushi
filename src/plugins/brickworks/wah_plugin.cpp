@@ -22,8 +22,7 @@
 
 #include "wah_plugin.h"
 
-namespace sushi {
-namespace wah_plugin {
+namespace sushi::internal::wah_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.wah";
 constexpr auto DEFAULT_LABEL = "Wah";
@@ -134,6 +133,5 @@ std::string_view WahPlugin::static_uid()
 }
 
 
-}// namespace wah_plugin
-}// namespace sushi
+} // namespace sushi::internal::wah_plugin
 

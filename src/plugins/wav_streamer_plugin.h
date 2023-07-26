@@ -29,7 +29,7 @@
 #include "dsp_library/value_smoother.h"
 #include "library/internal_plugin.h"
 
-namespace sushi::wav_streamer_plugin {
+namespace sushi::internal::wav_streamer_plugin {
 
 enum class StreamingMode
 {
@@ -163,7 +163,7 @@ private:
 
     BypassManager _bypass_manager;
 
-    StreamingMode _mode{sushi::wav_streamer_plugin::StreamingMode::STOPPED};
+    StreamingMode _mode{sushi::internal::wav_streamer_plugin::StreamingMode::STOPPED};
 
     AudioBlock* _current_block{nullptr};
     float _current_block_pos{0};
@@ -175,6 +175,6 @@ private:
     memory_relaxed_aquire_release::CircularFifo<AudioBlock*, QUEUE_SIZE> _block_queue;
 };
 
-}// namespace sushi::wav_player_plugin
+} // namespace sushi::internal::wav_player_plugin
 
 #endif //SUSHI_WAV_STREAMER_PLUGIN_H

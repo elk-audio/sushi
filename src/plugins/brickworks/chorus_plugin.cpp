@@ -22,8 +22,7 @@
 
 #include "chorus_plugin.h"
 
-namespace sushi {
-namespace chorus_plugin {
+namespace sushi::internal::chorus_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.chorus";
 constexpr auto DEFAULT_LABEL = "Chorus";
@@ -157,6 +156,5 @@ std::string_view ChorusPlugin::static_uid()
 }
 
 
-}// namespace chorus_plugin
-}// namespace sushi
+} // namespace sushi::internal::chorus_plugin
 

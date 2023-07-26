@@ -22,8 +22,7 @@
 
 #include "combdelay_plugin.h"
 
-namespace sushi {
-namespace comb_plugin {
+namespace sushi::internal::comb_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.comb_delay";
 constexpr auto DEFAULT_LABEL = "Comb Delay";
@@ -165,6 +164,5 @@ std::string_view CombPlugin::static_uid()
 }
 
 
-}// namespace comb_plugin
-}// namespace sushi
+} // namespace sushi::internal::comb_plugin
 

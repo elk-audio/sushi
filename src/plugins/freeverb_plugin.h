@@ -25,8 +25,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace freeverb_plugin {
+namespace sushi::internal::freeverb_plugin {
 
 class FreeverbPlugin : public InternalPlugin, public UidHelper<FreeverbPlugin>
 {
@@ -63,6 +62,6 @@ private:
     std::unique_ptr<revmodel> _reverb_model;
 };
 
-}// namespace freeverb_plugin
-}// namespace sushi
+} // namespace sushi::internal::freeverb_plugin
+
 #endif // FREEVERB_PLUGIN_H

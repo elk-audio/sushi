@@ -22,8 +22,7 @@
 
 #include "saturation_plugin.h"
 
-namespace sushi {
-namespace saturation_plugin {
+namespace sushi::internal::saturation_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.saturation";
 constexpr auto DEFAULT_LABEL = "Saturation";
@@ -157,6 +156,6 @@ std::string_view SaturationPlugin::static_uid()
 }
 
 
-}// namespace saturation_plugin
-}// namespace sushi
+} // namespace sushi::internal::saturation_plugin
+
 

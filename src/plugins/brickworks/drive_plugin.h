@@ -26,8 +26,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace drive_plugin {
+namespace sushi::internal::drive_plugin {
 
 class DrivePlugin : public InternalPlugin, public UidHelper<DrivePlugin>
 {
@@ -68,6 +67,6 @@ private:
     ChunkSampleBuffer _tmp_buf{MAX_TRACK_CHANNELS};
 };
 
-}// namespace drive_plugin
-}// namespace sushi
+} // namespace sushi::internal::drive_plugin
+
 #endif // DRIVE_PLUGIN_H

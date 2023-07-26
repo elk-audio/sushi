@@ -22,8 +22,7 @@
 
 #include "multi_filter_plugin.h"
 
-namespace sushi {
-namespace multi_filter_plugin {
+namespace sushi::internal::multi_filter_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.multi_filter";
 constexpr auto DEFAULT_LABEL = "MultiFilter";
@@ -164,6 +163,6 @@ std::string_view MultiFilterPlugin::static_uid()
 }
 
 
-}// namespace multi_filter_plugin
-}// namespace sushi
+} // namespace sushi::internal::multi_filter_plugin
+
 

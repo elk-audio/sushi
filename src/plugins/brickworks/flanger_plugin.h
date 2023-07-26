@@ -27,8 +27,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace flanger_plugin {
+namespace sushi::internal::flanger_plugin {
 
 class FlangerPlugin : public InternalPlugin, public UidHelper<FlangerPlugin>
 {
@@ -63,6 +62,6 @@ private:
     std::array<std::vector<std::byte>, MAX_TRACK_CHANNELS> _delay_mem_areas;
 };
 
-}// namespace flanger_plugin
-}// namespace sushi
+} // namespace sushi::internal::flanger_plugin
+
 #endif // FLANGER_PLUGIN_H

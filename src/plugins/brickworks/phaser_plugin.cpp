@@ -22,8 +22,7 @@
 
 #include "phaser_plugin.h"
 
-namespace sushi {
-namespace phaser_plugin {
+namespace sushi::internal::phaser_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.phaser";
 constexpr auto DEFAULT_LABEL = "Phaser";
@@ -146,6 +145,4 @@ std::string_view PhaserPlugin::static_uid()
 }
 
 
-}// namespace phaser_plugin
-}// namespace sushi
-
+} // namespace sushi::internal::phaser_plugin

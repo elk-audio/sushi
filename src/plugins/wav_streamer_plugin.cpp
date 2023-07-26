@@ -248,7 +248,7 @@ void WavStreamerPlugin::process_audio([[maybe_unused]] const ChunkSampleBuffer& 
         _update_file_length_display();
     }
 
-    if (_current_block && _bypass_manager.should_process() && _mode != sushi::wav_streamer_plugin::StreamingMode::STOPPED)
+    if (_current_block && _bypass_manager.should_process() && _mode != sushi::internal::wav_streamer_plugin::StreamingMode::STOPPED)
     {
         if (_mode == StreamingMode::PLAYING || _mode == StreamingMode::STARTING)
         {
@@ -621,4 +621,4 @@ void WavStreamerPlugin::_handle_fades(ChunkSampleBuffer& buffer)
     }
 }
 
-}// namespace sushi::wav_player_plugin
+} // namespace sushi::internal::wav_player_plugin

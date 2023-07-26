@@ -27,8 +27,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace chorus_plugin {
+namespace sushi::internal::chorus_plugin {
 
 class ChorusPlugin : public InternalPlugin, public UidHelper<ChorusPlugin>
 {
@@ -63,6 +62,5 @@ private:
     std::array<std::vector<std::byte>, MAX_TRACK_CHANNELS> _delay_mem_areas;
 };
 
-}// namespace chorus_plugin
-}// namespace sushi
+} // namespace sushi::internal::chorus_plugin
 #endif // CHORUS_PLUGIN_H

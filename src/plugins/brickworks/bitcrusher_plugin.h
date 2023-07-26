@@ -26,8 +26,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace bitcrusher_plugin {
+namespace sushi::internal::bitcrusher_plugin {
 
 class BitcrusherPlugin : public InternalPlugin, public UidHelper<BitcrusherPlugin>
 {
@@ -65,6 +64,6 @@ private:
     std::array<bw_sr_reduce_state, MAX_TRACK_CHANNELS> _sr_reduce_states;
 };
 
-}// namespace bitcrusher_plugin
-}// namespace sushi
+} // namespace sshi::internal::bitcrusher_plugin
+
 #endif // BITCRUSHER_PLUGIN_H

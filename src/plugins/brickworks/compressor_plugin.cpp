@@ -22,13 +22,13 @@
 
 #include "compressor_plugin.h"
 
-namespace sushi {
-namespace compressor_plugin {
+namespace sushi::internal::compressor_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.compressor";
 constexpr auto DEFAULT_LABEL = "Compressor";
 
 constexpr float MINUS_3DB = 0.7071067811865476f;
+
 
 CompressorPlugin::CompressorPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
@@ -167,6 +167,5 @@ std::string_view CompressorPlugin::static_uid()
 }
 
 
-}// namespace compressor_plugin
-}// namespace sushi
+} // namespace sushi::internal::compressor_plugin
 

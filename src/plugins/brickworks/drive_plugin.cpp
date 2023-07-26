@@ -22,8 +22,7 @@
 
 #include "drive_plugin.h"
 
-namespace sushi {
-namespace drive_plugin {
+namespace sushi::internal::drive_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.drive";
 constexpr auto DEFAULT_LABEL = "Drive";
@@ -163,6 +162,6 @@ std::string_view DrivePlugin::static_uid()
 }
 
 
-}// namespace drive_plugin
-}// namespace sushi
+} // namespace sushi::internal::drive_plugin
+
 

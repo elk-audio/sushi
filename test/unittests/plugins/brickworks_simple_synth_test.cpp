@@ -13,7 +13,7 @@
 #include "plugins/brickworks/simple_synth_plugin.cpp"
 
 using namespace sushi;
-using namespace sushi::simple_synth_plugin;
+using namespace sushi::internal::simple_synth_plugin;
 
 constexpr float TEST_SAMPLERATE = 48000;
 constexpr int   TEST_CHANNEL_COUNT = 2;

@@ -25,8 +25,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace highpass_plugin {
+namespace sushi::internal::highpass_plugin {
 
 class HighPassPlugin : public InternalPlugin, public UidHelper<HighPassPlugin>
 {
@@ -59,6 +58,6 @@ private:
     std::array<bw_hp1_state, MAX_TRACK_CHANNELS> _hp1_states;
 };
 
-}// namespace highpass_plugin
-}// namespace sushi
+} // namespace sushi::internal::highpass_plugin
+
 #endif // HIGHPASS_PLUGIN_H

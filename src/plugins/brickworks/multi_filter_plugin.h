@@ -25,8 +25,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace multi_filter_plugin {
+namespace sushi::internal::multi_filter_plugin {
 
 class MultiFilterPlugin : public InternalPlugin, public UidHelper<MultiFilterPlugin>
 {
@@ -64,6 +63,6 @@ private:
     std::array<bw_mm2_state, MAX_TRACK_CHANNELS> _mm2_states;
 };
 
-}// namespace multi_filter_plugin
-}// namespace sushi
+} // namespace sushi::internal::multi_filter_plugin
+
 #endif // MULTIFILTER_PLUGIN_H

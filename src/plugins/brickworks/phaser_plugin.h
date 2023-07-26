@@ -25,8 +25,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace phaser_plugin {
+namespace sushi::internal::phaser_plugin {
 
 class PhaserPlugin : public InternalPlugin, public UidHelper<PhaserPlugin>
 {
@@ -61,6 +60,6 @@ private:
     std::array<bw_phaser_state, MAX_TRACK_CHANNELS> _phaser_states;
 };
 
-}// namespace phaser_plugin
-}// namespace sushi
+} // namespace sushi::internal::phaser_plugin
+
 #endif // PHASER_PLUGIN_H

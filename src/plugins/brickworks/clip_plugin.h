@@ -26,8 +26,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace clip_plugin {
+namespace sushi::internal::clip_plugin {
 
 class ClipPlugin : public InternalPlugin, public UidHelper<ClipPlugin>
 {
@@ -67,6 +66,6 @@ private:
     ChunkSampleBuffer _tmp_buf{MAX_TRACK_CHANNELS};
 };
 
-}// namespace clip_plugin
-}// namespace sushi
+} // namespace sushi::internal::clip_plugin
+
 #endif // CLIP_PLUGIN_H

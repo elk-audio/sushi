@@ -22,8 +22,7 @@
 
 #include "flanger_plugin.h"
 
-namespace sushi {
-namespace flanger_plugin {
+namespace sushi::internal::flanger_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.flanger";
 constexpr auto DEFAULT_LABEL = "Flanger";
@@ -157,6 +156,5 @@ std::string_view FlangerPlugin::static_uid()
 }
 
 
-}// namespace flanger_plugin
-}// namespace sushi
+} // namespace sushi::internal::flanger_plugin
 

@@ -26,8 +26,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace dist_plugin {
+namespace sushi::internal::dist_plugin {
 
 class DistPlugin : public InternalPlugin, public UidHelper<DistPlugin>
 {
@@ -68,6 +67,6 @@ private:
     ChunkSampleBuffer _tmp_buf{MAX_TRACK_CHANNELS};
 };
 
-}// namespace dist_plugin
-}// namespace sushi
+} // namespace sushi::internal::dist_plugin
+
 #endif // DIST_PLUGIN_H

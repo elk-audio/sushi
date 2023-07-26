@@ -26,8 +26,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace fuzz_plugin {
+namespace sushi::internal::fuzz_plugin {
 
 class FuzzPlugin : public InternalPlugin, public UidHelper<FuzzPlugin>
 {
@@ -67,6 +66,6 @@ private:
     ChunkSampleBuffer _tmp_buf{MAX_TRACK_CHANNELS};
 };
 
-}// namespace fuzz_plugin
-}// namespace sushi
+} // namespace sushi::internal::fuzz_plugin
+
 #endif // FUZZ_PLUGIN_H

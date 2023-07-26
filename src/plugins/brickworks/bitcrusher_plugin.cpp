@@ -22,8 +22,7 @@
 
 #include "bitcrusher_plugin.h"
 
-namespace sushi {
-namespace bitcrusher_plugin {
+namespace sushi::internal::bitcrusher_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.bitcrusher";
 constexpr auto DEFAULT_LABEL = "Bitcrusher";
@@ -126,6 +125,5 @@ std::string_view BitcrusherPlugin::static_uid()
 }
 
 
-}// namespace bitcrusher_plugin
-}// namespace sushi
+} // namespace sushi::internal::bitcrusher_plugin
 

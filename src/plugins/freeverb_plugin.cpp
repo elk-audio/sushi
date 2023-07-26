@@ -23,8 +23,7 @@
 
 #include "freeverb_plugin.h"
 
-namespace sushi {
-namespace freeverb_plugin {
+namespace sushi::internal::freeverb_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.testing.freeverb";
 constexpr auto DEFAULT_LABEL = "Freeverb";
@@ -190,6 +189,5 @@ std::string_view FreeverbPlugin::static_uid()
 }
 
 
-}// namespace freeverb_plugin
-}// namespace sushi
+} // namespace sushi::internal::freeverb_plugin
 

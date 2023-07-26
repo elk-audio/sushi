@@ -25,8 +25,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace wah_plugin {
+namespace sushi::internal::wah_plugin {
 
 class WahPlugin : public InternalPlugin, public UidHelper<WahPlugin>
 {
@@ -59,6 +58,6 @@ private:
     std::array<bw_wah_state, MAX_TRACK_CHANNELS> _wah_states;
 };
 
-}// namespace wah_plugin
-}// namespace sushi
+} // namespace sushi::internal::wah_plugin
+
 #endif // WAH_PLUGIN_H
