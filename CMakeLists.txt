@@ -308,9 +308,9 @@ if (${SUSHI_WITH_ALSA_MIDI})
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_ALSA_MIDI)
 endif()
 
-#################
-# RtMidi ssetup #
-#################
+################
+# RtMidi setup #
+################
 
 if (${SUSHI_WITH_RT_MIDI})
     message("Building with RtMidi support.")
@@ -535,10 +535,6 @@ set(FREEVERB_SOURCES ${FREEVERB_DIR}/allpass.cpp
 ####################
 
 set(SOURCE_FILES
-    src/main.cpp
-    src/exit_control.cpp
-    src/logging.cpp
-    src/json_utils.cpp
     src/utils.cpp
     src/audio_frontends/base_audio_frontend.cpp
     src/concrete_sushi.cpp
@@ -548,7 +544,10 @@ set(SOURCE_FILES
     src/audio_frontends/portaudio_frontend.cpp
     src/audio_frontends/apple_coreaudio_frontend.cpp
     src/audio_frontends/portaudio_devices_dump.cpp
+    src/audio_frontends/coreaudio_devices_dump.cpp
     src/audio_frontends/xenomai_raspa_frontend.cpp
+    src/audio_frontends/offline_frontend.cpp
+    src/audio_frontends/reactive_frontend.cpp
     src/control_frontends/base_control_frontend.cpp
     src/control_frontends/oscpack_osc_messenger.cpp
     src/control_frontends/reactive_midi_frontend.cpp
@@ -640,8 +639,7 @@ set(SOURCE_FILES
     src/plugins/brickworks/fuzz_plugin.cpp
     src/plugins/brickworks/dist_plugin.cpp
     src/plugins/brickworks/drive_plugin.cpp
-    src/plugins/brickworks/simple_synth_plugin.cppsrc/audio_frontends/offline_frontend.cpp
-    src/audio_frontends/reactive_frontend.cpp
+    src/plugins/brickworks/simple_synth_plugin.cpp
 )
 
 # TODO: MACOSX_BUNDLE ? I think not.
