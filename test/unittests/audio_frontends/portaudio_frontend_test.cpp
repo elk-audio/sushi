@@ -29,13 +29,13 @@ protected:
     {
     }
 
-    void SetUp()
+    void SetUp() override
     {
         mockPortAudio = new NiceMock<MockPortAudio>();
         _module_under_test = std::make_unique<PortAudioFrontend>(&_engine);
     }
 
-    void TearDown()
+    void TearDown() override
     {
         if (_module_under_test->_stream_initialized)
         {

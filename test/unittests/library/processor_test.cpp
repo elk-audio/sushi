@@ -189,7 +189,7 @@ TEST(TestProcessorUtils, TestSetBypassRampTime)
 class TestBypassManager : public ::testing::Test
 {
 protected:
-    TestBypassManager() {}
+    TestBypassManager() = default;
 
     BypassManager _module_under_test{false, std::chrono::milliseconds(TEST_BYPASS_TIME_MS)};
 };

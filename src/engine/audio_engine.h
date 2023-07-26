@@ -613,8 +613,8 @@ private:
 
     // Processors in the realtime part indexed by their unique 32 bit id
     // Only to be accessed from the process callback in rt mode.
-    std::vector<Processor*>    _realtime_processors{MAX_RT_PROCESSOR_ID, nullptr};
-    AudioGraph                 _audio_graph;
+    std::vector<Processor*> _realtime_processors{MAX_RT_PROCESSOR_ID, nullptr};
+    AudioGraph              _audio_graph;
 
     Track* _pre_track{nullptr};
     Track* _post_track{nullptr};

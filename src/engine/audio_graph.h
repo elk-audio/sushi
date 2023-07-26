@@ -39,10 +39,9 @@ public:
      *                  exceed the number of cores on the architecture
      * @param max_no_tracks The maximum number of tracks to reserve space for. As
      *                      add() and remove() could be called from an rt thread
-     *                      they must not (de)allocate memory-
+     *                      they must not (de)allocate memory.
      * @param sample_rate The sample_rate - used for calculating audio thread periodicity. Only used on Apple.
      * @param device_name The Audio Device Name - only used on Apple, and will be unused on other platforms.
-     *                      they must not (de)allocate memory-
      * @param debug_mode_switches Enable xenomai-specific thread debugging
      */
     AudioGraph(int cpu_cores,

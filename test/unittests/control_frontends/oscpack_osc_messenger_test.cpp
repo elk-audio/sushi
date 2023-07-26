@@ -54,7 +54,7 @@ class TestOscpackOscMessenger : public ::testing::Test
 protected:
     TestOscpackOscMessenger() {}
 
-    void SetUp()
+    void SetUp() override
     {
         connection.processor = 0;
         connection.parameter = 0;
@@ -67,7 +67,7 @@ protected:
         _module_under_test->init();
     }
 
-    void TearDown() {}
+    void TearDown() override {}
 
     sushi::control::ControlMockup _mock_controller;
 
