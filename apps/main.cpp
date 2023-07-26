@@ -65,10 +65,16 @@ void error_exit(const std::string& message, sushi::Status status)
  */
 std::unique_ptr<Sushi> start_sushi(SushiOptions options);
 
+void pipe_signal_handler([[maybe_unused]] int sig)
+{
+    std::cout << "Pipe signal received and ignored: " << sig << std::endl;
+}
+
 int main(int argc, char* argv[])
 {
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
+    signal(SIGPIPE, pipe_signal_handler);
 
     // option_parser accepts arguments excluding program name,
     // so skip it if it is present.
