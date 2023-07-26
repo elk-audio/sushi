@@ -39,6 +39,8 @@
 #include "engine/json_configurator.h"
 #include "control_frontends/oscpack_osc_messenger.h"
 
+#include "audio_frontends/apple_coreaudio_frontend.h"
+
 namespace sushi::internal {
 
 ELKLOG_GET_LOGGER_WITH_MODULE_NAME("standalone-factory");

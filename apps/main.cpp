@@ -26,6 +26,7 @@
 #include "sushi/utils.h"
 #include "sushi/parameter_dump.h"
 #include "sushi/portaudio_devices_dump.h"
+#include "sushi/coreaudio_devices_dump.h"
 #include "sushi/sushi.h"
 #include "sushi/terminal_utilities.h"
 #include "sushi/standalone_factory.h"
@@ -95,14 +96,31 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    if (options.enable_portaudio_devs_dump)
+    if (options.enable_audio_devices_dump)
     {
+        if (options.frontend_type == FrontendType::PORTAUDIO)
+        {
 #ifdef SUSHI_BUILD_WITH_PORTAUDIO
-        std::cout << sushi::generate_portaudio_devices_info_document() << std::endl;
-        return 0;
+            std::cout << sushi::generate_portaudio_devices_info_document() << std::endl;
+            return 0;
 #else
-        std::cerr << "SUSHI not built with Portaudio support, cannot dump devices." << std::endl;
+            std::cerr << "SUSHI not built with Portaudio support, cannot dump devices." << std::endl;
 #endif
+        }
+        else if (options.frontend_type == FrontendType::APPLE_COREAUDIO)
+        {
+#ifdef SUSHI_BUILD_WITH_APPLE_COREAUDIO
+            std::cout << sushi::generate_coreaudio_devices_info_document() << std::endl;
+#else
+            std::cerr << "SUSHI not built with Apple CoreAudio support, cannot dump devices." << std::endl;
+#endif
+            return 0;
+        }
+        else
+        {
+            std::cout << "No frontend specified or specified frontend not supported (please specify ." << std::endl;
+            return 1;
+        }
     }
 
     auto sushi = start_sushi(options);

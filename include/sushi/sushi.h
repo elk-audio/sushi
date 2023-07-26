@@ -128,7 +128,7 @@ struct SushiOptions
     float suggested_input_latency = SUSHI_PORTAUDIO_INPUT_LATENCY_DEFAULT;
     float suggested_output_latency = SUSHI_PORTAUDIO_OUTPUT_LATENCY_DEFAULT;
 
-    bool enable_portaudio_devs_dump = false;
+    bool enable_audio_devices_dump = false;
 
     bool use_osc = true;
     bool use_grpc = true;

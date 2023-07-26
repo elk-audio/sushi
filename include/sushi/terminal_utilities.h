@@ -162,8 +162,8 @@ ParseStatus parse_options(int argc, char* argv[], sushi::SushiOptions& options)
                 options.suggested_input_latency = atof(opt.arg);
                 break;
 
-            case OPT_IDX_DUMP_PORTAUDIO:
-                options.enable_portaudio_devs_dump = true;
+            case OPT_IDX_DUMP_DEVICES:
+                options.enable_audio_devices_dump = true;
                 break;
 
             case OPT_IDX_USE_JACK:
