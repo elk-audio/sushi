@@ -28,6 +28,10 @@
 #include <vector>
 #include <chrono>
 
+#ifdef ERROR
+#undef ERROR
+#endif
+
 namespace sushi::control {
 
 using Time = std::chrono::microseconds;
