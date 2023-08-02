@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 // This file has been copied from the Jalv LV2 plugin host example - little refactoring has been carried out
