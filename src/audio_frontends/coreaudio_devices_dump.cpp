@@ -18,15 +18,15 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#ifndef SUSHI_COREAUDIO_DEVICES_DUMP_H
-#define SUSHI_COREAUDIO_DEVICES_DUMP_H
-
 #include "sushi/coreaudio_devices_dump.h"
+#include "rapidjson/rapidjson.h"
+
+#ifdef SUSHI_BUILD_WITH_APPLE_COREAUDIO
+
 #include "apple_coreaudio_frontend.h"
 
 #include "elklog/static_logger.h"
 
-#include "rapidjson/rapidjson.h"
 #include "audio_frontends/apple_coreaudio/apple_coreaudio_system_object.h"
 
 namespace sushi {
@@ -110,5 +110,20 @@ rapidjson::Document generate_coreaudio_devices_info_document()
 
 } // end namespace sushi
 
-#endif // SUSHI_PORTAUDIO_DEVICES_DUMP_H
+#endif // SUSHI_BUILD_WITH_APPLE_COREAUDIO
 
+#ifndef SUSHI_BUILD_WITH_APPLE_COREAUDIO
+
+namespace sushi {
+
+rapidjson::Document generate_coreaudio_devices_info_document()
+{
+    rapidjson::Document document;
+
+    return document;
+}
+
+} // end namespace sushi
+
+
+#endif // SUSHI_BUILD_WITH_APPLE_COREAUDIO
