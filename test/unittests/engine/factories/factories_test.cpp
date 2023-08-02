@@ -303,10 +303,12 @@ TEST_F(StandaloneFactoryTest, TestStandaloneFactoryWithDefaultConfig)
     device_info.maxOutputChannels = 1;
     device_info.name = expected_name;
 
+#ifdef SUSHI_BUILD_WITH_PORTAUDIO
     EXPECT_CALL(*mockPortAudio, Pa_GetDeviceInfo)
     .WillOnce(Return(&device_info))
     .WillOnce(Return(&device_info))
     .WillOnce(Return(&device_info));
+#endif
 
     options.config_filename = "NONE";
     options.config_source = ConfigurationSource::NONE;
@@ -343,10 +345,12 @@ TEST_F(StandaloneFactoryTest, TestStandaloneFactoryWithConfigFile)
     device_info.maxOutputChannels = 2;
     device_info.name = expected_name;
 
+#ifdef SUSHI_BUILD_WITH_PORTAUDIO
     EXPECT_CALL(*mockPortAudio, Pa_GetDeviceInfo)
     .WillOnce(Return(&device_info))
     .WillOnce(Return(&device_info))
     .WillOnce(Return(&device_info));
+#endif
 
     _path.append("config_single_stereo.json");
 
