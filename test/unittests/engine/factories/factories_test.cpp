@@ -60,6 +60,10 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration*)
 #include "factories/standalone_factory.cpp"
 #include "factories/standalone_factory_implementation.cpp"
 
+#ifndef SUSHI_BUILD_WITH_APPLE_COREAUDIO
+#include "audio_frontends/apple_coreaudio_frontend.cpp"
+#endif
+
 using namespace std::chrono_literals;
 
 using ::testing::Return;
