@@ -16,7 +16,7 @@ endif()
 
 # Don't change version anywhere else. Everything is generated from this.
 set(SUSHI_VERSION_MAJOR 1)
-set(SUSHI_VERSION_MINOR 0)
+set(SUSHI_VERSION_MINOR 1)
 set(SUSHI_VERSION_REVISION 0)
 
 project(sushi_library
@@ -69,11 +69,17 @@ set(SUSHI_AUDIO_BUFFER_SIZE_DEFAULT 64)
 set(SUSHI_WITH_SENTRY_DEFAULT OFF)
 set(SUSHI_SENTRY_DSN_DEFAULT "--Sentry default DSN is undefined--")
 option(BUILD_STANDALONE_APP "Build standalone Sushi executable" ON)
+set(SUSHI_DISABLE_MULTICORE_UNIT_TESTS_DEFAULT OFF)
+
+set(SUSHI_RASPA_FLAVOR_DEFAULT "evl")
+set(TWINE_WITH_XENOMAI_DEFAULT OFF)
+set(TWINE_WITH_EVL_DEFAULT OFF)
 
 if (APPLE)
     # macOS defaults
-    set(SUSHI_WITH_XENOMAI_DEFAULT OFF)
-    set(SUSHI_WITH_PORTAUDIO_DEFAULT ON)
+    set(SUSHI_WITH_RASPA_DEFAULT OFF)
+    set(SUSHI_WITH_PORTAUDIO_DEFAULT OFF)
+    set(SUSHI_WITH_APPLE_COREAUDIO_DEFAULT ON)
     set(SUSHI_WITH_ALSA_MIDI_DEFAULT OFF)
     set(SUSHI_WITH_RT_MIDI_DEFAULT ON)
     set(SUSHI_WITH_VST2_DEFAULT OFF)
@@ -81,33 +87,36 @@ if (APPLE)
     set(SUSHI_WITH_LV2_MDA_TESTS_DEFAULT OFF)
     set(SUSHI_WITH_UNIT_TESTS_DEFAULT ON)
     set(SUSHI_BUILD_TWINE_DEFAULT ON)
-elseif (DEFINED ENV{OE_CMAKE_TOOLCHAIN_FILE)
+    set(SUSHI_DISABLE_MULTICORE_UNIT_TESTS_DEFAULT ON)
+elseif (CMAKE_CROSSCOMPILING)
     # Yocto cross-compilation defaults
-    set(SUSHI_WITH_XENOMAI_DEFAULT ON)
+    set(SUSHI_WITH_RASPA_DEFAULT ON)
     set(SUSHI_WITH_PORTAUDIO_DEFAULT OFF)
+    set(SUSHI_WITH_APPLE_COREAUDIO_DEFAULT OFF)
     set(SUSHI_WITH_ALSA_MIDI_DEFAULT ON)
     set(SUSHI_WITH_RT_MIDI_DEFAULT OFF)
     set(SUSHI_WITH_LV2_DEFAULT ON)
-    set(SUSHI_WITH_LV2_MDA_TESTS_DEFAULT ON)
+    set(SUSHI_WITH_LV2_MDA_TESTS_DEFAULT OFF)
     set(SUSHI_WITH_UNIT_TESTS_DEFAULT OFF)
     set(SUSHI_BUILD_TWINE_DEFAULT OFF)
 else()
     # Native Linux defaults
     set(SUSHI_WITH_JACK_DEFAULT ON)
-    set(SUSHI_WITH_XENOMAI_DEFAULT OFF)
+    set(SUSHI_WITH_RASPA_DEFAULT OFF)
     set(SUSHI_WITH_PORTAUDIO_DEFAULT OFF)
+    set(SUSHI_WITH_APPLE_COREAUDIO_DEFAULT OFF)
     set(SUSHI_WITH_ALSA_MIDI_DEFAULT ON)
     set(SUSHI_WITH_RT_MIDI_DEFAULT OFF)
     set(SUSHI_WITH_LV2_DEFAULT ON)
     set(SUSHI_WITH_LV2_MDA_TESTS_DEFAULT ON)
     set(SUSHI_WITH_UNIT_TESTS_DEFAULT ON)
     set(SUSHI_BUILD_TWINE_DEFAULT ON)
-    set(TWINE_WITH_XENOMAI OFF)
 endif()
 
-option(SUSHI_WITH_XENOMAI "Enable Xenomai support" ${SUSHI_WITH_XENOMAI_DEFAULT})
+option(SUSHI_WITH_RASPA "Enable Raspa (xenomai) support" ${SUSHI_WITH_RASPA_DEFAULT})
 option(SUSHI_WITH_JACK "Enable Jack support" ${SUSHI_WITH_JACK_DEFAULT})
 option(SUSHI_WITH_PORTAUDIO "Enable PortAudio support" ${SUSHI_WITH_PORTAUDIO_DEFAULT})
+option(SUSHI_WITH_APPLE_COREAUDIO "Enable Apple CoreAudio support" ${SUSHI_WITH_APPLE_COREAUDIO_DEFAULT})
 option(SUSHI_WITH_ALSA_MIDI "Enable alsa midi support" ${SUSHI_WITH_ALSA_MIDI_DEFAULT})
 option(SUSHI_WITH_RT_MIDI "Enable RtMidi support" ${SUSHI_WITH_RT_MIDI_DEFAULT})
 option(SUSHI_WITH_VST2 "Enable Vst 2 support" ${SUSHI_WITH_VST2_DEFAULT})
@@ -122,13 +131,28 @@ option(SUSHI_BUILD_TWINE "Build included Twine library" ${SUSHI_BUILD_TWINE_DEFA
 option(SUSHI_TWINE_STATIC "Link against static version of TWINE library" ${SUSHI_TWINE_STATIC_DEFAULT})
 option(SUSHI_WITH_SENTRY "Enable sentry.io support" ${SUSHI_WITH_SENTRY_DEFAULT})
 option(SUSHI_SENTRY_DSN "Required Sentry DSN Path" ${SUSHI_SENTRY_DSN_DEFAULT})
+option(SUSHI_DISABLE_MULTICORE_UNIT_TESTS "Disable unit-tests dependent on multi-core processing." ${SUSHI_DISABLE_MULTICORE_UNIT_TESTS_DEFAULT})
 
 set(SUSHI_AUDIO_BUFFER_SIZE ${SUSHI_AUDIO_BUFFER_SIZE_DEFAULT} CACHE STRING "Set internal audio buffer size in frames")
+set(SUSHI_RASPA_FLAVOR ${SUSHI_RASPA_FLAVOR_DEFAULT} CACHE STRING "Set raspa flavor. Options are xenomai or evl")
 
 if (SUSHI_WITH_ALSA_MIDI AND SUSHI_WITH_RT_MIDI)
     message(FATAL_ERROR "Both alsa midi and RtMidi set to on. Use only one midi frontend at a time")
 endif()
 
+if (SUSHI_WITH_RASPA)
+    # Determine raspa evl/xenomai variables
+    if (${SUSHI_RASPA_FLAVOR} MATCHES "evl")
+        message("Building with Raspa/Twine EVL support")
+        set(TWINE_WITH_EVL ON CACHE BOOL "" FORCE)
+    elseif (${SUSHI_RASPA_FLAVOR} MATCHES "xenomai")
+        message("Building with Raspa/Twine Xenomai support.")
+        message("Warning Xenomai 3 support is deprecated and will be removed in future versions")
+        set(TWINE_WITH_XENOMAI ON CACHE BOOL "" FORCE)
+    else ()
+        message(FATAL_ERROR "Raspa flavor should be set to xenomai or evl")
+    endif()
+endif()
 
 ###############################
 # Sub-directory configuration #
@@ -162,39 +186,52 @@ add_subdirectory(elklog)
 
 add_subdirectory(third-party EXCLUDE_FROM_ALL)
 
-#################
-# Xenomai setup #
-#################
+###############
+# Raspa setup #
+###############
 
-if (${SUSHI_WITH_XENOMAI})
-    message("Building with Xenomai support")
+if (${SUSHI_WITH_RASPA})
 
-    # External libraries:
-    # explicitly link with cobalt lib
-    set(XENOMAI_BASE_DIR "/usr/xenomai" CACHE STRING "xenomai base dir path")
+    find_library(RASPA_LIB
+            NAMES raspa
+            PATHS /usr/lib /usr/local/lib
+            )
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${RASPA_LIB} asound)
+    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_RASPA)
 
     if (NOT "$ENV{CMAKE_SYSROOT}" STREQUAL "")
-        set(CMAKE_SYSROOT "$ENV{CMAKE_SYSROOT}")
-        message("ENV_CMAKE_SYSROOT = " $ENV{CMAKE_SYSROOT})
-    endif()
-    if (NOT "${CMAKE_SYSROOT}" STREQUAL "")
-        set(XENOMAI_BASE_DIR "${CMAKE_SYSROOT}/usr/xenomai")
-        message("XENOMAI_BASE_DIR is " ${XENOMAI_BASE_DIR})
+            set(CMAKE_SYSROOT "$ENV{CMAKE_SYSROOT}")
+            message("ENV_CMAKE_SYSROOT = " $ENV{CMAKE_SYSROOT})
     endif()
 
-    find_library(COBALT_LIB cobalt HINTS ${XENOMAI_BASE_DIR}/lib)
+    # Determine whether to link with evl or cobalt lib
+    if (${SUSHI_RASPA_FLAVOR} MATCHES "xenomai")
 
-    set(TWINE_WITH_XENOMAI ON CACHE BOOL "" FORCE)
-    find_library(RASPA_LIB
-                 NAMES raspa
-                 PATHS /usr/lib /usr/local/lib
-                 )
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} asound ${RASPA_LIB} ${COBALT_LIB})
+        # External libraries:
+        # explicitly link with cobalt lib
+        set(XENOMAI_BASE_DIR "/usr/xenomai" CACHE STRING "xenomai base dir path")
 
-    # Compile definitions
-    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_XENOMAI)
-else()
-    set(TWINE_WITH_XENOMAI OFF CACHE BOOL "" FORCE)
+        if (NOT "$ENV{CMAKE_SYSROOT}" STREQUAL "")
+            set(CMAKE_SYSROOT "$ENV{CMAKE_SYSROOT}")
+            message("ENV_CMAKE_SYSROOT = " $ENV{CMAKE_SYSROOT})
+        endif()
+
+        if (NOT "${CMAKE_SYSROOT}" STREQUAL "")
+            set(XENOMAI_BASE_DIR "${CMAKE_SYSROOT}/usr/xenomai")
+            message("XENOMAI_BASE_DIR is " ${XENOMAI_BASE_DIR})
+        endif()
+
+        find_library(COBALT_LIB cobalt HINTS ${XENOMAI_BASE_DIR}/lib)
+        set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${COBALT_LIB})
+
+    elseif (${SUSHI_RASPA_FLAVOR} MATCHES "evl")
+        message("Building with EVL support")
+        find_library(EVL_LIB
+        NAMES evl
+        PATHS /usr/lib /usr/local/lib
+        )
+        set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${EVL_LIB})
+    endif()
 endif()
 
 ##############
@@ -227,6 +264,28 @@ if (${SUSHI_WITH_PORTAUDIO})
 
     # Compile definitions
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_PORTAUDIO)
+endif()
+
+if (APPLE)
+    set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_APPLE_THREADING)
+
+    ###################
+    # CoreAudio setup #
+    ###################
+
+    if (${SUSHI_WITH_APPLE_COREAUDIO})
+        message("Building with Apple CoreAudio support.")
+
+        # Compile definitions
+        set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_APPLE_COREAUDIO)
+
+        set(ADDITIONAL_APPLE_COREAUDIO_SOURCES  src/audio_frontends/apple_coreaudio/apple_coreaudio_utils.cpp
+                                                src/audio_frontends/apple_coreaudio/apple_coreaudio_object.cpp
+                                                src/audio_frontends/apple_coreaudio/apple_coreaudio_device.mm)
+
+        set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} "-framework CoreAudio -framework Foundation")
+    endif()
+
 endif()
 
 ###################
@@ -365,8 +424,15 @@ if (${SUSHI_WITH_VST3})
     # Compiler definitions
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_VST3)
 
-    # Triggering mda-vst3 build - used by sample sushi json configurations under misc/config_files.
-    set_target_properties(mda-vst3 PROPERTIES EXCLUDE_FROM_ALL False)
+
+    # In yocto env / cross compiling scenrarios, this is not needed as mda-vst3 plugins are
+    # built already. Also, this causes an "exec-format" error since the plugins need a specific
+    # method of compilation during cross compilation process.
+    if (NOT CMAKE_CROSSCOMPILING)
+        # Triggering mda-vst3 build - used by sample sushi json configurations under misc/config_files.
+        set_target_properties(mda-vst3 PROPERTIES EXCLUDE_FROM_ALL False)
+    endif()
+
 endif()
 
 #############
@@ -453,11 +519,26 @@ if (${SUSHI_WITH_SENTRY})
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_SENTRY -DSUSHI_SENTRY_DSN="${SUSHI_SENTRY_DSN}")
 endif()
 
+##############
+#  Freeverb  #
+##############
+
+set(FREEVERB_DIR ${PROJECT_SOURCE_DIR}/third-party/freeverb/Components)
+set(FREEVERB_SOURCES ${FREEVERB_DIR}/allpass.cpp
+                     ${FREEVERB_DIR}/comb.cpp
+                     ${FREEVERB_DIR}/revmodel.cpp
+)
+
+
 ####################
 #  Main Target     #
 ####################
 
 set(SOURCE_FILES
+    src/main.cpp
+    src/exit_control.cpp
+    src/logging.cpp
+    src/json_utils.cpp
     src/utils.cpp
     src/audio_frontends/base_audio_frontend.cpp
     src/concrete_sushi.cpp
@@ -465,6 +546,7 @@ set(SOURCE_FILES
     src/audio_frontends/reactive_frontend.cpp
     src/audio_frontends/jack_frontend.cpp
     src/audio_frontends/portaudio_frontend.cpp
+    src/audio_frontends/apple_coreaudio_frontend.cpp
     src/audio_frontends/portaudio_devices_dump.cpp
     src/audio_frontends/xenomai_raspa_frontend.cpp
     src/control_frontends/base_control_frontend.cpp
@@ -525,6 +607,7 @@ set(SOURCE_FILES
     src/plugins/lfo_plugin.cpp
     src/plugins/passthrough_plugin.cpp
     src/plugins/equalizer_plugin.cpp
+    src/plugins/freeverb_plugin.cpp
     src/plugins/peak_meter_plugin.cpp
     src/plugins/return_plugin.cpp
     src/plugins/sample_player_plugin.cpp
@@ -534,10 +617,30 @@ set(SOURCE_FILES
     src/plugins/send_return_factory.cpp
     src/plugins/step_sequencer_plugin.cpp
     src/plugins/transposer_plugin.cpp
+    src/plugins/wav_streamer_plugin.cpp
     src/plugins/wav_writer_plugin.cpp
     src/plugins/mono_summing_plugin.cpp
     src/plugins/stereo_mixer_plugin.cpp
-    src/audio_frontends/offline_frontend.cpp
+    src/plugins/brickworks/compressor_plugin.cpp
+    src/plugins/brickworks/bitcrusher_plugin.cpp
+    src/plugins/brickworks/wah_plugin.cpp
+    src/plugins/brickworks/eq3band_plugin.cpp
+    src/plugins/brickworks/phaser_plugin.cpp
+    src/plugins/brickworks/chorus_plugin.cpp
+    src/plugins/brickworks/vibrato_plugin.cpp
+    src/plugins/brickworks/flanger_plugin.cpp
+    src/plugins/brickworks/combdelay_plugin.cpp
+    src/plugins/brickworks/saturation_plugin.cpp
+    src/plugins/brickworks/noise_gate_plugin.cpp
+    src/plugins/brickworks/tremolo_plugin.cpp
+    src/plugins/brickworks/notch_plugin.cpp
+    src/plugins/brickworks/multi_filter_plugin.cpp
+    src/plugins/brickworks/highpass_plugin.cpp
+    src/plugins/brickworks/clip_plugin.cpp
+    src/plugins/brickworks/fuzz_plugin.cpp
+    src/plugins/brickworks/dist_plugin.cpp
+    src/plugins/brickworks/drive_plugin.cpp
+    src/plugins/brickworks/simple_synth_plugin.cppsrc/audio_frontends/offline_frontend.cpp
     src/audio_frontends/reactive_frontend.cpp
 )
 
@@ -558,7 +661,11 @@ set(INCLUDE_DIRS ${INCLUDE_DIRS}
                  "${PROJECT_SOURCE_DIR}/src"
                  "${PROJECT_SOURCE_DIR}"
                  "${PROJECT_SOURCE_DIR}/third-party/vst3sdk"
-                 "${PROJECT_SOURCE_DIR}/third-party/link/include")
+                 "${PROJECT_SOURCE_DIR}/third-party/link/include"
+                 "${PROJECT_SOURCE_DIR}/third-party/brickworks/include"
+                 "${FREEVERB_DIR}"
+)
+
 
 set(PUBLIC_INCLUDE_DIRS "${CMAKE_BINARY_DIR}" # for generated version.h
                         "${PROJECT_SOURCE_DIR}/third-party/optionparser/"

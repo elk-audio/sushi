@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -51,13 +51,16 @@ LV2_Worker_Status Worker::schedule(LV2_Worker_Schedule_Handle handle, uint32_t s
         Lv2FifoItem request;
         request.size = size;
 
-        if (size > WORKER_REQUEST_SIZE)
+        if (size > request.block.size())
         {
             return LV2_WORKER_ERR_NO_SPACE;
         }
 
         memcpy(request.block.data(), data, size);
-        worker->requests().push(request);
+        if (!worker->requests().push(request))
+        {
+            return LV2_WORKER_ERR_NO_SPACE;
+        }
         wrapper->request_worker_callback(&LV2_Wrapper::worker_callback);
     }
     else

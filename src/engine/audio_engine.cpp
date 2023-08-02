@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Real time audio processing engine
- * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
 #include <fstream>
@@ -92,9 +92,10 @@ void ClipDetector::detect_clipped_samples(const ChunkSampleBuffer& buffer, RtSaf
 
 AudioEngine::AudioEngine(float sample_rate,
                          int rt_cpu_cores,
+                         std::optional<std::string> device_name,
                          bool debug_mode_sw,
                          dispatcher::BaseEventDispatcher* event_dispatcher) : BaseEngine::BaseEngine(sample_rate),
-                                                          _audio_graph(rt_cpu_cores, MAX_TRACKS, debug_mode_sw),
+                                                          _audio_graph(rt_cpu_cores, MAX_TRACKS, sample_rate, device_name, debug_mode_sw),
                                                           _audio_in_connections(MAX_AUDIO_CONNECTIONS),
                                                           _audio_out_connections(MAX_AUDIO_CONNECTIONS),
                                                           _transport(sample_rate, &_main_out_queue),
@@ -721,9 +722,9 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
         return EngineReturnStatus::ERROR;
     }
 
-    plugin->set_enabled(true);
     plugin->set_input_channels(std::min(plugin->max_input_channels(), track->input_channels()));
     plugin->set_output_channels(std::min(plugin->max_output_channels(), track->input_channels()));
+    plugin->set_enabled(true);
 
     if (this->realtime())
     {

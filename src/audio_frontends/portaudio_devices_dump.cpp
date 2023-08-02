@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Utility functions for dumping Portaudio devices info
- * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
 #ifndef SUSHI_PORTAUDIO_DEVICES_DUMP_H
@@ -41,7 +41,7 @@ ELKLOG_GET_LOGGER_WITH_MODULE_NAME("portaudio");
  */
 rapidjson::Document generate_portaudio_devices_info_document()
 {
-    sushi::internal::audio_frontend::PortAudioFrontend frontend{nullptr};
+    sushi::internal::audio_frontend::PortAudioFrontend frontend {nullptr};
 
     rapidjson::Document document;
     document.SetObject();

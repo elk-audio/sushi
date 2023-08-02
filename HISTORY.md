@@ -1,3 +1,32 @@
+## 1.1.0
+
+New features:
+  * Added Apple CoreAudio frontend
+  * Support for aggregate devices
+  * Brickworks plugin suite added
+  * Wave Streamer plugin
+  * Freeverb plugin
+  * TWINE updated to 0.4.0 with workgroup and EVL support
+  * Rapidjson updated to latest master branch
+  * Optimised State changes for VST3 plugins
+  * Crash logging with Sentry
+  * Device dump now includes sample rate and buffer size support
+
+Fixes:
+  * LV2 worker request space too small
+  * LV2 logging not handled correctly
+  * Incorrect velocity scaling on Midi output from LV2 plugins
+  * VST3 plugin initialization order fix
+  * Parameter notification fix
+  * Incorrect file length display in WaveStreamer plugin
+  * Seek precision fix in WaveStreamer plugin
+  * Audio channel setup now only called when plugin is disabled
+  * Send and return crash at exit
+
+Breaking changes:
+  * The argument --dump-portaudio-devs is changed to --dump-audio-devices and now requires a frontend to be specified (--coreaudio or --portaudio).
+  * Failure to set priority and/or workgroup on macOS will cause Sushi to exit.
+
 ## 1.0.0
 
 New features:

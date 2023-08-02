@@ -1,0 +1,212 @@
+{
+    "host_config" : {
+        "samplerate" : 48000,
+        "playing_mode" : "playing"
+    },
+    "tracks" : [
+        {
+            "name" : "main",
+            "channels" : 2,
+            "inputs" : [],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "uid" : "sushi.testing.wav_streamer",
+                    "name" : "streamer",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.brickworks.noise_gate",
+                    "name" : "noise_gate",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.brickworks.highpass",
+                    "name" : "highpass",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.brickworks.multi_filter",
+                    "name" : "multi_filter",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.brickworks.saturation",
+                    "name" : "saturation",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.brickworks.dist",
+                    "name" : "dist",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.brickworks.drive",
+                    "name" : "drive",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.brickworks.fuzz",
+                    "name" : "fuzz",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.brickworks.bitcrusher",
+                    "name" : "bitcrusher",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.brickworks.flanger",
+                    "name" : "flanger",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.brickworks.phaser",
+                    "name" : "phaser",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.brickworks.tremolo",
+                    "name" : "tremolo",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.brickworks.vibrato",
+                    "name" : "vibrato",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.brickworks.wah",
+                    "name" : "wah",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.brickworks.chorus",
+                    "name" : "chorus",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.brickworks.comb_delay",
+                    "name" : "comb_delay",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.brickworks.compressor",
+                    "name" : "compressor",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.brickworks.notch",
+                    "name" : "notch",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.brickworks.eq3band",
+                    "name" : "eq3band",
+                    "type" : "internal"
+                },
+                {
+                    "uid" : "sushi.brickworks.clip",
+                    "name" : "clip",
+                    "type" : "internal"
+                }
+            ]
+        }
+    ],
+    "initial_state" : [
+        {
+            "processor" : "streamer",
+            "properties" : {
+                "file" : "/home/mind/soundfiles/elecguit.wav"
+            }
+        },
+        {
+            "processor" : "streamer",
+            "parameters" : {
+                "playing" : 1,
+                "loop" : 1
+            }
+        },
+        {
+            "processor" : "noise_gate",
+            "bypassed" : true
+        },
+        {
+            "processor" : "highpass",
+            "bypassed" : true
+        },
+        {
+            "processor" : "multi_filter",
+            "bypassed" : true
+        },
+        {
+            "processor" : "saturation",
+            "bypassed" : true
+        },
+        {
+            "processor" : "dist",
+            "bypassed" : true
+        },
+        {
+            "processor" : "drive",
+            "bypassed" : true
+        },
+        {
+            "processor" : "fuzz",
+            "bypassed" : true
+        },
+        {
+            "processor" : "bitcrusher",
+            "bypassed" : true
+        },
+        {
+            "processor" : "flanger",
+            "bypassed" : true
+        },
+        {
+            "processor" : "phaser",
+            "bypassed" : true
+        },
+        {
+            "processor" : "tremolo",
+            "bypassed" : true
+        },
+        {
+            "processor" : "vibrato",
+            "bypassed" : true
+        },
+        {
+            "processor" : "wah",
+            "bypassed" : true
+        },
+        {
+            "processor" : "chorus",
+            "bypassed" : true
+        },
+        {
+            "processor" : "comb_delay",
+            "bypassed" : true
+        },
+        {
+            "processor" : "compressor",
+            "bypassed" : true
+        },
+        {
+            "processor" : "notch",
+            "bypassed" : true
+        },
+        {
+            "processor" : "eq3band",
+            "bypassed" : true
+        },
+        {
+            "processor" : "clip",
+            "bypassed" : true
+        }
+    ]
+}

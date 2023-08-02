@@ -1,6 +1,6 @@
 /**
  * @brief Mock object for ProcessorContainer
- * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
 #ifndef SUSHI_MOCK_PROCESSOR_CONTAINER_H

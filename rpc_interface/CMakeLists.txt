@@ -4,11 +4,21 @@
 
 find_package(gRPC REQUIRED)
 
+
 ################################
 #  gRPC / Protobuf generation  #
 ################################
 
 set(PROTOS protos/sushi_rpc.proto)
+
+# In yocto environments, yocto grpc does not include gRPCPluginTargets.cmake
+# when find_package(gRPC REQUIRED) is called.
+if(CMAKE_CROSSCOMPILING)
+    find_program(_gRPC_CPP_PLUGIN grpc_cpp_plugin)
+else()
+    set(_gRPC_CPP_PLUGIN \$<TARGET_FILE:gRPC::grpc_cpp_plugin>)
+endif()
+
 
 # Intermediate library target with the generated protobuf objects
 add_library(protos-lib OBJECT)
@@ -21,7 +31,7 @@ protobuf_generate(
     LANGUAGE grpc
     GENERATE_EXTENSIONS .grpc.pb.h .grpc.pb.cc
     PLUGIN
-    "protoc-gen-grpc=\$<TARGET_FILE:gRPC::grpc_cpp_plugin>"
+    "protoc-gen-grpc=${_gRPC_CPP_PLUGIN}"
 )
 
 ######################
@@ -45,3 +55,8 @@ target_link_libraries(sushi_rpc PUBLIC gRPC::grpc++ protos-lib)
 target_compile_features(sushi_rpc PRIVATE cxx_std_17)
 target_compile_options(sushi_rpc PRIVATE -Wall -Wextra -fPIC)
 
+##################
+#  Install step  #
+##################
+
+install(FILES ${PROTOS} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/sushi)

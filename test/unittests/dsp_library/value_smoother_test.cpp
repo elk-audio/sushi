@@ -38,9 +38,11 @@ protected:
     {
         _module_under_test_filter.set_lag_time(std::chrono::milliseconds(5), TEST_SAMPLE_RATE);
         _module_under_test_ramp.set_lag_time(std::chrono::milliseconds(5), TEST_SAMPLE_RATE);
+        _module_under_test_exp_ramp.set_lag_time(std::chrono::milliseconds(5), TEST_SAMPLE_RATE);
     }
     ValueSmootherFilter<float> _module_under_test_filter;
     ValueSmootherRamp<float> _module_under_test_ramp;
+    ValueSmootherExpRamp<float> _module_under_test_exp_ramp;
  };
 
 
@@ -57,10 +59,19 @@ TEST_F(ValueSmootherTest, TestExpFloat)
     test_common(_module_under_test_filter);
     /* As the filter version approaches the target value asymptotically, it needs
      * to run a few more cycles before the value comes close enough */
-    for (int i = 0; i < 15; ++i)
+    for (int i = 0; i < 25; ++i)
     {
         _module_under_test_filter.next_value();
     }
     EXPECT_TRUE(_module_under_test_filter.stationary());
     EXPECT_NEAR(TEST_TARGET_VALUE, _module_under_test_filter.value(), 0.001);
+}
+
+
+TEST_F(ValueSmootherTest, TestExponentialFloat)
+{
+    test_common(_module_under_test_exp_ramp);
+
+    EXPECT_TRUE(_module_under_test_exp_ramp.stationary());
+    EXPECT_FLOAT_EQ(TEST_TARGET_VALUE, _module_under_test_exp_ramp.value());
 }

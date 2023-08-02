@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @Brief Callbacks for LV2 extension features.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
 #ifndef SUSHI_LV2_FEATURES_H
@@ -67,7 +67,7 @@ Port* port_by_symbol(Model* model, const char* sym);
 int lv2_vprintf(LV2_Log_Handle handle,
             LV2_URID type,
             const char *fmt,
-            va_list ap);
+            va_list args);
 
 int lv2_printf(LV2_Log_Handle handle,
            LV2_URID type,

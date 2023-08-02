@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -16,37 +16,43 @@
 /**
  * @brief Wrapper around the list of tracks used for rt processing and its associated
  *        multicore management
- * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include "twine/src/twine_internal.h"
-
 #include "audio_graph.h"
+#include "logging.h"
+#include "exit_control.h"
 
 namespace sushi::internal::engine {
 
 constexpr bool DISABLE_DENORMALS = true;
 
+constexpr int SUSHI_EXIT_SIGNAL = 32;
+
+/**
+ * Real-time worker thread callback method.
+ */
 void external_render_callback(void* data)
 {
-    /* Signal that this is a realtime audio processing thread */
-    twine::ThreadRtFlag rt_flag;
+    auto tracks = reinterpret_cast<std::vector<sushi::engine::Track*>*>(data);
 
-    auto tracks = reinterpret_cast<std::vector<Track*>*>(data);
-    for (auto i : *tracks)
+    for (auto track : *tracks)
     {
-        i->render();
+        track->render();
     }
 }
 
 AudioGraph::AudioGraph(int cpu_cores,
                        int max_no_tracks,
+                       [[maybe_unused]] float sample_rate,
+                       [[maybe_unused]] std::optional<std::string> device_name,
                        bool debug_mode_switches) : _audio_graph(cpu_cores),
                                                    _event_outputs(cpu_cores),
                                                    _cores(cpu_cores),
                                                    _current_core(0)
 {
     assert(cpu_cores > 0);
+
     if (_cores > 1)
     {
         twine::apple::AppleMultiThreadData apple_data;

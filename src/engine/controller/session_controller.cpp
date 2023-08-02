@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Implementation of external control interface for sushi.
- * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
 #include <ctime>
@@ -381,6 +381,11 @@ void SessionController::_restore_tracks(std::vector<control::TrackState> tracks)
                 {
                     std::tie(status, track_id) = _engine->create_track(track.name, track.channels);
                 }
+                break;
+
+            default:
+                track_id = 0;
+                status = EngineReturnStatus::INVALID_TRACK;
         }
 
         auto track_instance = _processors->mutable_track(track_id);

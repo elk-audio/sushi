@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,9 +15,9 @@
 
  /**
  * @brief Frontend using Xenomai with RASPA library for XMOS board.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
-#ifdef SUSHI_BUILD_WITH_XENOMAI
+#ifdef SUSHI_BUILD_WITH_RASPA
 
 #include <cerrno>
 
@@ -31,7 +31,7 @@ namespace sushi::internal::audio_frontend {
 /**
  * Ensure version compatibility with raspa library
  */
-constexpr int REQUIRED_RASPA_VER_MAJ = 0;
+constexpr int REQUIRED_RASPA_VER_MAJ = 1;
 constexpr int REQUIRED_RASPA_VER_MIN = 1;
 static_assert(REQUIRED_RASPA_VER_MAJ == RASPA_VERSION_MAJ, "Raspa major version mismatch");
 static_assert(REQUIRED_RASPA_VER_MIN == RASPA_VERSION_MIN, "Raspa minor version mismatch");
@@ -198,7 +198,7 @@ AudioFrontendStatus XenomaiRaspaFrontend::config_audio_channels(const XenomaiRas
 
 } // end namespace sushi::internal::audio_frontend
 
-#else // SUSHI_BUILD_WITH_XENOMAI
+#else // SUSHI_BUILD_WITH_RASPA
 
 #include "xenomai_raspa_frontend.h"
 
@@ -220,4 +220,4 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration*)
 
 }
 
-#endif // SUSHI_BUILD_WITH_XENOMAI
+#endif // SUSHI_BUILD_WITH_RASPA

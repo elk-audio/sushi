@@ -22,9 +22,16 @@ if (${SUSHI_WITH_VST3})
 
     # Exclude VstGui, hosting samples and skip validation
     set(SMTG_ADD_VSTGUI OFF CACHE BOOL "" FORCE)
-    set(SMTG_ADD_VST3_PLUGINS_SAMPLES ON CACHE BOOL "" FORCE)
     set(SMTG_ADD_VST3_HOSTING_SAMPLES OFF CACHE BOOL "" FORCE)
     set(SMTG_RUN_VST_VALIDATOR OFF CACHE BOOL "" FORCE)
+
+    # if cross compiling, switch off the create module info post build step
+    if(CMAKE_CROSSCOMPILING)
+        set(SMTG_CREATE_MODULE_INFO OFF CACHE BOOL "" FORCE)
+    endif()
+
+    # VST3 example plugins are needed by unit tests
+    set(SMTG_ADD_VST3_PLUGINS_SAMPLES ON CACHE BOOL "" FORCE)
 
     # Don't install example plugins in ~/.vst3, keep them in the build directory
     set(SMTG_PLUGIN_TARGET_PATH ${CMAKE_CURRENT_BINARY_DIR}/vst3sdk/VST3 CACHE STRING "" FORCE)
@@ -54,13 +61,16 @@ if (${SUSHI_WITH_VST3})
     set(VST_SDK TRUE)
     set(SDK_IDE_PLUGIN_EXAMPLES_FOLDER FOLDER "PlugInExamples")
 
-    add_subdirectory(vst3sdk/public.sdk/samples/vst)
-
     # Suppress warnings to keep our build output clean
     set(VST3_COMPILE_FLAGS "-Wno-unused-parameter -Wno-extra -Wno-deprecated -Wno-cpp -Wno-pointer-bool-conversion -Wno-suggest-override -Wno-format")
-    set_target_properties(base PROPERTIES COMPILE_FLAGS ${VST3_COMPILE_FLAGS})
-    set_target_properties(adelay PROPERTIES COMPILE_FLAGS ${VST3_COMPILE_FLAGS})
-    set_target_properties(mda-vst3 PROPERTIES COMPILE_FLAGS ${VST3_COMPILE_FLAGS})
+
+    if (SMTG_ADD_VST3_PLUGINS_SAMPLES)
+        add_subdirectory(vst3sdk/public.sdk/samples/vst)
+        set_target_properties(mda-vst3 PROPERTIES COMPILE_FLAGS ${VST3_COMPILE_FLAGS})
+        set_target_properties(base PROPERTIES COMPILE_FLAGS ${VST3_COMPILE_FLAGS})
+        set_target_properties(adelay PROPERTIES COMPILE_FLAGS ${VST3_COMPILE_FLAGS})
+    endif()
+
 endif()
 
 #####################################################

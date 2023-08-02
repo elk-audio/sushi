@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -16,7 +16,7 @@
 /**
  * @brief Class for wrapping the 2 data sets (rt and non-rt) needed for realtime
  *        safe operation of Audio and Cv/Gate connections
- * @copyright 2017-2020 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
 #ifndef SUSHI_CONNECTION_ROUTER_H

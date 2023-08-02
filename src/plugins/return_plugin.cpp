@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Aux return plugin to return audio from a send plugin
- * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
 #include <algorithm>
@@ -130,6 +130,7 @@ void ReturnPlugin::process_event(const RtEvent& event)
         case RtEventType::SET_BYPASS:
         {
             bool bypassed = static_cast<bool>(event.processor_command_event()->value());
+            Processor::set_bypassed(bypassed);
             _bypass_manager.set_bypass(bypassed, _sample_rate);
             break;
         }

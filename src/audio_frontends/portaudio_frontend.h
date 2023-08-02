@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
  /**
  * @brief Realtime audio frontend for PortAudio
- * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
 #ifndef SUSHI_PORTAUDIO_FRONTEND_H
@@ -37,6 +37,19 @@
 #include "base_audio_frontend.h"
 
 namespace sushi::internal::audio_frontend {
+
+
+#ifdef SUSHI_BUILD_WITH_PORTAUDIO
+
+/**
+ * @brief Given an optional portaudio output device ID, this attempts to fetch the corresponding name.
+ *        If no id is passed (the optional argument has no value), the default output device is used.
+ * @param portaudio_output_device_id an optional int device id.
+ * @return An optional std::string, if a value can be resolved.
+ */
+[[nodiscard]] std::optional<std::string> get_portaudio_output_device_name(std::optional<int> portaudio_output_device_id);
+
+#endif
 
 struct PortaudioDeviceInfo
 {

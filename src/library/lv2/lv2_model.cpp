@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @Brief Wrapper for LV2 plugins - Wrapper for LV2 plugins - model.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
 #ifdef SUSHI_BUILD_WITH_LV2
@@ -417,6 +417,8 @@ void Model::_initialize_map_feature()
     this->_map.handle = this;
     this->_map.map = map_uri;
     init_feature(&this->_features.map_feature, LV2_URID__map, &this->_map);
+
+    lv2_atom_forge_init(&_forge, &_map);
 }
 
 void Model::_initialize_unmap_feature()

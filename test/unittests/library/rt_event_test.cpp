@@ -13,44 +13,50 @@ TEST (TestRealtimeEvents, TestFactoryFunction)
     auto note_on_event = event.keyboard_event();
     EXPECT_EQ(ObjectId(123), note_on_event->processor_id());
     EXPECT_EQ(1, note_on_event->sample_offset());
+    EXPECT_EQ(0, note_on_event->channel());
     EXPECT_EQ(46, note_on_event->note());
     EXPECT_FLOAT_EQ(0.5, note_on_event->velocity());
 
-    event = RtEvent::make_note_off_event(122, 2, 0, 47, 0.5);
+    event = RtEvent::make_note_off_event(122, 2, 1, 47, 0.5);
     EXPECT_EQ(RtEventType::NOTE_OFF, event.type());
     auto note_off_event = event.keyboard_event();
     EXPECT_EQ(ObjectId(122), note_off_event->processor_id());
     EXPECT_EQ(2, note_off_event->sample_offset());
+    EXPECT_EQ(1, note_on_event->channel());
     EXPECT_EQ(47, note_off_event->note());
     EXPECT_FLOAT_EQ(0.5, note_off_event->velocity());
 
-    event = RtEvent::make_note_aftertouch_event(124, 3, 0, 48, 0.5);
+    event = RtEvent::make_note_aftertouch_event(124, 3, 2, 48, 0.5);
     EXPECT_EQ(RtEventType::NOTE_AFTERTOUCH, event.type());
     auto note_at_event = event.keyboard_event();
     EXPECT_EQ(ObjectId(124), note_at_event->processor_id());
     EXPECT_EQ(3, note_at_event->sample_offset());
+    EXPECT_EQ(2, note_on_event->channel());
     EXPECT_EQ(48, note_at_event->note());
     EXPECT_FLOAT_EQ(0.5, note_at_event->velocity());
 
-    event = RtEvent::make_aftertouch_event(111, 3, 0, 0.6);
+    event = RtEvent::make_aftertouch_event(111, 3, 2, 0.6);
     EXPECT_EQ(RtEventType::AFTERTOUCH, event.type());
     auto at_event = event.keyboard_common_event();
     EXPECT_EQ(ObjectId(111), at_event->processor_id());
     EXPECT_EQ(3, at_event->sample_offset());
+    EXPECT_EQ(2, note_on_event->channel());
     EXPECT_FLOAT_EQ(0.6, at_event->value());
 
-    event = RtEvent::make_pitch_bend_event(112, 4, 0, 0.7);
+    event = RtEvent::make_pitch_bend_event(112, 4, 3, 0.7);
     EXPECT_EQ(RtEventType::PITCH_BEND, event.type());
     auto pb_event = event.keyboard_common_event();
     EXPECT_EQ(ObjectId(112), pb_event->processor_id());
     EXPECT_EQ(4, pb_event->sample_offset());
+    EXPECT_EQ(3, note_on_event->channel());
     EXPECT_FLOAT_EQ(0.7, pb_event->value());
 
-    event = RtEvent::make_kb_modulation_event(113, 5, 0, 0.8);
+    event = RtEvent::make_kb_modulation_event(113, 5, 4, 0.8);
     EXPECT_EQ(RtEventType::MODULATION, event.type());
     auto mod_event = event.keyboard_common_event();
     EXPECT_EQ(ObjectId(113), mod_event->processor_id());
     EXPECT_EQ(5, mod_event->sample_offset());
+    EXPECT_EQ(4, note_on_event->channel());
     EXPECT_FLOAT_EQ(0.8, mod_event->value());
 
     event = RtEvent::make_parameter_change_event(125, 4, 64, 0.5);
@@ -224,6 +230,72 @@ TEST (TestRealtimeEvents, TestFactoryFunction)
     event = RtEvent::make_processor_notify_event(30, ProcessorNotifyRtEvent::Action::PARAMETER_UPDATE);
     EXPECT_EQ(RtEventType::NOTIFY, event.type());
     EXPECT_EQ(ProcessorNotifyRtEvent::Action::PARAMETER_UPDATE, event.processor_notify_event()->action());
+}
+
+TEST (TestRealtimeEvents, TestMidiFactoryFunction)
+{
+    midi::NoteOnMessage note_on{.channel = 0, .note = 65, .velocity = 127};
+
+    auto event = RtEvent::make_note_on_event(123, 1, note_on);
+    EXPECT_EQ(RtEventType::NOTE_ON, event.type());
+    auto note_on_event = event.keyboard_event();
+    EXPECT_EQ(ObjectId(123), note_on_event->processor_id());
+    EXPECT_EQ(1, note_on_event->sample_offset());
+    EXPECT_EQ(0, note_on_event->channel());
+    EXPECT_EQ(65, note_on_event->note());
+    EXPECT_FLOAT_EQ(1.0, note_on_event->velocity());
+
+    midi::NoteOffMessage note_off{.channel = 1, .note = 66, .velocity = 127};
+
+    event = RtEvent::make_note_off_event(122, 2, note_off);
+    EXPECT_EQ(RtEventType::NOTE_OFF, event.type());
+    auto note_off_event = event.keyboard_event();
+    EXPECT_EQ(ObjectId(122), note_off_event->processor_id());
+    EXPECT_EQ(2, note_off_event->sample_offset());
+    EXPECT_EQ(1, note_on_event->channel());
+    EXPECT_EQ(66, note_off_event->note());
+    EXPECT_FLOAT_EQ(1.0, note_off_event->velocity());
+
+    midi::PolyKeyPressureMessage poly_press{.channel = 2, .note = 67, .pressure = 127};
+
+    event = RtEvent::make_note_aftertouch_event(124, 3, poly_press);
+    EXPECT_EQ(RtEventType::NOTE_AFTERTOUCH, event.type());
+    auto note_at_event = event.keyboard_event();
+    EXPECT_EQ(ObjectId(124), note_at_event->processor_id());
+    EXPECT_EQ(3, note_at_event->sample_offset());
+    EXPECT_EQ(2, note_on_event->channel());
+    EXPECT_EQ(67, note_at_event->note());
+    EXPECT_FLOAT_EQ(1.0, note_at_event->velocity());
+
+    midi::ChannelPressureMessage ch_press{.channel = 3, .pressure = 127};
+
+    event = RtEvent::make_aftertouch_event(111, 4, ch_press);
+    EXPECT_EQ(RtEventType::AFTERTOUCH, event.type());
+    auto at_event = event.keyboard_common_event();
+    EXPECT_EQ(ObjectId(111), at_event->processor_id());
+    EXPECT_EQ(4, at_event->sample_offset());
+    EXPECT_EQ(3, note_on_event->channel());
+    EXPECT_FLOAT_EQ(1.0, at_event->value());
+
+    midi::PitchBendMessage pitch_bnd{.channel = 4, .value = midi::PITCH_BEND_MIDDLE / 2};
+
+    event = RtEvent::make_pitch_bend_event(112, 5, pitch_bnd);
+    EXPECT_EQ(RtEventType::PITCH_BEND, event.type());
+    auto pb_event = event.keyboard_common_event();
+    EXPECT_EQ(ObjectId(112), pb_event->processor_id());
+    EXPECT_EQ(5, pb_event->sample_offset());
+    EXPECT_EQ(4, note_on_event->channel());
+    EXPECT_FLOAT_EQ(-0.5, pb_event->value());
+
+    midi::ControlChangeMessage mod{.channel = 5, .controller = midi::MOD_WHEEL_CONTROLLER_NO, .value = 127};
+
+    event = RtEvent::make_kb_modulation_event(113, 6, mod);
+    EXPECT_EQ(RtEventType::MODULATION, event.type());
+    auto mod_event = event.keyboard_common_event();
+    EXPECT_EQ(ObjectId(113), mod_event->processor_id());
+    EXPECT_EQ(6, mod_event->sample_offset());
+    EXPECT_EQ(5, note_on_event->channel());
+    EXPECT_FLOAT_EQ(1.0f, mod_event->value());
 }
 
 TEST(TestRealtimeEvents, TestReturnableEvents)

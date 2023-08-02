@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
  /**
  * @brief Class to configure the audio engine using Json config files.
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
  *
  * @details This file contains class JsonConfigurator which provides public methods
  * to read configuration data from Json config files, validate its schema and configure

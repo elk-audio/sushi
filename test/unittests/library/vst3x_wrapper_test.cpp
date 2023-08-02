@@ -426,10 +426,11 @@ TEST_F(TestVst3xWrapper, TestMultipleStates)
     state.add_parameter_change(desc->id(), 0.55);
     status = _module_under_test->set_state(&state, true);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
-    event = _host_control._dummy_dispatcher.retrieve_event();
-    _module_under_test->process_event(event->to_rt_event(0));
 
     EXPECT_FALSE(_module_under_test->_state_change_queue.wasEmpty());
+
+    event = _host_control._dummy_dispatcher.retrieve_event();
+    _module_under_test->process_event(event->to_rt_event(0));
 
     // Process twice and check that we got the value from the second state
     _module_under_test->process_audio(buffer, buffer);

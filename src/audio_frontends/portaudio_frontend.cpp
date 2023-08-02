@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Realtime audio frontend for PortAudio
- * @copyright 2017-2021 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
 #ifdef SUSHI_BUILD_WITH_PORTAUDIO
@@ -29,6 +29,32 @@
 namespace sushi::internal::audio_frontend {
 
 ELKLOG_GET_LOGGER_WITH_MODULE_NAME("portaudio");
+
+std::optional<std::string> get_portaudio_output_device_name(std::optional<int> portaudio_output_device_id)
+{
+    int device_index = -1;
+
+    if (portaudio_output_device_id.has_value())
+    {
+        device_index = portaudio_output_device_id.value();
+    }
+    else
+    {
+        device_index = Pa_GetDefaultOutputDevice();
+    }
+
+    sushi::audio_frontend::PortAudioFrontend frontend {nullptr};
+
+    auto device_info = frontend.device_info(device_index);
+
+    if (!device_info.has_value())
+    {
+        SUSHI_LOG_ERROR("Could not retrieve device info for Portaudio device with idx: {}", device_index);
+        return std::nullopt;
+    }
+
+    return device_info.value().name;
+}
 
 AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* config)
 {
@@ -155,6 +181,7 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
     if (_audio_output_channels + _cv_output_channels > 0)
     {
         ELKLOG_LOG_DEBUG("Connected output channels to {}", _output_device_info->name);
+        ELKLOG_LOG_INFO("Output device has {} available channels", _output_device_info->maxOutputChannels);
     }
     else
     {

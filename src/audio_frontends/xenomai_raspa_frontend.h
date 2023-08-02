@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -16,13 +16,13 @@
 /**
  * @brief Frontend using Xenomai rt framework
  *        and RTDM driver for audio over SPI
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
 #ifndef SUSHI_XENOMAI_RASPA_FRONTEND_H
 #define SUSHI_XENOMAI_RASPA_FRONTEND_H
 
-#ifdef SUSHI_BUILD_WITH_XENOMAI
+#ifdef SUSHI_BUILD_WITH_RASPA
 
 #include "base_audio_frontend.h"
 
@@ -104,7 +104,7 @@ private:
 } // end namespace sushi::internal::audio_frontend
 
 
-#else // SUSHI_BUILD_WITH_XENOMAI
+#else // SUSHI_BUILD_WITH_RASPA
 // Dummy frontend for non-Cobalt builds
 
 #include "base_audio_frontend.h"
@@ -128,5 +128,5 @@ public:
 
 } // end namespace sushi::internal::audio_frontend
 
-#endif // SUSHI_BUILD_WITH_XENOMAI
+#endif // SUSHI_BUILD_WITH_RASPA
 #endif // SUSHI_XENOMAI_RASPA_FRONTEND_H

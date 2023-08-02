@@ -1,6 +1,6 @@
 /**
  * @brief Helper and utility functions for unit tests
- * @copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
 #ifndef SUSHI_TEST_UTILS_H
@@ -9,6 +9,8 @@
 #include "sushi/sample_buffer.h"
 
 #include <iomanip>
+#include <random>
+#include <optional>
 
 using ::testing::internal::posix::GetEnv;
 using namespace sushi;
@@ -25,6 +27,27 @@ inline void fill_sample_buffer(SampleBuffer<size>& buffer, float value)
         std::fill(buffer.channel(ch), buffer.channel(ch) + size, value);
     }
 }
+
+
+template <int size>
+inline void fill_buffer_with_noise(SampleBuffer<size>& buffer, std::optional<int> seed=std::nullopt)
+{
+    std::ranlux24 rand_gen;
+    if (seed.has_value())
+    {
+        rand_gen.seed(seed.value());
+    }
+    std::uniform_real_distribution<float> dist{-1.0f, 1.0f};
+
+    for (int ch = 0; ch < buffer.channel_count(); ++ch)
+    {
+        for (int i = 0; i < size; ++i)
+        {
+            buffer.channel(ch)[i] = dist(rand_gen);
+        }
+    }
+}
+
 
 template <int size>
 inline void assert_buffer_value(float value, const SampleBuffer <size> &buffer)
@@ -46,6 +69,32 @@ inline void assert_buffer_value(float value, const SampleBuffer<size>& buffer, f
         for (int i = 0; i < size; ++i)
         {
             ASSERT_NEAR(value, buffer.channel(ch)[i], error_margin);
+        }
+    }
+}
+
+template <int size>
+inline void assert_buffer_non_null(const SampleBuffer <size> &buffer)
+{
+    for (int ch = 0; ch < buffer.channel_count(); ++ch)
+    {
+        float sum = 0;
+        for (int i = 0; i < size; ++i)
+        {
+            sum += std::abs(buffer.channel(ch)[i]);
+        }
+        ASSERT_GT(sum, 0.00001);
+    }
+}
+
+template <int size>
+inline void assert_buffer_not_nan(const SampleBuffer <size> &buffer)
+{
+    for (int ch = 0; ch < buffer.channel_count(); ++ch)
+    {
+        for (int i = 0; i < size; ++i)
+        {
+            ASSERT_FALSE(std::isnan(buffer.channel(ch)[i]));
         }
     }
 }

@@ -16,9 +16,12 @@ SET(TEST_FILES
     unittests/plugins/control_to_cv_plugin_test.cpp
     unittests/plugins/cv_to_control_plugin_test.cpp
     unittests/plugins/plugins_test.cpp
+    unittests/plugins/external_plugins_test.cpp
+    unittests/plugins/brickworks_simple_synth_test.cpp
     unittests/plugins/sample_player_plugin_test.cpp
     unittests/plugins/send_return_test.cpp
     unittests/plugins/step_sequencer_test.cpp
+    unittests/plugins/wav_streamer_plugin_test.cpp
     unittests/engine/audio_graph_test.cpp
     unittests/engine/track_test.cpp
     unittests/engine/engine_test.cpp
@@ -58,6 +61,7 @@ SET(TEST_FILES
     unittests/library/rt_event_test.cpp
     unittests/library/id_generator_test.cpp
     unittests/library/simple_fifo_test.cpp
+    unittests/library/fixed_stack_test.cpp
 )
 
 set(TEST_HELPER_FILES ${TEST_HELPER_FILES}
@@ -68,6 +72,7 @@ set(TEST_HELPER_FILES ${TEST_HELPER_FILES}
     ${PROJECT_SOURCE_DIR}/src/library/vst2x/vst2x_processor_factory.cpp
     ${PROJECT_SOURCE_DIR}/src/library/vst3x/vst3x_processor_factory.cpp
     ${PROJECT_SOURCE_DIR}/test/unittests/test_utils/portaudio_mockup.cpp
+    ${FREEVERB_SOURCES}
 )
 
 set(INCLUDE_DIRS ${INCLUDE_DIRS}
@@ -95,6 +100,10 @@ set(TEST_DEPENDENCIES "")
 ######################
 # Build options      #
 ######################
+
+if (APPLE)
+    set(TEST_COMPILE_DEFINITIONS ${TEST_COMPILE_DEFINITIONS} -DSUSHI_APPLE_THREADING)
+endif()
 
 # Build Test plugin, needed for dynamic library loading unit tests
 # Adapted from https://github.com/gmoe/vst-cmake
@@ -147,6 +156,7 @@ if (${SUSHI_WITH_VST2})
     set(TEST_COMPILE_DEFINITIONS ${TEST_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_VST2)
     if (APPLE)
         set(TEST_COMPILE_DEFINITIONS ${TEST_COMPILE_DEFINITIONS} -DVST2_TEST_PLUGIN_PATH="$<TARGET_BUNDLE_DIR:vst2_test_plugin>")
+        set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} "-framework CoreFoundation")
     else()
         set(TEST_COMPILE_DEFINITIONS ${TEST_COMPILE_DEFINITIONS} -DVST2_TEST_PLUGIN_PATH="$<TARGET_FILE:vst2_test_plugin>")
     endif()
@@ -161,6 +171,17 @@ endif()
 if (${SUSHI_WITH_PORTAUDIO})
     set(TEST_FILES ${TEST_FILES} unittests/audio_frontends/portaudio_frontend_test.cpp)
     set(TEST_COMPILE_DEFINITIONS ${TEST_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_PORTAUDIO)
+endif()
+
+if (${SUSHI_WITH_APPLE_COREAUDIO})
+    set(TEST_FILES ${TEST_FILES}
+            unittests/audio_frontends/apple_coreaudio_frontend_test.cpp
+            unittests/test_utils/apple_coreaudio_mockup.cpp
+            ../src/audio_frontends/apple_coreaudio/apple_coreaudio_object.cpp
+            ../src/audio_frontends/apple_coreaudio/apple_coreaudio_device.mm
+            ../src/audio_frontends/apple_coreaudio/apple_coreaudio_utils.cpp)
+    set(TEST_COMPILE_DEFINITIONS ${TEST_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_APPLE_COREAUDIO)
+    set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} "-framework CoreAudio -framework Foundation")
 endif()
 
 if (${SUSHI_WITH_VST3})
@@ -201,10 +222,17 @@ target_include_directories(unit_tests
             ${PUBLIC_INCLUDE_DIRS})
 
 target_link_libraries(unit_tests "${TEST_LINK_LIBRARIES}")
-add_dependencies(unit_tests ${TEST_DEPENDENCIES})
+if (TEST_DEPENDENCIES)
+    add_dependencies(unit_tests ${TEST_DEPENDENCIES})
+endif()
 
 # Disable Link in tests as this slows down the testing a lot due to network activity etc
 remove_definitions(-DSUSHI_BUILD_WITH_ABLETON_LINK)
+
+
+if(${SUSHI_DISABLE_MULTICORE_UNIT_TESTS})
+    target_compile_definitions(unit_tests PRIVATE -DDISABLE_MULTICORE_UNIT_TESTS)
+endif()
 
 add_test(unit_tests unit_tests)
 
@@ -212,9 +240,14 @@ add_test(unit_tests unit_tests)
 # Environment variable pointing to test/data/ is set so that
 # tests can read it to access data files maintaining an independent out-of-source build
 
-add_custom_target(run_tests ALL
-                  ${CMAKE_COMMAND}
-                  -E env "SUSHI_TEST_DATA_DIR=${PROJECT_SOURCE_DIR}/test/data"
-                  "$<TARGET_FILE:unit_tests>")
-add_dependencies(run_tests unit_tests)
+# Execute tests if we are not cross-compiling
+if(CMAKE_CROSSCOMPILING)
+    message(STATUS "Detected cross-compiling: skipping unit tests run.")
+else()
+    add_custom_target(run_tests ALL
+                      ${CMAKE_COMMAND}
+                      -E env "SUSHI_TEST_DATA_DIR=${PROJECT_SOURCE_DIR}/test/data"
+                      "$<TARGET_FILE:unit_tests>")
+    add_dependencies(run_tests unit_tests)
+endif()
 

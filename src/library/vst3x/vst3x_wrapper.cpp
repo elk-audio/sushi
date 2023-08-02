@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Wrapper for VST 3.x plugins.
- * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
 #include <string>
@@ -176,13 +176,7 @@ ProcessorReturnCode Vst3xWrapper::init(float sample_rate)
     {
         return ProcessorReturnCode::PLUGIN_INIT_ERROR;
     }
-    auto res = _instance.component()->setActive(Steinberg::TBool(true));
-    if (res != Steinberg::kResultOk)
-    {
-        ELKLOG_LOG_ERROR("Failed to activate component with error code: {}", res);
-        return ProcessorReturnCode::PLUGIN_INIT_ERROR;
-    }
-    res = _instance.controller()->setComponentHandler(&_component_handler);
+    auto res = _instance.controller()->setComponentHandler(&_component_handler);
     if (res != Steinberg::kResultOk)
     {
         ELKLOG_LOG_ERROR("Failed to set component handler with error code: {}", res);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 Modern Ancient Instruments Networked AB, dba Elk
+ * Copyright 2017-2023 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Real time audio processing engine
- * @copyright 2017-2022 Modern Ancient Instruments Networked AB, dba Elk, Stockholm
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
 #ifndef SUSHI_ENGINE_H
@@ -93,7 +93,8 @@ public:
      * @param rt_cpu_cores The maximum number of cpu cores to use for audio processing. Default
      *                     is 1 and means that audio processing is done only in the rt callback
      *                     of the audio frontend.
-     *                     With values >1 tracks will be processed in parallel threads.
+     *                     With values > 1 tracks will be processed in parallel threads.
+     * @param device_name The audio device name - only used on Apple for fetching the audio thread workgroup, and will be unused on other platforms.
      * @param debug_mode_sw Enable xenomai specific thread debugging for all audio threads in
      *                      multicore mode.
      * @param event_dispatcher A pointer to a BaseEventDispatcher instance, which AudioEngine takes over ownership of.
@@ -101,6 +102,7 @@ public:
      */
     explicit AudioEngine(float sample_rate,
                          int rt_cpu_cores = 1,
+                         std::optional<std::string> device_name = std::nullopt,
                          bool debug_mode_sw = false,
                          dispatcher::BaseEventDispatcher* event_dispatcher = nullptr);
 
@@ -394,8 +396,8 @@ public:
      * @param processor_name
      * @return
      */
-    std::pair <EngineReturnStatus, ObjectId> create_processor(const PluginInfo& plugin_info,
-                                                              const std::string& processor_name) override;
+    std::pair<EngineReturnStatus, ObjectId> create_processor(const PluginInfo& plugin_info,
+                                                             const std::string& processor_name) override;
 
     /**
      * @brief Add a plugin to a track. The plugin must not currently be active on any track.
@@ -604,6 +606,8 @@ private:
 
     void _route_cv_gate_ins(ControlBuffer& buffer);
 
+    std::unique_ptr<dispatcher::BaseEventDispatcher> _event_dispatcher;
+
     PluginRegistry _plugin_registry;
     ProcessorContainer _processors;
 
@@ -637,7 +641,6 @@ private:
     Transport _transport;
     PluginLibrary _plugin_library;
 
-    std::unique_ptr<dispatcher::BaseEventDispatcher> _event_dispatcher;
     HostControl _host_control{nullptr, &_transport, &_plugin_library};
 
     performance::PerformanceTimer _process_timer;
