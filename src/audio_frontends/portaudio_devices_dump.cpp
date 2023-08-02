@@ -18,9 +18,6 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#ifndef SUSHI_PORTAUDIO_DEVICES_DUMP_H
-#define SUSHI_PORTAUDIO_DEVICES_DUMP_H
-
 #include "sushi/portaudio_devices_dump.h"
 
 #include "elklog/static_logger.h"
@@ -103,6 +100,4 @@ rapidjson::Document generate_portaudio_devices_info_document()
 }
 
 } // end namespace sushi
-
-#endif // SUSHI_PORTAUDIO_DEVICES_DUMP_H
 
