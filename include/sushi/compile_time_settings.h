@@ -68,6 +68,19 @@ struct CompileTimeSettings
 #ifdef SUSHI_BUILD_WITH_SENTRY
             "sentry"
 #endif
+
+// Without this entry, if all ifdefs are false, compiling will fail.
+// Not as uncommon as you may think: building without LV2, VST2 and VST3 causes this for unit-tests.
+#if    !defined (SUSHI_BUILD_WITH_VST2) \
+    && !defined (SUSHI_BUILD_WITH_VST3) \
+    && !defined (SUSHI_BUILD_WITH_LV2)  \
+    && !defined (SUSHI_BUILD_WITH_JACK) \
+    && !defined (SUSHI_BUILD_WITH_RASPA)\
+    && !defined (SUSHI_BUILD_WITH_RPC_INTERFACE) \
+    && !defined (SUSHI_BUILD_WITH_ABLETON_LINK)  \
+    && !defined (SUSHI_BUILD_WITH_SENTRY)
+            ""
+#endif
     };
 };
 
