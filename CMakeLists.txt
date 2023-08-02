@@ -68,8 +68,8 @@ set(SUSHI_TWINE_STATIC_DEFAULT OFF)
 set(SUSHI_AUDIO_BUFFER_SIZE_DEFAULT 64)
 set(SUSHI_WITH_SENTRY_DEFAULT OFF)
 set(SUSHI_SENTRY_DSN_DEFAULT "--Sentry default DSN is undefined--")
-option(BUILD_STANDALONE_APP "Build standalone Sushi executable" ON)
 set(SUSHI_DISABLE_MULTICORE_UNIT_TESTS_DEFAULT OFF)
+set(SUSHI_BUILD_STANDALONE_APP_DEFAULT ON)
 
 set(SUSHI_RASPA_FLAVOR_DEFAULT "evl")
 set(TWINE_WITH_XENOMAI_DEFAULT OFF)
@@ -132,6 +132,7 @@ option(SUSHI_TWINE_STATIC "Link against static version of TWINE library" ${SUSHI
 option(SUSHI_WITH_SENTRY "Enable sentry.io support" ${SUSHI_WITH_SENTRY_DEFAULT})
 option(SUSHI_SENTRY_DSN "Required Sentry DSN Path" ${SUSHI_SENTRY_DSN_DEFAULT})
 option(SUSHI_DISABLE_MULTICORE_UNIT_TESTS "Disable unit-tests dependent on multi-core processing." ${SUSHI_DISABLE_MULTICORE_UNIT_TESTS_DEFAULT})
+option(SUSHI_BUILD_STANDALONE_APP "Build standalone Sushi executable" ${SUSHI_BUILD_STANDALONE_APP_DEFAULT})
 
 set(SUSHI_AUDIO_BUFFER_SIZE ${SUSHI_AUDIO_BUFFER_SIZE_DEFAULT} CACHE STRING "Set internal audio buffer size in frames")
 set(SUSHI_RASPA_FLAVOR ${SUSHI_RASPA_FLAVOR_DEFAULT} CACHE STRING "Set raspa flavor. Options are xenomai or evl")
@@ -711,7 +712,7 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZ
 #  Sub projects     #
 #####################
 
-if (${BUILD_STANDALONE_APP})
+if (${SUSHI_BUILD_STANDALONE_APP})
     add_subdirectory(apps)
 endif()
 

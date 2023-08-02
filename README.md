@@ -150,6 +150,7 @@ SUSHI_VST2_SDK_PATH                   | path     | Path to external Vst 2.4 SDK.
 SUSHI_WITH_SENTRY                     | on / off | Build Sushi with Sentry error logging support.
 SUSHI_SENTRY_DSN                      | url      | URL to the default value for the Sushi Sentry logging DSN. This can still be passed as a runtime terminal argument.
 SUSHI_DISABLE_MULTICORE_UNIT_TESTS    | on / off | Disable unit-tests dependent on multi-core processing.
+SUSHI_BUILD_STANDALONE_APP            | on / off | Build standalone Sushi executable.
 The default values for the options are platform-specific (native Linux, Yocto/OE, macOS).
 
 _Note_:
