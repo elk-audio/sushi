@@ -35,16 +35,16 @@ namespace control {
 class SushiControl;
 }
 
-namespace engine {
+namespace internal::engine {
 class AudioEngine;
 }
 
-namespace audio_frontend {
+namespace internal::audio_frontend {
 struct BaseAudioFrontendConfiguration;
 class BaseAudioFrontend;
 }
 
-namespace midi_frontend {
+namespace internal::midi_frontend {
 class BaseMidiFrontend;
 class ReactiveMidiFrontend;
 }

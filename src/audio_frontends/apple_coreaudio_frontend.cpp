@@ -421,13 +421,14 @@ void AppleCoreAudioFrontend::_copy_output_buffer_to_interleaved_buffer(float* ou
 
 #ifndef SUSHI_BUILD_WITH_APPLE_COREAUDIO
 #include "apple_coreaudio_frontend.h"
+#include "elklog/static_logger.h"
 
 ELKLOG_GET_LOGGER;
 
-namespace sushi::audio_frontend {
+namespace sushi::internal::audio_frontend {
 
-sushi::audio_frontend::AudioFrontendStatus sushi::audio_frontend::AppleCoreAudioFrontend::init(
-        [[maybe_unused]] sushi::audio_frontend::BaseAudioFrontendConfiguration* config)
+sushi::internal::audio_frontend::AudioFrontendStatus sushi::internal::audio_frontend::AppleCoreAudioFrontend::init(
+        [[maybe_unused]] sushi::internal::audio_frontend::BaseAudioFrontendConfiguration* config)
 {
     // The log print needs to be in a cpp file for initialisation order reasons
     ELKLOG_LOG_ERROR("Sushi was not built with CoreAudio support!");

@@ -100,7 +100,7 @@ private:
 
 #include "base_audio_frontend.h"
 
-namespace sushi::audio_frontend {
+namespace sushi::internal::audio_frontend {
 
 struct AppleCoreAudioFrontendConfiguration : public BaseAudioFrontendConfiguration {
     AppleCoreAudioFrontendConfiguration(const std::optional<std::string>&,
@@ -112,14 +112,14 @@ struct AppleCoreAudioFrontendConfiguration : public BaseAudioFrontendConfigurati
 class AppleCoreAudioFrontend : public BaseAudioFrontend
 {
 public:
-    explicit AppleCoreAudioFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine){};
+    explicit AppleCoreAudioFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {};
     AudioFrontendStatus init(BaseAudioFrontendConfiguration* config) override;
 
     void cleanup() override{};
     void run() override{};
 };
 
-} // namespace sushi::audio_frontend
+} // namespace sushi::internal::audio_frontend
 
 #endif // SUSHI_BUILD_WITH_APPLE_COREAUDIO
 
