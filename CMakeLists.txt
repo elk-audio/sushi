@@ -646,6 +646,7 @@ set(SOURCE_FILES
 # TODO: MACOSX_BUNDLE ? I think not.
 add_library(${PROJECT_NAME} STATIC "${SOURCE_FILES}"
                                    "${FREEVERB_SOURCES}"
+                                   "${ADDITIONAL_APPLE_COREAUDIO_SOURCES}"
                                    "${ADDITIONAL_VST2_SOURCES}"
                                    "${ADDITIONAL_VST3_SOURCES}"
                                    "${ADDITIONAL_LV2_SOURCES}"

@@ -5,13 +5,6 @@
 
 set(APP_FILES main.cpp)
 
-if (${SUSHI_WITH_APPLE_COREAUDIO})
-    set(APP_FILES ${APP_FILES}
-        ../src/audio_frontends/apple_coreaudio/apple_coreaudio_object.cpp
-        ../src/audio_frontends/apple_coreaudio/apple_coreaudio_device.mm
-        ../src/audio_frontends/apple_coreaudio/apple_coreaudio_utils.cpp)
-endif()
-
 add_executable(sushi MACOSX_BUNDLE ${APP_FILES})
 
 ####################################
