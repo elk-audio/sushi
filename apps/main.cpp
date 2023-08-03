@@ -175,6 +175,7 @@ std::unique_ptr<Sushi> start_sushi(SushiOptions options)
     }
     else if (options.frontend_type == FrontendType::JACK ||
              options.frontend_type == FrontendType::XENOMAI_RASPA ||
+             options.frontend_type == FrontendType::APPLE_COREAUDIO ||
              options.frontend_type == FrontendType::PORTAUDIO)
     {
         factory = std::make_unique<StandaloneFactory>();
