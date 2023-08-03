@@ -201,8 +201,8 @@ if (${SUSHI_WITH_RASPA})
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_RASPA)
 
     if (NOT "$ENV{CMAKE_SYSROOT}" STREQUAL "")
-            set(CMAKE_SYSROOT "$ENV{CMAKE_SYSROOT}")
-            message("ENV_CMAKE_SYSROOT = " $ENV{CMAKE_SYSROOT})
+        set(CMAKE_SYSROOT "$ENV{CMAKE_SYSROOT}")
+        message("ENV_CMAKE_SYSROOT = " $ENV{CMAKE_SYSROOT})
     endif()
 
     # Determine whether to link with evl or cobalt lib
@@ -228,9 +228,9 @@ if (${SUSHI_WITH_RASPA})
     elseif (${SUSHI_RASPA_FLAVOR} MATCHES "evl")
         message("Building with EVL support")
         find_library(EVL_LIB
-        NAMES evl
-        PATHS /usr/lib /usr/local/lib
-        )
+            NAMES evl
+            PATHS /usr/lib /usr/local/lib
+            )
         set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${EVL_LIB})
     endif()
 endif()
@@ -348,8 +348,8 @@ if (${SUSHI_WITH_VST2})
         set(SUSHI_VST2_SDK_PATH ${VST_2_SDK_BASE_DIR})
     else()
         find_file(SUSHI_VST2_SDK_PATH NAMES VST2_SDK vstsdk2.4 HINTS $ENV{HOME}/workspace
-                                                                $ENV{HOME}/workspace/VST_SDK
-                                                                $ENV{HOME}/workspace/vstsdk3610_11_06_2018_build_37)
+                                                                     $ENV{HOME}/workspace/VST_SDK
+                                                                     $ENV{HOME}/workspace/vstsdk3610_11_06_2018_build_37)
     endif()
     if (${SUSHI_VST2_SDK_PATH} STREQUAL "VST2_SDK_PATH-NOTFOUND")
         message("Warning! Could not find Steinberg SDK for VST 2.4")
@@ -386,16 +386,16 @@ if (${SUSHI_WITH_VST3})
     set(VST3_COMPILE_FLAGS "-Wno-unused-parameter -Wno-extra -Wno-deprecated -Wno-cpp -Wno-pointer-bool-conversion -Wno-suggest-override")
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-            set(VST3_HOST_SOURCES ${VST3_HOST_SOURCES} "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_linux.cpp")
-            set(AUDIOHOST_PLATFORM_LIBS)
+        set(VST3_HOST_SOURCES ${VST3_HOST_SOURCES} "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_linux.cpp")
+        set(AUDIOHOST_PLATFORM_LIBS)
     endif()
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-            set(VST3_HOST_SOURCES
-                ${VST3_HOST_SOURCES}
-                "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_mac.mm")
-            set(AUDIOHOST_PLATFORM_LIBS "-framework Cocoa")
-            set(VST3_COMPILE_FLAGS "${VST3_COMPILE_FLAGS} -fobjc-arc")
+        set(VST3_HOST_SOURCES
+            ${VST3_HOST_SOURCES}
+            "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_mac.mm")
+        set(AUDIOHOST_PLATFORM_LIBS "-framework Cocoa")
+        set(VST3_COMPILE_FLAGS "${VST3_COMPILE_FLAGS} -fobjc-arc")
     endif()
 
     add_library(vst3_host STATIC ${VST3_HOST_SOURCES})
@@ -645,6 +645,7 @@ set(SOURCE_FILES
 
 # TODO: MACOSX_BUNDLE ? I think not.
 add_library(${PROJECT_NAME} STATIC "${SOURCE_FILES}"
+                                   "${FREEVERB_SOURCES}"
                                    "${ADDITIONAL_VST2_SOURCES}"
                                    "${ADDITIONAL_VST3_SOURCES}"
                                    "${ADDITIONAL_LV2_SOURCES}"

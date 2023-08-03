@@ -12,8 +12,6 @@ if (${SUSHI_WITH_APPLE_COREAUDIO})
         ../src/audio_frontends/apple_coreaudio/apple_coreaudio_utils.cpp)
 endif()
 
-set(APP_FILES ${APP_FILES} ${FREEVERB_SOURCES})
-
 add_executable(sushi MACOSX_BUNDLE ${APP_FILES})
 
 ####################################
