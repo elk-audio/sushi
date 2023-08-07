@@ -96,7 +96,7 @@ protected:
      * @brief Inherit and populate this to instantiate and configure the audio frontend.
      * @param options A populated SushiOptions structure.
      * @param config
-     * @return
+     * @return Status
      */
     virtual Status _setup_audio_frontend(const SushiOptions& options,
                                          const jsonconfig::ControlConfig& config) = 0;
@@ -104,30 +104,21 @@ protected:
     /**
      * @brief Inherit and populate this to instantiate and configure the midi frontend.
      * @param options A populated SushiOptions structure.
-     * @return
+     * @return Status
      */
     virtual Status _set_up_midi(const SushiOptions& options,
                                 const jsonconfig::ControlConfig& config) = 0;
 
     /**
-     * @brief Inherit and populate this to instantiate and configure sgRPC, OSC, and eventual other control.
-     * @param options A populated SushiOptions structure.
-     * @param configurator
-     * @return
-     */
-    virtual Status _set_up_control(const SushiOptions& options,
-                                   jsonconfig::JsonConfigurator* configurator) = 0;
-
-    /**
      * @brief Handle sequenced events from configuration file here.
      * @param options A populated SushiOptions structure.
      * @param configurator
-     * @return
+     * @return Status
      */
     virtual Status _load_json_events(const SushiOptions& options,
                                      jsonconfig::JsonConfigurator* configurator) = 0;
 
-    Status _status { Status::OK};
+    Status _status {Status::OK};
 
     std::unique_ptr<engine::AudioEngine> _engine {nullptr};
     std::unique_ptr<midi_dispatcher::MidiDispatcher> _midi_dispatcher {nullptr};
@@ -142,6 +133,18 @@ protected:
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     std::unique_ptr<sushi_rpc::GrpcServer> _rpc_server {nullptr};
 #endif
+
+private:
+    /**
+     * @brief This instantiates and configures gRPC, OSC, and eventual other future control.
+     *        It is common for all factories, since they share control functionality.
+     *        OSC / gRPC can instead be turned on/off using the option flags in SushiOptions.
+     * @param options A populated SushiOptions structure.
+     * @param configurator
+     * @return Status
+     */
+    Status _set_up_control(const SushiOptions& options,
+                           jsonconfig::JsonConfigurator* configurator);
 };
 
 } // end namespace sushi::internal

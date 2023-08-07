@@ -73,9 +73,6 @@ protected:
     Status _set_up_midi([[maybe_unused]] const SushiOptions& options,
                         const jsonconfig::ControlConfig& config) override;
 
-    Status _set_up_control([[maybe_unused]] const SushiOptions& options,
-                           [[maybe_unused]] jsonconfig::JsonConfigurator* configurator) override;
-
     Status _load_json_events([[maybe_unused]] const SushiOptions& options,
                              jsonconfig::JsonConfigurator* configurator) override;
 

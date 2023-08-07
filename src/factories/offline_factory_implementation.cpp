@@ -33,7 +33,6 @@
 #include "audio_frontends/offline_frontend.h"
 
 #include "engine/json_configurator.h"
-#include "control_frontends/oscpack_osc_messenger.h"
 
 namespace sushi::internal {
 
@@ -46,6 +45,10 @@ OfflineFactoryImplementation::~OfflineFactoryImplementation() = default;
 std::pair<std::unique_ptr<Sushi>, Status> OfflineFactoryImplementation::new_instance(SushiOptions& options)
 {
     init_logger(options);
+
+    // For the offline frontend, OSC control is not supported.
+    // So, the SushiOptions flag is overridden.
+    options.use_osc = false;
 
     _instantiate_subsystems(options);
 
@@ -94,24 +97,8 @@ Status OfflineFactoryImplementation::_set_up_midi([[maybe_unused]] const SushiOp
     return Status::OK;
 }
 
-Status OfflineFactoryImplementation::_set_up_control([[maybe_unused]] const SushiOptions& options,
-                                                     [[maybe_unused]] jsonconfig::JsonConfigurator* configurator)
-{
-    _engine_controller = std::make_unique<engine::Controller>(_engine.get(),
-                                                              _midi_dispatcher.get(),
-                                                              _audio_frontend.get());
-
-#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
-    _rpc_server = std::make_unique<sushi_rpc::GrpcServer>(options.grpc_listening_address, _engine_controller.get());
-    ELKLOG_LOG_INFO("Instantiating gRPC server with address: {}", options.grpc_listening_address);
-#endif
-
-    return Status::OK;
-}
-
-Status
-    OfflineFactoryImplementation::_load_json_events([[maybe_unused]] const SushiOptions& options,
-                                                    jsonconfig::JsonConfigurator* configurator)
+Status OfflineFactoryImplementation::_load_json_events([[maybe_unused]] const SushiOptions& options,
+                                                       jsonconfig::JsonConfigurator* configurator)
 {
     auto [status, events] = configurator->load_event_list();
 

@@ -20,6 +20,8 @@
 
 #include "base_factory.h"
 
+#include "elklog/static_logger.h"
+
 #include "engine/audio_engine.h"
 #include "engine/json_configurator.h"
 
@@ -29,7 +31,11 @@
 #include "audio_frontends/portaudio_frontend.h"
 #include "audio_frontends/apple_coreaudio_frontend.h"
 
+#include "control_frontends/oscpack_osc_messenger.h"
+
 namespace sushi::internal {
+
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("base-factory");
 
 BaseFactory::BaseFactory() = default;
 
@@ -212,6 +218,10 @@ Status BaseFactory::_configure_engine(SushiOptions& options,
         return status;
     }
 
+    _engine_controller = std::make_unique<engine::Controller>(_engine.get(),
+                                                              _midi_dispatcher.get(),
+                                                              _audio_frontend.get());
+
     status = _set_up_control(options, configurator);
     if (status != Status::OK)
     {
@@ -255,6 +265,51 @@ Status BaseFactory::_load_json_configuration(jsonconfig::JsonConfigurator* confi
     {
         return Status::FAILED_LOAD_PROCESSOR_STATES;
     }
+
+    return Status::OK;
+}
+
+Status BaseFactory::_set_up_control([[maybe_unused]] const SushiOptions& options,
+                                    [[maybe_unused]] jsonconfig::JsonConfigurator* configurator)
+{
+    if (options.use_osc)
+    {
+        auto oscpack_messenger = new osc::OscpackOscMessenger(options.osc_server_port,
+                                                              options.osc_send_port,
+                                                              options.osc_send_ip);
+
+        _osc_frontend = std::make_unique<control_frontend::OSCFrontend>(_engine.get(),
+                                                                        _engine_controller.get(),
+                                                                        oscpack_messenger);
+
+        _engine_controller->set_osc_frontend(_osc_frontend.get());
+
+        auto osc_status = _osc_frontend->init();
+        if (osc_status != control_frontend::ControlFrontendStatus::OK)
+        {
+            return Status::FAILED_OSC_FRONTEND_INITIALIZATION;
+        }
+
+        if (configurator)
+        {
+            configurator->set_osc_frontend(_osc_frontend.get());
+
+            auto status = configurator->load_osc();
+            if (status != jsonconfig::JsonConfigReturnStatus::OK &&
+                status != jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
+            {
+                return Status::FAILED_LOAD_OSC;
+            }
+        }
+    }
+
+#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+    if (options.use_grpc)
+    {
+        _rpc_server = std::make_unique<sushi_rpc::GrpcServer>(options.grpc_listening_address, _engine_controller.get());
+        ELKLOG_LOG_INFO("Instantiating gRPC server with address: {}", options.grpc_listening_address);
+    }
+#endif
 
     return Status::OK;
 }
