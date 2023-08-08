@@ -643,7 +643,6 @@ set(SOURCE_FILES
     src/plugins/brickworks/simple_synth_plugin.cpp
 )
 
-# TODO: MACOSX_BUNDLE ? I think not.
 add_library(${PROJECT_NAME} STATIC "${SOURCE_FILES}"
                                    "${FREEVERB_SOURCES}"
                                    "${ADDITIONAL_APPLE_COREAUDIO_SOURCES}"

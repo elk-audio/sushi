@@ -27,9 +27,10 @@ set(DOC_FILES_INSTALL
         )
 
 if (APPLE)
+    # TODO: fix to work when not submodule
     install(CODE [[
     include(BundleUtilities)
-    fixup_bundle("${CMAKE_INSTALL_PREFIX}/sushi/sushi.app" "" "") # TODO: fix to work when not submodule
+    fixup_bundle("${CMAKE_INSTALL_PREFIX}/sushi/sushi.app" "" "")
     ]] COMPONENT Runtime)
 endif()
 

@@ -59,6 +59,7 @@ EventDispatcher::~EventDispatcher()
         Event* event = _in_queue.pop();
 
 // TODO: This SOMETIMES crashes when running Sushi as a NikkeiVST3 with pluginval
+//  (Ticket: AUD-653).
         delete event;
     }
 }

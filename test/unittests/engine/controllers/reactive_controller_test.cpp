@@ -23,7 +23,6 @@
 
 #include "engine/controller/real_time_controller.cpp"
 
-// TODO: Make these mock-able too!
 #include "audio_frontends/reactive_frontend.cpp"
 #include "control_frontends/reactive_midi_frontend.cpp"
 
@@ -69,9 +68,6 @@ protected:
 
 TEST_F(ReactiveControllerTestFrontend, TestRtControllerAudioCalls)
 {
-    // TODO: This test can be improved by mocking also ReactiveFrontend,
-    //  so we can use "expect call" on it.
-
     ASSERT_FALSE(_mock_engine.process_called);
 
     ChunkSampleBuffer in_buffer;
@@ -120,7 +116,6 @@ TEST_F(ReactiveControllerTestFrontend, TestRtControllerTransportCalls)
     EXPECT_NE(old_playing_mode, new_playing_mode);
     EXPECT_EQ(_real_time_controller->_playing_mode, new_playing_mode);
 
-    // TODO: Mock Transport.
     // Only on set_time is playing_mode updated in Transport.
     EXPECT_NE(_real_time_controller->_transport->playing_mode(), new_internal_playing_mode);
     _real_time_controller->_transport->set_time(std::chrono::seconds(0), 0);

@@ -45,7 +45,8 @@ std::unique_ptr<Sushi> BaseFactory::_make_sushi()
 {
     if (_status == Status::OK)
     {
-        // It's clearer to have FactoryBase as friend of Sushi.
+        // BaseFactory is a friend of ConcreteSushi:
+        // meaning it's impossible to instantiate Sushi without inheriting from BaseFactory.
         auto sushi = std::unique_ptr<ConcreteSushi>(new ConcreteSushi());
 
         sushi->_engine = std::move(_engine);
@@ -144,9 +145,9 @@ Status BaseFactory::_configure_from_file(SushiOptions& options)
 Status BaseFactory::_configure_from_json(SushiOptions& options)
 {
     auto configurator = std::make_unique<jsonconfig::JsonConfigurator>(_engine.get(),
-                                                                        _midi_dispatcher.get(),
-                                                                        _engine->processor_container(),
-                                                                        options.json_string);
+                                                                       _midi_dispatcher.get(),
+                                                                       _engine->processor_container(),
+                                                                       options.json_string);
 
     auto [control_config_status, control_config] = configurator->load_control_config();
     if (control_config_status != jsonconfig::JsonConfigReturnStatus::OK)

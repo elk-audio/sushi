@@ -48,7 +48,7 @@ struct InputConnection
 {
     // TODO: This can be track_id, if the InputConnection is member of KbdInputConnection.
     //   It can also be processor_id, if the InputConnection is member of CCInputConnection.
-    //   Disambiguating would be safer.
+    //   Disambiguating would be safer (AUD-565).
     ObjectId target;
     ObjectId parameter;
     float min_range;
