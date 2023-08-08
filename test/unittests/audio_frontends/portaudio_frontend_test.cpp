@@ -31,7 +31,7 @@ protected:
 
     void SetUp() override
     {
-        mockPortAudio = new NiceMock<MockPortAudio>();
+        mockPortAudio = std::make_unique<NiceMock<MockPortAudio>>();
         _module_under_test = std::make_unique<PortAudioFrontend>(&_engine);
     }
 
@@ -44,7 +44,7 @@ protected:
         }
         EXPECT_CALL(*mockPortAudio, Pa_Terminate);
         _module_under_test.reset();
-        delete mockPortAudio;
+        mockPortAudio.reset();
     }
 
     EngineMockup _engine{SAMPLE_RATE};

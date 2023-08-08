@@ -257,7 +257,7 @@ protected:
 
     void SetUp() override
     {
-        mockPortAudio = new NiceMock<MockPortAudio>();
+        mockPortAudio = std::make_unique<NiceMock<MockPortAudio>>();
 
         PaError init_value = PaErrorCode::paNoError;
         EXPECT_CALL(*mockPortAudio, Pa_Initialize).WillRepeatedly(Return(init_value));
@@ -277,10 +277,7 @@ protected:
 
     void TearDown() override
     {
-        // TODO: Terrible to have a global like this.
-        //  This is from portaudio_frontend_test.cpp. But I really don't like the naked global pointer,
-        //  is there really a need for it?
-        delete mockPortAudio;
+        mockPortAudio.reset();
     }
 
     PaDeviceInfo device_info;

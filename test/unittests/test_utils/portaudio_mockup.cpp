@@ -1,6 +1,6 @@
 #include "portaudio_mockup.h"
 
-MockPortAudio* mockPortAudio;
+std::unique_ptr<MockPortAudio> mockPortAudio;
 
 PaError Pa_Initialize()
 {

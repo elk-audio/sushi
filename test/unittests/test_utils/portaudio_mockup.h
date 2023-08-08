@@ -35,7 +35,7 @@ public:
     MOCK_METHOD(const PaStreamInfo*, Pa_GetStreamInfo, (PaStream*));
 };
 
-extern MockPortAudio* mockPortAudio;
+extern std::unique_ptr<MockPortAudio> mockPortAudio;
 
 PaError Pa_Initialize();
 
