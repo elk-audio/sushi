@@ -1,4 +1,5 @@
 #include <cmath>
+#include <cstdint>
 
 #include "vst2_test_plugin.h"
 

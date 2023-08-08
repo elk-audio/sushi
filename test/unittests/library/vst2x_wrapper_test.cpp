@@ -61,7 +61,7 @@ protected:
     void SetUp(const std::string& plugin_path)
     {
         auto full_path = std::filesystem::path(plugin_path.c_str());
-        auto full_plugin_path = std::string(std::filesystem::absolute(full_path));
+        auto full_plugin_path = std::string(std::filesystem::absolute(full_path).string());
 
         _module_under_test = std::make_unique<Vst2xWrapper>(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE), full_plugin_path);
 
