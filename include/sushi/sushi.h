@@ -169,24 +169,48 @@ struct SushiOptions
 };
 
 /**
- * This should be called only once in the lifetime of the embedding binary - or it will fail.
- * @param options
+ * base Sushi class API.
+ * To create a Sushi instance, use one of the factories provided, depending on the use-case required:
+ * - ReactiveFactory
+ * - StandaloneFactory
+ * - OfflineFactory
  */
-void init_logger([[maybe_unused]] const SushiOptions& options);
-
 class Sushi
 {
-public:
+protected:
     Sushi() = default;
+
+public:
     virtual ~Sushi() = default;
 
+    /**
+     * Given Sushi is initialized successfully, call this before the audio callback is first invoked.
+     * This is only meant to be called once during the instance lifetime.
+     * @return Status will reflect if starting was successful, or what error occurred.
+     */
     [[nodiscard]] virtual Status start() = 0;
 
+    /**
+     * Call to stop the Sushi instance.
+     * This is only meant to be called once during the instance lifetime.
+     */
     virtual void stop() = 0;
 
+    /**
+     * @return an instance of the Sushi controller - assuming Sushi has first been initialized.
+     */
     virtual control::SushiControl* controller() = 0;
 
+    /**
+     * Setting the sample rate.
+     * @param sample_rate
+     */
     virtual void set_sample_rate(float sample_rate) = 0;
+
+    /**
+     * Querying the currently set sample-rate.
+     * @return
+     */
     virtual float sample_rate() const = 0;
 };
 

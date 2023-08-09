@@ -2,24 +2,9 @@
 Headless plugin host for ELK Audio OS.
 
 ## Sushi as Library
+Sushi can be used as a standalone terminal application, and can now also be used as a library.
 
-This branch is still “Work In Progress”, and not ready for merging.
-
-That’s also why it is currently peppered with “TODO’s” as placeholders - all to be removed before merging of course.
-
-The work contained here this far, over Develop (very high-level - the below map to several Jira stories):
-
-* Implements first Stereo version of "Sushi as a library".
-* Adds an “RtController” class, which is the API over which the JUCE plugin / other container, can control Sushi’s internals.
-* Allows Sushi to be remote-controlled over gRPC also when a library.
-* Re-factor of Sushi’s creation and initialisation, to dedicated factory classes, and unit-test these.
-* Bridge also MIDI I/O to Sushi from a containing host application (not yet real-time though).
-* Map the Sushi Transport, to that of the containing host application.
-
-For using Sushi as a library, you need only read the header files contained in the include/sushi folder, where Sushi's API is exposed.
-Additionally, Sushi is controlled over gRPC and OSC, which are both unchanged in the "sushi as library" implementation - see documentation below.
-
-For example uses of sushi as a library, see apps/main.cpp in this repository showing a terminal application use-case, and the "Nikkei" repository, showing a JUCE plugin use-case. 
+For more information on the latter, refer to the [LIBRARY.md] (docs/LIBRARY.md) file in this repository.
 
 ## Usage
 See `sushi -h` for a complete list of options.
