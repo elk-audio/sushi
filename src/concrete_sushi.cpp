@@ -135,7 +135,9 @@ void init_logger([[maybe_unused]] const SushiOptions& options)
     {
         std::cerr << "Log failure " << ret_code << ", using default." << std::endl;
     }
-    ELKLOG_LOG_INFO("Options: {}, {}", options.enable_flush_interval, options.log_flush_interval.count());
+    ELKLOG_LOG_INFO("Logger options: Enable flush interval: {}, flushing at: {} second intervals.",
+                    options.enable_flush_interval,
+                    options.log_flush_interval.count());
 }
 
 namespace internal {
