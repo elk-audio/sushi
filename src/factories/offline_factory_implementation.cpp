@@ -50,6 +50,15 @@ std::pair<std::unique_ptr<Sushi>, Status> OfflineFactoryImplementation::new_inst
     // So, the SushiOptions flag is overridden.
     options.use_osc = false;
 
+#ifdef TWINE_BUILD_WITH_APPLE_COREAUDIO
+    ELKLOG_LOG_WARNING("Using the Offline frontend with more than 1 CPU core is not currently supported on Apple. "
+                       "The threads need to be attached to a workgroup, "
+                       "which will not exist if there is no audio interface. "
+                       "Sushi will proceed to run, but on a single CPU core.");
+
+    options.rt_cpu_cores = 1;
+#endif
+
     _instantiate_subsystems(options);
 
     return {_make_sushi(), _status};
