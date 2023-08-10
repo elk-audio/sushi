@@ -470,7 +470,7 @@ const optionparser::Descriptor usage[] =
         "",
         "sentry-dsn",
         SushiArg::NonEmpty,
-        "\t\t--sentry-dsn=<dsn.address> \tSet the DSN that sentry should upload crashlogs to [default address=" SUSHI_STRINGIZE(SUSHI_SENTRY_DSN_DEFAULT) "]."
+        "\t\t--sentry-dsn=<dsn.address> \tSet the DSN that sentry should upload crash logs to [default address=" SUSHI_STRINGIZE(SUSHI_SENTRY_DSN_DEFAULT) "]."
     },
     // Don't touch this one (sets default values for optionparser library)
     { 0, 0, 0, 0, 0, 0}

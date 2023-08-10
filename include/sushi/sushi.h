@@ -107,50 +107,173 @@ std::string to_string(Status status);
  */
 struct SushiOptions
 {
+    /**
+     * Set this to choose what audio frontend type Sushi should use.
+     * The options are defined in the FrontendType enum class.
+     */
+    FrontendType frontend_type = FrontendType::NONE;
+
+    /**
+     * Specify a directory to be the base of plugin paths used in JSON configuration files,
+     * and over gRPC commands for plugin loading.
+     */
+    std::string base_plugin_path = std::filesystem::current_path();
+
+    /**
+     * Set this to choose how Sushi will be configured:
+     * By a json-config file path (ConfigurationSource::FILE),
+     * a string containing a json configuration (ConfigurationSource::JSON_STRING),
+     * or no configuration (ConfigurationSource::NONE)
+     * - in which case the minimum default config is set.
+     */
+    ConfigurationSource config_source = ConfigurationSource::FILE;
+
+    /**
+     * Only used if config_source is set to ConfigurationSource::FILE.
+     */
+    std::string config_filename = std::string(SUSHI_JSON_FILENAME_DEFAULT);
+
+    /**
+     * Only used if config_source is set to ConfigurationSource::JSON_STRING.
+     */
+    std::string json_string = std::string(SUSHI_JSON_STRING_DEFAULT);
+
+    /**
+     * Specify minimum logging level, from ('debug', 'info', 'warning', 'error')
+     */
+    std::string log_level = std::string(ELKLOG_LOG_LEVEL_DEFAULT);
+
+    /**
+     * Specify logging file destination.
+     */
+    std::string log_file = std::string(ELKLOG_LOG_FILE_DEFAULT);
+
+    /**
+     * These are only for the case of using a JACK audio frontend,
+     * and even then, you will rarely need to alter the defaults.
+     */
+    std::string jack_client_name = std::string(SUSHI_JACK_CLIENT_NAME_DEFAULT);
+    std::string jack_server_name = std::string("");
+
+    /**
+     * Try to automatically connect Jack ports at startup.
+     */
+    bool connect_ports = false;
+
+    /**
+     * Index of the device to use for audio input with portaudio frontend [default=system default].
+     */
+    std::optional<int> portaudio_input_device_id = std::nullopt;
+
+    /**
+     * Index of the device to use for audio output with portaudio frontend [default=system default]
+     */
+    std::optional<int> portaudio_output_device_id = std::nullopt;
+
+    /**
+     * UID of the device to use for audio input with Apple CoreAudio frontend.
+     */
+    std::optional<std::string> apple_coreaudio_input_device_uid = std::nullopt;
+
+    /**
+     * UID of the device to use for audio output with Apple CoreAudio frontend.
+     */
+    std::optional<std::string> apple_coreaudio_output_device_uid = std::nullopt;
+
+    /**
+     * Input latency in seconds to suggest to portaudio.
+     * Will be rounded up to closest available latency depending on audio API.
+     */
+    float suggested_input_latency = SUSHI_PORTAUDIO_INPUT_LATENCY_DEFAULT;
+
+    /**
+     * Output latency in seconds to suggest to portaudio.
+     * Will be rounded up to closest available latency depending on audio API.
+     */
+    float suggested_output_latency = SUSHI_PORTAUDIO_OUTPUT_LATENCY_DEFAULT;
+
+    /**
+     * If true, Sushi will dump available audio devices to stdout in JSON format, and immediately exit.
+     * This requires a frontend to be specified.
+     */
+    bool enable_audio_devices_dump = false;
+
+    /**
+     * Dump plugin and parameter data to stdout in JSON format.
+     * This will reflect the configuration currently loaded.
+     */
+    bool enable_parameter_dump = false;
+
+    /**
+     * Set this to false, to disable Open Sound Control completely.
+     */
+    bool use_osc = true;
+
+    /**
+     * If the OSC control frontend is enabled,
+     * you will also need to configure the IP and Ports it uses.
+     *
+     *
+     * The osc_server_port is the Port to listen for OSC messages on.
+     * If it is unavailable, Sushi will fail to start, returning:
+     * Status::FAILED_OSC_FRONTEND_INITIALIZATION.
+     */
+    int osc_server_port = SUSHI_OSC_SERVER_PORT_DEFAULT;
+
+    /**
+     * Port and IP to send OSC messages to.
+     */
+    int osc_send_port = SUSHI_OSC_SEND_PORT_DEFAULT;
+    std::string osc_send_ip = SUSHI_OSC_SEND_IP_DEFAULT;
+
+    /**
+     * Set this to false, to disable gRPC completely.
+     */
+    bool use_grpc = true;
+
+    /**
+     * gRPC listening address in the format: address:port. By default accepts incoming connections from all ip:s.
+     */
+    std::string grpc_listening_address = SUSHI_GRPC_LISTENING_PORT_DEFAULT;
+
+    /**
+     * Set the path to the crash handler to use for sentry reports.
+     */
+    std::string sentry_crash_handler_path = SUSHI_SENTRY_CRASH_HANDLER_PATH_DEFAULT;
+
+    /**
+     * Set the DSN that sentry should upload crash logs to.
+     */
+    std::string sentry_dsn = SUSHI_SENTRY_DSN_DEFAULT;
+
+    /**
+     * These are used only if Sushi uses an Offline audio frontend.
+     * Then, sushi uses the first path as its audio input,
+     * and the second as output.
+     */
     std::string input_filename;
     std::string output_filename;
 
-    std::string log_level = std::string(ELKLOG_LOG_LEVEL_DEFAULT);
-    std::string log_file = std::string(ELKLOG_LOG_FILE_DEFAULT);
-
-    std::string jack_client_name = std::string(SUSHI_JACK_CLIENT_NAME_DEFAULT);
-    std::string jack_server_name = std::string("");
-    int osc_server_port = SUSHI_OSC_SERVER_PORT_DEFAULT;
-    int osc_send_port = SUSHI_OSC_SEND_PORT_DEFAULT;
-    std::string osc_send_ip = SUSHI_OSC_SEND_IP_DEFAULT;
-    std::optional<int> portaudio_input_device_id = std::nullopt;
-    std::optional<int> portaudio_output_device_id = std::nullopt;
-    std::optional<std::string> apple_coreaudio_input_device_uid = std::nullopt;
-    std::optional<std::string> apple_coreaudio_output_device_uid = std::nullopt;
-
-    std::optional<std::string> device_name = std::nullopt;
-
-    float suggested_input_latency = SUSHI_PORTAUDIO_INPUT_LATENCY_DEFAULT;
-    float suggested_output_latency = SUSHI_PORTAUDIO_OUTPUT_LATENCY_DEFAULT;
-
-    bool enable_audio_devices_dump = false;
-
-    bool use_osc = true;
-    bool use_grpc = true;
-
-    std::string base_plugin_path = std::filesystem::current_path();
-
-    std::string sentry_crash_handler_path = SUSHI_SENTRY_CRASH_HANDLER_PATH_DEFAULT;
-    std::string sentry_dsn = SUSHI_SENTRY_DSN_DEFAULT;
-
-    std::string grpc_listening_address = SUSHI_GRPC_LISTENING_PORT_DEFAULT;
-    FrontendType frontend_type = FrontendType::NONE;
-    bool connect_ports = false;
+    /**
+     * Break to debugger if a mode switch is detected (Xenomai only).
+     */
     bool debug_mode_switches = false;
-    int  rt_cpu_cores = 1;
-    bool enable_timings = false;
-    bool enable_flush_interval = false;
-    bool enable_parameter_dump = false;
-    std::chrono::seconds log_flush_interval = std::chrono::seconds(0);
 
-    ConfigurationSource config_source = ConfigurationSource::FILE;
-    std::string config_filename = std::string(SUSHI_JSON_FILENAME_DEFAULT);
-    std::string json_string = std::string(SUSHI_JSON_STRING_DEFAULT);
+    /**
+     * Process audio multi-threaded, with n cores [default n=1 (off)].
+     */
+    int  rt_cpu_cores = 1;
+
+    /**
+     * Enable performance timings on all audio processors.
+     */
+    bool enable_timings = false;
+
+    /**
+     * Enable flushing the log periodically and specify the interval.
+     */
+    bool enable_flush_interval = false;
+    std::chrono::seconds log_flush_interval = std::chrono::seconds(0);
 
     /**
      * Extracts the address string and port number from the grpc_listening_address string.
@@ -166,6 +289,9 @@ struct SushiOptions
      * @return true if incrementing the value succeeded.
      */
     bool increment_grpc_port_number();
+
+    // This field is used internally by Sushi.
+    std::optional<std::string> device_name = std::nullopt;
 };
 
 /**
