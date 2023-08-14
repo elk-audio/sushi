@@ -135,18 +135,21 @@ EventDispatcherStatus EventDispatcher::subscribe_to_engine_notifications(EventPo
 
 int EventDispatcher::process(std::unique_ptr<Event>&& event)
 {
-    // TODO: These if's can no longer be chained!
     if (event->process_asynchronously())
     {
         event->set_receiver(EventPosterId::WORKER);
         auto receiver = event->receiver();
         return _posters[receiver]->process(std::move(event));
     }
+
     if (event->is_parameter_change_event())
     {
         auto typed_event = static_cast<const ParameterChangeEvent*>(event.get());
-        _parameter_manager.mark_parameter_changed(typed_event->processor_id(), typed_event->parameter_id(), typed_event->time());
+        _parameter_manager.mark_parameter_changed(typed_event->processor_id(),
+                                                  typed_event->parameter_id(),
+                                                  typed_event->time());
     }
+
     if (event->maps_to_rt_event())
     {
         auto [send_now, sample_offset] = _event_timer.sample_offset_from_realtime(event->time());
@@ -160,11 +163,13 @@ int EventDispatcher::process(std::unique_ptr<Event>&& event)
         _waiting_list.push_front(std::move(event));
         return EventStatus::QUEUED_HANDLING;
     }
+
     if (event->is_parameter_change_notification() || event->is_property_change_notification())
     {
         _publish_parameter_events(std::move(event));
         return EventStatus::HANDLED_OK;
     }
+
     if (event->is_engine_notification())
     {
         _handle_engine_notifications_internally(static_cast<EngineNotificationEvent*>(event.get()));
@@ -257,7 +262,6 @@ int EventDispatcher::_process_rt_event(RtEvent &rt_event)
         }
     }
 
-    // TODO: Can an event be all three at the same time, or only ever one?
     if (event->is_keyboard_event())
     {
         _publish_keyboard_events(std::move(event));
@@ -296,6 +300,10 @@ void EventDispatcher::_publish_keyboard_events(std::unique_ptr<Event>&& event)
 
     for (auto& listener : _keyboard_event_listeners)
     {
+        // TODO: This won't work!
+        //  Maybe have another process() that also takes a listener list?
+        //  Or maybe it's enough that std::unique_ptr stays in this scope, and all process() methods take naked ones?
+        //  IS THERE a doc header or something I've missed reading? Probably not.
         listener->process(std::move(event));
     }
 }
@@ -306,6 +314,7 @@ void EventDispatcher::_publish_parameter_events(std::unique_ptr<Event>&& event)
 
     for (auto& listener : _parameter_change_listeners)
     {
+        // TODO: >>> see above
         listener->process(std::move(event));
     }
 }
@@ -316,6 +325,7 @@ void EventDispatcher::_publish_engine_notification_events(std::unique_ptr<Event>
 
     for (auto& listener : _engine_notification_listeners)
     {
+        // TODO: >>> see above
         listener->process(std::move(event));
     }
 }
@@ -431,6 +441,7 @@ void Worker::stop()
 int Worker::process(std::unique_ptr<Event>&& event)
 {
     _queue.push(std::move(event));
+
     return EventStatus::QUEUED_HANDLING;
 }
 

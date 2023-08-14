@@ -487,7 +487,10 @@ void OSCFrontend::_setup_engine_control()
 
 void OSCFrontend::_completion_callback(Event* event, int return_status)
 {
-    ELKLOG_LOG_DEBUG("EngineEvent {} completed with status {}({})", event->id(), return_status == 0 ? "ok" : "failure", return_status);
+    ELKLOG_LOG_DEBUG("EngineEvent {} completed with status {}({})",
+                     event->id(),
+                     return_status == 0 ? "ok" : "failure",
+                     return_status);
 }
 
 void OSCFrontend::_start_server()

@@ -644,8 +644,8 @@ private:
 class AsynchronousWorkEvent : public Event
 {
 public:
-    virtual bool process_asynchronously() const override {return true;}
-    virtual bool is_async_work_event() const override {return true;}
+    bool process_asynchronously() const override {return true;}
+    bool is_async_work_event() const override {return true;}
     virtual std::unique_ptr<Event> execute() = 0;
 
 protected:

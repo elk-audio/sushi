@@ -84,7 +84,7 @@ public:
      * @brief Remove a processor from a track entry
      * @param processor_id The id of the processor to remove.
      * @param track_id  The id of the track to remove from
-     * @return true if the processor was successfullt removed from the track,
+     * @return true if the processor was successfully removed from the track,
      *         false otherwise
      */
     bool remove_from_track(ObjectId processor_id, ObjectId track_id) override;

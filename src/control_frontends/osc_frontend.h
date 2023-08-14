@@ -81,7 +81,7 @@ public:
                 control::SushiControl* controller,
                 osc::BaseOscMessenger* osc_interface);
 
-    ~OSCFrontend();
+    ~OSCFrontend() override;
 
     ControlFrontendStatus init() override;
 

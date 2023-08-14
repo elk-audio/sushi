@@ -173,11 +173,10 @@ control::ControlStatus SessionController::restore_session(const control::Session
         return EventStatus::HANDLED_OK;
     };
 
-    // TODO: I could figure out signature of lambda argument for std::make_unique...
     std::unique_ptr<Event> e;
     e.reset(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
-
     _event_dispatcher->post_event(std::move(e));
+
     return control::ControlStatus::OK;
 }
 

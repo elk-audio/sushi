@@ -74,7 +74,6 @@ public:
 
         while (!_queue.empty())
         {
-            // TODO: IS peeking like this OK?
             auto event = _queue.back().get();
 
             // There can be notification events before, which we want to ignore when mocking.
@@ -175,7 +174,7 @@ public:
                                       _transport(sample_rate, &_rt_event_output)
     {}
 
-    ~EngineMockup()
+    ~EngineMockup() override
     {}
 
     void
@@ -239,7 +238,7 @@ class DummyMidiFrontend : public sushi::internal::midi_frontend::BaseMidiFronten
 public:
     DummyMidiFrontend() : BaseMidiFrontend(nullptr) {}
 
-    virtual ~DummyMidiFrontend() {}
+    ~DummyMidiFrontend() override {}
 
     bool init() override {return true;}
     void run()  override {}

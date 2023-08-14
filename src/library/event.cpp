@@ -221,7 +221,7 @@ RtEvent ParameterChangeEvent::to_rt_event(int sample_offset) const
 
        default:
             /* Only to stop the compiler from complaining */
-            return RtEvent();
+            return {};
     }
 }
 
@@ -272,7 +272,6 @@ RtEvent AsynchronousProcessorWorkCompletionEvent::to_rt_event(int /*sample_offse
 
 std::unique_ptr<Event> AsynchronousBlobDeleteEvent::execute()
 {
-    // TODO: Also wrap _data in unique_ptr?
     delete(_data.data);
     
     return nullptr;
@@ -280,7 +279,6 @@ std::unique_ptr<Event> AsynchronousBlobDeleteEvent::execute()
 
 std::unique_ptr<Event> AsynchronousDeleteEvent::execute()
 {
-    // TODO: Also wrap _data in unique_ptr?
     delete _data;
 
     return nullptr;
