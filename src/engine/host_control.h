@@ -42,11 +42,11 @@ public:
     /**
      * @brief Post an event into the dispatcher's queue
      *
-     * @param event Non-owning pointer to the event
+     * @param event the event
      */
-    void post_event(Event* event)
+    void post_event(std::unique_ptr<Event>&& event)
     {
-        _event_dispatcher->post_event(event);
+        _event_dispatcher->post_event(std::move(event));
     }
 
     /**

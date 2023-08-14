@@ -621,29 +621,36 @@ JsonConfigReturnStatus JsonConfigurator::load_events()
     {
         return status;
     }
+
     auto dispatcher = _engine->event_dispatcher();
     for (auto& json_event : events.GetArray())
     {
-        if (Event* e = _parse_event(json_event, IGNORE_TIMESTAMP); e != nullptr)
-            dispatcher->post_event(e);
+        if (auto e = _parse_event(json_event, IGNORE_TIMESTAMP); e != nullptr)
+        {
+            dispatcher->post_event(std::move(e));
+        }
     }
     return JsonConfigReturnStatus::OK;
 }
 
-std::pair<JsonConfigReturnStatus, std::vector<Event*>> JsonConfigurator::load_event_list()
+std::pair<JsonConfigReturnStatus, std::vector<std::unique_ptr<Event>>> JsonConfigurator::load_event_list()
 {
-    std::vector<Event*> events;
+    std::vector<std::unique_ptr<Event>> events;
     auto [status, json_events] = _parse_section(JsonSection::EVENTS);
     if (status != JsonConfigReturnStatus::OK)
     {
-        return std::make_pair(status, events);
+        return std::make_pair(status, std::move(events));
     }
+
     for (auto& json_event : json_events.GetArray())
     {
-        if (Event* e = _parse_event(json_event, USE_TIMESTAMP); e != nullptr)
-            events.push_back(e);
+        if (auto e = _parse_event(json_event, USE_TIMESTAMP); e != nullptr)
+        {
+            events.push_back(std::move(e));
+        }
     }
-    return std::make_pair(JsonConfigReturnStatus::OK, events);
+
+    return std::make_pair(JsonConfigReturnStatus::OK, std::move(events));
 }
 
 JsonConfigReturnStatus JsonConfigurator::load_initial_state()
@@ -812,7 +819,7 @@ int JsonConfigurator::_get_midi_channel(const rapidjson::Value& channels)
     return channels.GetInt();
 }
 
-Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool with_timestamp)
+std::unique_ptr<Event> JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool with_timestamp)
 {
     Time timestamp = with_timestamp? std::chrono::microseconds(
             static_cast<int>(std::round(json_event["time"].GetDouble() * 1'000'000))): IMMEDIATE_PROCESS;
@@ -833,11 +840,11 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
             ELKLOG_LOG_WARNING("Unrecognised parameter: {}", data["parameter_name"].GetString());
             return nullptr;
         }
-        return new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
-                                        processor->id(),
-                                        parameter->id(),
-                                        data["value"].GetFloat(),
-                                        timestamp);
+        return std::make_unique<ParameterChangeEvent>(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
+                                                      processor->id(),
+                                                      parameter->id(),
+                                                      data["value"].GetFloat(),
+                                                      timestamp);
     }
 
     if (json_event["type"] == "property_change")
@@ -848,30 +855,30 @@ Event* JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool w
             ELKLOG_LOG_WARNING("Unrecognised property: {}", data["property_name"].GetString());
             return nullptr;
         }
-        return new PropertyChangeEvent(processor->id(),
-                                       parameter->id(),
-                                       data["value"].GetString(),
-                                       timestamp);
+        return std::make_unique<PropertyChangeEvent>(processor->id(),
+                                                     parameter->id(),
+                                                     data["value"].GetString(),
+                                                     timestamp);
     }
 
     if (json_event["type"] == "note_on")
     {
-        return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON,
-                                 processor->id(),
-                                 0, // channel
-                                 data["note"].GetUint(),
-                                 data["velocity"].GetFloat(),
-                                 timestamp);
+        return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::NOTE_ON,
+                                               processor->id(),
+                                               0, // channel
+                                               data["note"].GetUint(),
+                                               data["velocity"].GetFloat(),
+                                               timestamp);
     }
 
     if (json_event["type"] == "note_off")
     {
-        return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF,
-                                 processor->id(),
-                                 0, // channel
-                                 data["note"].GetUint(),
-                                 data["velocity"].GetFloat(),
-                                 timestamp);
+        return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::NOTE_OFF,
+                                               processor->id(),
+                                               0, // channel
+                                               data["note"].GetUint(),
+                                               data["velocity"].GetFloat(),
+                                               timestamp);
     }
     return nullptr;
 }

@@ -70,7 +70,7 @@ class Event
     friend class sushi::internal::dispatcher::Worker;
 
 public:
-    virtual ~Event() {}
+    virtual ~Event() = default;
 
     /**
      * @brief Creates an Event from its RtEvent counterpart if possible
@@ -78,11 +78,11 @@ public:
      * @param timestamp the timestamp to assign to the Event
      * @return pointer to an Event if successful, nullptr if there is no possible conversion
      */
-    static Event* from_rt_event(const RtEvent& rt_event, Time timestamp);
+    static std::unique_ptr<Event> from_rt_event(const RtEvent& rt_event, Time timestamp);
 
-    Time        time() const {return _timestamp;}
-    int         receiver() const {return _receiver;}
-    EventId     id() const {return _id;}
+    [[nodiscard]] Time        time() const {return _timestamp;}
+    [[nodiscard]] int         receiver() const {return _receiver;}
+    [[nodiscard]] EventId     id() const {return _id;}
 
     /**
      * @brief Whether the event should be processes asynchronously in a low priority thread or not
@@ -308,7 +308,7 @@ public:
                  std::unique_ptr<RtState> state,
                  Time timestamp);
 
-    ~RtStateEvent();
+    ~RtStateEvent() override;
 
     bool maps_to_rt_event() const override {return true;}
 
@@ -646,7 +646,7 @@ class AsynchronousWorkEvent : public Event
 public:
     virtual bool process_asynchronously() const override {return true;}
     virtual bool is_async_work_event() const override {return true;}
-    virtual Event* execute() = 0;
+    virtual std::unique_ptr<Event> execute() = 0;
 
 protected:
     explicit AsynchronousWorkEvent(Time timestamp) : Event(timestamp) {}
@@ -668,7 +668,7 @@ public:
                                                       _rt_event_id(rt_event_id)
     {}
 
-    Event* execute() override;
+    std::unique_ptr<Event> execute() override;
 
 private:
     AsynchronousWorkCallback _work_callback;
@@ -704,7 +704,7 @@ public:
     AsynchronousBlobDeleteEvent(BlobData data,
                                 Time timestamp) : AsynchronousWorkEvent(timestamp),
                                                      _data(data) {}
-    Event* execute() override;
+    std::unique_ptr<Event> execute() override;
 
 private:
     BlobData _data;
@@ -716,7 +716,7 @@ public:
     AsynchronousDeleteEvent(RtDeletable* data,
                             Time timestamp) : AsynchronousWorkEvent(timestamp),
                                               _data(data) {}
-    Event* execute() override;
+    std::unique_ptr<Event> execute() override;
 
 private:
     RtDeletable* _data;

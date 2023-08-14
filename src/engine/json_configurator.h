@@ -143,7 +143,7 @@ public:
      * @return An std::vector with the parsed events which is only valid if the status
      *         returned is JsonConfigReturnStatus::OK
      */
-    std::pair<JsonConfigReturnStatus, std::vector<Event*>> load_event_list();
+    std::pair<JsonConfigReturnStatus, std::vector<std::unique_ptr<Event>>> load_event_list();
 
     /**
      * @brief Reads the json config, searches for a valid "initial_state" definition
@@ -194,7 +194,7 @@ private:
      *        if set to false, the event timestamp will be set for immediate processing
      * @return A pointer to an Event if successful, nullptr otherwise
      */
-    Event* _parse_event(const rapidjson::Value& json_event, bool with_timestamp);
+    std::unique_ptr<Event> _parse_event(const rapidjson::Value& json_event, bool with_timestamp);
 
     /**
      * @brief function which validates the json data against the respective schema.

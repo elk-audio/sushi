@@ -43,7 +43,7 @@ public:
     virtual void run() {}
     virtual void stop() {}
 
-    virtual void post_event(Event* event) = 0;
+    virtual void post_event(std::unique_ptr<Event>&& event) = 0;
 
     virtual EventDispatcherStatus register_poster(EventPoster* /*poster*/) {return EventDispatcherStatus::OK;}
     virtual EventDispatcherStatus subscribe_to_keyboard_events(EventPoster* /*receiver*/) {return EventDispatcherStatus::OK;}

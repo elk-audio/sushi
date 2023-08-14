@@ -96,8 +96,9 @@ control::ControlStatus OscController::enable_output_for_parameter(int processor_
         return EventStatus::HANDLED_OK;
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    std::unique_ptr<Event> e;
+    e.reset(new LambdaEvent(lambda, IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(e));
     return control::ControlStatus::OK;
 }
 
@@ -135,8 +136,9 @@ control::ControlStatus OscController::disable_output_for_parameter(int processor
         return EventStatus::HANDLED_OK;
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    std::unique_ptr<Event> e;
+    e.reset(new LambdaEvent(lambda, IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(e));
     return control::ControlStatus::OK;
 }
 
@@ -158,8 +160,9 @@ control::ControlStatus OscController::enable_all_output()
         return EventStatus::HANDLED_OK;
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    std::unique_ptr<Event> e;
+    e.reset(new LambdaEvent(lambda, IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(e));
     return control::ControlStatus::OK;
 }
 
@@ -176,8 +179,9 @@ control::ControlStatus OscController::disable_all_output()
         return EventStatus::HANDLED_OK;
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    std::unique_ptr<Event> e;
+    e.reset(new LambdaEvent(lambda, IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(e));
     return control::ControlStatus::OK;
 }
 

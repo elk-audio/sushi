@@ -377,13 +377,18 @@ void Vst3xWrapper::set_bypassed(bool bypassed)
     assert(twine::is_current_thread_realtime() == false);
     if (_bypass_parameter.supported)
     {
-        _host_control.post_event(new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
-                                                          this->id(), _bypass_parameter.id, bypassed? 1.0f : 0, IMMEDIATE_PROCESS));
+        _host_control.post_event(std::make_unique<ParameterChangeEvent>(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
+                                                                        this->id(),
+                                                                        _bypass_parameter.id,
+                                                                        bypassed? 1.0f : 0,
+                                                                        IMMEDIATE_PROCESS));
         _bypass_manager.set_bypass(bypassed, _sample_rate);
     }
     else
     {
-        _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
+        _host_control.post_event(std::make_unique<SetProcessorBypassEvent>(this->id(),
+                                                                           bypassed,
+                                                                           IMMEDIATE_PROCESS));
     }
 }
 
@@ -516,13 +521,13 @@ ProcessorReturnCode Vst3xWrapper::set_program(int program)
     if (_internal_programs)
     {
         float normalised_program_id = static_cast<float>(program) / static_cast<float>(_program_count);
-        auto event = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
-                                              this->id(),
-                                              _program_change_parameter.id,
-                                              normalised_program_id,
-                                              IMMEDIATE_PROCESS);
+        auto event = std::make_unique<ParameterChangeEvent>(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
+                                                            this->id(),
+                                                            _program_change_parameter.id,
+                                                            normalised_program_id,
+                                                            IMMEDIATE_PROCESS);
         event->set_completion_cb(Vst3xWrapper::program_change_callback, this);
-        _host_control.post_event(event);
+        _host_control.post_event(std::move(event));
         ELKLOG_LOG_INFO("Set program {}, {}, {}", program, normalised_program_id, _program_change_parameter.id);
 
         // TODO: Why is this commented out?
@@ -602,13 +607,12 @@ ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool realtime
 
     if (realtime_running)
     {
-        auto event = new RtStateEvent(this->id(), std::move(rt_state), IMMEDIATE_PROCESS);
-        _host_control.post_event(event);
+        _host_control.post_event(std::make_unique<RtStateEvent>(this->id(), std::move(rt_state), IMMEDIATE_PROCESS));
     }
     else
     {
-        _host_control.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
-                                                                 this->id(), 0, IMMEDIATE_PROCESS));
+        _host_control.post_event(std::make_unique<AudioGraphNotificationEvent>(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
+                                                                               this->id(), 0, IMMEDIATE_PROCESS));
     }
 
     return ProcessorReturnCode::OK;
@@ -1018,8 +1022,12 @@ inline void Vst3xWrapper::_add_parameter_change(Steinberg::Vst::ParamID id, floa
 
 void Vst3xWrapper::set_parameter_change(ObjectId param_id, float value)
 {
-    auto event = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE, this->id(), param_id, value, IMMEDIATE_PROCESS);
-    _host_control.post_event(event);
+    auto event = std::make_unique<ParameterChangeEvent>(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
+                                                        this->id(),
+                                                        param_id,
+                                                        value,
+                                                        IMMEDIATE_PROCESS);
+    _host_control.post_event(std::move(event));
 }
 
 bool Vst3xWrapper::_sync_processor_to_controller()
@@ -1122,8 +1130,10 @@ void Vst3xWrapper::_set_binary_state(std::vector<std::byte>& state)
     stream.seek(0, Steinberg::MemoryStream::kIBSeekSet, nullptr);
     res = _instance.component()->setState(&stream);
     ELKLOG_LOG_ERROR_IF(res , "Failed to set component state ({})", res);
-    _host_control.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
-                                                             this->id(), 0, IMMEDIATE_PROCESS));
+
+    auto event = std::make_unique<AudioGraphNotificationEvent>(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
+                                                               this->id(), 0, IMMEDIATE_PROCESS);
+    _host_control.post_event(std::move(event));
 }
 
 void Vst3xWrapper::_set_state_rt(Vst3xRtState* state)

@@ -54,19 +54,17 @@ EventDispatcher::~EventDispatcher()
     {
         stop();
     }
-    while(_in_queue.empty() == false)
-    {
-        Event* event = _in_queue.pop();
 
-// TODO: This SOMETIMES crashes when running Sushi as a NikkeiVST3 with pluginval
-//  (Ticket: AUD-653).
-        delete event;
+    while (!_in_queue.empty())
+    {
+        // As each event goes out of scope, it's deleted.
+        auto event = _in_queue.pop();
     }
 }
 
-void EventDispatcher::post_event(Event* event)
+void EventDispatcher::post_event(std::unique_ptr<Event>&& event)
 {
-    _in_queue.push(event);
+    _in_queue.push(std::move(event));
 }
 
 EventDispatcherStatus EventDispatcher::register_poster(EventPoster* poster)
@@ -135,16 +133,18 @@ EventDispatcherStatus EventDispatcher::subscribe_to_engine_notifications(EventPo
     return EventDispatcherStatus::OK;
 }
 
-int EventDispatcher::process(Event* event)
+int EventDispatcher::process(std::unique_ptr<Event>&& event)
 {
+    // TODO: These if's can no longer be chained!
     if (event->process_asynchronously())
     {
         event->set_receiver(EventPosterId::WORKER);
-        return _posters[event->receiver()]->process(event);
+        auto receiver = event->receiver();
+        return _posters[receiver]->process(std::move(event));
     }
     if (event->is_parameter_change_event())
     {
-        auto typed_event = static_cast<const ParameterChangeEvent*>(event);
+        auto typed_event = static_cast<const ParameterChangeEvent*>(event.get());
         _parameter_manager.mark_parameter_changed(typed_event->processor_id(), typed_event->parameter_id(), typed_event->time());
     }
     if (event->maps_to_rt_event())
@@ -157,20 +157,21 @@ int EventDispatcher::process(Event* event)
                 return EventStatus::HANDLED_OK;
             }
         }
-        _waiting_list.push_front(event);
+        _waiting_list.push_front(std::move(event));
         return EventStatus::QUEUED_HANDLING;
     }
     if (event->is_parameter_change_notification() || event->is_property_change_notification())
     {
-        _publish_parameter_events(event);
+        _publish_parameter_events(std::move(event));
         return EventStatus::HANDLED_OK;
     }
     if (event->is_engine_notification())
     {
-        _handle_engine_notifications_internally(static_cast<EngineNotificationEvent*>(event));
-        _publish_engine_notification_events(event);
+        _handle_engine_notifications_internally(static_cast<EngineNotificationEvent*>(event.get()));
+        _publish_engine_notification_events(std::move(event));
         return EventStatus::HANDLED_OK;
     }
+
     return EventStatus::UNRECOGNIZED_EVENT;
 }
 
@@ -189,19 +190,25 @@ void EventDispatcher::_event_loop()
 
             if (receiver != nullptr)
             {
-                status = receiver->process(event);
+                receiver->process(std::move(event));
+                status = receiver->process(std::move(event));
             }
+
             if (status == EventStatus::QUEUED_HANDLING)
             {
                 /* Event has not finished processing, so don't call comp cb or delete it */
                 continue;
             }
+
+            // TODO: Completion callback is called on moved event!
+            // This is a synchronous call to the completion callback,
+            // meaning it's fine that the event then goes out of scope and is deleted.
             if (event->completion_cb() != nullptr)
             {
-                event->completion_cb()(event->callback_arg(), event, status);
+                event->completion_cb()(event->callback_arg(), event.get(), status);
             }
-            delete(event);
         }
+
         // Handle incoming RtEvents
         while (!_in_rt_queue->empty())
         {
@@ -249,65 +256,67 @@ int EventDispatcher::_process_rt_event(RtEvent &rt_event)
                 return EventStatus::UNRECOGNIZED_EVENT;
         }
     }
+
+    // TODO: Can an event be all three at the same time, or only ever one?
     if (event->is_keyboard_event())
     {
-        _publish_keyboard_events(event);
+        _publish_keyboard_events(std::move(event));
     }
-    if (event->is_engine_notification())
+    else if (event->is_engine_notification())
     {
-        _publish_engine_notification_events(event);
+        _publish_engine_notification_events(std::move(event));
     }
-    if (event->process_asynchronously())
+    else if (event->process_asynchronously())
     {
-        return _worker.process(event);
+        return _worker.process(std::move(event));
     }
-    // TODO - better lifetime management of events
-    delete event;
+
     return EventStatus::HANDLED_OK;
 }
 
-Event* EventDispatcher::_next_event()
+std::unique_ptr<Event> EventDispatcher::_next_event()
 {
-    Event* event = nullptr;
+    std::unique_ptr<Event> event = nullptr;
     if (!_waiting_list.empty())
     {
-        event = _waiting_list.back();
+        event = std::move(_waiting_list.back());
         _waiting_list.pop_back();
     }
     else if (!_in_queue.empty())
     {
         event = _in_queue.pop();
     }
+
     return event;
 }
 
-void EventDispatcher::_publish_keyboard_events(Event* event)
+void EventDispatcher::_publish_keyboard_events(std::unique_ptr<Event>&& event)
 {
     std::lock_guard<std::mutex> lock(_keyboard_listener_lock);
 
     for (auto& listener : _keyboard_event_listeners)
     {
-        listener->process(event);
+        listener->process(std::move(event));
     }
 }
 
-void EventDispatcher::_publish_parameter_events(Event* event)
+void EventDispatcher::_publish_parameter_events(std::unique_ptr<Event>&& event)
 {
     std::lock_guard<std::mutex> lock(_parameter_listener_lock);
 
     for (auto& listener : _parameter_change_listeners)
     {
-        listener->process(event);
+        listener->process(std::move(event));
     }
 }
 
-void EventDispatcher::_publish_engine_notification_events(Event* event)
+void EventDispatcher::_publish_engine_notification_events(std::unique_ptr<Event>&& event)
 {
     std::lock_guard<std::mutex> lock(_engine_listener_lock);
 
     for (auto& listener : _engine_notification_listeners)
     {
-        listener->process(event);
+        listener->process(std::move(event));
     }
 }
 
@@ -419,9 +428,9 @@ void Worker::stop()
     }
 }
 
-int Worker::process(Event*event)
+int Worker::process(std::unique_ptr<Event>&& event)
 {
-    _queue.push(event);
+    _queue.push(std::move(event));
     return EventStatus::QUEUED_HANDLING;
 }
 
@@ -434,29 +443,32 @@ void Worker::_worker()
         while (!_queue.empty())
         {
             int status = EventStatus::UNRECOGNIZED_EVENT;
-            Event* event = _queue.pop();
+            auto event = _queue.pop();
 
             if (event->is_engine_event())
             {
-                auto typed_event = static_cast<EngineEvent*>(event);
+                auto typed_event = static_cast<EngineEvent*>(event.get());
                 status = typed_event->execute(_engine);
             }
+
             if (event->is_async_work_event())
             {
-                auto typed_event = static_cast<AsynchronousWorkEvent*>(event);
-                Event* response_event = typed_event->execute();
+                auto typed_event = static_cast<AsynchronousWorkEvent*>(event.get());
+                auto response_event = typed_event->execute();
                 if (response_event != nullptr)
                 {
-                    _dispatcher->post_event(response_event);
+                    _dispatcher->post_event(std::move(response_event));
                 }
             }
 
+            // This is a synchronous call to the completion callback,
+            // meaning it's fine that the event then goes out of scope and is deleted.
             if (event->completion_cb() != nullptr)
             {
-                event->completion_cb()(event->callback_arg(), event, status);
+                event->completion_cb()(event->callback_arg(), event.get(), status);
             }
-            delete (event);
         }
+
         if (start_time > timing_update_counter + TIMING_UPDATE_INTERVAL)
         {
             timing_update_counter = start_time;

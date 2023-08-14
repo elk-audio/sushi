@@ -32,77 +32,77 @@ namespace sushi::internal::midi_dispatcher {
 
 ELKLOG_GET_LOGGER_WITH_MODULE_NAME("midi dispatcher");
 
-inline Event* make_note_on_event(const InputConnection& c,
-                                 const midi::NoteOnMessage& msg,
-                                 Time timestamp)
+inline std::unique_ptr<Event> make_note_on_event(const InputConnection& c,
+                                                 const midi::NoteOnMessage& msg,
+                                                 Time timestamp)
 {
     if (msg.velocity == 0)
     {
-        return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, c.target, msg.channel, msg.note, 0.5f, timestamp);
+        return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::NOTE_OFF, c.target, msg.channel, msg.note, 0.5f, timestamp);
     }
 
     float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
-    return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, c.target, msg.channel, msg.note, velocity, timestamp);
+    return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::NOTE_ON, c.target, msg.channel, msg.note, velocity, timestamp);
 }
 
-inline Event* make_note_off_event(const InputConnection& c,
-                                  const midi::NoteOffMessage& msg,
-                                  Time timestamp)
+inline std::unique_ptr<Event> make_note_off_event(const InputConnection& c,
+                                                  const midi::NoteOffMessage& msg,
+                                                  Time timestamp)
 {
     float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
-    return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, c.target, msg.channel, msg.note, velocity, timestamp);
+    return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::NOTE_OFF, c.target, msg.channel, msg.note, velocity, timestamp);
 }
 
-inline Event* make_note_aftertouch_event(const InputConnection& c,
-                                         const midi::PolyKeyPressureMessage& msg,
-                                         Time timestamp)
+inline std::unique_ptr<Event> make_note_aftertouch_event(const InputConnection& c,
+                                                         const midi::PolyKeyPressureMessage& msg,
+                                                         Time timestamp)
 {
     float pressure = msg.pressure / static_cast<float>(midi::MAX_VALUE);
-    return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_AFTERTOUCH, c.target, msg.channel, msg.note, pressure, timestamp);
+    return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::NOTE_AFTERTOUCH, c.target, msg.channel, msg.note, pressure, timestamp);
 }
 
-inline Event* make_aftertouch_event(const InputConnection& c,
-                                    const midi::ChannelPressureMessage& msg,
-                                    Time timestamp)
+inline std::unique_ptr<Event> make_aftertouch_event(const InputConnection& c,
+                                                    const midi::ChannelPressureMessage& msg,
+                                                    Time timestamp)
 {
     float pressure = msg.pressure / static_cast<float>(midi::MAX_VALUE);
-    return new KeyboardEvent(KeyboardEvent::Subtype::AFTERTOUCH, c.target, msg.channel, pressure, timestamp);
+    return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::AFTERTOUCH, c.target, msg.channel, pressure, timestamp);
 }
 
-inline Event* make_modulation_event(const InputConnection& c,
-                                    const midi::ControlChangeMessage& msg,
-                                    Time timestamp)
+inline std::unique_ptr<Event> make_modulation_event(const InputConnection& c,
+                                                    const midi::ControlChangeMessage& msg,
+                                                    Time timestamp)
 {
     float value = msg.value / static_cast<float>(midi::MAX_VALUE);
-    return new KeyboardEvent(KeyboardEvent::Subtype::MODULATION, c.target, msg.channel, value, timestamp);
+    return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::MODULATION, c.target, msg.channel, value, timestamp);
 }
 
-inline Event* make_pitch_bend_event(const InputConnection& c,
-                                    const midi::PitchBendMessage& msg,
-                                    Time timestamp)
+inline std::unique_ptr<Event> make_pitch_bend_event(const InputConnection& c,
+                                                    const midi::PitchBendMessage& msg,
+                                                    Time timestamp)
 {
     float value = (msg.value / static_cast<float>(midi::PITCH_BEND_MIDDLE)) - 1.0f;
-    return new KeyboardEvent(KeyboardEvent::Subtype::PITCH_BEND, c.target, msg.channel, value, timestamp);
+    return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::PITCH_BEND, c.target, msg.channel, value, timestamp);
 }
 
-inline Event* make_wrapped_midi_event(const InputConnection& c,
-                                      const uint8_t* data,
-                                      size_t size,
-                                      Time timestamp)
+inline std::unique_ptr<Event> make_wrapped_midi_event(const InputConnection& c,
+                                                      const uint8_t* data,
+                                                      size_t size,
+                                                      Time timestamp)
 {
     MidiDataByte midi_data{0};
     std::copy(data, data + size, midi_data.data());
-    return new KeyboardEvent(KeyboardEvent::Subtype::WRAPPED_MIDI, c.target, midi_data, timestamp);
+    return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::WRAPPED_MIDI, c.target, midi_data, timestamp);
 }
 
-inline Event* make_param_change_event(InputConnection& c,
-                                      const midi::ControlChangeMessage& msg,
-                                      Time timestamp)
+inline std::unique_ptr<Event> make_param_change_event(InputConnection& c,
+                                                      const midi::ControlChangeMessage& msg,
+                                                      Time timestamp)
 {
     uint8_t abs_value = msg.value;
-    // Maybe TODO: currently this is based on a virtual controller absolute value which is
-    // initialized at 64. An alternative would be to read the parameter value from the plugin
-    // and compute a change from that. We should investigate what other DAWs are doing.
+    // TODO: Maybe? Currently this is based on a virtual controller absolute value which is
+    //  initialized at 64. An alternative would be to read the parameter value from the plugin
+    //  and compute a change from that. We should investigate what other DAWs are doing.
     if (c.relative)
     {
         abs_value = c.virtual_abs_value;
@@ -120,14 +120,14 @@ inline Event* make_param_change_event(InputConnection& c,
         c.virtual_abs_value = abs_value;
     }
     float value = static_cast<float>(abs_value) / midi::MAX_VALUE * (c.max_range - c.min_range) + c.min_range;
-    return new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE, c.target, c.parameter, value, timestamp);
+    return std::make_unique<ParameterChangeEvent>(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE, c.target, c.parameter, value, timestamp);
 }
 
-inline Event* make_program_change_event(const InputConnection& c,
-                                        const midi::ProgramChangeMessage& msg,
-                                        Time timestamp)
+inline std::unique_ptr<Event> make_program_change_event(const InputConnection& c,
+                                                        const midi::ProgramChangeMessage& msg,
+                                                        Time timestamp)
 {
-    return new ProgramChangeEvent(c.target, msg.program, timestamp);
+    return std::make_unique<ProgramChangeEvent>(c.target, msg.program, timestamp);
 }
 
 MidiDispatcher::MidiDispatcher(dispatcher::BaseEventDispatcher* event_dispatcher) : _frontend(nullptr),
@@ -770,12 +770,12 @@ void MidiDispatcher::send_midi(int port, MidiDataByte data, Time timestamp)
     }
 }
 
-int MidiDispatcher::process(Event* event)
+int MidiDispatcher::process(std::unique_ptr<Event>&& event)
 {
     if (event->is_keyboard_event())
     {
         std::scoped_lock lock(_kb_routes_out_lock);
-        auto typed_event = static_cast<KeyboardEvent*>(event);
+        auto typed_event = static_cast<KeyboardEvent*>(event.get());
         const auto& cons = _kb_routes_out.find(typed_event->processor_id());
         if (cons != _kb_routes_out.end())
         {
@@ -814,7 +814,7 @@ int MidiDispatcher::process(Event* event)
     }
     else if (event->is_engine_notification())
     {
-        _handle_engine_notification(static_cast<EngineNotificationEvent*>(event));
+        _handle_engine_notification(static_cast<EngineNotificationEvent*>(event.get()));
     }
 
     return EventStatus::NOT_HANDLED;

@@ -31,13 +31,13 @@ inline void send_parameter_notification(ObjectId processor_id,
                                         const std::string& formatted_value,
                                         dispatcher::BaseEventDispatcher* dispatcher)
 {
-    ParameterChangeNotificationEvent event(processor_id,
-                                           parameter_id,
-                                           normalized_value,
-                                           domain_value,
-                                           formatted_value,
-                                           IMMEDIATE_PROCESS);
-    dispatcher->process(&event);
+    auto event = std::make_unique<ParameterChangeNotificationEvent>(processor_id,
+                                                                    parameter_id,
+                                                                    normalized_value,
+                                                                    domain_value,
+                                                                    formatted_value,
+                                                                    IMMEDIATE_PROCESS);
+    dispatcher->process(std::move(event));
 }
 
 ParameterManager::ParameterManager(Time update_rate,

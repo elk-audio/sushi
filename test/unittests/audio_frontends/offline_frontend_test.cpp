@@ -140,22 +140,16 @@ TEST_F(TestOfflineFrontend, TestAddSequencerEvents)
     rapidjson::Document config;
     auto [status, events] = configurator.load_event_list();
     ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, status);
-    _module_under_test->add_sequencer_events(events);
+    _module_under_test->add_sequencer_events(std::move(events));
 
-    auto event_q = _module_under_test->_event_queue;
-    ASSERT_EQ(4u, event_q.size());
+    auto event_q = &_module_under_test->_event_queue;
+    ASSERT_EQ(4u, event_q->size());
 
     // Check that queue is sorted by time
-    auto jt = --event_q.end();
-    for(auto it = event_q.begin(); it != jt; ++it)
+    auto jt = --event_q->end();
+    for(auto it = event_q->begin(); it != jt; ++it)
     {
         ASSERT_GE((*it)->time(), (*(it + 1))->time());
-    }
-
-    // Clear events manually, as that would be done by the EventDispatcher otherwise
-    for (auto* event : events)
-    {
-        delete event;
     }
 }
 

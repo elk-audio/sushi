@@ -357,7 +357,7 @@ public:
     void send_midi(int port, MidiDataByte data, Time timestamp) override;
 
     /* Inherited from EventPoster */
-    int process(Event* /*event*/) override;
+    int process(std::unique_ptr<Event>&& /*event*/) override;
 
     /**
      * @brief The unique id of this poster.

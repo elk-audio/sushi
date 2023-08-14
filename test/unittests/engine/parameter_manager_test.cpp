@@ -29,7 +29,7 @@ constexpr Time TEST_MAX_INTERVAL = std::chrono::milliseconds(10);
 // Custom Matcher to check the returned events
 MATCHER_P5(ParameterChangeNotificationMatcherFull, proc_id, param_id, norm_val, dom_val, txt_val, "")
 {
-    auto typed_ev = static_cast<ParameterChangeNotificationEvent*>(arg);
+    auto typed_ev = static_cast<ParameterChangeNotificationEvent*>(arg.get());
     return arg->is_parameter_change_notification() &&
            typed_ev->processor_id() == proc_id &&
            typed_ev->parameter_id() == param_id &&
@@ -40,7 +40,7 @@ MATCHER_P5(ParameterChangeNotificationMatcherFull, proc_id, param_id, norm_val, 
 
 MATCHER_P3(ParameterChangeNotificationMatcher, proc_id, param_id, norm_val, "")
 {
-    auto typed_ev = static_cast<ParameterChangeNotificationEvent*>(arg);
+    auto typed_ev = static_cast<ParameterChangeNotificationEvent*>(arg.get());
     return arg->is_parameter_change_notification() &&
            typed_ev->processor_id() == proc_id &&
            typed_ev->parameter_id() == param_id &&

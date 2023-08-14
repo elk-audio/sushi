@@ -87,9 +87,9 @@ public:
 protected:
     virtual void _completion_callback(Event* event, int return_status) = 0;
 
-    void send_with_callback(Event *event);
+    void send_with_callback(std::unique_ptr<Event>&& event);
 
-    engine::BaseEngine* _engine;
+    engine::BaseEngine* _engine {nullptr};
     dispatcher::BaseEventDispatcher* _event_dispatcher;
 
 private:

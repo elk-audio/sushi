@@ -77,7 +77,7 @@ public:
      * @brief Add events that should be run during the processing
      * @param An std::vector containing the timestamped events.
      */
-    void add_sequencer_events(std::vector<Event*> events);
+    void add_sequencer_events(std::vector<std::unique_ptr<Event>>&& events);
 
     void cleanup() override;
 
@@ -101,7 +101,7 @@ private:
     SampleBuffer<AUDIO_CHUNK_SIZE> _buffer{DUMMY_FRONTEND_CHANNELS};
     engine::ControlBuffer _control_buffer;
 
-    std::vector<Event*> _event_queue;
+    std::vector<std::unique_ptr<Event>> _event_queue;
 };
 
 } // end namespace sushi::internal::audio_frontend

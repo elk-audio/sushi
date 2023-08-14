@@ -113,7 +113,7 @@ Status OfflineFactoryImplementation::_load_json_events([[maybe_unused]] const Su
 
     if (status == jsonconfig::JsonConfigReturnStatus::OK)
     {
-        static_cast<audio_frontend::OfflineFrontend*>(_audio_frontend.get())->add_sequencer_events(events);
+        static_cast<audio_frontend::OfflineFrontend*>(_audio_frontend.get())->add_sequencer_events(std::move(events));
     }
     else if (status != jsonconfig::JsonConfigReturnStatus::NOT_DEFINED)
     {

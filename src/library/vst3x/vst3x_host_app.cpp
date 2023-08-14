@@ -59,8 +59,9 @@ Steinberg::tresult ComponentHandler::restartComponent(Steinberg::int32 flags)
     ELKLOG_LOG_DEBUG("restartComponent called");
     if (flags | (Steinberg::Vst::kParamValuesChanged & Steinberg::Vst::kReloadComponent))
     {
-        _host_control->post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
-                                                                  _wrapper_instance->id(), 0, IMMEDIATE_PROCESS));
+        auto event = std::make_unique<AudioGraphNotificationEvent>(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
+                                                                   _wrapper_instance->id(), 0, IMMEDIATE_PROCESS);
+        _host_control->post_event(std::move(event));
         return Steinberg::kResultOk;
     }
     return Steinberg::kResultFalse;

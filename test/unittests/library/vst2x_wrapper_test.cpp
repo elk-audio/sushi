@@ -337,8 +337,7 @@ TEST_F(TestVst2xWrapper, TestStateHandling)
     auto rt_event = _host_control._event_output.pop();
     auto delete_event = Event::from_rt_event(rt_event, IMMEDIATE_PROCESS);
     ASSERT_TRUE(delete_event);
-    static_cast<AsynchronousDeleteEvent*>(delete_event)->execute();
-    delete delete_event;
+    static_cast<AsynchronousDeleteEvent*>(delete_event.get())->execute();
 }
 
 TEST_F(TestVst2xWrapper, TestStateSaving)

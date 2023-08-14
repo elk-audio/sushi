@@ -210,8 +210,9 @@ control::ControlStatus AudioGraphController::set_processor_state(int processor_i
         return EventStatus::ERROR;
     };
 
-    auto event = new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    std::unique_ptr<Event> e;
+    e.reset(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(e));
     return control::ControlStatus::OK;
 }
 
@@ -237,8 +238,9 @@ control::ControlStatus AudioGraphController::create_track(const std::string& nam
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    std::unique_ptr<Event> e;
+    e.reset(new LambdaEvent(lambda, IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(e));
     return control::ControlStatus::OK;
 }
 
@@ -251,8 +253,9 @@ control::ControlStatus AudioGraphController::create_multibus_track(const std::st
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    std::unique_ptr<Event> e;
+    e.reset(new LambdaEvent(lambda, IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(e));
     return control::ControlStatus::OK;
 }
 
@@ -265,8 +268,9 @@ control::ControlStatus AudioGraphController::create_pre_track(const std::string&
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    std::unique_ptr<Event> e;
+    e.reset(new LambdaEvent(lambda, IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(e));
     return control::ControlStatus::OK;
 }
 
@@ -279,8 +283,9 @@ control::ControlStatus AudioGraphController::create_post_track(const std::string
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    std::unique_ptr<Event> e;
+    e.reset(new LambdaEvent(lambda, IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(e));
     return control::ControlStatus::OK;
 }
 
@@ -335,8 +340,9 @@ control::ControlStatus AudioGraphController::move_processor_on_track(int process
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    std::unique_ptr<Event> e;
+    e.reset(new LambdaEvent(lambda, IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(e));
     return control::ControlStatus::OK;
 }
 
@@ -373,8 +379,9 @@ control::ControlStatus AudioGraphController::create_processor_on_track(const std
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    std::unique_ptr<Event> e;
+    e.reset(new LambdaEvent(lambda, IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(e));
     return control::ControlStatus::OK;
 }
 
@@ -392,8 +399,9 @@ control::ControlStatus AudioGraphController::delete_processor_from_track(int pro
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    std::unique_ptr<Event> e;
+    e.reset(new LambdaEvent(lambda, IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(e));
     return control::ControlStatus::OK;
 }
 
@@ -427,8 +435,9 @@ control::ControlStatus AudioGraphController::delete_track(int track_id)
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    std::unique_ptr<Event> e;
+    e.reset(new LambdaEvent(lambda, IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(e));
     return control::ControlStatus::OK;
 }
 

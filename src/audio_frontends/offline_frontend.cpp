@@ -125,10 +125,10 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
     return ret_code;
 }
 
-void OfflineFrontend::add_sequencer_events(std::vector<Event*> events)
+void OfflineFrontend::add_sequencer_events(std::vector<std::unique_ptr<Event>>&& events)
 {
     // Sort events by reverse time
-    std::sort(events.begin(), events.end(), [](const Event* lhs, const Event* rhs)
+    std::sort(events.begin(), events.end(), [](const std::unique_ptr<Event>& lhs, const std::unique_ptr<Event>& rhs)
                                               {
                                                   return lhs->time() >= rhs->time();
                                               });
@@ -177,15 +177,16 @@ void OfflineFrontend::_process_events(Time end_time)
 {
     while (!_event_queue.empty() && _event_queue.back()->time() < end_time)
     {
-        auto next_event = _event_queue.back();
+        auto next_event = std::move(_event_queue.back());
+
         if (next_event->maps_to_rt_event())
         {
             int offset = time_to_sample_offset(end_time, next_event->time(), _engine->sample_rate());
             auto rt_event = next_event->to_rt_event(offset);
             _engine->send_rt_event_to_processor(rt_event);
         }
+
         _event_queue.pop_back();
-        delete next_event;
     }
 }
 

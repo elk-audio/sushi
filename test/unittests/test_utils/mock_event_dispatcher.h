@@ -25,7 +25,7 @@ public:
 
     MOCK_METHOD(void,
                 post_event,
-                (Event*),
+                (std::unique_ptr<Event>&&),
                 (override));
 
     MOCK_METHOD(EventDispatcherStatus,
@@ -80,7 +80,7 @@ public:
 
     MOCK_METHOD(int,
                 process,
-                (Event* event),
+                (std::unique_ptr<Event>&& event),
                 (override));
 
     MOCK_METHOD(int,

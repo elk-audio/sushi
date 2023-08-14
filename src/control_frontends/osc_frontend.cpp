@@ -196,21 +196,21 @@ std::vector<std::string> OSCFrontend::get_enabled_parameter_outputs()
     return outputs;
 }
 
-int OSCFrontend::process(Event* event)
+int OSCFrontend::process(std::unique_ptr<Event>&& event)
 {
     assert(_osc_initialized);
 
     if (event->is_parameter_change_notification())
     {
-        _handle_param_change_notification(static_cast<ParameterChangeNotificationEvent*>(event));
+        _handle_param_change_notification(static_cast<ParameterChangeNotificationEvent*>(event.get()));
     }
     else if (event->is_property_change_notification())
     {
-        _handle_property_change_notification(static_cast<PropertyChangeNotificationEvent*>(event));
+        _handle_property_change_notification(static_cast<PropertyChangeNotificationEvent*>(event.get()));
     }
     else if (event->is_engine_notification())
     {
-        _handle_engine_notification(static_cast<EngineNotificationEvent*>(event));
+        _handle_engine_notification(static_cast<EngineNotificationEvent*>(event.get()));
     }
     // Return statuses for notifications are not handled, so just return ok.
     return EventStatus::HANDLED_OK;
@@ -554,7 +554,9 @@ void OSCFrontend::_handle_param_change_notification(const ParameterChangeNotific
         {
             _osc->send(param_node->second.c_str(), event->normalized_value());
             ELKLOG_LOG_DEBUG("Sending parameter change from processor: {}, parameter: {}, value: {}",
-                            event->processor_id(), event->parameter_id(), event->normalized_value());
+                             event->processor_id(),
+                             event->parameter_id(),
+                             event->normalized_value());
         }
     }
 }
@@ -569,7 +571,9 @@ void OSCFrontend::_handle_property_change_notification(const PropertyChangeNotif
         {
             _osc->send(param_node->second.c_str(), event->value());
             ELKLOG_LOG_DEBUG("Sending property change from processor: {}, property: {}, value: {}",
-                            event->processor_id(), event->property_id(), event->value());
+                             event->processor_id(),
+                             event->property_id(),
+                             event->value());
         }
     }
 }

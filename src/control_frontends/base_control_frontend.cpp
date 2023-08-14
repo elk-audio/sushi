@@ -28,9 +28,8 @@ void BaseControlFrontend::send_parameter_change_event(ObjectId processor,
                                                       float value)
 {
     Time timestamp = IMMEDIATE_PROCESS;
-    auto e = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
-                                      processor, parameter, value, timestamp);
-    _event_dispatcher->post_event(e);
+    _event_dispatcher->post_event(std::make_unique<ParameterChangeEvent>(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
+                                                                         processor, parameter, value, timestamp));
 }
 
 void BaseControlFrontend::send_string_parameter_change_event(ObjectId processor,
@@ -38,8 +37,8 @@ void BaseControlFrontend::send_string_parameter_change_event(ObjectId processor,
                                                              const std::string& value)
 {
     Time timestamp = IMMEDIATE_PROCESS;
-    auto e = new PropertyChangeEvent(processor, parameter, value, timestamp);
-    _event_dispatcher->post_event(e);}
+    _event_dispatcher->post_event(std::make_unique<PropertyChangeEvent>(processor, parameter, value, timestamp));
+}
 
 
 void BaseControlFrontend::send_keyboard_event(ObjectId processor,
@@ -49,8 +48,7 @@ void BaseControlFrontend::send_keyboard_event(ObjectId processor,
                                               float velocity)
 {
     Time timestamp = IMMEDIATE_PROCESS;
-    auto e = new KeyboardEvent(type, processor, channel, note, velocity, timestamp);
-    _event_dispatcher->post_event(e);
+    _event_dispatcher->post_event(std::make_unique<KeyboardEvent>(type, processor, channel, note, velocity, timestamp));
 }
 
 void BaseControlFrontend::send_note_on_event(ObjectId processor, int channel, int note, float velocity)
@@ -66,38 +64,33 @@ void BaseControlFrontend::send_note_off_event(ObjectId processor, int channel, i
 void BaseControlFrontend::send_program_change_event(ObjectId processor, int program)
 {
     Time timestamp = IMMEDIATE_PROCESS;
-    auto e = new ProgramChangeEvent(processor, program, timestamp);
-    _event_dispatcher->post_event(e);
+    _event_dispatcher->post_event(std::make_unique<ProgramChangeEvent>(processor, program, timestamp));
 }
 
 void BaseControlFrontend::send_set_tempo_event(float tempo)
 {
-    auto e = new SetEngineTempoEvent(tempo, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(e);
+    _event_dispatcher->post_event(std::make_unique<SetEngineTempoEvent>(tempo, IMMEDIATE_PROCESS));
 }
 
 void BaseControlFrontend::send_set_time_signature_event(TimeSignature signature)
 {
-    auto e = new SetEngineTimeSignatureEvent(signature, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(e);
+    _event_dispatcher->post_event(std::make_unique<SetEngineTimeSignatureEvent>(signature, IMMEDIATE_PROCESS));
 }
 
 void BaseControlFrontend::send_set_playing_mode_event(PlayingMode mode)
 {
-    auto e = new SetEnginePlayingModeStateEvent(mode, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(e);
+    _event_dispatcher->post_event(std::make_unique<SetEnginePlayingModeStateEvent>(mode, IMMEDIATE_PROCESS));
 }
 
 void BaseControlFrontend::send_set_sync_mode_event(SyncMode mode)
 {
-    auto e = new SetEngineSyncModeEvent(mode, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(e);
+    _event_dispatcher->post_event(std::make_unique<SetEngineSyncModeEvent>(mode, IMMEDIATE_PROCESS));
 }
 
-void BaseControlFrontend::send_with_callback(Event* event)
+void BaseControlFrontend::send_with_callback(std::unique_ptr<Event>&& event)
 {
     event->set_completion_cb(BaseControlFrontend::completion_callback, this);
-    _event_dispatcher->post_event(event);
+    _event_dispatcher->post_event(std::move(event));
 }
 
 } // end namespace sushi::internal::control_frontend

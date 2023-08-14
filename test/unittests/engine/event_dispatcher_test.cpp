@@ -34,11 +34,11 @@ int dummy_processor_callback(void* /*arg*/, EventId /*id*/)
 class DummyPoster : public EventPoster
 {
 public:
-    int process(Event* /*event*/) override
+    int process(std::unique_ptr<Event>&& /*event*/) override
     {
         _received = true;
         return 100;
-    };
+    }
 
     int poster_id() override {return DUMMY_POSTER_ID;}
 
@@ -98,9 +98,9 @@ TEST_F(TestEventDispatcher, TestInstantiation)
 TEST_F(TestEventDispatcher, TestSimpleEventDispatching)
 {
     _module_under_test->register_poster(&_poster);
-    auto event = new Event(IMMEDIATE_PROCESS);
+    auto event = std::make_unique<Event>(IMMEDIATE_PROCESS);
     event->set_receiver(DUMMY_POSTER_ID);
-    _module_under_test->post_event(event);
+    _module_under_test->post_event(std::move(event));
     crank_event_loop_once();
     ASSERT_TRUE(_poster.event_received());
     _module_under_test->stop();
@@ -173,9 +173,9 @@ TEST_F(TestEventDispatcher, TestFromRtEventParameterChangeNotification)
 
 TEST_F(TestEventDispatcher, TestEngineNotificationForwarding)
 {
-    auto event = new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_ADDED_TO_TRACK,
-                                                 123, 234, IMMEDIATE_PROCESS);
-    _module_under_test->post_event(event);
+    auto event = std::make_unique<AudioGraphNotificationEvent>(AudioGraphNotificationEvent::Action::PROCESSOR_ADDED_TO_TRACK,
+                                                               123, 234, IMMEDIATE_PROCESS);
+    _module_under_test->post_event(std::move(event));
 
     _module_under_test->subscribe_to_engine_notifications(&_poster);
     crank_event_loop_once();
@@ -187,13 +187,13 @@ TEST_F(TestEventDispatcher, TestEngineNotificationForwarding)
 TEST_F(TestEventDispatcher, TestCompletionCallback)
 {
     _module_under_test->register_poster(&_poster);
-    auto event = new Event(IMMEDIATE_PROCESS);
+    auto event = std::make_unique<Event>(IMMEDIATE_PROCESS);
     event->set_receiver(DUMMY_POSTER_ID);
     event->set_completion_cb(dummy_callback, nullptr);
     completed = false;
     completion_status = 0;
 
-    _module_under_test->post_event(event);
+    _module_under_test->post_event(std::move(event));
     crank_event_loop_once();
 
     ASSERT_TRUE(_poster.event_received());
@@ -257,9 +257,9 @@ TEST_F(TestWorker, TestEventQueueingAndProcessing)
 {
     completed = false;
     completion_status = 0;
-    auto event = new SetEngineTempoEvent(120.0f, IMMEDIATE_PROCESS);
+    auto event = std::make_unique<SetEngineTempoEvent>(120.0f, IMMEDIATE_PROCESS);
     event->set_completion_cb(dummy_callback, nullptr);
-    auto status = _module_under_test->process(event);
+    auto status = _module_under_test->process(std::move(event));
     ASSERT_EQ(EventStatus::QUEUED_HANDLING, status);
     ASSERT_FALSE(_module_under_test->_queue.empty());
     crank_event_loop_once();

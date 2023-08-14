@@ -57,7 +57,7 @@ public:
     void run();
     void stop();
 
-    int process(Event* event) override;
+    int process(std::unique_ptr<Event>&& event) override;
     int poster_id() override {return EventPosterId::WORKER;}
 
 private:
@@ -68,7 +68,7 @@ private:
     std::thread                 _worker_thread;
     std::atomic<bool>           _running;
 
-    SynchronizedQueue<Event*>   _queue;
+    SynchronizedQueue<std::unique_ptr<Event>> _queue;
 };
 
 class EventDispatcher : public BaseEventDispatcher
@@ -81,7 +81,7 @@ public:
     void run() override;
     void stop() override;
 
-    void post_event(Event* event) override;
+    void post_event(std::unique_ptr<Event>&& event) override;
 
     EventDispatcherStatus register_poster(EventPoster* poster) override;
     EventDispatcherStatus subscribe_to_keyboard_events(EventPoster* receiver) override;
@@ -95,7 +95,7 @@ public:
     void set_sample_rate(float sample_rate) override {_event_timer.set_sample_rate(sample_rate);}
     void set_time(Time timestamp) override {_event_timer.set_incoming_time(timestamp);}
 
-    int process(Event* event) override;
+    int process(std::unique_ptr<Event>&& event) override;
     int poster_id() override;
 
 private:
@@ -103,20 +103,22 @@ private:
 
     int _process_rt_event(RtEvent& rt_event);
 
-    Event* _next_event();
+    std::unique_ptr<Event> _next_event();
 
-    void _publish_keyboard_events(Event* event);
-    void _publish_parameter_events(Event* event);
-    void _publish_engine_notification_events(Event* event);
+    void _publish_keyboard_events(std::unique_ptr<Event>&& event);
+    void _publish_parameter_events(std::unique_ptr<Event>&& event);
+    void _publish_engine_notification_events(std::unique_ptr<Event>&& event);
     void _handle_engine_notifications_internally(EngineNotificationEvent* event);
 
     std::atomic<bool>           _running;
     std::thread                 _event_thread;
 
-    SynchronizedQueue<Event*>   _in_queue;
+    SynchronizedQueue<std::unique_ptr<Event>> _in_queue;
+
     RtSafeRtEventFifo*          _in_rt_queue;
     RtSafeRtEventFifo*          _out_rt_queue;
-    std::deque<Event*>          _waiting_list;
+
+    std::deque<std::unique_ptr<Event>> _waiting_list;
 
     Worker                      _worker;
     event_timer::EventTimer     _event_timer;

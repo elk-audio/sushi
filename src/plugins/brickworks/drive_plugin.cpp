@@ -82,7 +82,7 @@ void DrivePlugin::set_enabled(bool enabled)
 
 void DrivePlugin::set_bypassed(bool bypassed)
 {
-    _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
+    _host_control.post_event(std::make_unique<SetProcessorBypassEvent>(this->id(), bypassed, IMMEDIATE_PROCESS));
 }
 
 void DrivePlugin::process_event(const RtEvent& event)
