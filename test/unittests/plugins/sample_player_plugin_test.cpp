@@ -168,5 +168,5 @@ TEST_F(TestSamplePlayerPlugin, TestEventProcessing)
     _module_under_test->set_bypassed(false);
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(0.0f, out_buffer);
-    delete data.data;
+    delete[] data.data;
 }
