@@ -51,16 +51,16 @@ protected:
     }
 
     template<class DataType>
-    void expect_calls_to_set_property(AudioObjectID expected_audio_object_id, const AudioObjectPropertyAddress& expected_address)
+    void expect_calls_to_set_property(AudioObjectID expected_audio_object_id, const AudioObjectPropertyAddress expected_address)
     {
         EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(true));
-        EXPECT_CALL(_mock, AudioObjectIsPropertySettable).WillOnce([expected_audio_object_id, &expected_address](AudioObjectID audio_object_id, const AudioObjectPropertyAddress* address, Boolean* out_is_settable) {
+        EXPECT_CALL(_mock, AudioObjectIsPropertySettable).WillOnce([expected_audio_object_id, expected_address](AudioObjectID audio_object_id, const AudioObjectPropertyAddress* address, Boolean* out_is_settable) {
             EXPECT_EQ(audio_object_id, expected_audio_object_id);
             EXPECT_EQ(*address, expected_address);
             *out_is_settable = true;
             return kAudioHardwareNoError;
         });
-        EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize).WillOnce([expected_audio_object_id, &expected_address](AudioObjectID audio_object_id, const AudioObjectPropertyAddress* address, UInt32, const void*, UInt32* out_data_size) {
+        EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize).WillOnce([expected_audio_object_id, expected_address](AudioObjectID audio_object_id, const AudioObjectPropertyAddress* address, UInt32, const void*, UInt32* out_data_size) {
             EXPECT_EQ(audio_object_id, expected_audio_object_id);
             EXPECT_EQ(*address, expected_address);
             *out_data_size = sizeof(DataType);
@@ -70,17 +70,17 @@ protected:
     }
 
     template<class DataType>
-    void expect_calls_to_get_property(AudioObjectID expected_audio_object_id, const AudioObjectPropertyAddress& expected_address, const DataType& return_value)
+    void expect_calls_to_get_property(AudioObjectID expected_audio_object_id, const AudioObjectPropertyAddress expected_address, const DataType& return_value)
     {
         EXPECT_CALL(_mock, AudioObjectHasProperty).WillOnce(Return(true));
 
-        EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize).WillOnce([expected_audio_object_id, &expected_address](AudioObjectID audio_object_id, const AudioObjectPropertyAddress* address, UInt32, const void*, UInt32* out_data_size) {
+        EXPECT_CALL(_mock, AudioObjectGetPropertyDataSize).WillOnce([expected_audio_object_id, expected_address](AudioObjectID audio_object_id, const AudioObjectPropertyAddress* address, UInt32, const void*, UInt32* out_data_size) {
             EXPECT_EQ(audio_object_id, expected_audio_object_id);
             EXPECT_EQ(*address, expected_address);
             *out_data_size = sizeof(DataType);
             return kAudioHardwareNoError;
         });
-        EXPECT_CALL(_mock, AudioObjectGetPropertyData).WillOnce([&return_value](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* data_size, void* out_data) {
+        EXPECT_CALL(_mock, AudioObjectGetPropertyData).WillOnce([return_value](AudioObjectID, const AudioObjectPropertyAddress*, UInt32, const void*, UInt32* data_size, void* out_data) {
             *data_size = sizeof(DataType);
             *static_cast<DataType*>(out_data) = return_value;
             return kAudioHardwareNoError;

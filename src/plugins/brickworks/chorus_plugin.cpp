@@ -80,7 +80,7 @@ void ChorusPlugin::set_enabled(bool enabled)
     bw_chorus_reset_coeffs(&_chorus_coeffs);
     for (int i = 0; i < MAX_TRACK_CHANNELS; i++)
     {
-        _delay_mem_areas[i].reserve(bw_chorus_mem_req(&_chorus_coeffs));
+        _delay_mem_areas[i].resize(bw_chorus_mem_req(&_chorus_coeffs));
         bw_chorus_mem_set(&_chorus_states[i], _delay_mem_areas[i].data());
     }
     for (int i = 0; i < MAX_TRACK_CHANNELS; i++)
