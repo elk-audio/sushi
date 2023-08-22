@@ -12,7 +12,6 @@ using namespace sushi::internal;
 using namespace sushi::internal::dispatcher;
 
 constexpr int DUMMY_POSTER_ID = 1;
-constexpr int DUMMY_STATUS = 100;
 constexpr float TEST_SAMPLE_RATE = 44100.0;
 constexpr auto EVENT_PROCESS_WAIT_TIME = std::chrono::milliseconds(1);
 
@@ -28,16 +27,16 @@ void dummy_callback(void* /*arg*/, Event* /*event*/, int status)
 int dummy_processor_callback(void* /*arg*/, EventId /*id*/)
 {
     completed = true;
-    return DUMMY_STATUS;
+    return EventStatus::HANDLED_OK;
 }
 
 class DummyPoster : public EventPoster
 {
 public:
-    int process(std::unique_ptr<Event>&& /*event*/) override
+    int process(Event* /*event*/) override
     {
         _received = true;
-        return 100;
+        return EventStatus::HANDLED_OK;
     }
 
     int poster_id() override {return DUMMY_POSTER_ID;}
@@ -64,6 +63,7 @@ public:
         _module_under_test->_running = false;
         _module_under_test->_event_loop();
     }
+
 protected:
     TestEventDispatcher() = default;
 
@@ -198,7 +198,7 @@ TEST_F(TestEventDispatcher, TestCompletionCallback)
 
     ASSERT_TRUE(_poster.event_received());
     ASSERT_TRUE(completed);
-    ASSERT_EQ(DUMMY_STATUS, completion_status);
+    ASSERT_EQ(EventStatus::HANDLED_OK, completion_status);
 }
 
 TEST_F(TestEventDispatcher, TestAsyncCallbackFromProcessor)
@@ -220,7 +220,7 @@ TEST_F(TestEventDispatcher, TestAsyncCallbackFromProcessor)
     _out_rt_queue.pop(rt_event);
     EXPECT_EQ(RtEventType::ASYNC_WORK_NOTIFICATION, rt_event.type());
     auto typed_event = rt_event.async_work_completion_event();
-    EXPECT_EQ(DUMMY_STATUS, typed_event->return_status());
+    EXPECT_EQ(EventStatus::HANDLED_OK, typed_event->return_status());
     EXPECT_EQ(sending_ev_id, typed_event->sending_event_id());
     EXPECT_EQ(123u, typed_event->processor_id());
 }
@@ -259,7 +259,7 @@ TEST_F(TestWorker, TestEventQueueingAndProcessing)
     completion_status = 0;
     auto event = std::make_unique<SetEngineTempoEvent>(120.0f, IMMEDIATE_PROCESS);
     event->set_completion_cb(dummy_callback, nullptr);
-    auto status = _module_under_test->process(std::move(event));
+    auto status = _module_under_test->dispatch(std::move(event));
     ASSERT_EQ(EventStatus::QUEUED_HANDLING, status);
     ASSERT_FALSE(_module_under_test->_queue.empty());
     crank_event_loop_once();

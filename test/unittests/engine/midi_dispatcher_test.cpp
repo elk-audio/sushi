@@ -203,7 +203,8 @@ TEST_F(TestMidiDispatcher, TestKeyboardDataOutConnection)
                             IMMEDIATE_PROCESS);
 
     /* Send midi message without connections */
-    auto status = _module_under_test.process(std::make_unique<KeyboardEvent>(event_ch12));
+    auto event = std::make_unique<KeyboardEvent>(event_ch12);
+    auto status = _module_under_test.process(event.get());
     EXPECT_EQ(EventStatus::HANDLED_OK, status);
 
     /* Connect track to output 1, channel 5 */
@@ -215,7 +216,8 @@ TEST_F(TestMidiDispatcher, TestKeyboardDataOutConnection)
 
     /* Expect a midi output message */
     EXPECT_CALL(_mock_frontend, send_midi(1, midi::encode_note_on(4, 48, 0.5f), _)).Times(1);
-    status = _module_under_test.process(std::make_unique<KeyboardEvent>(event_ch5));
+    event = std::make_unique<KeyboardEvent>(event_ch5);
+    status = _module_under_test.process(event.get());
     EXPECT_EQ(EventStatus::HANDLED_OK, status);
 
     output_connections = _module_under_test.get_all_kb_output_connections();
@@ -226,10 +228,12 @@ TEST_F(TestMidiDispatcher, TestKeyboardDataOutConnection)
                                                           midi::MidiChannel::CH_5);
     ASSERT_EQ(MidiDispatcherStatus::OK, ret);
 
-    status = _module_under_test.process(std::make_unique<KeyboardEvent>(event_ch5));
+    event = std::make_unique<KeyboardEvent>(event_ch5);
+    status = _module_under_test.process(event.get());
     EXPECT_EQ(EventStatus::HANDLED_OK, status);
 
-    status = _module_under_test.process(std::make_unique<KeyboardEvent>(event_ch12));
+    event = std::make_unique<KeyboardEvent>(event_ch12);
+    status = _module_under_test.process(event.get());
     EXPECT_EQ(EventStatus::HANDLED_OK, status);
 
     output_connections = _module_under_test.get_all_kb_output_connections();
@@ -257,10 +261,10 @@ TEST_F(TestMidiDispatcher, TestTransportOutputs)
     EXPECT_CALL(_mock_frontend, send_midi(1, midi::encode_stop_message(), _)).Times(1);
     EXPECT_CALL(_mock_frontend, send_midi(1, midi::encode_timing_clock(), _)).Times(1);
 
-    _module_under_test.process(std::move(start_event));
-    _module_under_test.process(std::move(stop_event));
-    _module_under_test.process(std::move(rec_event));
-    _module_under_test.process(std::move(tick_event));
+    _module_under_test.process(start_event.get());
+    _module_under_test.process(stop_event.get());
+    _module_under_test.process(rec_event.get());
+    _module_under_test.process(tick_event.get());
 }
 
 TEST_F(TestMidiDispatcher, TestRawDataConnection)

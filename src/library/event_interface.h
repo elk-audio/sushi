@@ -47,7 +47,7 @@ public:
      *         does not have a completion callback, the return value will be
      *         ignored
      */
-    virtual int process(std::unique_ptr<Event>&& /*event*/)
+    virtual int process(Event* /*event*/)
     {
         return EventStatus::UNRECOGNIZED_EVENT;
     }

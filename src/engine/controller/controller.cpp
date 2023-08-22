@@ -110,19 +110,19 @@ void Controller::completion_callback(void*arg, Event*event, int status)
     reinterpret_cast<Controller*>(arg)->_completion_callback(event, status);
 }
 
-int Controller::process(std::unique_ptr<Event>&& event)
+int Controller::process(Event* event)
 {
     if (event->is_parameter_change_notification())
     {
-        _notify_parameter_listeners(event.get());
+        _notify_parameter_listeners(event);
     }
     else if (event->is_property_change_notification())
     {
-        _notify_property_listeners(event.get());
+        _notify_property_listeners(event);
     }
     else if (event->is_engine_notification())
     {
-        _handle_engine_notifications(static_cast<const EngineNotificationEvent*>(event.get()));
+        _handle_engine_notifications(static_cast<const EngineNotificationEvent*>(event));
     }
 
     return EventStatus::NOT_HANDLED;

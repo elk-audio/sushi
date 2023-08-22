@@ -129,7 +129,8 @@ TEST_F(MidiControllerEventTestFrontend, TestKbdOutputConectionDisconnection)
                             IMMEDIATE_PROCESS);
 
     /* Send midi message without connections */
-    auto status1 = _midi_dispatcher.process(std::make_unique<KeyboardEvent>(event_ch3));
+    auto event = std::make_unique<KeyboardEvent>(event_ch3);
+    auto status1 = _midi_dispatcher.process(event.get());
     EXPECT_EQ(EventStatus::HANDLED_OK, status1);
 
     auto event_status_connect = _midi_controller.connect_kbd_output_from_track(track_id, channel_3, port);
@@ -138,7 +139,8 @@ TEST_F(MidiControllerEventTestFrontend, TestKbdOutputConectionDisconnection)
     ASSERT_EQ(execution_status1, EventStatus::HANDLED_OK);
 
     EXPECT_CALL(_mock_frontend, send_midi(0, midi::encode_note_on(2, 48, 0.5f), _)).Times(1);
-    auto status2 = _midi_dispatcher.process(std::make_unique<KeyboardEvent>(event_ch3));
+    event = std::make_unique<KeyboardEvent>(event_ch3);
+    auto status2 = _midi_dispatcher.process(event.get());
     EXPECT_EQ(EventStatus::HANDLED_OK, status2);
 
     auto event_status_disconnect =  _midi_controller.disconnect_kbd_output(track_id, channel_3, port);
@@ -146,7 +148,8 @@ TEST_F(MidiControllerEventTestFrontend, TestKbdOutputConectionDisconnection)
     auto execution_status2 = _test_dispatcher->execute_engine_event(&_test_engine);
     ASSERT_EQ(execution_status2, EventStatus::HANDLED_OK);
 
-    auto status3 = _midi_dispatcher.process(std::make_unique<KeyboardEvent>(event_ch3));
+    event = std::make_unique<KeyboardEvent>(event_ch3);
+    auto status3 = _midi_dispatcher.process(event.get());
     EXPECT_EQ(EventStatus::HANDLED_OK, status3);
 }
 

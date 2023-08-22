@@ -161,14 +161,14 @@ TEST_F(TestOSCFrontend, TestAddAndRemoveConnectionsForProcessor)
 
     auto event = std::make_unique<AudioGraphNotificationEvent>(AudioGraphNotificationEvent::Action::PROCESSOR_CREATED,
                                                                processor_id, 0, IMMEDIATE_PROCESS);
-    _module_under_test->process(std::move(event));
+    _module_under_test->process(event.get());
 
     EXPECT_CALL(*_mock_osc_interface, delete_method(_)).Times(4);
 
     event = std::make_unique<AudioGraphNotificationEvent>(AudioGraphNotificationEvent::Action::PROCESSOR_DELETED,
                                                           processor_id, 0, IMMEDIATE_PROCESS);
 
-    _module_under_test->process(std::move(event));
+    _module_under_test->process(event.get());
 }
 
 TEST_F(TestOSCFrontend, TestAddAndRemoveConnectionsForTrack)
@@ -196,14 +196,14 @@ TEST_F(TestOSCFrontend, TestAddAndRemoveConnectionsForTrack)
 
     auto event = std::make_unique<AudioGraphNotificationEvent>(AudioGraphNotificationEvent::Action::TRACK_CREATED,
                                                                track_id, 0, IMMEDIATE_PROCESS);
-    _module_under_test->process(std::move(event));
+    _module_under_test->process(event.get());
 
     EXPECT_CALL(*_mock_osc_interface, delete_method(_)).Times(6);
 
     event = std::make_unique<AudioGraphNotificationEvent>(AudioGraphNotificationEvent::Action::TRACK_DELETED,
                                                           0, track_id, IMMEDIATE_PROCESS);
 
-    _module_under_test->process(std::move(event));
+    _module_under_test->process(event.get());
 }
 
 TEST_F(TestOSCFrontend, TestConnectParameterChange)
@@ -277,7 +277,7 @@ TEST_F(TestOSCFrontend, TestParamChangeNotification)
                                                                     "",
                                                                     IMMEDIATE_PROCESS);
 
-    _module_under_test->process(std::move(event)); // Since nothing is connected this should not cause a call.
+    _module_under_test->process(event.get()); // Since nothing is connected this should not cause a call.
 
     _module_under_test->connect_from_all_parameters();
 
@@ -288,7 +288,7 @@ TEST_F(TestOSCFrontend, TestParamChangeNotification)
                                                                "",
                                                                IMMEDIATE_PROCESS);
 
-    _module_under_test->process(std::move(event)); // But this should - the one expected.
+    _module_under_test->process(event.get()); // But this should - the one expected.
 }
 
 /*TEST_F(TestOSCFrontend, TestPropertyChangeNotification)

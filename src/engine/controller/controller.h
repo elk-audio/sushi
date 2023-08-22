@@ -74,7 +74,7 @@ public:
                                                       control::ControlListener* listener) override;
 
     /* Inherited from EventPoster */
-    int process(std::unique_ptr<Event>&& event) override;
+    int process(Event* event) override;
 
     int poster_id() override { return EventPosterId::CONTROLLER; }
 

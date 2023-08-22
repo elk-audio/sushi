@@ -35,7 +35,7 @@ enum class EventDispatcherStatus
 };
 
 /* Abstract base class is solely for test mockups */
-class BaseEventDispatcher : public EventPoster
+class BaseEventDispatcher
 {
 public:
     virtual ~BaseEventDispatcher() = default;
@@ -57,6 +57,8 @@ public:
 
     virtual void set_sample_rate(float /*sample_rate*/) {}
     virtual void set_time(Time /*timestamp*/) {}
+
+    virtual int dispatch(std::unique_ptr<Event>&& /*event*/) = 0;
 };
 
 } // end namespace sushi::internal::dispatcher

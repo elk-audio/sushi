@@ -23,12 +23,11 @@
 
 namespace sushi::internal::dispatcher {
 
-constexpr int AUDIO_ENGINE_ID = 0;
 constexpr std::chrono::milliseconds THREAD_PERIODICITY = std::chrono::milliseconds(1);
 constexpr auto WORKER_THREAD_PERIODICITY = std::chrono::milliseconds(1);
 constexpr auto TIMING_UPDATE_INTERVAL = std::chrono::seconds(1);
 constexpr auto PARAMETER_UPDATE_RATE = 10;
-// Rate limits broadcasted parameter updates to 25 Hz
+// Rate limits broadcast parameter updates to 25 Hz
 constexpr auto MAX_PARAMETER_UPDATE_INTERVAL = std::chrono::milliseconds(40);
 
 EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
@@ -43,8 +42,6 @@ EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
                                                                     _parameter_update_count{0}
 {
     std::fill(_posters.begin(), _posters.end(), nullptr);
-    register_poster(this);
-    register_poster(&_worker);
 }
 
 
@@ -133,48 +130,69 @@ EventDispatcherStatus EventDispatcher::subscribe_to_engine_notifications(EventPo
     return EventDispatcherStatus::OK;
 }
 
-int EventDispatcher::process(std::unique_ptr<Event>&& event)
+int EventDispatcher::dispatch(std::unique_ptr<Event>&& event)
 {
-    if (event->process_asynchronously())
+    int status = EventStatus::NOT_HANDLED;
+
+    assert(event->receiver() < static_cast<int>(_posters.size()));
+    auto receiver = _posters[event->receiver()];
+    if (receiver != nullptr)
+    {
+        status = _posters[event->receiver()]->process(event.get());
+    }
+    else if (event->process_asynchronously())
     {
         event->set_receiver(EventPosterId::WORKER);
-        auto receiver = event->receiver();
-        return _posters[receiver]->process(std::move(event));
-    }
 
-    if (event->is_parameter_change_event())
+        // TODO: Remove received bit for all events.
+        // auto receiver = event->receiver();
+        // return _posters[receiver]->process(event.get());
+
+        return _worker.dispatch(std::move(event));
+    }
+    else if (event->is_parameter_change_event())
     {
         auto typed_event = static_cast<const ParameterChangeEvent*>(event.get());
         _parameter_manager.mark_parameter_changed(typed_event->processor_id(),
                                                   typed_event->parameter_id(),
                                                   typed_event->time());
     }
-
-    if (event->maps_to_rt_event())
+    else if (event->maps_to_rt_event())
     {
         auto [send_now, sample_offset] = _event_timer.sample_offset_from_realtime(event->time());
         if (send_now)
         {
             if (_out_rt_queue->push(event->to_rt_event(sample_offset)))
             {
-                return EventStatus::HANDLED_OK;
+                status = EventStatus::HANDLED_OK;
             }
         }
-        _waiting_list.push_front(std::move(event));
-        return EventStatus::QUEUED_HANDLING;
-    }
+        else
+        {
+            _waiting_list.push_front(std::move(event));
 
-    if (event->is_parameter_change_notification() || event->is_property_change_notification())
+            // Dispatch will be called with this event again. When it HAS run, callback is called.
+            return EventStatus::QUEUED_HANDLING;
+        }
+    }
+    else if (event->is_parameter_change_notification() || event->is_property_change_notification())
     {
-        _publish_parameter_events(std::move(event));
-        return EventStatus::HANDLED_OK;
+        _publish_parameter_events(event.get());
+        status = EventStatus::HANDLED_OK;
     }
-
-    if (event->is_engine_notification())
+    else  if (event->is_engine_notification())
     {
         _handle_engine_notifications_internally(static_cast<EngineNotificationEvent*>(event.get()));
-        _publish_engine_notification_events(std::move(event));
-        return EventStatus::HANDLED_OK;
+        _publish_engine_notification_events(event.get());
+        status = EventStatus::HANDLED_OK;
+    }
+
+    if (status == EventStatus::HANDLED_OK)
+    {
+        if (event->completion_cb() != nullptr)
+        {
+            event->completion_cb()(event->callback_arg(), event.get(), status);
+        }
     }
 
     return EventStatus::UNRECOGNIZED_EVENT;
@@ -189,29 +207,7 @@ void EventDispatcher::_event_loop()
         // Handle incoming Events
         while (auto event = _next_event())
         {
-            assert(event->receiver() < static_cast<int>(_posters.size()));
-            auto receiver = _posters[event->receiver()];
-            int status = EventStatus::UNRECOGNIZED_RECEIVER;
-
-            if (receiver != nullptr)
-            {
-                receiver->process(std::move(event));
-                status = receiver->process(std::move(event));
-            }
-
-            if (status == EventStatus::QUEUED_HANDLING)
-            {
-                /* Event has not finished processing, so don't call comp cb or delete it */
-                continue;
-            }
-
-            // TODO: Completion callback is called on moved event!
-            // This is a synchronous call to the completion callback,
-            // meaning it's fine that the event then goes out of scope and is deleted.
-            if (event->completion_cb() != nullptr)
-            {
-                event->completion_cb()(event->callback_arg(), event.get(), status);
-            }
+            dispatch(std::move(event));
         }
 
         // Handle incoming RtEvents
@@ -221,12 +217,14 @@ void EventDispatcher::_event_loop()
             _in_rt_queue->pop(rt_event);
             _process_rt_event(rt_event);
         }
+
         // Send updates for any parameters that have changed
         if (_parameter_update_count++ >= PARAMETER_UPDATE_RATE)
         {
             _parameter_manager.output_parameter_notifications(this, _last_rt_event_time);
             _parameter_update_count = 0;
         }
+
         std::this_thread::sleep_until(start_time + THREAD_PERIODICITY);
     }
     while (_running);
@@ -264,15 +262,15 @@ int EventDispatcher::_process_rt_event(RtEvent &rt_event)
 
     if (event->is_keyboard_event())
     {
-        _publish_keyboard_events(std::move(event));
+        _publish_keyboard_events(event.get());
     }
     else if (event->is_engine_notification())
     {
-        _publish_engine_notification_events(std::move(event));
+        _publish_engine_notification_events(event.get());
     }
     else if (event->process_asynchronously())
     {
-        return _worker.process(std::move(event));
+        return _worker.dispatch(std::move(event));
     }
 
     return EventStatus::HANDLED_OK;
@@ -294,39 +292,33 @@ std::unique_ptr<Event> EventDispatcher::_next_event()
     return event;
 }
 
-void EventDispatcher::_publish_keyboard_events(std::unique_ptr<Event>&& event)
+void EventDispatcher::_publish_keyboard_events(Event* event)
 {
     std::lock_guard<std::mutex> lock(_keyboard_listener_lock);
 
     for (auto& listener : _keyboard_event_listeners)
     {
-        // TODO: This won't work!
-        //  Maybe have another process() that also takes a listener list?
-        //  Or maybe it's enough that std::unique_ptr stays in this scope, and all process() methods take naked ones?
-        //  IS THERE a doc header or something I've missed reading? Probably not.
-        listener->process(std::move(event));
+        listener->process(event);
     }
 }
 
-void EventDispatcher::_publish_parameter_events(std::unique_ptr<Event>&& event)
+void EventDispatcher::_publish_parameter_events(Event* event)
 {
     std::lock_guard<std::mutex> lock(_parameter_listener_lock);
 
     for (auto& listener : _parameter_change_listeners)
     {
-        // TODO: >>> see above
-        listener->process(std::move(event));
+        listener->process(event);
     }
 }
 
-void EventDispatcher::_publish_engine_notification_events(std::unique_ptr<Event>&& event)
+void EventDispatcher::_publish_engine_notification_events(Event* event)
 {
     std::lock_guard<std::mutex> lock(_engine_listener_lock);
 
     for (auto& listener : _engine_notification_listeners)
     {
-        // TODO: >>> see above
-        listener->process(std::move(event));
+        listener->process(event);
     }
 }
 
@@ -370,7 +362,7 @@ EventDispatcherStatus EventDispatcher::unsubscribe_from_parameter_change_notific
     return EventDispatcherStatus::UNKNOWN_POSTER;
 }
 
-EventDispatcherStatus EventDispatcher::unsubscribe_from_engine_notifications(EventPoster*receiver)
+EventDispatcherStatus EventDispatcher::unsubscribe_from_engine_notifications(EventPoster* receiver)
 {
     std::lock_guard<std::mutex> lock(_engine_listener_lock);
 
@@ -383,11 +375,6 @@ EventDispatcherStatus EventDispatcher::unsubscribe_from_engine_notifications(Eve
         }
     }
     return EventDispatcherStatus::UNKNOWN_POSTER;
-}
-
-int EventDispatcher::poster_id()
-{
-    return AUDIO_ENGINE_ID;
 }
 
 void EventDispatcher::_handle_engine_notifications_internally(EngineNotificationEvent* event)
@@ -438,7 +425,7 @@ void Worker::stop()
     }
 }
 
-int Worker::process(std::unique_ptr<Event>&& event)
+int Worker::dispatch(std::unique_ptr<Event>&& event)
 {
     _queue.push(std::move(event));
 

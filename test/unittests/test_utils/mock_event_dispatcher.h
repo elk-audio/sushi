@@ -79,15 +79,8 @@ public:
                 (override));
 
     MOCK_METHOD(int,
-                process,
+                dispatch,
                 (std::unique_ptr<Event>&& event),
                 (override));
-
-    MOCK_METHOD(int,
-                poster_id,
-                (),
-                (override));
-
-
 };
 #endif //SUSHI_MOCK_EVENT_DISPATCHER_H

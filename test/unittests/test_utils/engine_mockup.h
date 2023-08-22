@@ -32,12 +32,10 @@ public:
         }
     }
 
-    int process(std::unique_ptr<Event>&& /*event*/) override
+    int dispatch(std::unique_ptr<Event>&& /*event*/) override
     {
         return EventStatus::HANDLED_OK;
     }
-
-    int poster_id() override {return EventPosterId::AUDIO_ENGINE;}
 
     void post_event(std::unique_ptr<Event>&& event) override
     {

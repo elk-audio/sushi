@@ -45,7 +45,7 @@ class BaseEventDispatcher;
  * @brief Low priority worker for handling possibly time consuming tasks like
  * instantiating plugins or do asynchronous work from processors.
  */
-class Worker : public EventPoster
+class Worker
 {
 public:
     Worker(engine::BaseEngine* engine, BaseEventDispatcher* dispatcher) : _engine(engine),
@@ -57,8 +57,7 @@ public:
     void run();
     void stop();
 
-    int process(std::unique_ptr<Event>&& event) override;
-    int poster_id() override {return EventPosterId::WORKER;}
+    int dispatch(std::unique_ptr<Event>&& event);
 
 private:
     engine::BaseEngine*         _engine;
@@ -95,8 +94,7 @@ public:
     void set_sample_rate(float sample_rate) override {_event_timer.set_sample_rate(sample_rate);}
     void set_time(Time timestamp) override {_event_timer.set_incoming_time(timestamp);}
 
-    int process(std::unique_ptr<Event>&& event) override;
-    int poster_id() override;
+    int dispatch(std::unique_ptr<Event>&& event) override;
 
 private:
     void _event_loop();
@@ -105,9 +103,9 @@ private:
 
     std::unique_ptr<Event> _next_event();
 
-    void _publish_keyboard_events(std::unique_ptr<Event>&& event);
-    void _publish_parameter_events(std::unique_ptr<Event>&& event);
-    void _publish_engine_notification_events(std::unique_ptr<Event>&& event);
+    void _publish_keyboard_events(Event* event);
+    void _publish_parameter_events(Event* event);
+    void _publish_engine_notification_events(Event* event);
     void _handle_engine_notifications_internally(EngineNotificationEvent* event);
 
     std::atomic<bool>           _running;

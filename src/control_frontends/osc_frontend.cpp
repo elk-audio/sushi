@@ -196,21 +196,21 @@ std::vector<std::string> OSCFrontend::get_enabled_parameter_outputs()
     return outputs;
 }
 
-int OSCFrontend::process(std::unique_ptr<Event>&& event)
+int OSCFrontend::process(Event* event)
 {
     assert(_osc_initialized);
 
     if (event->is_parameter_change_notification())
     {
-        _handle_param_change_notification(static_cast<ParameterChangeNotificationEvent*>(event.get()));
+        _handle_param_change_notification(static_cast<ParameterChangeNotificationEvent*>(event));
     }
     else if (event->is_property_change_notification())
     {
-        _handle_property_change_notification(static_cast<PropertyChangeNotificationEvent*>(event.get()));
+        _handle_property_change_notification(static_cast<PropertyChangeNotificationEvent*>(event));
     }
     else if (event->is_engine_notification())
     {
-        _handle_engine_notification(static_cast<EngineNotificationEvent*>(event.get()));
+        _handle_engine_notification(static_cast<EngineNotificationEvent*>(event));
     }
     // Return statuses for notifications are not handled, so just return ok.
     return EventStatus::HANDLED_OK;

@@ -37,7 +37,7 @@ inline void send_parameter_notification(ObjectId processor_id,
                                                                     domain_value,
                                                                     formatted_value,
                                                                     IMMEDIATE_PROCESS);
-    dispatcher->process(std::move(event));
+    dispatcher->dispatch(std::move(event));
 }
 
 ParameterManager::ParameterManager(Time update_rate,

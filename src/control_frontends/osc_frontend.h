@@ -134,7 +134,7 @@ public:
     void stop() override {_stop_server();}
 
     /* Inherited from EventPoster */
-    int process(std::unique_ptr<Event>&& event) override;
+    int process(Event* event) override;
 
     int poster_id() override {return EventPosterId::OSC_FRONTEND;}
 
