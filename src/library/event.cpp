@@ -40,6 +40,10 @@ RtDeletable::~RtDeletable()
 
 namespace internal {
 
+/**
+ * Methods for real-time event classes:
+ */
+
 std::unique_ptr<Event> Event::from_rt_event(const RtEvent& rt_event, Time timestamp)
 {
     switch (rt_event.type())
@@ -259,15 +263,19 @@ RtEvent StringPropertyEvent::to_rt_event(int sample_offset) const
     return RtEvent::make_string_property_change_event(_processor_id, sample_offset, _property_id, heap_string);
 }
 
+RtEvent AsynchronousProcessorWorkCompletionEvent::to_rt_event(int /*sample_offset*/) const
+{
+    return RtEvent::make_async_work_completion_event(_rt_processor, _rt_event_id, _return_value);
+}
+
+/**
+ * Methods for asynchronous processing event classes:
+ */
+
 std::unique_ptr<Event> AsynchronousProcessorWorkEvent::execute()
 {
     int status = _work_callback(_data, _rt_event_id);
     return std::make_unique<AsynchronousProcessorWorkCompletionEvent>(status, _rt_processor, _rt_event_id, IMMEDIATE_PROCESS);
-}
-
-RtEvent AsynchronousProcessorWorkCompletionEvent::to_rt_event(int /*sample_offset*/) const
-{
-    return RtEvent::make_async_work_completion_event(_rt_processor, _rt_event_id, _return_value);
 }
 
 std::unique_ptr<Event> AsynchronousBlobDeleteEvent::execute()
