@@ -97,7 +97,8 @@ enum class Status : int
     FAILED_TO_START_RPC_SERVER = 16,
     FRONTEND_IS_INCOMPATIBLE_WITH_STANDALONE = 17,
     
-    SUSHI_ALREADY_STARTED = 18
+    SUSHI_ALREADY_STARTED = 18,
+    SUSHI_THREW_EXCEPTION = 19
 };
 
 std::string to_string(Status status);

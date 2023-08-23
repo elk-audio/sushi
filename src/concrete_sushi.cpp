@@ -113,6 +113,8 @@ std::string to_string(Status status)
             return "Failed to start the RPC server.";
         case Status::SUSHI_ALREADY_STARTED:
             return "Sushi has already been started";
+        case Status::SUSHI_THREW_EXCEPTION:
+            return "Sushi has thrown an exception";
         case Status::OK:
             return "Ok";
         default:
