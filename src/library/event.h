@@ -70,7 +70,7 @@ class Event
     friend class sushi::internal::dispatcher::Worker;
 
 public:
-    virtual ~Event() = default;
+    virtual ~Event() {}
 
     /**
      * @brief Creates an Event from its RtEvent counterpart if possible
@@ -132,7 +132,7 @@ protected:
     explicit Event(Time timestamp) : _timestamp(timestamp) {}
 
     /* Only the dispatcher can set the receiver and call the completion callback */
-    void                    set_receiver(int receiver) {_receiver = receiver;}
+
     EventCompletionCallback completion_cb() const {return _completion_cb;}
     void*                   callback_arg() const {return _callback_arg;}
 

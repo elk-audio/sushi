@@ -136,8 +136,6 @@ public:
     /* Inherited from EventPoster */
     int process(Event* event) override;
 
-    int poster_id() override {return EventPosterId::OSC_FRONTEND;}
-
     std::string send_ip() const;
 
     int send_port() const;

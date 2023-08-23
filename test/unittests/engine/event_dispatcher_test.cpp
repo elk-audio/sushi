@@ -11,7 +11,6 @@ using namespace sushi;
 using namespace sushi::internal;
 using namespace sushi::internal::dispatcher;
 
-constexpr int DUMMY_POSTER_ID = 1;
 constexpr float TEST_SAMPLE_RATE = 44100.0;
 constexpr auto EVENT_PROCESS_WAIT_TIME = std::chrono::milliseconds(1);
 
@@ -39,8 +38,6 @@ public:
         return EventStatus::HANDLED_OK;
     }
 
-    int poster_id() override {return DUMMY_POSTER_ID;}
-
     bool event_received()
     {
         if (_received)
@@ -52,7 +49,7 @@ public:
     }
 
 private:
-    bool _received{false};
+    bool _received {false};
 };
 
 class TestEventDispatcher : public ::testing::Test
@@ -80,7 +77,7 @@ protected:
         delete _module_under_test;
     }
 
-    EventDispatcher*    _module_under_test;
+    EventDispatcher*    _module_under_test{};
     EngineMockup        _test_engine{TEST_SAMPLE_RATE};
     RtSafeRtEventFifo   _in_rt_queue;
     RtSafeRtEventFifo   _out_rt_queue;
@@ -95,30 +92,9 @@ TEST_F(TestEventDispatcher, TestInstantiation)
     _module_under_test->stop();
 }
 
-TEST_F(TestEventDispatcher, TestSimpleEventDispatching)
-{
-    _module_under_test->register_poster(&_poster);
-    auto event = std::make_unique<Event>(IMMEDIATE_PROCESS);
-    event->set_receiver(DUMMY_POSTER_ID);
-    _module_under_test->post_event(std::move(event));
-    crank_event_loop_once();
-    ASSERT_TRUE(_poster.event_received());
-    _module_under_test->stop();
-}
-
 TEST_F(TestEventDispatcher, TestRegisteringAndDeregistering)
 {
-    auto status = _module_under_test->register_poster(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::OK, status);
-    status = _module_under_test->register_poster(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::ALREADY_SUBSCRIBED, status);
-
-    status = _module_under_test->deregister_poster(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::OK, status);
-    status = _module_under_test->deregister_poster(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::UNKNOWN_POSTER, status);
-
-    status = _module_under_test->subscribe_to_keyboard_events(&_poster);
+    auto status = _module_under_test->subscribe_to_keyboard_events(&_poster);
     EXPECT_EQ(EventDispatcherStatus::OK, status);
     status = _module_under_test->subscribe_to_keyboard_events(&_poster);
     EXPECT_EQ(EventDispatcherStatus::ALREADY_SUBSCRIBED, status);
@@ -148,7 +124,6 @@ TEST_F(TestEventDispatcher, TestRegisteringAndDeregistering)
     status = _module_under_test->unsubscribe_from_engine_notifications(&_poster);
     EXPECT_EQ(EventDispatcherStatus::UNKNOWN_POSTER, status);
 }
-
 
 TEST_F(TestEventDispatcher, TestFromRtEventNoteOnEvent)
 {
@@ -183,12 +158,10 @@ TEST_F(TestEventDispatcher, TestEngineNotificationForwarding)
     ASSERT_TRUE(_poster.event_received());
 }
 
-
 TEST_F(TestEventDispatcher, TestCompletionCallback)
 {
-    _module_under_test->register_poster(&_poster);
-    auto event = std::make_unique<Event>(IMMEDIATE_PROCESS);
-    event->set_receiver(DUMMY_POSTER_ID);
+    auto event = std::make_unique<AudioGraphNotificationEvent>(AudioGraphNotificationEvent::Action::PROCESSOR_ADDED_TO_TRACK,
+                                                               123, 234, IMMEDIATE_PROCESS);
     event->set_completion_cb(dummy_callback, nullptr);
     completed = false;
     completion_status = 0;
@@ -196,7 +169,7 @@ TEST_F(TestEventDispatcher, TestCompletionCallback)
     _module_under_test->post_event(std::move(event));
     crank_event_loop_once();
 
-    ASSERT_TRUE(_poster.event_received());
+    //ASSERT_TRUE(_poster.event_received());
     ASSERT_TRUE(completed);
     ASSERT_EQ(EventStatus::HANDLED_OK, completion_status);
 }
@@ -230,27 +203,20 @@ class TestWorker : public ::testing::Test
 public:
     void crank_event_loop_once()
     {
-        _module_under_test->_running = false;
-        _module_under_test->_worker();
+        _module_under_test._running = false;
+        _module_under_test._worker();
     }
 
 protected:
     TestWorker() = default;
 
-    void SetUp() override
-    {
-        _module_under_test = new Worker(&_test_engine,
-                                        _test_engine.event_dispatcher());
-    }
-
     void TearDown() override
     {
-        _module_under_test->stop();
-        delete _module_under_test;
+        _module_under_test.stop();
     }
 
-    Worker*          _module_under_test;
-    EngineMockup     _test_engine{TEST_SAMPLE_RATE};
+    EngineMockup _test_engine{TEST_SAMPLE_RATE};
+    Worker       _module_under_test {&_test_engine, _test_engine.event_dispatcher()};
 };
 
 TEST_F(TestWorker, TestEventQueueingAndProcessing)
@@ -259,9 +225,9 @@ TEST_F(TestWorker, TestEventQueueingAndProcessing)
     completion_status = 0;
     auto event = std::make_unique<SetEngineTempoEvent>(120.0f, IMMEDIATE_PROCESS);
     event->set_completion_cb(dummy_callback, nullptr);
-    auto status = _module_under_test->dispatch(std::move(event));
+    auto status = _module_under_test.dispatch(std::move(event));
     ASSERT_EQ(EventStatus::QUEUED_HANDLING, status);
-    ASSERT_FALSE(_module_under_test->_queue.empty());
+    ASSERT_FALSE(_module_under_test._queue.empty());
     crank_event_loop_once();
     ASSERT_TRUE(completed);
     ASSERT_EQ(EventStatus::HANDLED_OK, completion_status);

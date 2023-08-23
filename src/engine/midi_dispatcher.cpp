@@ -133,7 +133,6 @@ inline std::unique_ptr<Event> make_program_change_event(const InputConnection& c
 MidiDispatcher::MidiDispatcher(dispatcher::BaseEventDispatcher* event_dispatcher) : _frontend(nullptr),
                                                                                     _event_dispatcher(event_dispatcher)
 {
-    _event_dispatcher->register_poster(this);
     _event_dispatcher->subscribe_to_keyboard_events(this);
     _event_dispatcher->subscribe_to_engine_notifications(this);
 }
@@ -142,7 +141,6 @@ MidiDispatcher::~MidiDispatcher()
 {
     _event_dispatcher->unsubscribe_from_keyboard_events(this);
     _event_dispatcher->unsubscribe_from_engine_notifications(this);
-    _event_dispatcher->deregister_poster(this);
 }
 
 

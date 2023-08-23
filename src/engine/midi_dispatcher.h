@@ -359,12 +359,6 @@ public:
     /* Inherited from EventPoster */
     int process(Event* /*event*/) override;
 
-    /**
-     * @brief The unique id of this poster.
-     * @return
-     */
-    int poster_id() override {return EventPosterId::MIDI_DISPATCHER;}
-
 private:
 
     bool _handle_engine_notification(const EngineNotificationEvent* event);

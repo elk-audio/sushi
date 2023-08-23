@@ -11,7 +11,7 @@ using namespace sushi::internal::dispatcher;
 class MockEventDispatcher : public dispatcher::BaseEventDispatcher
 {
 public:
-    MockEventDispatcher() {}
+    MockEventDispatcher() = default;
 
     MOCK_METHOD(void,
                 run,
@@ -29,11 +29,6 @@ public:
                 (override));
 
     MOCK_METHOD(EventDispatcherStatus,
-                register_poster,
-                (EventPoster*),
-                (override));
-
-    MOCK_METHOD(EventDispatcherStatus,
                 subscribe_to_keyboard_events,
                 (EventPoster*),
                 (override));
@@ -45,11 +40,6 @@ public:
 
     MOCK_METHOD(EventDispatcherStatus,
                 subscribe_to_engine_notifications,
-                (EventPoster*),
-                (override));
-
-    MOCK_METHOD(EventDispatcherStatus,
-                deregister_poster,
                 (EventPoster*),
                 (override));
 

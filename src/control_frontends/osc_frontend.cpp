@@ -72,7 +72,7 @@ void OscState::add_enabled_outputs(std::string&& processor_name,
 
 OSCFrontend::OSCFrontend(engine::BaseEngine* engine,
                          control::SushiControl* controller,
-                         osc::BaseOscMessenger* osc_interface) : BaseControlFrontend(engine, EventPosterId::OSC_FRONTEND),
+                         osc::BaseOscMessenger* osc_interface) : BaseControlFrontend(engine),
                                           _controller(controller),
                                           _graph_controller(controller->audio_graph_controller()),
                                           _param_controller(controller->parameter_controller()),

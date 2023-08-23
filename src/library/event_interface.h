@@ -26,19 +26,11 @@
 
 namespace sushi::internal {
 
-enum EventPosterId : int
-{
-    AUDIO_ENGINE = 0,
-    MIDI_DISPATCHER,
-    OSC_FRONTEND,
-    WORKER,
-    CONTROLLER,
-    MAX_POSTERS
-};
-
 class EventPoster
 {
 public:
+    virtual ~EventPoster() = default;
+
     /**
      * @brief Function called when the poster receives an event
      * @param event The event received
@@ -51,12 +43,6 @@ public:
     {
         return EventStatus::UNRECOGNIZED_EVENT;
     }
-
-    /**
-     * @brief The unique id of this poster.
-     * @return
-     */
-    virtual int poster_id() = 0;
 };
 
 } // end namespace sushi::internal

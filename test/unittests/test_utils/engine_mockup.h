@@ -32,6 +32,12 @@ public:
         }
     }
 
+    void run() override {}
+    void stop() override {}
+
+    void set_sample_rate(float /*sample_rate*/) override {}
+    void set_time(Time /*timestamp*/) override {}
+
     int dispatch(std::unique_ptr<Event>&& /*event*/) override
     {
         return EventStatus::HANDLED_OK;

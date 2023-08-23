@@ -76,8 +76,6 @@ public:
     /* Inherited from EventPoster */
     int process(Event* event) override;
 
-    int poster_id() override { return EventPosterId::CONTROLLER; }
-
     static void completion_callback(void* arg, Event* event, int status);
 
     void set_osc_frontend(control_frontend::OSCFrontend* osc_frontend);

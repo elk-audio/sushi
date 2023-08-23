@@ -40,9 +40,7 @@ EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
                                                                     _parameter_manager{MAX_PARAMETER_UPDATE_INTERVAL,
                                                                                        engine->processor_container()},
                                                                     _parameter_update_count{0}
-{
-    std::fill(_posters.begin(), _posters.end(), nullptr);
-}
+{}
 
 
 EventDispatcher::~EventDispatcher()
@@ -64,19 +62,9 @@ void EventDispatcher::post_event(std::unique_ptr<Event>&& event)
     _in_queue.push(std::move(event));
 }
 
-EventDispatcherStatus EventDispatcher::register_poster(EventPoster* poster)
-{
-    if (_posters[poster->poster_id()] != nullptr)
-    {
-        return EventDispatcherStatus::ALREADY_SUBSCRIBED;
-    }
-    _posters[poster->poster_id()] = poster;
-    return EventDispatcherStatus::OK;
-}
-
 void EventDispatcher::run()
 {
-    if (_running == false)
+    if (!_running)
     {
         _running = true;
         _event_thread = std::thread(&EventDispatcher::_event_loop, this);
@@ -134,20 +122,8 @@ int EventDispatcher::dispatch(std::unique_ptr<Event>&& event)
 {
     int status = EventStatus::NOT_HANDLED;
 
-    assert(event->receiver() < static_cast<int>(_posters.size()));
-    auto receiver = _posters[event->receiver()];
-    if (receiver != nullptr)
+    if (event->process_asynchronously())
     {
-        status = _posters[event->receiver()]->process(event.get());
-    }
-    else if (event->process_asynchronously())
-    {
-        event->set_receiver(EventPosterId::WORKER);
-
-        // TODO: Remove received bit for all events.
-        // auto receiver = event->receiver();
-        // return _posters[receiver]->process(event.get());
-
         return _worker.dispatch(std::move(event));
     }
     else if (event->is_parameter_change_event())
@@ -320,16 +296,6 @@ void EventDispatcher::_publish_engine_notification_events(Event* event)
     {
         listener->process(event);
     }
-}
-
-EventDispatcherStatus EventDispatcher::deregister_poster(EventPoster* poster)
-{
-    if (_posters[poster->poster_id()] != nullptr)
-    {
-        _posters[poster->poster_id()] = nullptr;
-        return EventDispatcherStatus::OK;
-    }
-    return EventDispatcherStatus::UNKNOWN_POSTER;
 }
 
 EventDispatcherStatus EventDispatcher::unsubscribe_from_keyboard_events(EventPoster* receiver)
