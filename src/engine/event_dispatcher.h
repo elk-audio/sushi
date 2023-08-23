@@ -82,13 +82,13 @@ public:
 
     void post_event(std::unique_ptr<Event>&& event) override;
 
-    EventDispatcherStatus subscribe_to_keyboard_events(EventPoster* receiver) override;
-    EventDispatcherStatus subscribe_to_parameter_change_notifications(EventPoster* receiver) override;
-    EventDispatcherStatus subscribe_to_engine_notifications(EventPoster* receiver) override;
+    Status subscribe_to_keyboard_events(EventPoster* receiver) override;
+    Status subscribe_to_parameter_change_notifications(EventPoster* receiver) override;
+    Status subscribe_to_engine_notifications(EventPoster* receiver) override;
 
-    EventDispatcherStatus unsubscribe_from_keyboard_events(EventPoster* receiver) override;
-    EventDispatcherStatus unsubscribe_from_parameter_change_notifications(EventPoster* receiver) override;
-    EventDispatcherStatus unsubscribe_from_engine_notifications(EventPoster* receiver) override;
+    Status unsubscribe_from_keyboard_events(EventPoster* receiver) override;
+    Status unsubscribe_from_parameter_change_notifications(EventPoster* receiver) override;
+    Status unsubscribe_from_engine_notifications(EventPoster* receiver) override;
 
     void set_sample_rate(float sample_rate) override {_event_timer.set_sample_rate(sample_rate);}
     void set_time(Time timestamp) override {_event_timer.set_incoming_time(timestamp);}

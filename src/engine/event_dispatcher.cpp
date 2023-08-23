@@ -82,40 +82,40 @@ void EventDispatcher::stop()
     }
 }
 
-EventDispatcherStatus EventDispatcher::subscribe_to_keyboard_events(EventPoster* receiver)
+Status EventDispatcher::subscribe_to_keyboard_events(EventPoster* receiver)
 {
     std::lock_guard<std::mutex> lock(_keyboard_listener_lock);
 
     for (auto r : _keyboard_event_listeners)
     {
-        if (r == receiver) return EventDispatcherStatus::ALREADY_SUBSCRIBED;
+        if (r == receiver) return Status::ALREADY_SUBSCRIBED;
     }
     _keyboard_event_listeners.push_back(receiver);
-    return EventDispatcherStatus::OK;
+    return Status::OK;
 }
 
-EventDispatcherStatus EventDispatcher::subscribe_to_parameter_change_notifications(EventPoster* receiver)
+Status EventDispatcher::subscribe_to_parameter_change_notifications(EventPoster* receiver)
 {
     std::lock_guard<std::mutex> lock(_parameter_listener_lock);
 
     for (auto r : _parameter_change_listeners)
     {
-        if (r == receiver) return EventDispatcherStatus::ALREADY_SUBSCRIBED;
+        if (r == receiver) return Status::ALREADY_SUBSCRIBED;
     }
     _parameter_change_listeners.push_back(receiver);
-    return EventDispatcherStatus::OK;
+    return Status::OK;
 }
 
-EventDispatcherStatus EventDispatcher::subscribe_to_engine_notifications(EventPoster*receiver)
+Status EventDispatcher::subscribe_to_engine_notifications(EventPoster*receiver)
 {
     std::lock_guard<std::mutex> lock(_engine_listener_lock);
 
     for (auto r : _engine_notification_listeners)
     {
-        if (r == receiver) return EventDispatcherStatus::ALREADY_SUBSCRIBED;
+        if (r == receiver) return Status::ALREADY_SUBSCRIBED;
     }
     _engine_notification_listeners.push_back(receiver);
-    return EventDispatcherStatus::OK;
+    return Status::OK;
 }
 
 int EventDispatcher::dispatch(std::unique_ptr<Event>&& event)
@@ -298,7 +298,7 @@ void EventDispatcher::_publish_engine_notification_events(Event* event)
     }
 }
 
-EventDispatcherStatus EventDispatcher::unsubscribe_from_keyboard_events(EventPoster* receiver)
+Status EventDispatcher::unsubscribe_from_keyboard_events(EventPoster* receiver)
 {
     std::lock_guard<std::mutex> lock(_keyboard_listener_lock);
 
@@ -307,13 +307,13 @@ EventDispatcherStatus EventDispatcher::unsubscribe_from_keyboard_events(EventPos
         if (*i == receiver)
         {
             _keyboard_event_listeners.erase(i);
-            return EventDispatcherStatus::OK;
+            return Status::OK;
         }
     }
-    return EventDispatcherStatus::UNKNOWN_POSTER;
+    return Status::UNKNOWN_POSTER;
 }
 
-EventDispatcherStatus EventDispatcher::unsubscribe_from_parameter_change_notifications(EventPoster* receiver)
+Status EventDispatcher::unsubscribe_from_parameter_change_notifications(EventPoster* receiver)
 {
     std::lock_guard<std::mutex> lock(_parameter_listener_lock);
 
@@ -322,13 +322,13 @@ EventDispatcherStatus EventDispatcher::unsubscribe_from_parameter_change_notific
         if (*i == receiver)
         {
             _parameter_change_listeners.erase(i);
-            return EventDispatcherStatus::OK;
+            return Status::OK;
         }
     }
-    return EventDispatcherStatus::UNKNOWN_POSTER;
+    return Status::UNKNOWN_POSTER;
 }
 
-EventDispatcherStatus EventDispatcher::unsubscribe_from_engine_notifications(EventPoster* receiver)
+Status EventDispatcher::unsubscribe_from_engine_notifications(EventPoster* receiver)
 {
     std::lock_guard<std::mutex> lock(_engine_listener_lock);
 
@@ -337,10 +337,10 @@ EventDispatcherStatus EventDispatcher::unsubscribe_from_engine_notifications(Eve
         if (*i == receiver)
         {
             _engine_notification_listeners.erase(i);
-            return EventDispatcherStatus::OK;
+            return Status::OK;
         }
     }
-    return EventDispatcherStatus::UNKNOWN_POSTER;
+    return Status::UNKNOWN_POSTER;
 }
 
 void EventDispatcher::_handle_engine_notifications_internally(EngineNotificationEvent* event)

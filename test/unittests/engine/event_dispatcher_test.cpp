@@ -95,34 +95,34 @@ TEST_F(TestEventDispatcher, TestInstantiation)
 TEST_F(TestEventDispatcher, TestRegisteringAndDeregistering)
 {
     auto status = _module_under_test->subscribe_to_keyboard_events(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::OK, status);
+    EXPECT_EQ(Status::OK, status);
     status = _module_under_test->subscribe_to_keyboard_events(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::ALREADY_SUBSCRIBED, status);
+    EXPECT_EQ(Status::ALREADY_SUBSCRIBED, status);
 
     status = _module_under_test->subscribe_to_parameter_change_notifications(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::OK, status);
+    EXPECT_EQ(Status::OK, status);
     status = _module_under_test->subscribe_to_parameter_change_notifications(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::ALREADY_SUBSCRIBED, status);
+    EXPECT_EQ(Status::ALREADY_SUBSCRIBED, status);
 
     status = _module_under_test->subscribe_to_engine_notifications(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::OK, status);
+    EXPECT_EQ(Status::OK, status);
     status = _module_under_test->subscribe_to_engine_notifications(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::ALREADY_SUBSCRIBED, status);
+    EXPECT_EQ(Status::ALREADY_SUBSCRIBED, status);
 
     status = _module_under_test->unsubscribe_from_keyboard_events(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::OK, status);
+    EXPECT_EQ(Status::OK, status);
     status = _module_under_test->unsubscribe_from_keyboard_events(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::UNKNOWN_POSTER, status);
+    EXPECT_EQ(Status::UNKNOWN_POSTER, status);
 
     status = _module_under_test->unsubscribe_from_parameter_change_notifications(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::OK, status);
+    EXPECT_EQ(Status::OK, status);
     status = _module_under_test->unsubscribe_from_parameter_change_notifications(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::UNKNOWN_POSTER, status);
+    EXPECT_EQ(Status::UNKNOWN_POSTER, status);
 
     status = _module_under_test->unsubscribe_from_engine_notifications(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::OK, status);
+    EXPECT_EQ(Status::OK, status);
     status = _module_under_test->unsubscribe_from_engine_notifications(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::UNKNOWN_POSTER, status);
+    EXPECT_EQ(Status::UNKNOWN_POSTER, status);
 }
 
 TEST_F(TestEventDispatcher, TestFromRtEventNoteOnEvent)

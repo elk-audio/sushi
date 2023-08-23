@@ -28,32 +28,32 @@ public:
                 (std::unique_ptr<Event>&&),
                 (override));
 
-    MOCK_METHOD(EventDispatcherStatus,
+    MOCK_METHOD(Status,
                 subscribe_to_keyboard_events,
                 (EventPoster*),
                 (override));
 
-    MOCK_METHOD(EventDispatcherStatus,
+    MOCK_METHOD(Status,
                 subscribe_to_parameter_change_notifications,
                 (EventPoster*),
                 (override));
 
-    MOCK_METHOD(EventDispatcherStatus,
+    MOCK_METHOD(Status,
                 subscribe_to_engine_notifications,
                 (EventPoster*),
                 (override));
 
-    MOCK_METHOD(EventDispatcherStatus,
+    MOCK_METHOD(Status,
                 unsubscribe_from_keyboard_events,
                 (EventPoster*),
                 (override));
 
-    MOCK_METHOD(EventDispatcherStatus,
+    MOCK_METHOD(Status,
                 unsubscribe_from_parameter_change_notifications ,
                 (EventPoster*),
                 (override));
 
-    MOCK_METHOD(EventDispatcherStatus,
+    MOCK_METHOD(Status,
                 unsubscribe_from_engine_notifications,
                 (EventPoster*),
                 (override));
