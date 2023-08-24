@@ -304,6 +304,8 @@ TEST_F(InternalPluginTest, TestRtStateHandling)
     // Retrieve the delete event and execute it
     ASSERT_FALSE(_host_control._event_output.empty());
 
+    EXPECT_EQ(_host_control._event_output.size(), 2);
+
     while (!_host_control._event_output.empty())
     {
         rt_event = _host_control._event_output.pop();
