@@ -14,15 +14,7 @@ constexpr auto ZERO_TIMEOUT = std::chrono::milliseconds(0);
 class TestAsyncReceiver : public ::testing::Test
 {
 protected:
-    TestAsyncReceiver()
-    {
-    }
-
-    void SetUp()
-    {}
-
-    void TearDown()
-    { }
+    TestAsyncReceiver() = default;
 
     RtSafeRtEventFifo _queue;
     AsynchronousEventReceiver _module_under_test{&_queue};

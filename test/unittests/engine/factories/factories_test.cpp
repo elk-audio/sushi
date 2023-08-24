@@ -90,8 +90,6 @@ protected:
         _path = test_utils::get_data_dir_path();
     }
 
-    void TearDown() override {}
-
     SushiOptions options;
 
     ReactiveFactoryImplementation _reactive_factory;
@@ -179,8 +177,6 @@ protected:
 
         _path = test_utils::get_data_dir_path();
     }
-
-    void TearDown() override {}
 
     SushiOptions options;
 

@@ -22,7 +22,7 @@ class CvToControlPluginTest : public ::testing::Test
 protected:
     CvToControlPluginTest() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         _module_under_test.init(TEST_SAMPLE_RATE);
         _module_under_test.set_event_output(&_event_output);

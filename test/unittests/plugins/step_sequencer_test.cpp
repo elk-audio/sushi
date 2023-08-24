@@ -12,10 +12,9 @@ constexpr float TEST_SAMPLERATE = 48000;
 class TestStepSequencerPlugin : public ::testing::Test
 {
 protected:
-    TestStepSequencerPlugin()
-    {
-    }
-    void SetUp()
+    TestStepSequencerPlugin() = default;
+
+    void SetUp() override
     {
         ProcessorReturnCode status = _module_under_test.init(TEST_SAMPLERATE);
         ASSERT_EQ(ProcessorReturnCode::OK, status);

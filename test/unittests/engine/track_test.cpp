@@ -21,12 +21,13 @@ constexpr bool CREATE_PAN_CONTROLS = true;
 class TrackTest : public ::testing::Test
 {
 protected:
-    TrackTest() {}
+    TrackTest() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         _module_under_test.init(TEST_SAMPLE_RATE);
     }
+
     HostControlMockup _host_control;
     performance::PerformanceTimer _timer;
     Track _module_under_test{_host_control.make_host_control_mockup(), TEST_CHANNEL_COUNT, &_timer, CREATE_PAN_CONTROLS};

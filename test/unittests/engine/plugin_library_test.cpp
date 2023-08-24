@@ -11,15 +11,7 @@ using namespace sushi::internal;
 class TestPluginLibrary : public ::testing::Test
 {
 protected:
-    TestPluginLibrary()
-    {
-    }
-
-    void SetUp()
-    {}
-
-    void TearDown()
-    { }
+    TestPluginLibrary() = default;
 
     engine::PluginLibrary _module_under_test;
 };

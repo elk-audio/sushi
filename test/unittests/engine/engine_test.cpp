@@ -23,10 +23,9 @@ using namespace sushi::internal::engine;
 class TestClipDetector : public ::testing::Test
 {
 protected:
-    TestClipDetector()
-    {}
+    TestClipDetector() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         _module_under_test.set_input_channels(TEST_CHANNEL_COUNT);
         _module_under_test.set_output_channels(TEST_CHANNEL_COUNT);
@@ -76,9 +75,9 @@ TEST_F(TestClipDetector, TestClipping)
 class TestEngine : public ::testing::Test
 {
 protected:
-    TestEngine() {}
+    TestEngine() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         _module_under_test = std::make_unique<AudioEngine>(SAMPLE_RATE, 1);
         _module_under_test->set_audio_input_channels(TEST_CHANNEL_COUNT);

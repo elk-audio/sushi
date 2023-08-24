@@ -33,11 +33,6 @@ protected:
         _module_under_test->set_enabled(true);
     }
 
-    void TearDown() override
-    {
-
-    }
-
     HostControlMockup _host_control;
     std::unique_ptr<SimpleSynthPlugin> _module_under_test;
 };

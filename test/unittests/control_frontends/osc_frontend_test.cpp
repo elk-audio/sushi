@@ -42,9 +42,9 @@ constexpr auto TEST_PROCESSOR_NAME = "proc";
 class TestOSCFrontend : public ::testing::Test
 {
 protected:
-    TestOSCFrontend() {}
+    TestOSCFrontend() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         _mock_osc_interface = new MockOscInterface(OSC_TEST_SERVER_PORT, OSC_TEST_SEND_PORT, OSC_TEST_SEND_ADDRESS);
 
@@ -97,7 +97,7 @@ protected:
         ON_CALL(_mock_processor_container, processor(_test_processor->id())).WillByDefault(Return(_test_processor));
     }
 
-    void TearDown()
+    void TearDown() override
     {
         EXPECT_CALL(*_mock_osc_interface, stop()).Times(1);
 

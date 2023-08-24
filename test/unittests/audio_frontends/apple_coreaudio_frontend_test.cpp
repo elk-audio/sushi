@@ -25,10 +25,6 @@ protected:
         AppleAudioHardwareMockup::instance = &_mock;
     }
 
-    void TearDown() override
-    {
-    }
-
     void expect_calls_to_get_cf_string_property(AudioObjectID expected_audio_object_id, const AudioObjectPropertyAddress& expected_addr, const CFStringRef& cf_string_ref)
     {
         EXPECT_CALL(_mock, AudioObjectHasProperty)

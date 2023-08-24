@@ -15,15 +15,8 @@ constexpr float TEST_SAMPLERATE = 48000;
 class TestTransport : public ::testing::Test
 {
 protected:
-    TestTransport()
-    {
-    }
+    TestTransport() = default;
 
-    void SetUp()
-    {}
-
-    void TearDown()
-    {}
     RtEventFifo<10> _rt_event_output;
     Transport _module_under_test{TEST_SAMPLERATE, &_rt_event_output};
 };

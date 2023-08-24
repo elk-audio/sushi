@@ -117,17 +117,11 @@ TEST(TestMidiDispatcherEventCreation, TestMakeProgramChangeEvent)
 class TestMidiDispatcher : public ::testing::Test
 {
 protected:
-    TestMidiDispatcher()
-    {
-    }
+    TestMidiDispatcher() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         _module_under_test.set_frontend(&_mock_frontend);
-    }
-
-    void TearDown()
-    {
     }
 
     EngineMockup _test_engine{48000};

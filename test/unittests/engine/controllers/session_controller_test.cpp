@@ -25,8 +25,9 @@ constexpr float TEST_SAMPLE_RATE = 44100;
 class SessionControllerTest : public ::testing::Test
 {
 protected:
-    SessionControllerTest() {}
-    void SetUp()
+    SessionControllerTest() = default;
+
+    void SetUp() override
     {
         _audio_engine = std::make_unique<AudioEngine>(TEST_SAMPLE_RATE, 1, "", false, new EventDispatcherMockup());
         _mock_osc_interface = new MockOscInterface(0, 0, "");
@@ -42,7 +43,6 @@ protected:
 
     }
 
-    void TearDown() {}
     MockOscInterface*                     _mock_osc_interface;
     sushi::control::ControlMockup         _mock_controller;
     EventDispatcherMockup*                _event_dispatcher_mockup;

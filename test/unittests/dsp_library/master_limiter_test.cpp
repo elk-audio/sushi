@@ -12,8 +12,8 @@ using namespace sushi::dsp;
 class TestUpSampler : public ::testing::Test
 {
 protected:
-    TestUpSampler() {}
-    void SetUp()
+    TestUpSampler() = default;
+    void SetUp() override
     {
         _module_under_test.reset();
     }
@@ -38,8 +38,8 @@ constexpr float TEST_ATTACK_TIME_MS = 50.0f;
 class TestMasterLimiter : public ::testing::Test
 {
 protected:
-    TestMasterLimiter() {}
-    void SetUp()
+    TestMasterLimiter() = default;
+    void SetUp() override
     {
         _module_under_test.init(TEST_SAMPLERATE);
     }

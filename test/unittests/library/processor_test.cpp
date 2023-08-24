@@ -37,17 +37,18 @@ public:
 class TestProcessor : public ::testing::Test
 {
 protected:
-    TestProcessor()
-    {
-    }
-    void SetUp()
+    TestProcessor() = default;
+
+    void SetUp() override
     {
         _module_under_test = new ProcessorTest(_host_control.make_host_control_mockup());
     }
-    void TearDown()
+
+    void TearDown() override
     {
         delete(_module_under_test);
     }
+    
     HostControlMockup _host_control;
     RtEventFifo<10> _event_queue;
     Processor* _module_under_test;

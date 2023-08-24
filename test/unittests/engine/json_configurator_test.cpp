@@ -54,10 +54,6 @@ protected:
                                                                 json_data.value());
     }
 
-    void TearDown() override
-    {
-    }
-
     /* Helper functions */
     JsonConfigReturnStatus _make_track(const rapidjson::Value &track, TrackType type);
 

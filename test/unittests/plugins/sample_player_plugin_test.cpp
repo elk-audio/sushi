@@ -25,7 +25,7 @@ static const std::string SAMPLE_FILE = "Kawai-K11-GrPiano-C4_mono.wav";
 class TestSamplerVoice : public ::testing::Test
 {
 protected:
-    void SetUp()
+    void SetUp() override
     {
         _module_under_test.set_sample(&_sample);
         _module_under_test.set_samplerate(TEST_SAMPLERATE);
@@ -85,19 +85,20 @@ TEST_F(TestSamplerVoice, TestNoteOff)
 class TestSamplePlayerPlugin : public ::testing::Test
 {
 protected:
-    TestSamplePlayerPlugin()
-    {
-    }
-    void SetUp()
+    TestSamplePlayerPlugin() = default;
+
+    void SetUp() override
     {
         _module_under_test = new SamplePlayerPlugin(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
         ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
         ASSERT_EQ(ProcessorReturnCode::OK, status);
     }
-    void TearDown()
+
+    void TearDown() override
     {
         delete _module_under_test;
     }
+
     HostControlMockup _host_control;
     SamplePlayerPlugin* _module_under_test;
 

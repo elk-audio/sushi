@@ -40,14 +40,15 @@ void run_test_scenario(PerformanceTimer& timer)
 class TestPerformanceTimer : public ::testing::Test
 {
 protected:
-    TestPerformanceTimer()
-    {}
-    void SetUp()
+    TestPerformanceTimer() = default;
+
+    void SetUp() override
     {
         _module_under_test.set_timing_period(TEST_PERIOD);
         /* Hack to store records while not using the worker thread */
         _module_under_test._enabled = true;
     }
+
     PerformanceTimer _module_under_test;
 };
 

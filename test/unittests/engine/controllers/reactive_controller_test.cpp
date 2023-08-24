@@ -45,16 +45,14 @@ constexpr float TEST_SAMPLE_RATE = 44100;
 class ReactiveControllerTestFrontend : public ::testing::Test
 {
 protected:
-    ReactiveControllerTestFrontend() {}
+    ReactiveControllerTestFrontend() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         _real_time_controller = std::make_unique<RealTimeController>(&_audio_frontend,
                                                                      &_midi_frontend,
                                                                      &_transport);
     }
-
-    void TearDown() {}
 
     EngineMockup _mock_engine {TEST_SAMPLE_RATE};
     ReactiveFrontend _audio_frontend {&_mock_engine};

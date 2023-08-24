@@ -34,19 +34,19 @@ public:
 class InternalPluginTest : public ::testing::Test
 {
 protected:
-    InternalPluginTest()
-    {
-    }
-    void SetUp()
+    InternalPluginTest() = default;
+
+    void SetUp() override
     {
         _module_under_test = new TestPlugin(_host_control.make_host_control_mockup());
         _module_under_test->set_event_output(&_host_control._event_output);
     }
 
-    void TearDown()
+    void TearDown() override
     {
         delete(_module_under_test);
     }
+
     HostControlMockup _host_control;
     InternalPlugin* _module_under_test;
 };

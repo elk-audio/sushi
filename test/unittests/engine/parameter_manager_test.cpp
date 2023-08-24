@@ -52,12 +52,10 @@ class TestParameterManager : public ::testing::Test
 {
 protected:
     using ::testing::Test::SetUp; // Hide error of hidden overload of virtual function in clang when signatures differ but the name is the same
-    TestParameterManager()
-    {
 
-    }
+    TestParameterManager() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         _test_processor = std::make_shared<gain_plugin::GainPlugin>(_host_control_mockup.make_host_control_mockup());
         _test_track = std::make_shared<Track>(_host_control_mockup.make_host_control_mockup(), 2, nullptr);

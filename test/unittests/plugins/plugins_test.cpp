@@ -28,10 +28,9 @@ static const std::string WRITE_FILE = "write_test";
 class TestPassthroughPlugin : public ::testing::Test
 {
 protected:
-    TestPassthroughPlugin()
-    {
-    }
-    void SetUp()
+    TestPassthroughPlugin() = default;
+
+    void SetUp() override
     {
         _module_under_test = std::make_unique<passthrough_plugin::PassthroughPlugin>(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
         _module_under_test->set_enabled(true);
@@ -76,11 +75,9 @@ TEST_F(TestPassthroughPlugin, TestProcess)
 class TestGainPlugin : public ::testing::Test
 {
 protected:
-    TestGainPlugin()
-    {
-    }
+    TestGainPlugin() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         _module_under_test = std::make_unique<gain_plugin::GainPlugin>(_host_control.make_host_control_mockup());
         ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
@@ -127,10 +124,9 @@ TEST_F(TestGainPlugin, TestProcess)
 class TestEqualizerPlugin : public ::testing::Test
 {
 protected:
-    TestEqualizerPlugin()
-    {
-    }
-    void SetUp()
+    TestEqualizerPlugin() = default;
+
+    void SetUp() override
     {
         _module_under_test = std::make_unique<equalizer_plugin::EqualizerPlugin>(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
         ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
@@ -190,10 +186,9 @@ TEST_F(TestEqualizerPlugin, TestProcess)
 class TestPeakMeterPlugin : public ::testing::Test
 {
 protected:
-    TestPeakMeterPlugin()
-    {
-    }
-    void SetUp()
+    TestPeakMeterPlugin() = default;
+
+    void SetUp() override
     {
         _module_under_test = std::make_unique<peak_meter_plugin::PeakMeterPlugin>(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
         ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
@@ -310,11 +305,9 @@ TEST(TestPeakMeterPluginInternal, TestTodBConversion)
 class TestLfoPlugin : public ::testing::Test
 {
 protected:
-    TestLfoPlugin()
-    {
-    }
+    TestLfoPlugin() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         _module_under_test = std::make_unique<lfo_plugin::LfoPlugin>(_host_control.make_host_control_mockup());
         ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
@@ -360,10 +353,9 @@ TEST_F(TestLfoPlugin, TestProcess)
 class TestWavWriterPlugin : public ::testing::Test
 {
 protected:
-    TestWavWriterPlugin()
-    {
-    }
-    void SetUp()
+    TestWavWriterPlugin() = default;
+
+    void SetUp() override
     {
         _module_under_test = std::make_unique<wav_writer_plugin::WavWriterPlugin>(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
         auto status = _module_under_test->init(TEST_SAMPLERATE);
@@ -447,10 +439,9 @@ TEST_F(TestWavWriterPlugin, TestProcess)
 class TestMonoSummingPlugin : public ::testing::Test
 {
 protected:
-    TestMonoSummingPlugin()
-    {
-    }
-    void SetUp()
+    TestMonoSummingPlugin() = default;
+
+    void SetUp() override
     {
         _module_under_test = std::make_unique<mono_summing_plugin::MonoSummingPlugin>(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
         auto status = _module_under_test->init(TEST_SAMPLERATE);
@@ -497,10 +488,9 @@ TEST_F(TestMonoSummingPlugin, TestProcess)
 class TestSampleDelayPlugin : public ::testing::Test
 {
 protected:
-    TestSampleDelayPlugin()
-    {
-    }
-    void SetUp()
+    TestSampleDelayPlugin() = default;
+
+    void SetUp() override
     {
         _module_under_test = std::make_unique<sample_delay_plugin::SampleDelayPlugin>(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
         auto status = _module_under_test->init(TEST_SAMPLERATE);
@@ -569,10 +559,9 @@ constexpr int TEST_CHANNELS_STEREO = 2;
 class TestStereoMixerPlugin : public ::testing::Test
 {
 protected:
-    TestStereoMixerPlugin()
-    {
-    }
-    void SetUp()
+    TestStereoMixerPlugin() = default;
+
+    void SetUp() override
     {
         _module_under_test = std::make_unique<stereo_mixer_plugin::StereoMixerPlugin>(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
         auto status = _module_under_test->init(TEST_SAMPLERATE);

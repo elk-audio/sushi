@@ -65,22 +65,21 @@ public:
         _module_under_test->_event_loop();
     }
 protected:
-    TestEventDispatcher()
-    {
-    }
+    TestEventDispatcher() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         _module_under_test = new EventDispatcher(&_test_engine,
                                                  &_in_rt_queue,
                                                  &_out_rt_queue);
     }
 
-    void TearDown()
+    void TearDown() override
     {
         _module_under_test->stop();
         delete _module_under_test;
     }
+
     EventDispatcher*    _module_under_test;
     EngineMockup        _test_engine{TEST_SAMPLE_RATE};
     RtSafeRtEventFifo   _in_rt_queue;
@@ -234,22 +233,22 @@ public:
         _module_under_test->_running = false;
         _module_under_test->_worker();
     }
-protected:
-    TestWorker()
-    {
-    }
 
-    void SetUp()
+protected:
+    TestWorker() = default;
+
+    void SetUp() override
     {
         _module_under_test = new Worker(&_test_engine,
                                         _test_engine.event_dispatcher());
     }
 
-    void TearDown()
+    void TearDown() override
     {
         _module_under_test->stop();
         delete _module_under_test;
     }
+
     Worker*          _module_under_test;
     EngineMockup     _test_engine{TEST_SAMPLE_RATE};
 };

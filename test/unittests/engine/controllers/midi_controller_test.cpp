@@ -33,15 +33,13 @@ const MidiDataByte TEST_PRG_CH_CH7 = {0xC6, 40, 0, 0};  /* Channel 7, prg 40 */
 class MidiControllerEventTestFrontend : public ::testing::Test
 {
 protected:
-    MidiControllerEventTestFrontend() {}
+    MidiControllerEventTestFrontend() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         _test_dispatcher = static_cast<EventDispatcherMockup*>(_test_engine.event_dispatcher());
         _midi_dispatcher.set_frontend(&_mock_frontend);
     }
-
-    void TearDown() {}
 
     EngineMockup _test_engine{TEST_SAMPLE_RATE};
     MidiDispatcher _midi_dispatcher{_test_engine.event_dispatcher()};

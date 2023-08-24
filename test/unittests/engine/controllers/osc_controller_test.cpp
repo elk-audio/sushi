@@ -32,9 +32,9 @@ constexpr auto OSC_TEST_SEND_ADDRESS = "127.0.0.1";
 class OscControllerEventTestFrontend : public ::testing::Test
 {
 protected:
-    OscControllerEventTestFrontend() {}
+    OscControllerEventTestFrontend() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         auto mock_osc_interface = new NiceMock<MockOscInterface>(OSC_TEST_SERVER_PORT,
                                                                  OSC_TEST_SEND_PORT,
@@ -49,8 +49,6 @@ protected:
         ASSERT_EQ(ControlFrontendStatus::OK, _osc_frontend->init());
         _osc_controller.set_osc_frontend(_osc_frontend.get());
     }
-
-    void TearDown() {}
 
     EngineMockup _test_engine{TEST_SAMPLE_RATE};
 

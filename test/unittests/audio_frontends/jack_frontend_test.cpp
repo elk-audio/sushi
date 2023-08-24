@@ -24,16 +24,14 @@ constexpr int CV_CHANNELS = 0;
 class TestJackFrontend : public ::testing::Test
 {
 protected:
-    TestJackFrontend()
-    {
-    }
+    TestJackFrontend() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         _module_under_test = new JackFrontend(&_engine);
     }
 
-    void TearDown()
+    void TearDown() override
     {
         _module_under_test->cleanup();
         delete _module_under_test;

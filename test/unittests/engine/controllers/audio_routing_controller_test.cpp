@@ -15,9 +15,9 @@ constexpr float TEST_SAMPLE_RATE = 44100;
 class AudioRoutingControllerTest : public ::testing::Test
 {
 protected:
-    AudioRoutingControllerTest() {}
+    AudioRoutingControllerTest() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         bool debug_mode_sw = false;
         _audio_engine = std::make_unique<AudioEngine>(TEST_SAMPLE_RATE, 1, "", debug_mode_sw, new EventDispatcherMockup());
@@ -30,8 +30,6 @@ protected:
         _audio_engine->create_track("Track 1", 2);
         _track_id = _audio_engine->processor_container()->track("Track 1")->id();
     }
-
-    void TearDown() {}
 
     EventDispatcherMockup*                  _event_dispatcher_mockup{nullptr};
     std::unique_ptr<AudioEngine>            _audio_engine;

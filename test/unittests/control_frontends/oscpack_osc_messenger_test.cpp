@@ -67,8 +67,6 @@ protected:
         _module_under_test->init();
     }
 
-    void TearDown() override {}
-
     sushi::control::ControlMockup _mock_controller;
 
     OscConnection connection;
