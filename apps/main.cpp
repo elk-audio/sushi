@@ -23,6 +23,7 @@
 #include <condition_variable>
 
 #include "elklog/static_logger.h"
+
 #include "sushi/utils.h"
 #include "sushi/parameter_dump.h"
 #include "sushi/portaudio_devices_dump.h"
@@ -81,7 +82,7 @@ std::unique_ptr<Sushi> start_sushi(SushiOptions options);
 
 void pipe_signal_handler([[maybe_unused]] int sig)
 {
-    std::cout << "Pipe signal received and ignored: " << sig << std::endl;
+    ELKLOG_LOG_INFO("Pipe signal received and ignored: {}", sig);
 }
 
 int main(int argc, char* argv[])
