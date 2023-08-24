@@ -13,9 +13,9 @@
  * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
-#include "plugin_library.h"
-
 #include "elklog/static_logger.h"
+
+#include "plugin_library.h"
 
 #include <filesystem>
 

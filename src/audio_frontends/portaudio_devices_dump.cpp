@@ -18,9 +18,9 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include "sushi/portaudio_devices_dump.h"
-
 #include "elklog/static_logger.h"
+
+#include "sushi/portaudio_devices_dump.h"
 
 #include "portaudio_frontend.h"
 

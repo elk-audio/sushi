@@ -18,9 +18,9 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include "base_audio_frontend.h"
-
 #include "elklog/static_logger.h"
+
+#include "base_audio_frontend.h"
 
 ELKLOG_GET_LOGGER_WITH_MODULE_NAME("audio_frontend");
 

@@ -51,10 +51,10 @@
 #include <Corefoundation/Corefoundation.h>
 #endif
 
+#include "elklog/static_logger.h"
+
 #include "vst2x_plugin_loader.h"
 #include "vst2x_host_callback.h"
-
-#include "elklog/static_logger.h"
 
 namespace sushi::internal::vst2 {
 

@@ -18,8 +18,9 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include "timing_controller.h"
 #include "elklog/static_logger.h"
+
+#include "timing_controller.h"
 
 ELKLOG_GET_LOGGER_WITH_MODULE_NAME("controller");
 

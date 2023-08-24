@@ -22,9 +22,10 @@
 
 #include "spdlog/fmt/bundled/chrono.h"
 
+#include "elklog/static_logger.h"
+
 #include "sushi/constants.h"
 #include "sushi/compile_time_settings.h"
-#include "elklog/static_logger.h"
 
 #include "session_controller.h"
 #include "controller_common.h"

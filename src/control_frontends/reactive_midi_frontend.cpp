@@ -20,11 +20,11 @@
 
 #include <chrono>
 
+#include "elklog/static_logger.h"
+
 #include "reactive_midi_frontend.h"
 
 #include "library/midi_decoder.h"
-
-#include "elklog/static_logger.h"
 
 ELKLOG_GET_LOGGER_WITH_MODULE_NAME("reactive midi frontend");
 

@@ -19,9 +19,9 @@
  * @copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include "standalone_factory_implementation.h"
-
 #include "elklog/static_logger.h"
+
+#include "standalone_factory_implementation.h"
 
 #include "engine/audio_engine.h"
 #include "src/concrete_sushi.h"

@@ -22,7 +22,7 @@
                     "type" : "internal"
                 },
                 {
-                    "path" : "mda-vst2/mdaJX10.so",
+                    "path" : "mdaJX10.vst",
                     "name" : "synth",
                     "type" : "vst2x"
                 }

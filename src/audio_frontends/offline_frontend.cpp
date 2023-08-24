@@ -22,9 +22,9 @@
 #include <cstring>
 #include <random>
 
-#include "offline_frontend.h"
-
 #include "elklog/static_logger.h"
+
+#include "offline_frontend.h"
 
 #include "audio_frontend_internals.h"
 

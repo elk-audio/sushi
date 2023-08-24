@@ -18,9 +18,9 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include "midi_controller.h"
-
 #include "elklog/static_logger.h"
+
+#include "midi_controller.h"
 
 #include "controller_common.h"
 

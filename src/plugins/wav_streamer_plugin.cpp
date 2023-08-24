@@ -18,9 +18,9 @@
  * @copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include "plugins/wav_streamer_plugin.h"
-
 #include "elklog/static_logger.h"
+
+#include "plugins/wav_streamer_plugin.h"
 
 namespace sushi::internal::wav_streamer_plugin {
 

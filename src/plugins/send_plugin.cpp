@@ -20,10 +20,11 @@
 
 #include <string>
 
+#include "elklog/static_logger.h"
+
 #include "send_plugin.h"
 
 #include "sushi/constants.h"
-#include "elklog/static_logger.h"
 
 #include "return_plugin.h"
 

@@ -18,13 +18,11 @@
  * @copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include <cassert>
-
 #include <bw_buf.h>
 
-#include "simple_synth_plugin.h"
-
 #include "elklog/static_logger.h"
+
+#include "simple_synth_plugin.h"
 
 namespace sushi::internal::simple_synth_plugin {
 

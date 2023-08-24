@@ -19,9 +19,9 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include "audio_graph.h"
 #include "elklog/static_logger.h"
 
+#include "audio_graph.h"
 
 namespace sushi::internal::engine {
 

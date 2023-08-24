@@ -20,10 +20,9 @@
 
 #include <vector>
 
-#include "performance_timer.h"
-
 #include "elklog/static_logger.h"
 
+#include "performance_timer.h"
 
 namespace sushi::internal::performance {
 

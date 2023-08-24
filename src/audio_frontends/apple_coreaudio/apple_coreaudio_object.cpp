@@ -13,9 +13,9 @@
  * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
-#include "apple_coreaudio_object.h"
-
 #include "elklog/static_logger.h"
+
+#include "apple_coreaudio_object.h"
 
 ELKLOG_GET_LOGGER_WITH_MODULE_NAME("AppleCoreAudio");
 

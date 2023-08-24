@@ -20,9 +20,9 @@
 
 #include <algorithm>
 
-#include "engine/midi_dispatcher.h"
-
 #include "elklog/static_logger.h"
+
+#include "engine/midi_dispatcher.h"
 
 #include "base_event_dispatcher.h"
 #include "base_engine.h"

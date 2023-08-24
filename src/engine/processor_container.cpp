@@ -18,9 +18,9 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include "processor_container.h"
-
 #include "elklog/static_logger.h"
+
+#include "processor_container.h"
 
 namespace sushi::internal::engine {
 

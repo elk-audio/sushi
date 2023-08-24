@@ -18,9 +18,9 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include "vst3x_processor_factory.h"
-
 #include "elklog/static_logger.h"
+
+#include "vst3x_processor_factory.h"
 
 #ifdef SUSHI_BUILD_WITH_VST3
 #include "vst3x_host_app.h"

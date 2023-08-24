@@ -20,9 +20,9 @@
 
 #include <iostream>
 
-#include "reactive_frontend.h"
-
 #include "elklog/static_logger.h"
+
+#include "reactive_frontend.h"
 
 namespace sushi::internal::audio_frontend {
 

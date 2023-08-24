@@ -18,9 +18,9 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include "transport_controller.h"
-
 #include "elklog/static_logger.h"
+
+#include "transport_controller.h"
 
 #include "controller_common.h"
 

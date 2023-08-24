@@ -31,9 +31,9 @@
 
 #include "twine/twine.h"
 
-#include "sushi/constants.h"
 #include "elklog/static_logger.h"
 
+#include "sushi/constants.h"
 #include "library/rt_event.h"
 #include "transport.h"
 

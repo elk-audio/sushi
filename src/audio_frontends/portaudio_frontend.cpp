@@ -480,6 +480,7 @@ void PortAudioFrontend::_output_interleaved_audio(float* output)
 #ifndef SUSHI_BUILD_WITH_PORTAUDIO
 
 #include "elklog/static_logger.h"
+
 #include "audio_frontends/portaudio_frontend.h"
 
 namespace sushi::internal::audio_frontend {

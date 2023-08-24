@@ -18,14 +18,14 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include "sushi/coreaudio_devices_dump.h"
+#include "elklog/static_logger.h"
 #include "rapidjson/rapidjson.h"
+
+#include "sushi/coreaudio_devices_dump.h"
 
 #ifdef SUSHI_BUILD_WITH_APPLE_COREAUDIO
 
 #include "apple_coreaudio_frontend.h"
-
-#include "elklog/static_logger.h"
 
 #include "audio_frontends/apple_coreaudio/apple_coreaudio_system_object.h"
 

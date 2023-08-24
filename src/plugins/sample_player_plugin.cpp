@@ -21,9 +21,9 @@
 #include <cassert>
 #include <sndfile.h>
 
-#include "sample_player_plugin.h"
-
 #include "elklog/static_logger.h"
+
+#include "sample_player_plugin.h"
 
 namespace sushi::internal::sample_player_plugin {
 

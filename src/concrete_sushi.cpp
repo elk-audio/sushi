@@ -20,11 +20,11 @@
 
 #include <iostream>
 
+#include "elklog/static_logger.h"
+
 #include "factories/reactive_factory_implementation.h"
 
 #include "concrete_sushi.h"
-
-#include "elklog/static_logger.h"
 
 #include "engine/audio_engine.h"
 

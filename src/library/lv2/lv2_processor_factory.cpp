@@ -17,9 +17,9 @@
  * @brief Factory for LV2 processors.
  */
 
-#include "lv2_processor_factory.h"
-
 #include "elklog/static_logger.h"
+
+#include "lv2_processor_factory.h"
 
 #ifdef SUSHI_BUILD_WITH_LV2
 #include "lv2_wrapper.h"

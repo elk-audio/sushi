@@ -18,10 +18,11 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
+#include "elklog/static_logger.h"
+
 #include "audio_graph_controller.h"
 
 #include "library/processor_state.h"
-#include "elklog/static_logger.h"
 
 ELKLOG_GET_LOGGER_WITH_MODULE_NAME("controller");
 

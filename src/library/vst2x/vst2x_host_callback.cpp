@@ -18,10 +18,10 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include "vst2x_host_callback.h"
-
 #include "twine/twine.h"
 #include "elklog/static_logger.h"
+
+#include "vst2x_host_callback.h"
 
 #include "vst2x_wrapper.h"
 

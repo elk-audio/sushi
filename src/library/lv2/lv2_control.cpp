@@ -13,9 +13,9 @@
  * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
-#include "lv2_control.h"
-
 #include "elklog/static_logger.h"
+
+#include "lv2_control.h"
 
 namespace sushi::internal::lv2 {
 

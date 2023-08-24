@@ -19,9 +19,9 @@
  * @copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include "reactive_factory_implementation.h"
-
 #include "elklog/static_logger.h"
+
+#include "reactive_factory_implementation.h"
 
 #include "audio_frontends/reactive_frontend.h"
 #include "control_frontends/reactive_midi_frontend.h"

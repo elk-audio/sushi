@@ -20,10 +20,10 @@
 
 #ifdef SUSHI_BUILD_WITH_APPLE_COREAUDIO
 
+#include "elklog/static_logger.h"
+
 #include "apple_coreaudio_frontend.h"
 #include "apple_coreaudio/apple_coreaudio_system_object.h"
-
-#include "elklog/static_logger.h"
 
 ELKLOG_GET_LOGGER_WITH_MODULE_NAME("AppleCoreAudio");
 
@@ -420,8 +420,9 @@ void AppleCoreAudioFrontend::_copy_output_buffer_to_interleaved_buffer(float* ou
 #endif // SUSHI_BUILD_WITH_APPLE_COREAUDIO
 
 #ifndef SUSHI_BUILD_WITH_APPLE_COREAUDIO
-#include "apple_coreaudio_frontend.h"
 #include "elklog/static_logger.h"
+
+#include "apple_coreaudio_frontend.h"
 
 ELKLOG_GET_LOGGER;
 

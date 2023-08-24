@@ -18,10 +18,9 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include "send_return_factory.h"
-
 #include "elklog/static_logger.h"
 
+#include "send_return_factory.h"
 #include "send_plugin.h"
 #include "return_plugin.h"
 

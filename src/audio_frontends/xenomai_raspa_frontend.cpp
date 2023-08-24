@@ -201,9 +201,9 @@ AudioFrontendStatus XenomaiRaspaFrontend::config_audio_channels(const XenomaiRas
 
 #else // SUSHI_BUILD_WITH_RASPA
 
-#include "xenomai_raspa_frontend.h"
-
 #include "elklog/static_logger.h"
+
+#include "xenomai_raspa_frontend.h"
 
 namespace sushi::internal::audio_frontend {
 

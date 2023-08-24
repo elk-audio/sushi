@@ -18,9 +18,9 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include "parameter_controller.h"
-
 #include "elklog/static_logger.h"
+
+#include "parameter_controller.h"
 
 #include "engine/base_engine.h"
 

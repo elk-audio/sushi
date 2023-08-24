@@ -18,14 +18,14 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include "lv2_wrapper.h"
-
 #include <exception>
 #include <cmath>
 
 #include <twine/twine.h>
 
 #include "elklog/static_logger.h"
+
+#include "lv2_wrapper.h"
 
 #include "lv2_port.h"
 #include "lv2_state.h"

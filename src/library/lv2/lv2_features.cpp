@@ -22,9 +22,9 @@
 
 #include <twine/twine.h>
 
-#include "lv2_features.h"
-
 #include "elklog/static_logger.h"
+
+#include "lv2_features.h"
 
 namespace sushi::internal::lv2 {
 

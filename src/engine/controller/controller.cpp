@@ -18,9 +18,10 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
+#include "elklog/static_logger.h"
+
 #include "controller.h"
 
-#include "elklog/static_logger.h"
 #include "sushi/control_notifications.h"
 
 #include "engine/base_engine.h"

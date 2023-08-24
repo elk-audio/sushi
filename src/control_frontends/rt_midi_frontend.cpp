@@ -21,11 +21,10 @@
 #include <functional>
 #include <tuple>
 
-#include "rt_midi_frontend.h"
-
-#include "sushi/sushi_time.h"
 #include "elklog/static_logger.h"
 
+#include "rt_midi_frontend.h"
+#include "sushi/sushi_time.h"
 #include "library/midi_decoder.h"
 
 ELKLOG_GET_LOGGER_WITH_MODULE_NAME("rtmidi");

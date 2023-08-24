@@ -1,8 +1,8 @@
 #include <algorithm>
 
-#include "processor.h"
-
 #include "elklog/static_logger.h"
+
+#include "processor.h"
 
 #include "library/midi_decoder.h"
 
