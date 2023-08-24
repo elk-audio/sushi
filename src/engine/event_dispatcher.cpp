@@ -18,6 +18,8 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
+#include "elklog/static_logger.h"
+
 #include "event_dispatcher.h"
 #include "engine/base_engine.h"
 
@@ -29,6 +31,8 @@ constexpr auto TIMING_UPDATE_INTERVAL = std::chrono::seconds(1);
 constexpr auto PARAMETER_UPDATE_RATE = 10;
 // Rate limits broadcast parameter updates to 25 Hz
 constexpr auto MAX_PARAMETER_UPDATE_INTERVAL = std::chrono::milliseconds(40);
+
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("event dispatcher");
 
 EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
                                  RtSafeRtEventFifo* in_rt_queue,
@@ -170,8 +174,15 @@ int EventDispatcher::dispatch(std::unique_ptr<Event>&& event)
             event->completion_cb()(event->callback_arg(), event.get(), status);
         }
     }
+    else
+    {
+        ELKLOG_LOG_ERROR("There should never be an unrecognized event.");
+        // If there is one, the above event handling chain is broken.
 
-    return EventStatus::UNRECOGNIZED_EVENT;
+        assert(false);
+
+        return EventStatus::UNRECOGNIZED_EVENT;
+    }
 }
 
 void EventDispatcher::_event_loop()
