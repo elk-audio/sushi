@@ -57,9 +57,9 @@ EngineReturnStatus to_engine_status(ProcessorReturnCode processor_status)
 }
 
 
-void ClipDetector::set_sample_rate(float samplerate)
+void ClipDetector::set_sample_rate(float sample_rate)
 {
-    _interval = static_cast<unsigned int>(samplerate * CLIPPING_DETECTION_INTERVAL.count() / 1000 - AUDIO_CHUNK_SIZE);
+    _interval = static_cast<unsigned int>(sample_rate * CLIPPING_DETECTION_INTERVAL.count() / 1000 - AUDIO_CHUNK_SIZE);
 }
 
 void ClipDetector::set_input_channels(int channels)

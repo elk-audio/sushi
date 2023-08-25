@@ -61,7 +61,7 @@ public:
         this->set_sample_rate(sample_rate);
     }
 
-    void set_sample_rate(float samplerate);
+    void set_sample_rate(float sample_rate);
 
     void set_input_channels(int channels);
 
