@@ -181,8 +181,10 @@ int EventDispatcher::dispatch(std::unique_ptr<Event>&& event)
 
         assert(false);
 
-        return EventStatus::UNRECOGNIZED_EVENT;
+        status = EventStatus::UNRECOGNIZED_EVENT;
     }
+
+    return status;
 }
 
 void EventDispatcher::_event_loop()
