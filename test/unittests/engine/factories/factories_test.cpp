@@ -25,7 +25,9 @@
 constexpr int MOCK_CHANNEL_COUNT = 10;
 
 #ifndef SUSHI_BUILD_WITH_PORTAUDIO
+
 #include "audio_frontends/portaudio_frontend.h"
+
 // Needed for mocking the frontend.
 namespace sushi::internal::audio_frontend {
 
@@ -294,14 +296,17 @@ protected:
 TEST_F(StandaloneFactoryTest, TestStandaloneFactoryWithDefaultConfig)
 {
     auto expected_name = "a_device";
+
+#ifdef SUSHI_BUILD_WITH_PORTAUDIO
     PaDeviceInfo device_info;
     device_info.maxInputChannels = 1;
     device_info.maxOutputChannels = 1;
     device_info.name = expected_name;
 
-#ifdef SUSHI_BUILD_WITH_PORTAUDIO
     EXPECT_CALL(*mockPortAudio, Pa_GetDeviceInfo)
+#ifdef __APPLE__
     .WillOnce(Return(&device_info))
+#endif
     .WillOnce(Return(&device_info))
     .WillOnce(Return(&device_info));
 #endif
@@ -336,14 +341,17 @@ TEST_F(StandaloneFactoryTest, TestStandaloneFactoryWithDefaultConfig)
 TEST_F(StandaloneFactoryTest, TestStandaloneFactoryWithConfigFile)
 {
     auto expected_name = "a_device";
+
+#ifdef SUSHI_BUILD_WITH_PORTAUDIO
     PaDeviceInfo device_info;
     device_info.maxInputChannels = 2;
     device_info.maxOutputChannels = 2;
     device_info.name = expected_name;
 
-#ifdef SUSHI_BUILD_WITH_PORTAUDIO
     EXPECT_CALL(*mockPortAudio, Pa_GetDeviceInfo)
+#ifdef __APPLE__
     .WillOnce(Return(&device_info))
+#endif
     .WillOnce(Return(&device_info))
     .WillOnce(Return(&device_info));
 #endif

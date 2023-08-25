@@ -57,7 +57,7 @@ AudioGraph::AudioGraph(int cpu_cores,
 
     if (_cores > 1)
     {
-        twine::apple::AppleMultiThreadData apple_data;
+        twine::apple::AppleMultiThreadData apple_data {};
 #ifdef SUSHI_APPLE_THREADING
         apple_data.chunk_size = AUDIO_CHUNK_SIZE;
         apple_data.current_sample_rate = sample_rate;
