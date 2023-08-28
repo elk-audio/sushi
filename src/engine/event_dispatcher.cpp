@@ -130,14 +130,16 @@ int EventDispatcher::dispatch(std::unique_ptr<Event> event)
     {
         return _worker.dispatch(std::move(event));
     }
-    else if (event->is_parameter_change_event())
+
+    if (event->is_parameter_change_event())
     {
         auto typed_event = static_cast<const ParameterChangeEvent*>(event.get());
         _parameter_manager.mark_parameter_changed(typed_event->processor_id(),
                                                   typed_event->parameter_id(),
                                                   typed_event->time());
     }
-    else if (event->maps_to_rt_event())
+
+    if (event->maps_to_rt_event())
     {
         auto [send_now, sample_offset] = _event_timer.sample_offset_from_realtime(event->time());
         if (send_now)
@@ -155,12 +157,14 @@ int EventDispatcher::dispatch(std::unique_ptr<Event> event)
             return EventStatus::QUEUED_HANDLING;
         }
     }
-    else if (event->is_parameter_change_notification() || event->is_property_change_notification())
+
+    if (event->is_parameter_change_notification() || event->is_property_change_notification())
     {
         _publish_parameter_events(event.get());
         status = EventStatus::HANDLED_OK;
     }
-    else  if (event->is_engine_notification())
+
+    if (event->is_engine_notification())
     {
         _handle_engine_notifications_internally(static_cast<EngineNotificationEvent*>(event.get()));
         _publish_engine_notification_events(event.get());
@@ -257,7 +261,8 @@ int EventDispatcher::_process_rt_event(RtEvent &rt_event)
     {
         _publish_engine_notification_events(event.get());
     }
-    else if (event->process_asynchronously())
+
+    if (event->process_asynchronously())
     {
         return _worker.dispatch(std::move(event));
     }
