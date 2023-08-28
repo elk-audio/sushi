@@ -146,9 +146,8 @@ control::ControlStatus MidiController::set_midi_clock_output_enabled(bool enable
         return status == midi_dispatcher::MidiDispatcherStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
     };
 
-    std::unique_ptr<Event> e;
-    e.reset(new LambdaEvent(lambda, IMMEDIATE_PROCESS));
-    _event_dispatcher->post_event(std::move(e));
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
     return control::ControlStatus::OK;
 }
 
@@ -213,9 +212,8 @@ control::ControlStatus MidiController::connect_kbd_input_to_track(int track_id,
         }
     };
 
-    std::unique_ptr<Event> e;
-    e.reset(new LambdaEvent(lambda, IMMEDIATE_PROCESS));
-    _event_dispatcher->post_event(std::move(e));
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
     return control::ControlStatus::OK;
 }
 
@@ -240,9 +238,8 @@ control::ControlStatus MidiController::connect_kbd_output_from_track(int track_i
         }
     };
 
-    std::unique_ptr<Event> e;
-    e.reset(new LambdaEvent(lambda, IMMEDIATE_PROCESS));
-    _event_dispatcher->post_event(std::move(e));
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
     return control::ControlStatus::OK;
 }
 
@@ -278,9 +275,8 @@ control::ControlStatus MidiController::connect_cc_to_parameter(int processor_id,
         }
     };
 
-    std::unique_ptr<Event> e;
-    e.reset(new LambdaEvent(lambda, IMMEDIATE_PROCESS));
-    _event_dispatcher->post_event(std::move(e));
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
     return control::ControlStatus::OK;
 }
 
@@ -307,9 +303,8 @@ control::ControlStatus MidiController::connect_pc_to_processor(int processor_id,
         }
     };
 
-    std::unique_ptr<Event> e;
-    e.reset(new LambdaEvent(lambda, IMMEDIATE_PROCESS));
-    _event_dispatcher->post_event(std::move(e));
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
     return control::ControlStatus::OK;
 }
 
@@ -344,9 +339,8 @@ control::ControlStatus MidiController::disconnect_kbd_input(int track_id,
         }
     };
 
-    std::unique_ptr<Event> e;
-    e.reset(new LambdaEvent(lambda, IMMEDIATE_PROCESS));
-    _event_dispatcher->post_event(std::move(e));
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
 
     return control::ControlStatus::OK;
 }
@@ -370,9 +364,8 @@ control::ControlStatus MidiController::disconnect_kbd_output(int track_id, contr
         }
     };
 
-    std::unique_ptr<Event> e;
-    e.reset(new LambdaEvent(lambda, IMMEDIATE_PROCESS));
-    _event_dispatcher->post_event(std::move(e));
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
 
     return control::ControlStatus::OK;
 }
@@ -399,9 +392,8 @@ control::ControlStatus MidiController::disconnect_cc(int processor_id,
         }
     };
 
-    std::unique_ptr<Event> e;
-    e.reset(new LambdaEvent(lambda, IMMEDIATE_PROCESS));
-    _event_dispatcher->post_event(std::move(e));
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
 
     return control::ControlStatus::OK;
 }
@@ -428,9 +420,8 @@ control::ControlStatus MidiController::disconnect_pc(int processor_id, control::
         }
     };
 
-    std::unique_ptr<Event> e;
-    e.reset(new LambdaEvent(lambda, IMMEDIATE_PROCESS));
-    _event_dispatcher->post_event(std::move(e));
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
 
     return control::ControlStatus::OK;
 }
@@ -451,9 +442,8 @@ control::ControlStatus MidiController::disconnect_all_cc_from_processor(int proc
         }
     };
 
-    std::unique_ptr<Event> e;
-    e.reset(new LambdaEvent(lambda, IMMEDIATE_PROCESS));
-    _event_dispatcher->post_event(std::move(e));
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
 
     return control::ControlStatus::OK;
 }
@@ -474,9 +464,8 @@ control::ControlStatus MidiController::disconnect_all_pc_from_processor(int proc
         }
     };
 
-    std::unique_ptr<Event> e;
-    e.reset(new LambdaEvent(lambda, IMMEDIATE_PROCESS));
-    _event_dispatcher->post_event(std::move(e));
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
 
     return control::ControlStatus::OK;
 }
