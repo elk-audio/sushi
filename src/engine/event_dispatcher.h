@@ -57,7 +57,7 @@ public:
     void run();
     void stop();
 
-    int dispatch(std::unique_ptr<Event>&& event);
+    int dispatch(std::unique_ptr<Event> event);
 
 private:
     engine::BaseEngine*         _engine;
@@ -80,7 +80,7 @@ public:
     void run() override;
     void stop() override;
 
-    void post_event(std::unique_ptr<Event>&& event) override;
+    void post_event(std::unique_ptr<Event> event) override;
 
     Status subscribe_to_keyboard_events(EventPoster* receiver) override;
     Status subscribe_to_parameter_change_notifications(EventPoster* receiver) override;
@@ -93,7 +93,7 @@ public:
     void set_sample_rate(float sample_rate) override {_event_timer.set_sample_rate(sample_rate);}
     void set_time(Time timestamp) override {_event_timer.set_incoming_time(timestamp);}
 
-    int dispatch(std::unique_ptr<Event>&& event) override;
+    int dispatch(std::unique_ptr<Event> event) override;
 
 private:
     void _event_loop();

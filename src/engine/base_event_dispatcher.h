@@ -43,7 +43,7 @@ public:
     virtual void run() = 0;
     virtual void stop() = 0;
 
-    virtual void post_event(std::unique_ptr<Event>&& event) = 0;
+    virtual void post_event(std::unique_ptr<Event> event) = 0;
 
     virtual Status subscribe_to_keyboard_events(EventPoster* /*receiver*/)
     {
@@ -78,7 +78,7 @@ public:
     virtual void set_sample_rate(float /*sample_rate*/) = 0;
     virtual void set_time(Time /*timestamp*/)  = 0;
 
-    virtual int dispatch(std::unique_ptr<Event>&& /*event*/) = 0;
+    virtual int dispatch(std::unique_ptr<Event> /*event*/) = 0;
 };
 
 } // end namespace sushi::internal::dispatcher

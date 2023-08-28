@@ -38,12 +38,12 @@ public:
     void set_sample_rate(float /*sample_rate*/) override {}
     void set_time(Time /*timestamp*/) override {}
 
-    int dispatch(std::unique_ptr<Event>&& /*event*/) override
+    int dispatch(std::unique_ptr<Event> /*event*/) override
     {
         return EventStatus::HANDLED_OK;
     }
 
-    void post_event(std::unique_ptr<Event>&& event) override
+    void post_event(std::unique_ptr<Event> event) override
     {
         _queue.push_front(std::move(event));
     }

@@ -61,7 +61,7 @@ EventDispatcher::~EventDispatcher()
     }
 }
 
-void EventDispatcher::post_event(std::unique_ptr<Event>&& event)
+void EventDispatcher::post_event(std::unique_ptr<Event> event)
 {
     _in_queue.push(std::move(event));
 }
@@ -122,7 +122,7 @@ Status EventDispatcher::subscribe_to_engine_notifications(EventPoster*receiver)
     return Status::OK;
 }
 
-int EventDispatcher::dispatch(std::unique_ptr<Event>&& event)
+int EventDispatcher::dispatch(std::unique_ptr<Event> event)
 {
     int status = EventStatus::NOT_HANDLED;
 
@@ -404,7 +404,7 @@ void Worker::stop()
     }
 }
 
-int Worker::dispatch(std::unique_ptr<Event>&& event)
+int Worker::dispatch(std::unique_ptr<Event> event)
 {
     _queue.push(std::move(event));
 

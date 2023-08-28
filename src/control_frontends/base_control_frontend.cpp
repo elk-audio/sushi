@@ -87,7 +87,7 @@ void BaseControlFrontend::send_set_sync_mode_event(SyncMode mode)
     _event_dispatcher->post_event(std::make_unique<SetEngineSyncModeEvent>(mode, IMMEDIATE_PROCESS));
 }
 
-void BaseControlFrontend::send_with_callback(std::unique_ptr<Event>&& event)
+void BaseControlFrontend::send_with_callback(std::unique_ptr<Event> event)
 {
     event->set_completion_cb(BaseControlFrontend::completion_callback, this);
     _event_dispatcher->post_event(std::move(event));

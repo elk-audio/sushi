@@ -25,7 +25,7 @@ public:
 
     MOCK_METHOD(void,
                 post_event,
-                (std::unique_ptr<Event>&&),
+                (std::unique_ptr<Event>),
                 (override));
 
     MOCK_METHOD(Status,
@@ -70,7 +70,7 @@ public:
 
     MOCK_METHOD(int,
                 dispatch,
-                (std::unique_ptr<Event>&& event),
+                (std::unique_ptr<Event> event),
                 (override));
 };
 #endif //SUSHI_MOCK_EVENT_DISPATCHER_H

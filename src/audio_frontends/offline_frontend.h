@@ -77,7 +77,7 @@ public:
      * @brief Add events that should be run during the processing
      * @param An std::vector containing the timestamped events.
      */
-    void add_sequencer_events(std::vector<std::unique_ptr<Event>>&& events);
+    void add_sequencer_events(std::vector<std::unique_ptr<Event>> events);
 
     void cleanup() override;
 

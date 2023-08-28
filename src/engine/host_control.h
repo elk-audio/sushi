@@ -44,7 +44,7 @@ public:
      *
      * @param event the event
      */
-    void post_event(std::unique_ptr<Event>&& event)
+    void post_event(std::unique_ptr<Event> event)
     {
         _event_dispatcher->post_event(std::move(event));
     }

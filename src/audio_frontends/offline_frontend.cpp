@@ -125,7 +125,7 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
     return ret_code;
 }
 
-void OfflineFrontend::add_sequencer_events(std::vector<std::unique_ptr<Event>>&& events)
+void OfflineFrontend::add_sequencer_events(std::vector<std::unique_ptr<Event>> events)
 {
     // Sort events by reverse time
     std::sort(events.begin(), events.end(), [](const std::unique_ptr<Event>& lhs, const std::unique_ptr<Event>& rhs)
