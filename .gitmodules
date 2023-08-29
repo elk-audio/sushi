@@ -31,7 +31,7 @@
 	url = https://github.com/sdangelo/brickworks/
 [submodule "third-party/freeverb"]
 	path = third-party/freeverb
-	url = https://github.com/elk-audio/freeverb
+	url = ../freeverb.git
 [submodule "elklog"]
 	path = elklog
 	url = ../elklog.git
