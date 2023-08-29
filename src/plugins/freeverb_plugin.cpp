@@ -21,13 +21,14 @@
 #include <cassert>
 #include <memory>
 
+#include <revmodel.hpp>
+
 #include "freeverb_plugin.h"
 
 namespace sushi::internal::freeverb_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.testing.freeverb";
 constexpr auto DEFAULT_LABEL = "Freeverb";
-
 
 FreeverbPlugin::FreeverbPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
@@ -69,6 +70,8 @@ FreeverbPlugin::FreeverbPlugin(HostControl host_control) : InternalPlugin(host_c
     assert(_width);
     assert(_damp);
 }
+
+FreeverbPlugin::~FreeverbPlugin() = default;
 
 ProcessorReturnCode FreeverbPlugin::init(float sample_rate)
 {
