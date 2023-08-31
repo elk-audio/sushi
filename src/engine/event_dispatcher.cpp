@@ -36,7 +36,8 @@ ELKLOG_GET_LOGGER_WITH_MODULE_NAME("event dispatcher");
 
 EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
                                  RtSafeRtEventFifo* in_rt_queue,
-                                 RtSafeRtEventFifo* out_rt_queue) : _running{false},
+                                 RtSafeRtEventFifo* out_rt_queue) : _engine(engine),
+                                                                    _running{false},
                                                                     _in_rt_queue{in_rt_queue},
                                                                     _out_rt_queue{out_rt_queue},
                                                                     _worker{engine, this},
@@ -45,7 +46,6 @@ EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
                                                                                        engine->processor_container()},
                                                                     _parameter_update_count{0}
 {}
-
 
 EventDispatcher::~EventDispatcher()
 {
@@ -216,6 +216,11 @@ void EventDispatcher::_event_loop()
         {
             _parameter_manager.output_parameter_notifications(this, _last_rt_event_time);
             _parameter_update_count = 0;
+        }
+
+        if (!_engine->realtime())
+        {
+            _engine->clear_rt_queues();
         }
 
         std::this_thread::sleep_until(start_time + THREAD_PERIODICITY);

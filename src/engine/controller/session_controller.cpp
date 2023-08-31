@@ -148,6 +148,7 @@ control::ControlStatus SessionController::restore_session(const control::Session
     {
         return control::ControlStatus::INVALID_ARGUMENTS;
     }
+
     auto new_session = std::make_unique<control::SessionState>(state);
 
     auto lambda = [&, state = std::move(new_session)] () -> int
@@ -158,6 +159,7 @@ control::ControlStatus SessionController::restore_session(const control::Session
             ELKLOG_LOG_DEBUG("Pausing engine");
             _audio_frontend->pause(true);
         }
+
         _clear_all_tracks();
         _restore_tracks(state->tracks);
         _restore_plugin_states(state->tracks);
@@ -170,6 +172,7 @@ control::ControlStatus SessionController::restore_session(const control::Session
             ELKLOG_LOG_DEBUG("Un-Pausing engine");
             _audio_frontend->pause(false);
         }
+
         return EventStatus::HANDLED_OK;
     };
 
@@ -348,6 +351,7 @@ bool SessionController::_check_state(const control::SessionState& state) const
         ELKLOG_LOG_ERROR("Audio engine doesn't have enough audio channels to restore saved session");
         return false;
     }
+
     if (state.midi_state.inputs > _midi_dispatcher->get_midi_inputs() ||
         state.midi_state.outputs > _midi_dispatcher->get_midi_outputs())
     {

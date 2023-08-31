@@ -698,7 +698,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC ${EXTRA_BUILD_LIBRARIES} ${COMMON_L
 
 target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Wextra -Wno-psabi -fPIC -ffast-math)
 
-target_compile_options(${PROJECT_NAME}  PRIVATE -fno-rtti)
+target_compile_options(${PROJECT_NAME} PRIVATE -fno-rtti)
 
 if (SUSHI_BUILD_WITH_SANITIZERS)
     target_compile_options(${PROJECT_NAME}  PUBLIC -fsanitize=address -g)

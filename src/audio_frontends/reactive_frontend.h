@@ -49,7 +49,7 @@ struct ReactiveFrontendConfiguration : public BaseAudioFrontendConfiguration
 class ReactiveFrontend : public BaseAudioFrontend
 {
 public:
-    ReactiveFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
+    explicit ReactiveFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
 
     ~ReactiveFrontend() override
     {
@@ -78,6 +78,15 @@ public:
     void run() override;
 
     /**
+     * This overrides the default implementation of pause in BaseAudioFrontend.
+     * Since the process_audio callback is not called
+     * @param enabled
+     */
+    void pause(bool enabled) override;
+
+    void notify_of_pause();
+
+    /**
      * @brief Method to invoke from the host's audio callback.
      * @param in_buffer Input sample buffer
      * @param out_buffer Output sample buffer
@@ -94,7 +103,7 @@ private:
     engine::ControlBuffer _in_controls;
     engine::ControlBuffer _out_controls;
 
-    Time _start_time;
+    Time _start_time {};
 };
 
 } // end namespace sushi::internal::audio_frontend

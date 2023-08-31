@@ -172,6 +172,11 @@ void OfflineFrontend::run()
     }
 }
 
+void OfflineFrontend::pause(bool /*enabled*/)
+{
+    // Currently a no-op
+}
+
 // Process all events up until end_time
 void OfflineFrontend::_process_events(Time end_time)
 {
@@ -267,11 +272,6 @@ void OfflineFrontend::_run_blocking()
         // Not done in libsndfile's example
         sf_writef_float(_output_file, file_buffer, static_cast<sf_count_t>(readcount));
     }
-}
-
-void OfflineFrontend::pause(bool /*enabled*/)
-{
-    // Currently a no-op
 }
 
 } // end namespace sushi::internal::audio_frontend

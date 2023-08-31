@@ -1019,7 +1019,7 @@ EngineReturnStatus AudioEngine::_disconnect_audio_channel(int engine_channel,
 void AudioEngine::_process_internal_rt_events()
 {
     RtEvent event;
-    while(_control_queue_in.pop(event))
+    while (_control_queue_in.pop(event))
     {
         switch (event.type())
         {
@@ -1110,7 +1110,7 @@ void AudioEngine::_process_internal_rt_events()
 void AudioEngine::_send_rt_events_to_processors()
 {
     RtEvent event;
-    while(_main_in_queue.pop(event))
+    while (_main_in_queue.pop(event))
     {
         _send_rt_event(event);
     }
@@ -1204,6 +1204,7 @@ void AudioEngine::update_timings()
                                    timings->avg_case * 100.0f, timings->min_case * 100.0f, timings->max_case * 100.0f);
                 }
             }
+
             if (engine_timings.has_value())
             {
                 ELKLOG_LOG_INFO("Engine total: avg: {}%, min: {}%, max: {}%",
@@ -1211,6 +1212,22 @@ void AudioEngine::update_timings()
             }
             _log_timing_print_counter = 0;
         }
+    }
+}
+
+void AudioEngine::clear_rt_queues()
+{
+    RtEvent event;
+    while (_control_queue_in.pop(event))
+    {
+        auto debug_string = fmt::format("Deleted control event of type: {}", event.type());
+        ELKLOG_LOG_DEBUG("{}", debug_string);
+    }
+
+    while (_main_in_queue.pop(event))
+    {
+        auto debug_string = fmt::format("Deleted rt event of type: {}", event.type());
+        ELKLOG_LOG_DEBUG("{}", debug_string);
     }
 }
 

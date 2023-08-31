@@ -59,7 +59,7 @@ struct BaseAudioFrontendConfiguration
 class BaseAudioFrontend
 {
 public:
-    BaseAudioFrontend(engine::BaseEngine* engine) : _engine(engine) {}
+    explicit BaseAudioFrontend(engine::BaseEngine* engine) : _engine(engine) {}
 
     virtual ~BaseAudioFrontend() = default;
 
@@ -94,12 +94,12 @@ public:
      virtual void pause(bool enabled);
 
 protected:
-    BaseAudioFrontendConfiguration* _config;
-    engine::BaseEngine* _engine;
+    BaseAudioFrontendConfiguration* _config {nullptr};
+    engine::BaseEngine* _engine {nullptr};
 
     BypassManager _pause_manager;
     std::unique_ptr<twine::RtConditionVariable> _pause_notify;
-    std::atomic_bool _pause_notified{false};
+    std::atomic_bool _pause_notified {false};
 };
 
 } // end namespace sushi::internal

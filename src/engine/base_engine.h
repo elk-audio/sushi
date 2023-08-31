@@ -284,7 +284,6 @@ public:
         return {EngineReturnStatus::OK, 0};
     }
 
-
     virtual EngineReturnStatus delete_track(ObjectId  /*track_id*/)
     {
         return EngineReturnStatus::OK;
@@ -347,6 +346,8 @@ public:
     virtual bool master_limiter() const {return false;}
 
     virtual void update_timings() {}
+
+    virtual void clear_rt_queues() {}
 
 protected:
     float _sample_rate;

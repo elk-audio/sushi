@@ -507,6 +507,15 @@ public:
      */
     void update_timings() override;
 
+    /**
+     * @brief Clears the queues which contain RtEvents intended for consumption in the audio callback.
+     * Its intended only to be used when the calls to the audio callback are temporarily suspended,
+     * to avoid overflowing the event queues.
+     * So do not invoke this if the audio callback is regularly called:
+     *  - system and plugin state will be discarded.
+     */
+    void clear_rt_queues() override;
+
 private:
     enum class Direction : bool
     {

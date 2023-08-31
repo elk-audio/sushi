@@ -33,8 +33,10 @@ RealTimeController::RealTimeController(audio_frontend::ReactiveFrontend* audio_f
 {
 }
 
-RealTimeController::~RealTimeController()
+void RealTimeController::pause(bool enabled)
 {
+    _audio_frontend->pause(enabled);
+    _audio_frontend->notify_of_pause();
 }
 
 void RealTimeController::set_tempo(float tempo)

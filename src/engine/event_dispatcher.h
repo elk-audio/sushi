@@ -107,6 +107,8 @@ private:
     void _publish_engine_notification_events(Event* event);
     void _handle_engine_notifications_internally(EngineNotificationEvent* event);
 
+    engine::BaseEngine* _engine = nullptr;
+
     std::atomic<bool>           _running;
     std::thread                 _event_thread;
 

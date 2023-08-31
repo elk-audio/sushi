@@ -70,6 +70,33 @@ void ReactiveFrontend::run()
     _engine->enable_realtime(true);
 }
 
+void ReactiveFrontend::pause(bool enabled)
+{
+    bool running = !_pause_manager.bypassed();
+    _pause_manager.set_bypass(enabled, _engine->sample_rate());
+
+    if (enabled && running)
+    {
+        _pause_notified = false;
+
+        _engine->enable_realtime(false);
+
+        _engine->clear_rt_queues();
+    }
+    else
+    {
+        _engine->enable_realtime(true);
+    }
+}
+
+void ReactiveFrontend::notify_of_pause()
+{
+    if (_pause_notified == false && _pause_manager.should_process() == false)
+    {
+        _pause_notified = true;
+    }
+}
+
 // TODO: While in JUCE plugins channel count can change, in sushi it's set on init.
 //  In JUCE, the buffer size is always the same for in and out, with some unused,
 //  if they differ.
@@ -102,11 +129,7 @@ void ReactiveFrontend::process_audio(ChunkSampleBuffer& in_buffer,
     }
     else
     {
-        if (_pause_notified == false && _pause_manager.should_process() == false)
-        {
-            _pause_notify->notify();
-            _pause_notified = true;
-        }
+       notify_of_pause();
     }
 }
 

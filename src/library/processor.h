@@ -572,7 +572,7 @@ public:
      * @brief Check whether or not bypass is enabled
      * @return true if bypass is enabled
      */
-    bool bypassed() const {return _state == BypassState::BYPASSED || _state == BypassState::RAMPING_DOWN;};
+    bool bypassed() const {return _state == BypassState::BYPASSED || _state == BypassState::RAMPING_DOWN;}
 
     /**
      * @brief Set the bypass state
@@ -603,7 +603,7 @@ public:
     /**
      * @return true if the processor output should be ramped, false if it doesn't need volume ramping
      */
-    bool should_ramp() const {return _state == BypassState::RAMPING_DOWN || _state == BypassState::RAMPING_UP;};
+    bool should_ramp() const {return _state == BypassState::RAMPING_DOWN || _state == BypassState::RAMPING_UP;}
 
     /**
      * @brief Does volume ramping on the buffer passed to the function based on the current bypass state

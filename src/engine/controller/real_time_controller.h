@@ -49,7 +49,9 @@ public:
                        midi_frontend::ReactiveMidiFrontend* midi_frontend,
                        engine::Transport* transport);
 
-    ~RealTimeController() override;
+    ~RealTimeController() override = default;
+
+    void pause(bool enabled) override;
 
     /// For Transport:
     /////////////////////////////////////////////////////////////
