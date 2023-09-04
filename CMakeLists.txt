@@ -706,6 +706,14 @@ target_link_libraries(${PROJECT_NAME} PUBLIC ${EXTRA_BUILD_LIBRARIES} ${COMMON_L
 #  Compiler Flags and definitions  #
 ####################################
 
+target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Wextra -Wno-psabi -fPIC -ffast-math)
+
+target_compile_options(${PROJECT_NAME}  PRIVATE -fno-rtti)
+
+if (SUSHI_BUILD_WITH_SANITIZERS)
+    target_compile_options(${PROJECT_NAME}  PUBLIC -fsanitize=address -g)
+endif()
+
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 target_compile_definitions(${PROJECT_NAME} PUBLIC -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${SUSHI_AUDIO_BUFFER_SIZE} ${EXTRA_COMPILE_DEFINITIONS})
 

@@ -11,7 +11,6 @@ add_executable(sushi MACOSX_BUNDLE ${APP_FILES})
 #  Compiler Flags and definitions  #
 ####################################
 
-target_compile_features(sushi PRIVATE cxx_std_17)
 target_compile_options(sushi PRIVATE -Wall -Wextra -Wno-psabi -fPIC -fno-rtti -ffast-math)
 
 target_link_libraries(sushi PRIVATE sushi_library "${APP_LINK_LIBRARIES}")
