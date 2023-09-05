@@ -84,7 +84,7 @@ void CombPlugin::set_enabled(bool enabled)
     bw_comb_reset_coeffs(&_comb_coeffs);
     for (int i = 0; i < MAX_TRACK_CHANNELS; i++)
     {
-        _delay_mem_areas[i].reserve(bw_comb_mem_req(&_comb_coeffs));
+        _delay_mem_areas[i].resize(bw_comb_mem_req(&_comb_coeffs));
         bw_comb_mem_set(&_comb_states[i], _delay_mem_areas[i].data());
     }
     for (int i = 0; i < MAX_TRACK_CHANNELS; i++)
