@@ -11,7 +11,7 @@ using namespace sushi::internal::dispatcher;
 class MockEventDispatcher : public dispatcher::BaseEventDispatcher
 {
 public:
-    MockEventDispatcher() {}
+    MockEventDispatcher() = default;
 
     MOCK_METHOD(void,
                 run,
@@ -25,45 +25,35 @@ public:
 
     MOCK_METHOD(void,
                 post_event,
-                (Event*),
+                (std::unique_ptr<Event>),
                 (override));
 
-    MOCK_METHOD(EventDispatcherStatus,
-                register_poster,
-                (EventPoster*),
-                (override));
-
-    MOCK_METHOD(EventDispatcherStatus,
+    MOCK_METHOD(Status,
                 subscribe_to_keyboard_events,
                 (EventPoster*),
                 (override));
 
-    MOCK_METHOD(EventDispatcherStatus,
+    MOCK_METHOD(Status,
                 subscribe_to_parameter_change_notifications,
                 (EventPoster*),
                 (override));
 
-    MOCK_METHOD(EventDispatcherStatus,
+    MOCK_METHOD(Status,
                 subscribe_to_engine_notifications,
                 (EventPoster*),
                 (override));
 
-    MOCK_METHOD(EventDispatcherStatus,
-                deregister_poster,
-                (EventPoster*),
-                (override));
-
-    MOCK_METHOD(EventDispatcherStatus,
+    MOCK_METHOD(Status,
                 unsubscribe_from_keyboard_events,
                 (EventPoster*),
                 (override));
 
-    MOCK_METHOD(EventDispatcherStatus,
+    MOCK_METHOD(Status,
                 unsubscribe_from_parameter_change_notifications ,
                 (EventPoster*),
                 (override));
 
-    MOCK_METHOD(EventDispatcherStatus,
+    MOCK_METHOD(Status,
                 unsubscribe_from_engine_notifications,
                 (EventPoster*),
                 (override));
@@ -79,15 +69,8 @@ public:
                 (override));
 
     MOCK_METHOD(int,
-                process,
-                (Event* event),
+                dispatch,
+                (std::unique_ptr<Event> event),
                 (override));
-
-    MOCK_METHOD(int,
-                poster_id,
-                (),
-                (override));
-
-
 };
 #endif //SUSHI_MOCK_EVENT_DISPATCHER_H

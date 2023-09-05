@@ -39,17 +39,12 @@ enum class ControlFrontendStatus
 class BaseControlFrontend : public EventPoster
 {
 public:
-    BaseControlFrontend(engine::BaseEngine* engine, EventPosterId id) : _engine(engine),
-                                                                        _poster_id(id)
+    explicit BaseControlFrontend(engine::BaseEngine* engine) : _engine(engine)
     {
         _event_dispatcher = _engine->event_dispatcher();
-        _event_dispatcher->register_poster(this);
     }
 
-    virtual ~BaseControlFrontend()
-    {
-        _event_dispatcher->deregister_poster(this);
-    };
+    ~BaseControlFrontend() override = default;
 
     static void completion_callback(void *arg, Event* event, int return_status)
     {
@@ -82,18 +77,14 @@ public:
 
     void send_set_sync_mode_event(SyncMode mode);
 
-    int poster_id() override {return _poster_id;}
-
 protected:
     virtual void _completion_callback(Event* event, int return_status) = 0;
 
-    void send_with_callback(Event *event);
+    void send_with_callback(std::unique_ptr<Event> event);
 
-    engine::BaseEngine* _engine;
+    engine::BaseEngine* _engine {nullptr};
     dispatcher::BaseEventDispatcher* _event_dispatcher;
 
-private:
-    EventPosterId _poster_id;
 };
 
 } // end namespace sushi::internal::control_frontend

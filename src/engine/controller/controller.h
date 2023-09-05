@@ -76,8 +76,6 @@ public:
     /* Inherited from EventPoster */
     int process(Event* event) override;
 
-    int poster_id() override { return EventPosterId::CONTROLLER; }
-
     static void completion_callback(void* arg, Event* event, int status);
 
     void set_osc_frontend(control_frontend::OSCFrontend* osc_frontend);
@@ -97,9 +95,9 @@ private:
 
     void _notify_transport_listeners(const control::TransportNotification& notification) const;
 
-    void _notify_parameter_listeners(Event* event) const;
+    void _notify_parameter_listeners(const Event* event) const;
 
-    void _notify_property_listeners(Event* event) const;
+    void _notify_property_listeners(const Event* event) const;
 
     void _notify_timing_listeners(const EngineTimingNotificationEvent* event) const;
 

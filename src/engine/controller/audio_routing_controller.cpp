@@ -101,8 +101,9 @@ control::ControlStatus AudioRoutingController::connect_input_channel_to_track(in
 
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
     };
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
     return control::ControlStatus::OK;
 }
 
@@ -117,8 +118,9 @@ control::ControlStatus AudioRoutingController::connect_output_channel_to_track(i
 
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
     };
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
     return control::ControlStatus::OK;
 }
 
@@ -133,8 +135,9 @@ control::ControlStatus AudioRoutingController::disconnect_input(int track_id, in
 
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
     };
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
     return control::ControlStatus::OK;
 }
 
@@ -149,8 +152,9 @@ control::ControlStatus AudioRoutingController::disconnect_output(int track_id, i
 
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
     };
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
     return control::ControlStatus::OK;
 }
 
@@ -176,8 +180,9 @@ control::ControlStatus AudioRoutingController::disconnect_all_inputs_from_track(
         }
         return return_status;
     };
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
     return control::ControlStatus::OK;
 }
 
@@ -202,8 +207,9 @@ control::ControlStatus AudioRoutingController::disconnect_all_outputs_from_track
         }
         return return_status;
     };
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
     return control::ControlStatus::OK;
 }
 

@@ -23,26 +23,29 @@ public:
         Execute
     };
 
-    ~EventDispatcherMockup()
+    ~EventDispatcherMockup() override
     {
         while (!_queue.empty())
         {
-            auto e = _queue.back();
+            // unique_ptr's will delete content as they go out of scope.
             _queue.pop_back();
-            delete e;
         }
     }
 
-    int process(Event* /*event*/) override
+    void run() override {}
+    void stop() override {}
+
+    void set_sample_rate(float /*sample_rate*/) override {}
+    void set_time(Time /*timestamp*/) override {}
+
+    int dispatch(std::unique_ptr<Event> /*event*/) override
     {
         return EventStatus::HANDLED_OK;
     }
 
-    int poster_id() override {return EventPosterId::AUDIO_ENGINE;}
-
-    void post_event(Event* event) override
+    void post_event(std::unique_ptr<Event> event) override
     {
-        _queue.push_front(event);
+        _queue.push_front(std::move(event));
     }
 
     /**
@@ -54,11 +57,11 @@ public:
         if (_queue.empty())
         {
             return false;
-        } else
+        }
+        else
         {
-            Event* e = _queue.back();
+            // unique_ptr's will delete content as they go out of scope.
             _queue.pop_back();
-            delete e;
             return true;
         }
     }
@@ -73,27 +76,28 @@ public:
     {
         EventStatus::EventStatus status = EventStatus::NOT_HANDLED;
 
-        while(_queue.empty() == false)
+        while (!_queue.empty())
         {
-            auto event = _queue.back();
+            auto event = _queue.back().get();
+
             // There can be notification events before, which we want to ignore when mocking.
             if (event->is_engine_event())
             {
                 /* TODO: If we go with Lambdas in all executable events,
-                 * the engine can just be captured in the Lambda.
-                 * If not, it should be a parameter to the Event class constructor.
+                 *  the engine can just be captured in the Lambda.
+                 *  If not, it should be a parameter to the Event class constructor.
                  */
                 auto typed_event = static_cast<EngineEvent*>(event);
 
                 status = static_cast<EventStatus::EventStatus>(typed_event->execute(engine));
 
                 _queue.pop_back();
-                delete event;
+
                 return status;
-            } else
+            }
+            else
             {
                 _queue.pop_back();
-                delete event;
             }
         }
 
@@ -105,16 +109,17 @@ public:
         if (_queue.empty())
         {
             return nullptr;
-        } else
+        }
+        else
         {
-            Event* e = _queue.back();
+            auto e = std::move(_queue.back());
             _queue.pop_back();
-            return std::unique_ptr<Event>(e);
+            return e;
         }
     }
 
 private:
-    std::deque<Event*> _queue;
+    std::deque<std::unique_ptr<Event>> _queue;
 };
 
 class ProcessorContainerMockup : public BaseProcessorContainer
@@ -173,7 +178,7 @@ public:
                                       _transport(sample_rate, &_rt_event_output)
     {}
 
-    ~EngineMockup()
+    ~EngineMockup() override
     {}
 
     void
@@ -237,7 +242,7 @@ class DummyMidiFrontend : public sushi::internal::midi_frontend::BaseMidiFronten
 public:
     DummyMidiFrontend() : BaseMidiFrontend(nullptr) {}
 
-    virtual ~DummyMidiFrontend() {}
+    ~DummyMidiFrontend() override {}
 
     bool init() override {return true;}
     void run()  override {}

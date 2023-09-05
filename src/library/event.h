@@ -78,17 +78,44 @@ public:
      * @param timestamp the timestamp to assign to the Event
      * @return pointer to an Event if successful, nullptr if there is no possible conversion
      */
-    static Event* from_rt_event(const RtEvent& rt_event, Time timestamp);
+    static std::unique_ptr<Event> from_rt_event(const RtEvent& rt_event, Time timestamp);
 
-    Time        time() const {return _timestamp;}
-    int         receiver() const {return _receiver;}
-    EventId     id() const {return _id;}
+    [[nodiscard]] Time        time() const {return _timestamp;}
+    [[nodiscard]] int         receiver() const {return _receiver;}
+    [[nodiscard]] EventId     id() const {return _id;}
 
     /**
-     * @brief Whether the event should be processes asynchronously in a low priority thread or not
+     * @brief Set a callback function that will be called after the event has been handled
+     * @param callback A function pointer that will be called on completion
+     * @param data Data that will be passed as function argument
+     */
+    void set_completion_cb(EventCompletionCallback callback, void* data)
+    {
+        _completion_cb = callback;
+        _callback_arg = data;
+    }
+
+    /**
+     * @brief Whether the events should be processes asynchronously in a low priority thread or not
      * @return true if the Event should be processed asynchronously, false otherwise.
      */
     virtual bool process_asynchronously() const {return false;}
+
+    /**
+     * Events that are directly convertible to an RtEvent.
+     */
+    virtual bool maps_to_rt_event() const {return false;}
+
+    /**
+     * Return the RtEvent counterpart of the Event
+     */
+    virtual RtEvent to_rt_event(int /*sample_offset*/) const {return {};}
+
+    /**
+     * The below should all be overridden only by one single sub-class.
+     * They are only used for reflection:
+     *  to statically cast to a particular sub-class of Event.
+     */
 
     /* Convertible to KeyboardEvent */
     virtual bool is_keyboard_event() const {return false;}
@@ -111,28 +138,11 @@ public:
     /* Convertible to AsynchronousWorkEvent */
     virtual bool is_async_work_event() const {return false;}
 
-    /* Event is directly convertible to an RtEvent */
-    virtual bool maps_to_rt_event() const {return false;}
-
-    /* Return the RtEvent counterpart of the Event */
-    virtual RtEvent to_rt_event(int /*sample_offset*/) const {return {};}
-
-    /**
-     * @brief Set a callback function that will be called after the event has been handled
-     * @param callback A function pointer that will be called on completion
-     * @param data Data that will be passed as function argument
-     */
-    void set_completion_cb(EventCompletionCallback callback, void* data)
-    {
-        _completion_cb = callback;
-        _callback_arg = data;
-    }
-
 protected:
     explicit Event(Time timestamp) : _timestamp(timestamp) {}
 
     /* Only the dispatcher can set the receiver and call the completion callback */
-    void                    set_receiver(int receiver) {_receiver = receiver;}
+
     EventCompletionCallback completion_cb() const {return _completion_cb;}
     void*                   callback_arg() const {return _callback_arg;}
 
@@ -143,6 +153,10 @@ private:
     void*                   _callback_arg{nullptr};
     EventId                 _id{EventIdGenerator::new_id()};
 };
+
+/**
+ * The subsequent events all map to real-time events:
+ */
 
 class KeyboardEvent : public Event
 {
@@ -308,7 +322,7 @@ public:
                  std::unique_ptr<RtState> state,
                  Time timestamp);
 
-    ~RtStateEvent();
+    ~RtStateEvent() override;
 
     bool maps_to_rt_event() const override {return true;}
 
@@ -317,72 +331,6 @@ public:
 private:
     ObjectId _processor_id;
     mutable std::unique_ptr<RtState> _state;
-};
-
-class ParameterChangeNotificationEvent : public Event
-{
-public:
-    ParameterChangeNotificationEvent(ObjectId processor_id,
-                                     ObjectId parameter_id,
-                                     float normalized_value,
-                                     float domain_value,
-                                     std::string formatted_value,
-                                     Time timestamp) : Event(timestamp),
-                                                       _processor_id(processor_id),
-                                                       _parameter_id(parameter_id),
-                                                       _normalized_value(normalized_value),
-                                                       _domain_value(domain_value),
-                                                       _formatted_value(formatted_value) {}
-
-    bool is_parameter_change_notification() const override {return true;}
-
-    bool is_parameter_change_event() const override {return false;}
-
-    bool maps_to_rt_event() const override {return false;}
-
-    ObjectId  processor_id() const {return _processor_id;}
-
-    ObjectId  parameter_id() const {return _parameter_id;}
-
-    float normalized_value() const {return _normalized_value;}
-
-    float domain_value() const {return _domain_value;}
-
-    const std::string& formatted_value() const {return _formatted_value;}
-
-private:
-    ObjectId    _processor_id;
-    ObjectId    _parameter_id;
-    float       _normalized_value;
-    float       _domain_value;
-    std::string _formatted_value;
-};
-
-class PropertyChangeNotificationEvent : public Event
-{
-public:
-    PropertyChangeNotificationEvent(ObjectId processor_id,
-                                    ObjectId property_id,
-                                    const std::string& value,
-                                    Time timestamp) : Event(timestamp),
-                                                      _processor_id(processor_id),
-                                                      _property_id(property_id),
-                                                      _value(value) {}
-
-    bool is_property_change_notification() const override {return true;}
-
-    bool maps_to_rt_event() const override {return false;}
-
-    ObjectId processor_id() const {return _processor_id;}
-
-    ObjectId property_id() const {return _property_id;}
-
-    const std::string& value() const {return _value;}
-
-private:
-    ObjectId    _processor_id;
-    ObjectId    _property_id;
-    std::string _value;
 };
 
 class SetProcessorBypassEvent : public Event
@@ -404,6 +352,31 @@ private:
     ObjectId _processor_id;
     bool     _bypass_enabled;
 };
+
+class AsynchronousProcessorWorkCompletionEvent : public Event
+{
+public:
+    AsynchronousProcessorWorkCompletionEvent(int return_value,
+                                             ObjectId processor,
+                                             EventId rt_event_id,
+
+                                             Time timestamp) : Event(timestamp),
+                                                               _return_value(return_value),
+                                                               _rt_processor(processor),
+                                                               _rt_event_id(rt_event_id) {}
+
+    bool maps_to_rt_event() const override {return true;}
+    RtEvent to_rt_event(int sample_offset) const override;
+
+private:
+    int         _return_value;
+    ObjectId    _rt_processor;
+    EventId     _rt_event_id;
+};
+
+/**
+ * The following events are all for Asynchronous processing:
+ */
 
 class EngineEvent : public Event
 {
@@ -475,6 +448,179 @@ private:
     ObjectId    _processor_id;
     ObjectId    _property_id;
     std::string _string_value;
+};
+
+class SetEngineTempoEvent : public EngineEvent
+{
+public:
+    SetEngineTempoEvent(float tempo, Time timestamp) : EngineEvent(timestamp),
+                                                       _tempo(tempo) {}
+
+    int execute(engine::BaseEngine* engine) const override;
+
+private:
+    float _tempo;
+};
+
+class SetEngineTimeSignatureEvent : public EngineEvent
+{
+public:
+    SetEngineTimeSignatureEvent(TimeSignature signature, Time timestamp) : EngineEvent(timestamp),
+                                                                           _signature(signature) {}
+
+    int execute(engine::BaseEngine* engine) const override;
+
+private:
+    TimeSignature _signature;
+};
+
+class SetEnginePlayingModeStateEvent : public EngineEvent
+{
+public:
+    SetEnginePlayingModeStateEvent(PlayingMode mode, Time timestamp) : EngineEvent(timestamp),
+                                                                       _mode(mode) {}
+
+    int execute(engine::BaseEngine* engine) const override;
+
+private:
+    PlayingMode _mode;
+};
+
+class SetEngineSyncModeEvent : public EngineEvent
+{
+public:
+    SetEngineSyncModeEvent(SyncMode mode, Time timestamp) : EngineEvent(timestamp),
+                                                            _mode(mode) {}
+
+    int execute(engine::BaseEngine* engine) const override;
+
+private:
+    SyncMode _mode;
+};
+
+class AsynchronousWorkEvent : public Event
+{
+public:
+    bool process_asynchronously() const override {return true;}
+    bool is_async_work_event() const override {return true;}
+    virtual std::unique_ptr<Event> execute() = 0;
+
+protected:
+    explicit AsynchronousWorkEvent(Time timestamp) : Event(timestamp) {}
+};
+
+typedef int (*AsynchronousWorkCallback)(void* data, EventId id);
+
+class AsynchronousProcessorWorkEvent : public AsynchronousWorkEvent
+{
+public:
+    AsynchronousProcessorWorkEvent(AsynchronousWorkCallback callback,
+                                   void* data,
+                                   ObjectId processor,
+                                   EventId rt_event_id,
+                                   Time timestamp) : AsynchronousWorkEvent(timestamp),
+                                                     _work_callback(callback),
+                                                     _data(data),
+                                                     _rt_processor(processor),
+                                                     _rt_event_id(rt_event_id)
+    {}
+
+    std::unique_ptr<Event> execute() override;
+
+private:
+    AsynchronousWorkCallback _work_callback;
+    void*                    _data;
+    ObjectId                 _rt_processor;
+    EventId                  _rt_event_id;
+};
+
+class AsynchronousBlobDeleteEvent : public AsynchronousWorkEvent
+{
+public:
+    AsynchronousBlobDeleteEvent(BlobData data,
+                                Time timestamp) : AsynchronousWorkEvent(timestamp),
+                                                  _data(data) {}
+    std::unique_ptr<Event> execute() override;
+
+private:
+    BlobData _data;
+};
+
+class AsynchronousDeleteEvent : public AsynchronousWorkEvent
+{
+public:
+    AsynchronousDeleteEvent(RtDeletable* data,
+                            Time timestamp) : AsynchronousWorkEvent(timestamp),
+                                              _data(data) {}
+    std::unique_ptr<Event> execute() override;
+
+private:
+    RtDeletable* _data;
+};
+
+/**
+ * The subsequent events are processed immediately, in the non-real-time thread.
+ * They do not map to real-time events, nor are they processed asynchronously.
+ */
+
+class ParameterChangeNotificationEvent : public Event
+{
+public:
+    ParameterChangeNotificationEvent(ObjectId processor_id,
+                                     ObjectId parameter_id,
+                                     float normalized_value,
+                                     float domain_value,
+                                     std::string formatted_value,
+                                     Time timestamp) : Event(timestamp),
+                                                       _processor_id(processor_id),
+                                                       _parameter_id(parameter_id),
+                                                       _normalized_value(normalized_value),
+                                                       _domain_value(domain_value),
+                                                       _formatted_value(formatted_value) {}
+
+    bool is_parameter_change_notification() const override {return true;}
+
+    ObjectId  processor_id() const {return _processor_id;}
+
+    ObjectId  parameter_id() const {return _parameter_id;}
+
+    float normalized_value() const {return _normalized_value;}
+
+    float domain_value() const {return _domain_value;}
+
+    const std::string& formatted_value() const {return _formatted_value;}
+
+private:
+    ObjectId    _processor_id;
+    ObjectId    _parameter_id;
+    float       _normalized_value;
+    float       _domain_value;
+    std::string _formatted_value;
+};
+
+class PropertyChangeNotificationEvent : public Event
+{
+public:
+    PropertyChangeNotificationEvent(ObjectId processor_id,
+                                    ObjectId property_id,
+                                    const std::string& value,
+                                    Time timestamp) : Event(timestamp),
+                                                      _processor_id(processor_id),
+                                                      _property_id(property_id),
+                                                      _value(value) {}
+
+    bool is_property_change_notification() const override {return true;}
+
+    ObjectId processor_id() const {return _processor_id;}
+
+    ObjectId property_id() const {return _property_id;}
+
+    const std::string& value() const {return _value;}
+
+private:
+    ObjectId    _processor_id;
+    ObjectId    _property_id;
+    std::string _value;
 };
 
 class EngineNotificationEvent : public Event
@@ -639,135 +785,6 @@ public:
 
 private:
     int _tick_count;
-};
-
-class AsynchronousWorkEvent : public Event
-{
-public:
-    virtual bool process_asynchronously() const override {return true;}
-    virtual bool is_async_work_event() const override {return true;}
-    virtual Event* execute() = 0;
-
-protected:
-    explicit AsynchronousWorkEvent(Time timestamp) : Event(timestamp) {}
-};
-
-typedef int (*AsynchronousWorkCallback)(void* data, EventId id);
-
-class AsynchronousProcessorWorkEvent : public AsynchronousWorkEvent
-{
-public:
-    AsynchronousProcessorWorkEvent(AsynchronousWorkCallback callback,
-                                   void* data,
-                                   ObjectId processor,
-                                   EventId rt_event_id,
-                                   Time timestamp) : AsynchronousWorkEvent(timestamp),
-                                                     _work_callback(callback),
-                                                     _data(data),
-                                                     _rt_processor(processor),
-                                                      _rt_event_id(rt_event_id)
-    {}
-
-    Event* execute() override;
-
-private:
-    AsynchronousWorkCallback _work_callback;
-    void*                    _data;
-    ObjectId                 _rt_processor;
-    EventId                  _rt_event_id;
-};
-
-class AsynchronousProcessorWorkCompletionEvent : public Event
-{
-public:
-    AsynchronousProcessorWorkCompletionEvent(int return_value,
-                                             ObjectId processor,
-                                             EventId rt_event_id,
-
-                                             Time timestamp) : Event(timestamp),
-                                                               _return_value(return_value),
-                                                               _rt_processor(processor),
-                                                               _rt_event_id(rt_event_id) {}
-
-    bool maps_to_rt_event() const override {return true;}
-    RtEvent to_rt_event(int sample_offset) const override;
-
-private:
-    int         _return_value;
-    ObjectId    _rt_processor;
-    EventId     _rt_event_id;
-};
-
-class AsynchronousBlobDeleteEvent : public AsynchronousWorkEvent
-{
-public:
-    AsynchronousBlobDeleteEvent(BlobData data,
-                                Time timestamp) : AsynchronousWorkEvent(timestamp),
-                                                     _data(data) {}
-    Event* execute() override;
-
-private:
-    BlobData _data;
-};
-
-class AsynchronousDeleteEvent : public AsynchronousWorkEvent
-{
-public:
-    AsynchronousDeleteEvent(RtDeletable* data,
-                            Time timestamp) : AsynchronousWorkEvent(timestamp),
-                                              _data(data) {}
-    Event* execute() override;
-
-private:
-    RtDeletable* _data;
-};
-
-class SetEngineTempoEvent : public EngineEvent
-{
-public:
-    SetEngineTempoEvent(float tempo, Time timestamp) : EngineEvent(timestamp),
-                                                       _tempo(tempo) {}
-
-    int execute(engine::BaseEngine* engine) const override;
-
-private:
-    float _tempo;
-};
-
-class SetEngineTimeSignatureEvent : public EngineEvent
-{
-public:
-    SetEngineTimeSignatureEvent(TimeSignature signature, Time timestamp) : EngineEvent(timestamp),
-                                                                           _signature(signature) {}
-
-    int execute(engine::BaseEngine* engine) const override;
-
-private:
-    TimeSignature _signature;
-};
-
-class SetEnginePlayingModeStateEvent : public EngineEvent
-{
-public:
-    SetEnginePlayingModeStateEvent(PlayingMode mode, Time timestamp) : EngineEvent(timestamp),
-                                                                       _mode(mode) {}
-
-    int execute(engine::BaseEngine* engine) const override;
-
-private:
-    PlayingMode _mode;
-};
-
-class SetEngineSyncModeEvent : public EngineEvent
-{
-public:
-    SetEngineSyncModeEvent(SyncMode mode, Time timestamp) : EngineEvent(timestamp),
-                                                            _mode(mode) {}
-
-    int execute(engine::BaseEngine* engine) const override;
-
-private:
-    SyncMode _mode;
 };
 
 } // end namespace sushi::internal

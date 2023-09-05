@@ -72,7 +72,7 @@ void OscState::add_enabled_outputs(std::string&& processor_name,
 
 OSCFrontend::OSCFrontend(engine::BaseEngine* engine,
                          control::SushiControl* controller,
-                         osc::BaseOscMessenger* osc_interface) : BaseControlFrontend(engine, EventPosterId::OSC_FRONTEND),
+                         osc::BaseOscMessenger* osc_interface) : BaseControlFrontend(engine),
                                           _controller(controller),
                                           _graph_controller(controller->audio_graph_controller()),
                                           _param_controller(controller->parameter_controller()),
@@ -487,7 +487,10 @@ void OSCFrontend::_setup_engine_control()
 
 void OSCFrontend::_completion_callback(Event* event, int return_status)
 {
-    ELKLOG_LOG_DEBUG("EngineEvent {} completed with status {}({})", event->id(), return_status == 0 ? "ok" : "failure", return_status);
+    ELKLOG_LOG_DEBUG("EngineEvent {} completed with status {}({})",
+                     event->id(),
+                     return_status == 0 ? "ok" : "failure",
+                     return_status);
 }
 
 void OSCFrontend::_start_server()
@@ -554,7 +557,9 @@ void OSCFrontend::_handle_param_change_notification(const ParameterChangeNotific
         {
             _osc->send(param_node->second.c_str(), event->normalized_value());
             ELKLOG_LOG_DEBUG("Sending parameter change from processor: {}, parameter: {}, value: {}",
-                            event->processor_id(), event->parameter_id(), event->normalized_value());
+                             event->processor_id(),
+                             event->parameter_id(),
+                             event->normalized_value());
         }
     }
 }
@@ -569,7 +574,9 @@ void OSCFrontend::_handle_property_change_notification(const PropertyChangeNotif
         {
             _osc->send(param_node->second.c_str(), event->value());
             ELKLOG_LOG_DEBUG("Sending property change from processor: {}, property: {}, value: {}",
-                            event->processor_id(), event->property_id(), event->value());
+                             event->processor_id(),
+                             event->property_id(),
+                             event->value());
         }
     }
 }

@@ -213,24 +213,24 @@ control::ControlStatus ParameterController::set_parameter_value(int processor_id
 {
     float clamped_value = std::clamp<float>(value, 0.0f, 1.0f);
     ELKLOG_LOG_DEBUG("set_parameter_value called with processor {}, parameter {} and value {}", processor_id, parameter_id, clamped_value);
-    auto event = new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
-                                          static_cast<ObjectId>(processor_id),
-                                          static_cast<ObjectId>(parameter_id),
-                                          clamped_value,
-                                          IMMEDIATE_PROCESS);
+    auto event = std::make_unique<ParameterChangeEvent>(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
+                                                        static_cast<ObjectId>(processor_id),
+                                                        static_cast<ObjectId>(parameter_id),
+                                                        clamped_value,
+                                                        IMMEDIATE_PROCESS);
 
-    _event_dispatcher->post_event(event);
+    _event_dispatcher->post_event(std::move(event));
     return control::ControlStatus::OK;
 }
 
 control::ControlStatus ParameterController::set_property_value(int processor_id, int property_id, const std::string& value)
 {
     ELKLOG_LOG_DEBUG("set_property_value called with processor {}, property {} and value {}", processor_id, property_id, value);
-    auto event = new PropertyChangeEvent(static_cast<ObjectId>(processor_id),
-                                         static_cast<ObjectId>(property_id),
-                                         value,
-                                         IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    auto event = std::make_unique<PropertyChangeEvent>(static_cast<ObjectId>(processor_id),
+                                                       static_cast<ObjectId>(property_id),
+                                                       value,
+                                                       IMMEDIATE_PROCESS);
+    _event_dispatcher->post_event(std::move(event));
     return control::ControlStatus::OK;
 }
 

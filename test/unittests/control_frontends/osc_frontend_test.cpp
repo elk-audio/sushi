@@ -159,16 +159,16 @@ TEST_F(TestOSCFrontend, TestAddAndRemoveConnectionsForProcessor)
     // As this in only done in response to events, test the event handling at the same time
     ObjectId processor_id = _test_processor->id();
 
-    auto event = AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_CREATED,
-                                             processor_id, 0, IMMEDIATE_PROCESS);
-    _module_under_test->process(&event);
+    auto event = std::make_unique<AudioGraphNotificationEvent>(AudioGraphNotificationEvent::Action::PROCESSOR_CREATED,
+                                                               processor_id, 0, IMMEDIATE_PROCESS);
+    _module_under_test->process(event.get());
 
     EXPECT_CALL(*_mock_osc_interface, delete_method(_)).Times(4);
 
-    event = AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_DELETED,
-                                        processor_id, 0, IMMEDIATE_PROCESS);
+    event = std::make_unique<AudioGraphNotificationEvent>(AudioGraphNotificationEvent::Action::PROCESSOR_DELETED,
+                                                          processor_id, 0, IMMEDIATE_PROCESS);
 
-    _module_under_test->process(&event);
+    _module_under_test->process(event.get());
 }
 
 TEST_F(TestOSCFrontend, TestAddAndRemoveConnectionsForTrack)
@@ -194,14 +194,16 @@ TEST_F(TestOSCFrontend, TestAddAndRemoveConnectionsForTrack)
     // As this in only done in response to events, test the event handling at the same time
     ObjectId track_id = _test_track->id();
 
-    auto event = AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::TRACK_CREATED, track_id, 0, IMMEDIATE_PROCESS);
-    _module_under_test->process(&event);
+    auto event = std::make_unique<AudioGraphNotificationEvent>(AudioGraphNotificationEvent::Action::TRACK_CREATED,
+                                                               track_id, 0, IMMEDIATE_PROCESS);
+    _module_under_test->process(event.get());
 
     EXPECT_CALL(*_mock_osc_interface, delete_method(_)).Times(6);
 
-    event = AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::TRACK_DELETED, 0, track_id, IMMEDIATE_PROCESS);
+    event = std::make_unique<AudioGraphNotificationEvent>(AudioGraphNotificationEvent::Action::TRACK_DELETED,
+                                                          0, track_id, IMMEDIATE_PROCESS);
 
-    _module_under_test->process(&event);
+    _module_under_test->process(event.get());
 }
 
 TEST_F(TestOSCFrontend, TestConnectParameterChange)
@@ -268,18 +270,25 @@ TEST_F(TestOSCFrontend, TestParamChangeNotification)
     ObjectId processor_id = _test_processor->id();
     ObjectId parameter_id = _test_processor->parameter_from_name("param 1")->id();
 
-    auto event = ParameterChangeNotificationEvent(processor_id,
-                                                  parameter_id,
-                                                  0.5f,
-                                                  0.0f,
-                                                  "",
-                                                  IMMEDIATE_PROCESS);
+    auto event = std::make_unique<ParameterChangeNotificationEvent>(processor_id,
+                                                                    parameter_id,
+                                                                    0.5f,
+                                                                    0.0f,
+                                                                    "",
+                                                                    IMMEDIATE_PROCESS);
 
-    _module_under_test->process(&event); // Since nothing is connected this should not cause a call.
+    _module_under_test->process(event.get()); // Since nothing is connected this should not cause a call.
 
     _module_under_test->connect_from_all_parameters();
 
-    _module_under_test->process(&event); // But this should - the one expected.
+    event = std::make_unique<ParameterChangeNotificationEvent>(processor_id,
+                                                               parameter_id,
+                                                               0.5f,
+                                                               0.0f,
+                                                               "",
+                                                               IMMEDIATE_PROCESS);
+
+    _module_under_test->process(event.get()); // But this should - the one expected.
 }
 
 /*TEST_F(TestOSCFrontend, TestPropertyChangeNotification)

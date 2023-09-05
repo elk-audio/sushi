@@ -36,7 +36,7 @@ pipelines:
           - ./third-party/vcpkg/bootstrap-vcpkg.sh
           - mkdir build
           - cd build
-          - cmake -DCMAKE_TOOLCHAIN_FILE=../third-party/vcpkg/scripts/buildsystems/vcpkg.cmake -DWITH_XENOMAI=FALSE -DWITH_JACK=TRUE -DWITH_VST2=OFF -DWITH_LV2=ON -DWITH_LV2_MDA_TESTS=ON -DTWINE_WITH_XENOMAI=OFF ..
+          - cmake -DCMAKE_TOOLCHAIN_FILE=../third-party/vcpkg/scripts/buildsystems/vcpkg.cmake -DWITH_XENOMAI=FALSE -DWITH_JACK=TRUE -DWITH_VST2=OFF -DWITH_LV2=ON -DWITH_LV2_MDA_TESTS=ON -DTWINE_WITH_XENOMAI=OFF -DSUSHI_BUILD_WITH_SANITIZERS=OFF ..
 
           # Build multiple configuration and run unit tests
           # Build sushi and unit tests with default options and default buffer size (64 samples)

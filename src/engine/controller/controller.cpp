@@ -204,24 +204,24 @@ void Controller::_handle_audio_graph_notifications(const AudioGraphNotificationE
     }
 }
 
-void Controller::_notify_parameter_listeners(Event* event) const
+void Controller::_notify_parameter_listeners(const Event* event) const
 {
-    auto typed_event = static_cast<ParameterChangeNotificationEvent*>(event);
+    auto typed_event = static_cast<const ParameterChangeNotificationEvent*>(event);
     control::ParameterChangeNotification notification(static_cast<int>(typed_event->processor_id()),
-                                                  static_cast<int>(typed_event->parameter_id()),
-                                                  typed_event->normalized_value(),
-                                                  typed_event->domain_value(),
-                                                  typed_event->formatted_value(),
-                                                  typed_event->time());
+                                                      static_cast<int>(typed_event->parameter_id()),
+                                                      typed_event->normalized_value(),
+                                                      typed_event->domain_value(),
+                                                      typed_event->formatted_value(),
+                                                      typed_event->time());
     for (auto& listener : _parameter_change_listeners)
     {
         listener->notification(&notification);
     }
 }
 
-void Controller::_notify_property_listeners(Event* event) const
+void Controller::_notify_property_listeners(const Event* event) const
 {
-    auto typed_event = static_cast<PropertyChangeNotificationEvent*>(event);
+    auto typed_event = static_cast<const PropertyChangeNotificationEvent*>(event);
     control::PropertyChangeNotification notification(static_cast<int>(typed_event->processor_id()),
                                                      static_cast<int>(typed_event->property_id()),
                                                      typed_event->value(),

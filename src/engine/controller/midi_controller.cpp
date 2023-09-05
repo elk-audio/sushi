@@ -146,8 +146,8 @@ control::ControlStatus MidiController::set_midi_clock_output_enabled(bool enable
         return status == midi_dispatcher::MidiDispatcherStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
     return control::ControlStatus::OK;
 }
 
@@ -212,9 +212,8 @@ control::ControlStatus MidiController::connect_kbd_input_to_track(int track_id,
         }
     };
 
-    // If you get a compilation error here, it is due to a bug in gcc 8 - upgrade to 9.
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
     return control::ControlStatus::OK;
 }
 
@@ -239,8 +238,8 @@ control::ControlStatus MidiController::connect_kbd_output_from_track(int track_i
         }
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
     return control::ControlStatus::OK;
 }
 
@@ -276,8 +275,8 @@ control::ControlStatus MidiController::connect_cc_to_parameter(int processor_id,
         }
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
     return control::ControlStatus::OK;
 }
 
@@ -304,8 +303,8 @@ control::ControlStatus MidiController::connect_pc_to_processor(int processor_id,
         }
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
     return control::ControlStatus::OK;
 }
 
@@ -340,9 +339,9 @@ control::ControlStatus MidiController::disconnect_kbd_input(int track_id,
         }
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
 
-    _event_dispatcher->post_event(event);
     return control::ControlStatus::OK;
 }
 
@@ -365,8 +364,9 @@ control::ControlStatus MidiController::disconnect_kbd_output(int track_id, contr
         }
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
+
     return control::ControlStatus::OK;
 }
 
@@ -392,8 +392,9 @@ control::ControlStatus MidiController::disconnect_cc(int processor_id,
         }
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
+
     return control::ControlStatus::OK;
 }
 
@@ -419,8 +420,9 @@ control::ControlStatus MidiController::disconnect_pc(int processor_id, control::
         }
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
+
     return control::ControlStatus::OK;
 }
 
@@ -440,8 +442,9 @@ control::ControlStatus MidiController::disconnect_all_cc_from_processor(int proc
         }
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
+
     return control::ControlStatus::OK;
 }
 
@@ -461,8 +464,9 @@ control::ControlStatus MidiController::disconnect_all_pc_from_processor(int proc
         }
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
+
     return control::ControlStatus::OK;
 }
 

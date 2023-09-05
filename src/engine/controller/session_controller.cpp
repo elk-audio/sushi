@@ -173,8 +173,9 @@ control::ControlStatus SessionController::restore_session(const control::Session
         return EventStatus::HANDLED_OK;
     };
 
-    auto event = new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
+
     return control::ControlStatus::OK;
 }
 

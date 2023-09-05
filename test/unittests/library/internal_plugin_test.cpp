@@ -301,13 +301,27 @@ TEST_F(InternalPluginTest, TestRtStateHandling)
     EXPECT_FLOAT_EQ(0.25f, _module_under_test->parameter_value(parameter->descriptor()->id()).second);
     EXPECT_TRUE(_module_under_test->bypassed());
 
-    // Retrive the delete event and execute it
+    // Retrieve the delete event and execute it
     ASSERT_FALSE(_host_control._event_output.empty());
-    auto rt_delete_event = _host_control._event_output.pop();
-    auto delete_event = Event::from_rt_event(rt_delete_event, IMMEDIATE_PROCESS);
-    ASSERT_TRUE(delete_event);
-    static_cast<AsynchronousDeleteEvent*>(delete_event)->execute();
-    delete delete_event;
+
+    EXPECT_EQ(_host_control._event_output.size(), 2);
+
+    while (!_host_control._event_output.empty())
+    {
+        rt_event = _host_control._event_output.pop();
+        auto from_rt_event = Event::from_rt_event(rt_event, IMMEDIATE_PROCESS);
+        ASSERT_TRUE(from_rt_event);
+
+        if (rt_event.type() == RtEventType::DELETE)
+        {
+            static_cast<AsynchronousDeleteEvent*>(from_rt_event.get())->execute();
+        }
+        else if (rt_event.type() == RtEventType::NOTIFY)
+        {
+            auto cast_event = static_cast<AudioGraphNotificationEvent*>(from_rt_event.get());
+            EXPECT_EQ(cast_event->action(), AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED);
+        }
+    }
 }
 
 TEST_F(InternalPluginTest, TestStateSaving)

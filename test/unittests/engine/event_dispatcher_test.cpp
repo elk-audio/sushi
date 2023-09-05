@@ -11,24 +11,33 @@ using namespace sushi;
 using namespace sushi::internal;
 using namespace sushi::internal::dispatcher;
 
-constexpr int DUMMY_POSTER_ID = 1;
-constexpr int DUMMY_STATUS = 100;
 constexpr float TEST_SAMPLE_RATE = 44100.0;
 constexpr auto EVENT_PROCESS_WAIT_TIME = std::chrono::milliseconds(1);
 
-bool completed = false;
-int completion_status = 0;
+bool completed_1 = false;
+int completion_status_1 = EventStatus::NOT_HANDLED;
+bool completed_2 = false;
+int completion_status_2 = EventStatus::NOT_HANDLED;
+int last_callback = 0;
 
-void dummy_callback(void* /*arg*/, Event* /*event*/, int status)
+void dummy_callback_1(void* /*arg*/, Event* /*event*/, int status)
 {
-    completed = true;
-    completion_status = status;
+    completed_1 = true;
+    completion_status_1 = status;
+    last_callback = 1;
+}
+
+void dummy_callback_2(void* /*arg*/, Event* /*event*/, int status)
+{
+    completed_2 = true;
+    completion_status_2 = status;
+    last_callback = 2;
 }
 
 int dummy_processor_callback(void* /*arg*/, EventId /*id*/)
 {
-    completed = true;
-    return DUMMY_STATUS;
+    completed_1 = true;
+    return EventStatus::HANDLED_OK;
 }
 
 class DummyPoster : public EventPoster
@@ -37,10 +46,8 @@ public:
     int process(Event* /*event*/) override
     {
         _received = true;
-        return 100;
-    };
-
-    int poster_id() override {return DUMMY_POSTER_ID;}
+        return EventStatus::HANDLED_OK;
+    }
 
     bool event_received()
     {
@@ -53,7 +60,7 @@ public:
     }
 
 private:
-    bool _received{false};
+    bool _received {false};
 };
 
 class TestEventDispatcher : public ::testing::Test
@@ -64,6 +71,7 @@ public:
         _module_under_test->_running = false;
         _module_under_test->_event_loop();
     }
+
 protected:
     TestEventDispatcher() = default;
 
@@ -80,7 +88,7 @@ protected:
         delete _module_under_test;
     }
 
-    EventDispatcher*    _module_under_test;
+    EventDispatcher*    _module_under_test = nullptr;
     EngineMockup        _test_engine{TEST_SAMPLE_RATE};
     RtSafeRtEventFifo   _in_rt_queue;
     RtSafeRtEventFifo   _out_rt_queue;
@@ -95,60 +103,38 @@ TEST_F(TestEventDispatcher, TestInstantiation)
     _module_under_test->stop();
 }
 
-TEST_F(TestEventDispatcher, TestSimpleEventDispatching)
-{
-    _module_under_test->register_poster(&_poster);
-    auto event = new Event(IMMEDIATE_PROCESS);
-    event->set_receiver(DUMMY_POSTER_ID);
-    _module_under_test->post_event(event);
-    crank_event_loop_once();
-    ASSERT_TRUE(_poster.event_received());
-    _module_under_test->stop();
-}
-
 TEST_F(TestEventDispatcher, TestRegisteringAndDeregistering)
 {
-    auto status = _module_under_test->register_poster(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::OK, status);
-    status = _module_under_test->register_poster(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::ALREADY_SUBSCRIBED, status);
-
-    status = _module_under_test->deregister_poster(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::OK, status);
-    status = _module_under_test->deregister_poster(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::UNKNOWN_POSTER, status);
-
+    auto status = _module_under_test->subscribe_to_keyboard_events(&_poster);
+    EXPECT_EQ(Status::OK, status);
     status = _module_under_test->subscribe_to_keyboard_events(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::OK, status);
-    status = _module_under_test->subscribe_to_keyboard_events(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::ALREADY_SUBSCRIBED, status);
+    EXPECT_EQ(Status::ALREADY_SUBSCRIBED, status);
 
     status = _module_under_test->subscribe_to_parameter_change_notifications(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::OK, status);
+    EXPECT_EQ(Status::OK, status);
     status = _module_under_test->subscribe_to_parameter_change_notifications(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::ALREADY_SUBSCRIBED, status);
+    EXPECT_EQ(Status::ALREADY_SUBSCRIBED, status);
 
     status = _module_under_test->subscribe_to_engine_notifications(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::OK, status);
+    EXPECT_EQ(Status::OK, status);
     status = _module_under_test->subscribe_to_engine_notifications(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::ALREADY_SUBSCRIBED, status);
+    EXPECT_EQ(Status::ALREADY_SUBSCRIBED, status);
 
     status = _module_under_test->unsubscribe_from_keyboard_events(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::OK, status);
+    EXPECT_EQ(Status::OK, status);
     status = _module_under_test->unsubscribe_from_keyboard_events(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::UNKNOWN_POSTER, status);
+    EXPECT_EQ(Status::UNKNOWN_POSTER, status);
 
     status = _module_under_test->unsubscribe_from_parameter_change_notifications(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::OK, status);
+    EXPECT_EQ(Status::OK, status);
     status = _module_under_test->unsubscribe_from_parameter_change_notifications(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::UNKNOWN_POSTER, status);
+    EXPECT_EQ(Status::UNKNOWN_POSTER, status);
 
     status = _module_under_test->unsubscribe_from_engine_notifications(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::OK, status);
+    EXPECT_EQ(Status::OK, status);
     status = _module_under_test->unsubscribe_from_engine_notifications(&_poster);
-    EXPECT_EQ(EventDispatcherStatus::UNKNOWN_POSTER, status);
+    EXPECT_EQ(Status::UNKNOWN_POSTER, status);
 }
-
 
 TEST_F(TestEventDispatcher, TestFromRtEventNoteOnEvent)
 {
@@ -173,9 +159,9 @@ TEST_F(TestEventDispatcher, TestFromRtEventParameterChangeNotification)
 
 TEST_F(TestEventDispatcher, TestEngineNotificationForwarding)
 {
-    auto event = new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_ADDED_TO_TRACK,
-                                                 123, 234, IMMEDIATE_PROCESS);
-    _module_under_test->post_event(event);
+    auto event = std::make_unique<AudioGraphNotificationEvent>(AudioGraphNotificationEvent::Action::PROCESSOR_ADDED_TO_TRACK,
+                                                               123, 234, IMMEDIATE_PROCESS);
+    _module_under_test->post_event(std::move(event));
 
     _module_under_test->subscribe_to_engine_notifications(&_poster);
     crank_event_loop_once();
@@ -183,22 +169,19 @@ TEST_F(TestEventDispatcher, TestEngineNotificationForwarding)
     ASSERT_TRUE(_poster.event_received());
 }
 
-
 TEST_F(TestEventDispatcher, TestCompletionCallback)
 {
-    _module_under_test->register_poster(&_poster);
-    auto event = new Event(IMMEDIATE_PROCESS);
-    event->set_receiver(DUMMY_POSTER_ID);
-    event->set_completion_cb(dummy_callback, nullptr);
-    completed = false;
-    completion_status = 0;
+    auto event = std::make_unique<AudioGraphNotificationEvent>(AudioGraphNotificationEvent::Action::PROCESSOR_ADDED_TO_TRACK,
+                                                               123, 234, IMMEDIATE_PROCESS);
+    event->set_completion_cb(dummy_callback_1, nullptr);
+    completed_1 = false;
+    completion_status_1 = 0;
 
-    _module_under_test->post_event(event);
+    _module_under_test->post_event(std::move(event));
     crank_event_loop_once();
 
-    ASSERT_TRUE(_poster.event_received());
-    ASSERT_TRUE(completed);
-    ASSERT_EQ(DUMMY_STATUS, completion_status);
+    ASSERT_TRUE(completed_1);
+    ASSERT_EQ(EventStatus::HANDLED_OK, completion_status_1);
 }
 
 TEST_F(TestEventDispatcher, TestAsyncCallbackFromProcessor)
@@ -220,9 +203,38 @@ TEST_F(TestEventDispatcher, TestAsyncCallbackFromProcessor)
     _out_rt_queue.pop(rt_event);
     EXPECT_EQ(RtEventType::ASYNC_WORK_NOTIFICATION, rt_event.type());
     auto typed_event = rt_event.async_work_completion_event();
-    EXPECT_EQ(DUMMY_STATUS, typed_event->return_status());
+    EXPECT_EQ(EventStatus::HANDLED_OK, typed_event->return_status());
     EXPECT_EQ(sending_ev_id, typed_event->sending_event_id());
     EXPECT_EQ(123u, typed_event->processor_id());
+}
+
+TEST_F(TestEventDispatcher, TestEventProcessingOrder)
+{
+    auto event_1 = std::make_unique<AudioGraphNotificationEvent>(AudioGraphNotificationEvent::Action::PROCESSOR_ADDED_TO_TRACK,
+                                                                1, 1, IMMEDIATE_PROCESS);
+    event_1->set_completion_cb(dummy_callback_1, nullptr);
+    completed_1 = false;
+    completion_status_1 = EventStatus::NOT_HANDLED;
+
+    _module_under_test->post_event(std::move(event_1));
+
+    auto event_2 = std::make_unique<AudioGraphNotificationEvent>(AudioGraphNotificationEvent::Action::PROCESSOR_ADDED_TO_TRACK,
+                                                                2, 2, IMMEDIATE_PROCESS);
+    event_2->set_completion_cb(dummy_callback_2, nullptr);
+    completed_2 = false;
+    completion_status_2 = EventStatus::NOT_HANDLED;
+
+    _module_under_test->post_event(std::move(event_2));
+
+    crank_event_loop_once();
+
+    ASSERT_TRUE(completed_1);
+    ASSERT_EQ(EventStatus::HANDLED_OK, completion_status_1);
+
+    ASSERT_TRUE(completed_2);
+    ASSERT_EQ(EventStatus::HANDLED_OK, completion_status_2);
+
+    ASSERT_EQ(last_callback, 2);
 }
 
 class TestWorker : public ::testing::Test
@@ -230,39 +242,32 @@ class TestWorker : public ::testing::Test
 public:
     void crank_event_loop_once()
     {
-        _module_under_test->_running = false;
-        _module_under_test->_worker();
+        _module_under_test._running = false;
+        _module_under_test._worker();
     }
 
 protected:
     TestWorker() = default;
 
-    void SetUp() override
-    {
-        _module_under_test = new Worker(&_test_engine,
-                                        _test_engine.event_dispatcher());
-    }
-
     void TearDown() override
     {
-        _module_under_test->stop();
-        delete _module_under_test;
+        _module_under_test.stop();
     }
 
-    Worker*          _module_under_test;
-    EngineMockup     _test_engine{TEST_SAMPLE_RATE};
+    EngineMockup _test_engine{TEST_SAMPLE_RATE};
+    Worker       _module_under_test {&_test_engine, _test_engine.event_dispatcher()};
 };
 
 TEST_F(TestWorker, TestEventQueueingAndProcessing)
 {
-    completed = false;
-    completion_status = 0;
-    auto event = new SetEngineTempoEvent(120.0f, IMMEDIATE_PROCESS);
-    event->set_completion_cb(dummy_callback, nullptr);
-    auto status = _module_under_test->process(event);
+    completed_1 = false;
+    completion_status_1 = 0;
+    auto event = std::make_unique<SetEngineTempoEvent>(120.0f, IMMEDIATE_PROCESS);
+    event->set_completion_cb(dummy_callback_1, nullptr);
+    auto status = _module_under_test.dispatch(std::move(event));
     ASSERT_EQ(EventStatus::QUEUED_HANDLING, status);
-    ASSERT_FALSE(_module_under_test->_queue.empty());
+    ASSERT_FALSE(_module_under_test._queue.empty());
     crank_event_loop_once();
-    ASSERT_TRUE(completed);
-    ASSERT_EQ(EventStatus::HANDLED_OK, completion_status);
+    ASSERT_TRUE(completed_1);
+    ASSERT_EQ(EventStatus::HANDLED_OK, completion_status_1);
 }

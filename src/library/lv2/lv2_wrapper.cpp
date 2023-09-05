@@ -341,13 +341,12 @@ ProcessorReturnCode LV2_Wrapper::set_state(ProcessorState* state, bool realtime_
 
     if (realtime_running)
     {
-        auto event = new RtStateEvent(this->id(), std::move(rt_state), IMMEDIATE_PROCESS);
-        _host_control.post_event(event);
+        _host_control.post_event(std::make_unique<RtStateEvent>(this->id(), std::move(rt_state), IMMEDIATE_PROCESS));
     }
     else
     {
-        _host_control.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
-                                                                 this->id(), 0, IMMEDIATE_PROCESS));
+        _host_control.post_event(std::make_unique<AudioGraphNotificationEvent>(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
+                                                                               this->id(), 0, IMMEDIATE_PROCESS));
     }
 
     return ProcessorReturnCode::OK;
@@ -639,9 +638,9 @@ void LV2_Wrapper::set_enabled(bool enabled)
 void LV2_Wrapper::set_bypassed(bool bypassed)
 {
     assert(twine::is_current_thread_realtime() == false);
-    _host_control.post_event(new SetProcessorBypassEvent(this->id(),
-                                                                bypassed,
-                                                                IMMEDIATE_PROCESS));
+    _host_control.post_event(std::make_unique<SetProcessorBypassEvent>(this->id(),
+                                                                       bypassed,
+                                                                       IMMEDIATE_PROCESS));
 }
 
 bool LV2_Wrapper::bypassed() const
@@ -978,8 +977,8 @@ void LV2_Wrapper::_set_binary_state(ProcessorState* state)
     {
         auto state_handler = _model->state();
         state_handler->apply_state(lilv_state, true);
-        _host_control.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
-                                                                 this->id(), 0, IMMEDIATE_PROCESS));
+        _host_control.post_event(std::make_unique<AudioGraphNotificationEvent>(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
+                                                                               this->id(), 0, IMMEDIATE_PROCESS));
     }
     ELKLOG_LOG_ERROR_IF(lilv_state == nullptr, "Failed to decode lilv state from binary state");
 }

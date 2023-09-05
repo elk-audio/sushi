@@ -40,108 +40,112 @@ RtDeletable::~RtDeletable()
 
 namespace internal {
 
-Event* Event::from_rt_event(const RtEvent& rt_event, Time timestamp)
+/**
+ * Methods for real-time event classes:
+ */
+
+std::unique_ptr<Event> Event::from_rt_event(const RtEvent& rt_event, Time timestamp)
 {
     switch (rt_event.type())
     {
         case RtEventType::NOTE_ON:
         {
             auto typed_ev = rt_event.keyboard_event();
-            return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON,
-                                     typed_ev->processor_id(),
-                                     typed_ev->channel(),
-                                     typed_ev->note(),
-                                     typed_ev->velocity(),
-                                     timestamp);
+            return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::NOTE_ON,
+                                                   typed_ev->processor_id(),
+                                                   typed_ev->channel(),
+                                                   typed_ev->note(),
+                                                   typed_ev->velocity(),
+                                                   timestamp);
         }
         case RtEventType::NOTE_OFF:
         {
             auto typed_ev = rt_event.keyboard_event();
-            return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF,
-                                     typed_ev->processor_id(),
-                                     typed_ev->channel(),
-                                     typed_ev->note(),
-                                     typed_ev->velocity(),
-                                     timestamp);
+            return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::NOTE_OFF,
+                                                   typed_ev->processor_id(),
+                                                   typed_ev->channel(),
+                                                   typed_ev->note(),
+                                                   typed_ev->velocity(),
+                                                   timestamp);
         }
         case RtEventType::NOTE_AFTERTOUCH:
         {
             auto typed_ev = rt_event.keyboard_event();
-            return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_AFTERTOUCH,
-                                     typed_ev->processor_id(),
-                                     typed_ev->channel(),
-                                     typed_ev->note(),
-                                     typed_ev->velocity(),
-                                     timestamp);
+            return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::NOTE_AFTERTOUCH,
+                                                   typed_ev->processor_id(),
+                                                   typed_ev->channel(),
+                                                   typed_ev->note(),
+                                                   typed_ev->velocity(),
+                                                   timestamp);
         }
         case RtEventType::MODULATION:
         {
             auto typed_ev = rt_event.keyboard_common_event();
-            return new KeyboardEvent(KeyboardEvent::Subtype::MODULATION,
-                                     typed_ev->processor_id(),
-                                     typed_ev->channel(),
-                                     typed_ev->value(),
-                                     timestamp);
+            return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::MODULATION,
+                                                   typed_ev->processor_id(),
+                                                   typed_ev->channel(),
+                                                   typed_ev->value(),
+                                                   timestamp);
         }
         case RtEventType::PITCH_BEND:
         {
             auto typed_ev = rt_event.keyboard_common_event();
-            return new KeyboardEvent(KeyboardEvent::Subtype::PITCH_BEND,
-                                     typed_ev->processor_id(),
-                                     typed_ev->channel(),
-                                     typed_ev->value(),
-                                     timestamp);
+            return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::PITCH_BEND,
+                                                   typed_ev->processor_id(),
+                                                   typed_ev->channel(),
+                                                   typed_ev->value(),
+                                                   timestamp);
         }
         case RtEventType::AFTERTOUCH:
         {
             auto typed_ev = rt_event.keyboard_common_event();
-            return new KeyboardEvent(KeyboardEvent::Subtype::AFTERTOUCH,
-                                     typed_ev->processor_id(),
-                                     typed_ev->channel(),
-                                     typed_ev->value(),
-                                     timestamp);
+            return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::AFTERTOUCH,
+                                                   typed_ev->processor_id(),
+                                                   typed_ev->channel(),
+                                                   typed_ev->value(),
+                                                   timestamp);
         }
         case RtEventType::WRAPPED_MIDI_EVENT:
         {
             auto typed_ev = rt_event.wrapped_midi_event();
-            return new KeyboardEvent(KeyboardEvent::Subtype::WRAPPED_MIDI,
-                                     typed_ev->processor_id(),
-                                     typed_ev->midi_data(),
-                                     timestamp);
+            return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::WRAPPED_MIDI,
+                                                   typed_ev->processor_id(),
+                                                   typed_ev->midi_data(),
+                                                   timestamp);
         }
         case RtEventType::TEMPO:
         {
             auto typed_event = rt_event.tempo_event();
-            return new TempoNotificationEvent(typed_event->tempo(), timestamp);
+            return std::make_unique<TempoNotificationEvent>(typed_event->tempo(), timestamp);
         }
         case RtEventType::TIME_SIGNATURE:
         {
             auto typed_event = rt_event.time_signature_event();
-            return new TimeSignatureNotificationEvent(typed_event->time_signature(), timestamp);
+            return std::make_unique<TimeSignatureNotificationEvent>(typed_event->time_signature(), timestamp);
         }
         case RtEventType::PLAYING_MODE:
         {
             auto typed_event = rt_event.playing_mode_event();
-            return new PlayingModeNotificationEvent(typed_event->mode(), timestamp);
+            return std::make_unique<PlayingModeNotificationEvent>(typed_event->mode(), timestamp);
         }
         case RtEventType::SYNC_MODE:
         {
             auto typed_event = rt_event.sync_mode_event();
-            return new SyncModeNotificationEvent(typed_event->mode(), timestamp);
+            return std::make_unique<SyncModeNotificationEvent>(typed_event->mode(), timestamp);
         }
         case RtEventType::ASYNC_WORK:
         {
             auto typed_ev = rt_event.async_work_event();
-            return new AsynchronousProcessorWorkEvent(typed_ev->callback(),
-                                                      typed_ev->callback_data(),
-                                                      typed_ev->processor_id(),
-                                                      typed_ev->event_id(),
-                                                      timestamp);
+            return std::make_unique<AsynchronousProcessorWorkEvent>(typed_ev->callback(),
+                                                                    typed_ev->callback_data(),
+                                                                    typed_ev->processor_id(),
+                                                                    typed_ev->event_id(),
+                                                                    timestamp);
         }
         case RtEventType::BLOB_DELETE:
         {
             auto typed_ev = rt_event.data_payload_event();
-            return new AsynchronousBlobDeleteEvent(typed_ev->value(), timestamp);
+            return std::make_unique<AsynchronousBlobDeleteEvent>(typed_ev->value(), timestamp);
         }
         case RtEventType::CLIP_NOTIFICATION:
         {
@@ -149,29 +153,29 @@ Event* Event::from_rt_event(const RtEvent& rt_event, Time timestamp)
             auto channel_type = typed_ev->channel_type() == ClipNotificationRtEvent::ClipChannelType::INPUT?
                                                             ClippingNotificationEvent::ClipChannelType::INPUT :
                                                             ClippingNotificationEvent::ClipChannelType::OUTPUT;
-            return new ClippingNotificationEvent(typed_ev->channel(), channel_type, timestamp);
+            return std::make_unique<ClippingNotificationEvent>(typed_ev->channel(), channel_type, timestamp);
         }
         case RtEventType::DELETE:
         {
             auto typed_ev = rt_event.delete_data_event();
-            return new AsynchronousDeleteEvent(typed_ev->data(), timestamp);
+            return std::make_unique<AsynchronousDeleteEvent>(typed_ev->data(), timestamp);
         }
         case RtEventType::NOTIFY:
         {
             auto typed_ev = rt_event.processor_notify_event();
             if (typed_ev->action() == ProcessorNotifyRtEvent::Action::PARAMETER_UPDATE)
             {
-                return new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
-                                                       typed_ev->processor_id(),
-                                                       0,
-                                                       timestamp);
+                return std::make_unique<AudioGraphNotificationEvent>(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
+                                                                     typed_ev->processor_id(),
+                                                                     0,
+                                                                     timestamp);
             }
             break;
         }
         case RtEventType::TIMING_TICK:
         {
             auto typed_ev = rt_event.timing_tick_event();
-            return new EngineTimingTickNotificationEvent(typed_ev->tick_count(), timestamp);
+            return std::make_unique<EngineTimingTickNotificationEvent>(typed_ev->tick_count(), timestamp);
         }
         default:
             return nullptr;
@@ -221,7 +225,7 @@ RtEvent ParameterChangeEvent::to_rt_event(int sample_offset) const
 
        default:
             /* Only to stop the compiler from complaining */
-            return RtEvent();
+            return {};
     }
 }
 
@@ -259,26 +263,32 @@ RtEvent StringPropertyEvent::to_rt_event(int sample_offset) const
     return RtEvent::make_string_property_change_event(_processor_id, sample_offset, _property_id, heap_string);
 }
 
-Event* AsynchronousProcessorWorkEvent::execute()
-{
-    int status = _work_callback(_data, _rt_event_id);
-    return new AsynchronousProcessorWorkCompletionEvent(status, _rt_processor, _rt_event_id, IMMEDIATE_PROCESS);
-}
-
 RtEvent AsynchronousProcessorWorkCompletionEvent::to_rt_event(int /*sample_offset*/) const
 {
     return RtEvent::make_async_work_completion_event(_rt_processor, _rt_event_id, _return_value);
 }
 
-Event* AsynchronousBlobDeleteEvent::execute()
+/**
+ * Methods for asynchronous processing event classes:
+ */
+
+std::unique_ptr<Event> AsynchronousProcessorWorkEvent::execute()
+{
+    int status = _work_callback(_data, _rt_event_id);
+    return std::make_unique<AsynchronousProcessorWorkCompletionEvent>(status, _rt_processor, _rt_event_id, IMMEDIATE_PROCESS);
+}
+
+std::unique_ptr<Event> AsynchronousBlobDeleteEvent::execute()
 {
     delete(_data.data);
+    
     return nullptr;
 }
 
-Event* AsynchronousDeleteEvent::execute()
+std::unique_ptr<Event> AsynchronousDeleteEvent::execute()
 {
     delete _data;
+
     return nullptr;
 }
 

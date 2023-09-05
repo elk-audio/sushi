@@ -104,8 +104,9 @@ std::pair<control::ControlStatus, std::vector<std::string>> ProgramController::g
 control::ControlStatus ProgramController::set_processor_program(int processor_id, int program_id)
 {
     ELKLOG_LOG_DEBUG("set_processor_program called with processor {} and program {}", processor_id, program_id);
-    auto event = new ProgramChangeEvent(static_cast<ObjectId>(processor_id), program_id, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    _event_dispatcher->post_event(std::make_unique<ProgramChangeEvent>(static_cast<ObjectId>(processor_id),
+                                                                                 program_id,
+                                                                                 IMMEDIATE_PROCESS));
     return control::ControlStatus::OK;
 }
 
