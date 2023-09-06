@@ -12,7 +12,9 @@ set(OSC_LIB_ONLY ON)
 add_subdirectory(oscpack)
 
 # oscpack sets the -Wall flag, which is negated below, to suppress warnings.
-target_compile_options(oscpack PRIVATE "-Wno-all")
+if(NOT MSVC)
+    target_compile_options(oscpack PRIVATE "-Wno-all")
+endif()
 
 ##########################
 #  VST3SDK and examples  #
@@ -62,7 +64,10 @@ if (${SUSHI_WITH_VST3})
     set(SDK_IDE_PLUGIN_EXAMPLES_FOLDER FOLDER "PlugInExamples")
 
     # Suppress warnings to keep our build output clean
-    set(VST3_COMPILE_FLAGS "-Wno-unused-parameter \
+    if(MSVC)
+        set(VST3_COMPILE_FLAGS "")
+    else()
+        set(VST3_COMPILE_FLAGS "-Wno-unused-parameter \
                             -Wno-extra -Wno-deprecated \
                             -Wno-cpp \
                             -Wno-pointer-bool-conversion \
@@ -74,6 +79,7 @@ if (${SUSHI_WITH_VST3})
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
         set(VST3_COMPILE_FLAGS "${VST3_COMPILE_FLAGS} -fobjc-arc -Wno-unqualified-std-cast-call")
+    endif()
     endif()
 
     if (SMTG_ADD_VST3_PLUGINS_SAMPLES)

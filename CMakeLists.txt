@@ -400,7 +400,8 @@ if (${SUSHI_WITH_VST3})
             "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/pluginterfacesupport.cpp"
             "${VST3_SDK_PATH}/public.sdk/source/common/memorystream.cpp")
 
-    set(VST3_COMPILE_FLAGS "-Wno-unused-parameter \
+    if(NOT MSVC)
+        set(VST3_COMPILE_FLAGS "-Wno-unused-parameter \
                             -Wno-extra \
                             -Wno-deprecated \
                             -Wno-cpp \
@@ -409,6 +410,7 @@ if (${SUSHI_WITH_VST3})
                             -Wno-deprecated-declarations \
                             -Wno-shorten-64-to-32 \
                             -Wformat=0")
+    endif()
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         set(VST3_HOST_SOURCES ${VST3_HOST_SOURCES} "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_linux.cpp")
