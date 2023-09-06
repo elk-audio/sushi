@@ -106,6 +106,12 @@ elseif (WIN32)
     set(SUSHI_WITH_VST3_DEFAULT OFF)
     set(SUSHI_LINK_VST3_DEFAULT OFF)
 
+    add_compile_definitions(ELKLOG_DISABLE_LOGGING)
+
+    if(MSVC)
+        add_compile_definitions(_USE_MATH_DEFINES)
+    endif()
+
 elseif (CMAKE_CROSSCOMPILING)
     # Yocto cross-compilation defaults
     set(SUSHI_WITH_RASPA_DEFAULT ON)
@@ -692,14 +698,16 @@ find_package(SndFile CONFIG REQUIRED)
 
 set(COMMON_LIBRARIES
     SndFile::sndfile
-    pthread
-    dl
     fifo
     oscpack
     elklog
     freeverb
     ${TWINE_LIB}
 )
+
+if(NOT MSVC)
+    set(COMMON_LIBRARIES ${COMMON_LIBRARIES} pthread dl)
+endif()
 
 set_target_properties(oscpack PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
 
