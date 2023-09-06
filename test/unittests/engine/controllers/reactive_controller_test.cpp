@@ -43,32 +43,52 @@ constexpr float TEST_SAMPLE_RATE = 44100;
 
 class ReactiveControllerTestFrontend : public ::testing::Test
 {
+public:
+    void crank_event_loop_once()
+    {
+        _event_dispatcher->_running = false;
+        _event_dispatcher->_event_loop();
+    }
+
 protected:
     ReactiveControllerTestFrontend() = default;
 
     void SetUp() override
     {
-        _real_time_controller = std::make_unique<RealTimeController>(&_audio_frontend,
-                                                                     &_midi_frontend,
+        _mock_engine = std::make_unique<EngineMockup>(TEST_SAMPLE_RATE, nullptr);
+
+        _event_dispatcher = std::make_unique<dispatcher::EventDispatcher>(_mock_engine.get(), &_in_rt_queue, &_out_rt_queue);
+
+        _mock_engine->set_dispatcher(_event_dispatcher.get());
+
+        _audio_frontend = std::make_unique<ReactiveFrontend>(_mock_engine.get());
+
+        _midi_dispatcher = std::make_unique<midi_dispatcher::MidiDispatcher>(_event_dispatcher.get());
+
+        _midi_frontend = std::make_unique<midi_frontend::ReactiveMidiFrontend>(_midi_dispatcher.get());
+
+        _real_time_controller = std::make_unique<RealTimeController>(_audio_frontend.get(),
+                                                                     _midi_frontend.get(),
                                                                      &_transport);
     }
 
-    EngineMockup _mock_engine {TEST_SAMPLE_RATE};
-    ReactiveFrontend _audio_frontend {&_mock_engine};
+    std::unique_ptr<RealTimeController>          _real_time_controller;
+    std::unique_ptr<dispatcher::EventDispatcher> _event_dispatcher;
+    std::unique_ptr<EngineMockup>                _mock_engine;
+    std::unique_ptr<ReactiveFrontend>            _audio_frontend;
 
-    midi_dispatcher::MidiDispatcher _midi_dispatcher {_mock_engine.event_dispatcher()};
+    std::unique_ptr<midi_dispatcher::MidiDispatcher>     _midi_dispatcher;
+    std::unique_ptr<midi_frontend::ReactiveMidiFrontend> _midi_frontend;
 
-    sushi::internal::midi_frontend::ReactiveMidiFrontend _midi_frontend {&_midi_dispatcher};
+    RtSafeRtEventFifo _in_rt_queue;
+    RtSafeRtEventFifo _out_rt_queue;
 
-    RtEventFifo<10> _rt_event_output;
-    Transport _transport {TEST_SAMPLE_RATE, &_rt_event_output};
-
-    std::unique_ptr<RealTimeController> _real_time_controller;
+    Transport _transport {TEST_SAMPLE_RATE, &_out_rt_queue};
 };
 
 TEST_F(ReactiveControllerTestFrontend, TestRtControllerAudioCalls)
 {
-    ASSERT_FALSE(_mock_engine.process_called);
+    ASSERT_FALSE(_mock_engine->process_called);
 
     ChunkSampleBuffer in_buffer;
     ChunkSampleBuffer out_buffer;
@@ -79,7 +99,7 @@ TEST_F(ReactiveControllerTestFrontend, TestRtControllerAudioCalls)
 
     test_utils::assert_buffer_value(1.0f, out_buffer);
 
-    ASSERT_TRUE(_mock_engine.process_called);
+    ASSERT_TRUE(_mock_engine->process_called);
 }
 
 TEST_F(ReactiveControllerTestFrontend, TestRtControllerTransportCalls)
@@ -136,8 +156,51 @@ TEST_F(ReactiveControllerTestFrontend, TestRtControllerTransportCalls)
     EXPECT_DOUBLE_EQ(new_beat_count, _real_time_controller->_transport->_beat_count);
 }
 
+TEST_F(ReactiveControllerTestFrontend, TestRtControllerPauseResume)
+{
+    // Send event.
+    auto param_ch_event = std::make_unique<ParameterChangeEvent>(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE, 6, 50, 1.0f, IMMEDIATE_PROCESS);
+    EXPECT_TRUE(param_ch_event->maps_to_rt_event());
+
+    _event_dispatcher->post_event(std::move(param_ch_event));
+
+    // The event should be processed if process_audio is called.
+    ASSERT_FALSE(_mock_engine->process_called);
+
+    ChunkSampleBuffer in_buffer;
+    ChunkSampleBuffer out_buffer;
+
+    test_utils::fill_sample_buffer(in_buffer, 1.0f);
+
+    _real_time_controller->process_audio(in_buffer, out_buffer, 1s);
+
+    test_utils::assert_buffer_value(1.0f, out_buffer);
+
+    ASSERT_TRUE(_mock_engine->process_called);
+
+    crank_event_loop_once();
+
+    ASSERT_FALSE(_out_rt_queue.empty());
+
+    RtEvent rt_event;
+    _out_rt_queue.pop(rt_event);
+
+    ASSERT_TRUE(_out_rt_queue.empty());
+
+    _real_time_controller->pause(true);
+
+    // Send another event.
+    auto param_ch_event_2 = std::make_unique<ParameterChangeEvent>(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE, 6, 50, 0.5f, IMMEDIATE_PROCESS);
+    EXPECT_TRUE(param_ch_event_2->maps_to_rt_event());
+
+    crank_event_loop_once();
+
+    // The event should be dropped now that we have paused.
+    ASSERT_TRUE(_out_rt_queue.empty());
+}
+
 TEST_F(ReactiveControllerTestFrontend, TestRtControllerMidiCalls)
 {
     // TODO: Currently the Passive Controller MIDI handling over the Passive MIDI frontend, is unfinished,
-    //   and not real-time safe. Once it's finished (story AUD-456), we should add relevant tests also here.
+    //  and not real-time safe. Once it's finished (story AUD-456), we should add relevant tests also here.
 }

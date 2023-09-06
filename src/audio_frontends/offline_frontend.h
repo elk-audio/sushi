@@ -83,7 +83,7 @@ public:
 
     void run() override;
 
-    void pause(bool enabled) override;
+    void pause(bool paused) override;
 
 private:
     void _process_events(Time end_time);

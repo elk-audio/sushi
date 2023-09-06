@@ -50,7 +50,8 @@ protected:
         _osc_controller.set_osc_frontend(_osc_frontend.get());
     }
 
-    EngineMockup _test_engine{TEST_SAMPLE_RATE};
+    EventDispatcherMockup _event_dispatcher;
+    EngineMockup          _test_engine {TEST_SAMPLE_RATE, &_event_dispatcher};
 
     sushi::control::ControlMockup _controller;
     OscController _osc_controller{&_test_engine};

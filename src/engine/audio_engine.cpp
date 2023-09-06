@@ -22,6 +22,8 @@
 #include <iomanip>
 #include <functional>
 
+#include <spdlog/fmt/bundled/format.h>
+
 #include "twine/src/twine_internal.h"
 #include "elklog/static_logger.h"
 

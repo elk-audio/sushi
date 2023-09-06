@@ -70,12 +70,12 @@ void ReactiveFrontend::run()
     _engine->enable_realtime(true);
 }
 
-void ReactiveFrontend::pause(bool enabled)
+void ReactiveFrontend::pause(bool paused)
 {
     bool running = !_pause_manager.bypassed();
-    _pause_manager.set_bypass(enabled, _engine->sample_rate());
+    _pause_manager.set_bypass(paused, _engine->sample_rate());
 
-    if (enabled && running)
+    if (paused && running)
     {
         _pause_notified = false;
 

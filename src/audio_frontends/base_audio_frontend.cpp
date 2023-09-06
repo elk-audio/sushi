@@ -41,16 +41,16 @@ AudioFrontendStatus BaseAudioFrontend::init(BaseAudioFrontendConfiguration* conf
     return AudioFrontendStatus::OK;
 }
 
-void BaseAudioFrontend::pause(bool enabled)
+void BaseAudioFrontend::pause(bool paused)
 {
     /* This default implementation is for realtime frontends that must remember to call
      * _pause_notify->notify() in the audio callback when un-pausing */
     assert(twine::is_current_thread_realtime() == false);
     bool running = !_pause_manager.bypassed();
-    _pause_manager.set_bypass(enabled, _engine->sample_rate());
+    _pause_manager.set_bypass(paused, _engine->sample_rate());
 
     // If pausing, return when engine has ramped down.
-    if (enabled && running)
+    if (paused && running)
     {
         _pause_notified = false;
         _pause_notify->wait();
@@ -58,7 +58,7 @@ void BaseAudioFrontend::pause(bool enabled)
     }
     else
     {
-        _engine->enable_realtime(enabled);
+        _engine->enable_realtime(paused);
     }
 }
 

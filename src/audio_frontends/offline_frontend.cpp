@@ -172,7 +172,7 @@ void OfflineFrontend::run()
     }
 }
 
-void OfflineFrontend::pause(bool /*enabled*/)
+void OfflineFrontend::pause(bool /*paused*/)
 {
     // Currently a no-op
 }

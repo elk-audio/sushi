@@ -51,7 +51,7 @@ public:
 
     ~RealTimeController() override = default;
 
-    void pause(bool enabled) override;
+    void pause(bool paused) override;
 
     /// For Transport:
     /////////////////////////////////////////////////////////////

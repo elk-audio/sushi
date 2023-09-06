@@ -89,9 +89,9 @@ public:
      *        data consumed, but the audio engine is not called and all audio outputs are silenced.
      *        When toggling pause, the audio will be quickly ramped down and the function will block
      *        until the change has taken effect.
-     * @param enabled If true enables pause, of false disables pause and calls the audio engine again
+     * @param paused If true enables pause, of false disables pause and calls the audio engine again
      */
-     virtual void pause(bool enabled);
+     virtual void pause(bool paused);
 
 protected:
     BaseAudioFrontendConfiguration* _config {nullptr};

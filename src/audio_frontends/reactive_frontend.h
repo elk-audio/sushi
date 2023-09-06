@@ -79,10 +79,10 @@ public:
 
     /**
      * This overrides the default implementation of pause in BaseAudioFrontend.
-     * Since the process_audio callback is not called
-     * @param enabled
+     * Since the process_audio callback is not called.
+     * @param paused
      */
-    void pause(bool enabled) override;
+    void pause(bool paused) override;
 
     void notify_of_pause();
 

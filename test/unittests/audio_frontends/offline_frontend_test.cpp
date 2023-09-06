@@ -41,9 +41,10 @@ protected:
         delete _module_under_test;
     }
 
-    EngineMockup _engine{SAMPLE_RATE};
-    MidiDispatcher _midi_dispatcher{_engine.event_dispatcher()};
-    OfflineFrontend* _module_under_test{};
+    EventDispatcherMockup _event_dispatcher;
+    EngineMockup          _engine {SAMPLE_RATE, &_event_dispatcher};
+    MidiDispatcher        _midi_dispatcher {_engine.event_dispatcher()};
+    OfflineFrontend*      _module_under_test {};
 };
 
 TEST_F(TestOfflineFrontend, TestWavProcessing)
