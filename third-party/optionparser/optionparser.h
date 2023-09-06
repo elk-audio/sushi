@@ -216,13 +216,16 @@
 #ifndef OPTIONPARSER_H_
 #define OPTIONPARSER_H_
 
+#ifdef _MSC_VER
+#include <intrin.h>
+#pragma intrinsic(_BitScanReverse)
+#endif
+
 /** @brief The namespace of The Lean Mean C++ Option Parser. */
 namespace optionparser
 {
 
 #ifdef _MSC_VER
-#include <intrin.h>
-#pragma intrinsic(_BitScanReverse)
 struct MSC_Builtin_CLZ
 {
   static int builtin_clz(unsigned x)
