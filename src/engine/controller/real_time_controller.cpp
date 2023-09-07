@@ -27,14 +27,17 @@ namespace sushi::internal
 
 RealTimeController::RealTimeController(audio_frontend::ReactiveFrontend* audio_frontend,
                                        midi_frontend::ReactiveMidiFrontend* midi_frontend,
-                                       engine::Transport* transport) : _audio_frontend(audio_frontend),
-                                                                       _midi_frontend(midi_frontend),
-                                                                       _transport(transport)
+                                       engine::Transport* transport,
+                                       dispatcher::BaseEventDispatcher* dispatcher) : _audio_frontend(audio_frontend),
+                                                                                      _midi_frontend(midi_frontend),
+                                                                                      _transport(transport),
+                                                                                      _event_dispatcher(dispatcher)
 {
 }
 
 void RealTimeController::pause(bool paused)
 {
+    _event_dispatcher->pause_rt_processing(paused);
     _audio_frontend->pause(paused);
     _audio_frontend->notify_of_pause();
 }

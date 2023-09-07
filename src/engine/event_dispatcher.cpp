@@ -218,7 +218,7 @@ void EventDispatcher::_event_loop()
             _parameter_update_count = 0;
         }
 
-        if (!_engine->realtime())
+        if (!_engine->realtime() && _rt_processing_paused)
         {
             _engine->clear_rt_queues();
         }

@@ -69,7 +69,8 @@ protected:
 
         _real_time_controller = std::make_unique<RealTimeController>(_audio_frontend.get(),
                                                                      _midi_frontend.get(),
-                                                                     &_transport);
+                                                                     &_transport,
+                                                                     _event_dispatcher.get());
     }
 
     std::unique_ptr<RealTimeController>          _real_time_controller;

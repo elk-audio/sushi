@@ -113,9 +113,9 @@ class MidiDispatcher : public EventPoster, public midi_receiver::MidiReceiver
     SUSHI_DECLARE_NON_COPYABLE(MidiDispatcher);
 
 public:
-    MidiDispatcher(dispatcher::BaseEventDispatcher* event_dispatcher);
+    explicit MidiDispatcher(dispatcher::BaseEventDispatcher* event_dispatcher);
 
-    virtual ~MidiDispatcher();
+    ~MidiDispatcher() override;
 
     void set_frontend(midi_frontend::BaseMidiFrontend* frontend)
     {

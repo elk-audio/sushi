@@ -59,7 +59,8 @@ std::pair<std::unique_ptr<Sushi>, Status> ReactiveFactoryImplementation::new_ins
     _real_time_controller = std::make_unique<RealTimeController>(
         static_cast<audio_frontend::ReactiveFrontend*>(_audio_frontend.get()),
         static_cast<midi_frontend::ReactiveMidiFrontend*>(_midi_frontend.get()),
-        _engine->transport());
+        _engine->transport(),
+        _engine->event_dispatcher());
 
     return {_make_sushi(), _status};
 }

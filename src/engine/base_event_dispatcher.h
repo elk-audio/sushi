@@ -79,6 +79,18 @@ public:
     virtual void set_time(Time /*timestamp*/)  = 0;
 
     virtual int dispatch(std::unique_ptr<Event> /*event*/) = 0;
+
+    void pause_rt_processing(bool paused)
+    {
+        _rt_processing_paused = paused;
+    }
+
+    bool rt_processing_paused() const
+    {
+        return _rt_processing_paused;
+    }
+
+    bool _rt_processing_paused{false};
 };
 
 } // end namespace sushi::internal::dispatcher
