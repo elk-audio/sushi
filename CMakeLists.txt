@@ -730,12 +730,14 @@ target_link_libraries(${PROJECT_NAME} PUBLIC ${EXTRA_BUILD_LIBRARIES} ${COMMON_L
 #  Compiler Flags and definitions  #
 ####################################
 
-target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Wextra -Wno-psabi -fPIC -ffast-math)
+if(NOT MSVC)
+    target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Wextra -Wno-psabi -fPIC -ffast-math)
 
-target_compile_options(${PROJECT_NAME}  PRIVATE -fno-rtti)
+    target_compile_options(${PROJECT_NAME}  PRIVATE -fno-rtti)
 
-if (SUSHI_BUILD_WITH_SANITIZERS)
-    target_compile_options(${PROJECT_NAME}  PUBLIC -fsanitize=address -g)
+    if (SUSHI_BUILD_WITH_SANITIZERS)
+        target_compile_options(${PROJECT_NAME}  PUBLIC -fsanitize=address -g)
+    endif()
 endif()
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
