@@ -1222,14 +1222,12 @@ void AudioEngine::clear_rt_queues()
     RtEvent event;
     while (_control_queue_in.pop(event))
     {
-        auto debug_string = fmt::format("Deleted control event of type: {}", event.type());
-        ELKLOG_LOG_DEBUG("{}", debug_string);
+        ELKLOG_LOG_DEBUG("{}", fmt::format("Deleted control event of type: {}", event.type()));
     }
 
     while (_main_in_queue.pop(event))
     {
-        auto debug_string = fmt::format("Deleted rt event of type: {}", event.type());
-        ELKLOG_LOG_DEBUG("{}", debug_string);
+        ELKLOG_LOG_DEBUG("{}", fmt::format("Deleted rt event of type: {}", event.type()));
     }
 }
 
