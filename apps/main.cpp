@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
 {
     signal(SIGINT, exit_on_signal);
     signal(SIGTERM, exit_on_signal);
-    signal(SIGPIPE, pipe_signal_handler);
+    //signal(SIGPIPE, pipe_signal_handler);
 
     // option_parser accepts arguments excluding program name,
     // so skip it if it is present.

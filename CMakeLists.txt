@@ -642,26 +642,26 @@ set(SOURCE_FILES
     src/plugins/wav_writer_plugin.cpp
     src/plugins/mono_summing_plugin.cpp
     src/plugins/stereo_mixer_plugin.cpp
-    src/plugins/brickworks/compressor_plugin.cpp
-    src/plugins/brickworks/bitcrusher_plugin.cpp
-    src/plugins/brickworks/wah_plugin.cpp
-    src/plugins/brickworks/eq3band_plugin.cpp
-    src/plugins/brickworks/phaser_plugin.cpp
-    src/plugins/brickworks/chorus_plugin.cpp
-    src/plugins/brickworks/vibrato_plugin.cpp
-    src/plugins/brickworks/flanger_plugin.cpp
-    src/plugins/brickworks/combdelay_plugin.cpp
-    src/plugins/brickworks/saturation_plugin.cpp
-    src/plugins/brickworks/noise_gate_plugin.cpp
-    src/plugins/brickworks/tremolo_plugin.cpp
-    src/plugins/brickworks/notch_plugin.cpp
-    src/plugins/brickworks/multi_filter_plugin.cpp
-    src/plugins/brickworks/highpass_plugin.cpp
-    src/plugins/brickworks/clip_plugin.cpp
-    src/plugins/brickworks/fuzz_plugin.cpp
-    src/plugins/brickworks/dist_plugin.cpp
-    src/plugins/brickworks/drive_plugin.cpp
-    src/plugins/brickworks/simple_synth_plugin.cpp
+#    src/plugins/brickworks/compressor_plugin.cpp
+#    src/plugins/brickworks/bitcrusher_plugin.cpp
+#    src/plugins/brickworks/wah_plugin.cpp
+#    src/plugins/brickworks/eq3band_plugin.cpp
+#    src/plugins/brickworks/phaser_plugin.cpp
+#    src/plugins/brickworks/chorus_plugin.cpp
+#    src/plugins/brickworks/vibrato_plugin.cpp
+#    src/plugins/brickworks/flanger_plugin.cpp
+#    src/plugins/brickworks/combdelay_plugin.cpp
+#    src/plugins/brickworks/saturation_plugin.cpp
+#    src/plugins/brickworks/noise_gate_plugin.cpp
+#    src/plugins/brickworks/tremolo_plugin.cpp
+#    src/plugins/brickworks/notch_plugin.cpp
+#    src/plugins/brickworks/multi_filter_plugin.cpp
+#    src/plugins/brickworks/highpass_plugin.cpp
+#    src/plugins/brickworks/clip_plugin.cpp
+#    src/plugins/brickworks/fuzz_plugin.cpp
+#    src/plugins/brickworks/dist_plugin.cpp
+#    src/plugins/brickworks/drive_plugin.cpp
+#    src/plugins/brickworks/simple_synth_plugin.cpp
 )
 
 add_library(${PROJECT_NAME} STATIC "${SOURCE_FILES}"

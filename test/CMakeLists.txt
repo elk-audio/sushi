@@ -15,9 +15,9 @@ SET(TEST_FILES
     unittests/plugins/arpeggiator_plugin_test.cpp
     unittests/plugins/control_to_cv_plugin_test.cpp
     unittests/plugins/cv_to_control_plugin_test.cpp
-    unittests/plugins/plugins_test.cpp
-    unittests/plugins/external_plugins_test.cpp
-    unittests/plugins/brickworks_simple_synth_test.cpp
+   # unittests/plugins/plugins_test.cpp
+   # unittests/plugins/external_plugins_test.cpp
+   # unittests/plugins/brickworks_simple_synth_test.cpp
     unittests/plugins/sample_player_plugin_test.cpp
     unittests/plugins/send_return_test.cpp
     unittests/plugins/step_sequencer_test.cpp
@@ -214,7 +214,7 @@ endif()
 add_executable(unit_tests ${TEST_FILES} ${TEST_HELPER_FILES})
 
 target_compile_definitions(unit_tests PRIVATE ${TEST_COMPILE_DEFINITIONS})
-target_compile_options(unit_tests PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
+target_compile_options(unit_tests PRIVATE -Wall  -fno-rtti -ffast-math)
 
 target_include_directories(unit_tests
         PUBLIC

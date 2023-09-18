@@ -404,7 +404,7 @@ std::vector<KbdInputConnection> MidiDispatcher::get_all_kb_input_connections()
             for(auto connection = channels[channel_i].begin(); connection != channels[channel_i].end(); ++connection)
             {
                 KbdInputConnection conn {};
-                conn.input_connection = *connection.base();
+                conn.input_connection = *connection;
                 conn.port = inputs_i->first;
                 conn.channel = static_cast<int>(channel_i);
                 conn.raw_midi = false;
@@ -424,7 +424,7 @@ std::vector<KbdInputConnection> MidiDispatcher::get_all_kb_input_connections()
             for(auto connection = channels[channel_i].begin(); connection != channels[channel_i].end(); ++connection)
             {
                 KbdInputConnection conn {};
-                conn.input_connection = *connection.base();
+                conn.input_connection = *connection;
                 conn.port = inputs_i->first;
                 conn.channel = static_cast<int>(channel_i);
                 conn.raw_midi = true;
@@ -839,7 +839,7 @@ std::vector<CCInputConnection> MidiDispatcher::_get_cc_input_connections(std::op
                         processor_id_filter == connection->target)
                     {
                         CCInputConnection conn {};
-                        conn.input_connection = *(connection.base());
+                        conn.input_connection = *connection;
                         conn.channel = static_cast<int>(channel_i);
                         conn.port = input_i->first;
                         conn.cc = static_cast<int>(cc_i);
