@@ -22,8 +22,6 @@
 #include <iomanip>
 #include <functional>
 
-#include <spdlog/fmt/bundled/format.h>
-
 #include "twine/src/twine_internal.h"
 #include "elklog/static_logger.h"
 
@@ -1203,14 +1201,14 @@ void AudioEngine::update_timings()
                 if (timings.has_value())
                 {
                     ELKLOG_LOG_INFO("Processor: {} ({}), avg: {}%, min: {}%, max: {}%", id, processor->name(),
-                                   timings->avg_case * 100.0f, timings->min_case * 100.0f, timings->max_case * 100.0f);
+                                    timings->avg_case * 100.0f, timings->min_case * 100.0f, timings->max_case * 100.0f);
                 }
             }
 
             if (engine_timings.has_value())
             {
                 ELKLOG_LOG_INFO("Engine total: avg: {}%, min: {}%, max: {}%",
-                               engine_timings->avg_case * 100.0f, engine_timings->min_case * 100.0f, engine_timings->max_case * 100.0f);
+                                engine_timings->avg_case * 100.0f, engine_timings->min_case * 100.0f, engine_timings->max_case * 100.0f);
             }
             _log_timing_print_counter = 0;
         }
@@ -1222,12 +1220,12 @@ void AudioEngine::clear_rt_queues()
     RtEvent event;
     while (_control_queue_in.pop(event))
     {
-        ELKLOG_LOG_DEBUG("{}", fmt::format("Deleted control event of type: {}", event.type()));
+        ELKLOG_LOG_DEBUG("Deleted control event of type: {}", event.type());
     }
 
     while (_main_in_queue.pop(event))
     {
-        ELKLOG_LOG_DEBUG("{}", fmt::format("Deleted rt event of type: {}", event.type()));
+        ELKLOG_LOG_DEBUG("Deleted rt event of type: {}", event.type());
     }
 }
 
@@ -1238,7 +1236,7 @@ void print_single_timings_for_node(std::fstream& f, performance::PerformanceTime
     {
         f << std::setw(16) << timings.value().avg_case * 100.0
           << std::setw(16) << timings.value().min_case * 100.0
-          << std::setw(16) << timings.value().max_case * 100.0 <<"\n";
+          << std::setw(16) << timings.value().max_case * 100.0 << "\n";
     }
 }
 
@@ -1338,6 +1336,7 @@ void AudioEngine::_route_cv_gate_ins(ControlBuffer& buffer)
         auto ev = RtEvent::make_parameter_change_event(r.processor_id, 0, r.parameter_id, value);
         _send_rt_event(ev);
     }
+
     // Get gate state changes by xor:ing with previous states
     auto gate_diffs = _prev_gate_values ^ buffer.gate_values;
     if (gate_diffs.any())
@@ -1369,10 +1368,12 @@ RealtimeState update_state(RealtimeState current_state)
     {
         return RealtimeState::RUNNING;
     }
+
     if (current_state == RealtimeState::STOPPING)
     {
         return RealtimeState::STOPPED;
     }
+
     return current_state;
 }
 
