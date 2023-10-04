@@ -106,8 +106,6 @@ elseif (WIN32)
     set(SUSHI_WITH_VST3_DEFAULT OFF)
     set(SUSHI_LINK_VST3_DEFAULT OFF)
 
-    add_compile_definitions(ELKLOG_DISABLE_LOGGING)
-
     if(MSVC)
         add_compile_definitions(_USE_MATH_DEFINES)
     endif()
