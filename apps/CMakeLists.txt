@@ -5,7 +5,11 @@
 
 set(APP_FILES main.cpp)
 
-add_executable(sushi MACOSX_BUNDLE ${APP_FILES})
+if(APPLE)
+    add_executable(sushi MACOSX_BUNDLE ${APP_FILES})
+else()
+    add_executable(sushi ${APP_FILES})
+endif()
 
 ####################################
 #  Compiler Flags and definitions  #
@@ -13,13 +17,14 @@ add_executable(sushi MACOSX_BUNDLE ${APP_FILES})
 
 if(MSVC)    
     set(SUSHI_COMPILE_OPTIONS /W4 /fp:fast)
+    set(APP_LINK_LIBRARIES ${APP_LINK_LIBRARIES} winmm.lib) # oscpack GetCurrentTimeMs
 else()
     set(SUSHI_COMPILE_OPTIONS -Wall -Wextra -Wno-psabi -fPIC -fno-rtti -ffast-math)
 endif()
 
 target_compile_options(sushi PRIVATE ${SUSHI_COMPILE_OPTIONS})
 
-target_link_libraries(sushi PRIVATE sushi_library "${APP_LINK_LIBRARIES}")
+target_link_libraries(sushi PRIVATE sushi_library ${APP_LINK_LIBRARIES})
 
 ####################
 #  Install         #
