@@ -92,7 +92,7 @@ if (APPLE)
 elseif (WIN32)
     # windows defaults
     set(SUSHI_WITH_XENOMAI_DEFAULT OFF)
-    set(SUSHI_WITH_PORTAUDIO_DEFAULT OFF)
+    set(SUSHI_WITH_PORTAUDIO_DEFAULT ON)
     set(SUSHI_WITH_ALSA_MIDI_DEFAULT OFF)
     set(SUSHI_WITH_RT_MIDI_DEFAULT OFF)
     set(SUSHI_WITH_VST2_DEFAULT OFF)
@@ -285,7 +285,13 @@ if (${SUSHI_WITH_PORTAUDIO})
 
     find_package(portaudio CONFIG REQUIRED)
 
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} portaudio_static)
+    if(MSVC)
+        set(PORTAUDIO_LIB portaudio)
+    else()
+        set(PORTAUDIO_LIB portaudio_static)
+    endif()
+
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES}  ${PORTAUDIO_LIB})
 
     # Compile definitions
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_PORTAUDIO)

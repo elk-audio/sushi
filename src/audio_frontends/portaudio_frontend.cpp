@@ -28,6 +28,10 @@
 
 #include "audio_frontend_internals.h"
 
+#ifdef _MSC_VER
+    #define bzero(b, len) (memset((b), '\0', (len)), (void) 0) 
+#endif
+
 namespace sushi::internal::audio_frontend {
 
 ELKLOG_GET_LOGGER_WITH_MODULE_NAME("portaudio");
