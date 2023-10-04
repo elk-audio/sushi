@@ -65,7 +65,7 @@ if (${SUSHI_WITH_VST3})
 
     # Suppress warnings to keep our build output clean
     if(MSVC)
-        set(VST3_COMPILE_FLAGS "")
+        set(VST3_COMPILE_FLAGS " /W0")
     else()
         set(VST3_COMPILE_FLAGS "-Wno-unused-parameter \
                             -Wno-extra -Wno-deprecated \
