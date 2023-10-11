@@ -58,7 +58,9 @@ ELK_DISABLE_UNUSED_PARAMETER
 #include "aeffectx.h"
 ELK_POP_WARNING
 
+#ifndef _MSC_VER
 #include <dlfcn.h>
+#endif
 
 namespace sushi::internal::vst2 {
 
