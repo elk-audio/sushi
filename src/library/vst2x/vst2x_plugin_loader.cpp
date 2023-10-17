@@ -209,7 +209,7 @@ LibraryHandle PluginLoader::get_library_handle_for_plugin(const std::string& plu
         ELKLOG_LOG_ERROR("Plugin path not found: {}", plugin_absolute_path);
         return nullptr;
     }
-    void* libraryHandle = LoadLibraryA(plugin_absolute_path.c_str());
+    void* libraryHandle = LoadLibrary(plugin_absolute_path.c_str());
 
     if (libraryHandle == nullptr)
     {
