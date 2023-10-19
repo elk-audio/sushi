@@ -154,6 +154,14 @@ ParseStatus parse_options(int argc, char* argv[], sushi::SushiOptions& options)
                 options.portaudio_output_device_id = atoi(opt.arg);
                 break;
 
+            case OPT_IDX_AUDIO_INPUT_DEVICE_UID:
+                options.apple_coreaudio_input_device_uid = opt.arg;
+                break;
+
+            case OPT_IDX_AUDIO_OUTPUT_DEVICE_UID:
+                options.apple_coreaudio_output_device_uid = opt.arg;
+                break;
+
             case OPT_IDX_PA_SUGGESTED_INPUT_LATENCY:
                 options.suggested_input_latency = atof(opt.arg);
                 break;
