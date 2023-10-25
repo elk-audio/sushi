@@ -73,6 +73,9 @@ if (${SUSHI_WITH_VST3})
 
 endif()
 
+set(FREEVERB_UNDENORMALIZE OFF CACHE BOOL "" FORCE)
+add_subdirectory(freeverb)
+
 #####################################################
 #  External Projects definitions (non-Cmake based)  #
 #####################################################

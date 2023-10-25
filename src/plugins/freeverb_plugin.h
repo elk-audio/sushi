@@ -21,9 +21,9 @@
 #ifndef FREEVERB_PLUGIN_H
 #define FREEVERB_PLUGIN_H
 
-#include <revmodel.hpp>
-
 #include "library/internal_plugin.h"
+
+class revmodel;
 
 namespace sushi::internal::freeverb_plugin {
 
@@ -32,7 +32,7 @@ class FreeverbPlugin : public InternalPlugin, public UidHelper<FreeverbPlugin>
 public:
     explicit FreeverbPlugin(HostControl hostControl);
 
-    ~FreeverbPlugin() override = default;
+    ~FreeverbPlugin() override;
 
     ProcessorReturnCode init(float sample_rate) override;
 
