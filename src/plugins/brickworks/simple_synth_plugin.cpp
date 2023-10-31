@@ -25,6 +25,8 @@
 #include "simple_synth_plugin.h"
 #include "logging.h"
 
+#include <iostream>
+
 namespace sushi {
 namespace simple_synth_plugin {
 
@@ -172,6 +174,7 @@ void SimpleSynthPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */, 
     bw_env_gen_set_sustain(&_env_gen_coeffs, _sustain->processed_value());
     bw_env_gen_set_release(&_env_gen_coeffs, _release->processed_value());
 
+
     int previous_offset = 0;
     RtEvent event;
 
@@ -210,7 +213,7 @@ void SimpleSynthPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */, 
             _held_notes[note] = false;
             // if there are other held notes, switch to the highest one
             _highest_held_note = MAX_MIDI_NOTE - 1;
-            while (!_held_notes[_highest_held_note] && (_highest_held_note >= 0))
+            while ((_highest_held_note >= 0) && !_held_notes[_highest_held_note])
             {
                 _highest_held_note--;
             }
