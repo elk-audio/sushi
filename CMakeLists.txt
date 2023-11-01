@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8..3.23)
+cmake_minimum_required(VERSION 3.15..3.23)
 
 if(${CMAKE_VERSION} VERSION_LESS 3.12)
     cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
@@ -56,6 +56,11 @@ configure_file(
 ###########################
 #  Build and link options #
 ###########################
+
+if(MSVC)
+    # Link statically to the msvc runtime
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
 
 # The defaults enable all options and select APIs available for either Xenomai or macOS
 set(SUSHI_WITH_JACK_DEFAULT OFF)
