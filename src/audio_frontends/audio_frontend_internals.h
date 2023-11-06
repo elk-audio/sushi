@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -24,8 +24,7 @@
 #include <xmmintrin.h>
 #endif
 
-namespace sushi {
-namespace audio_frontend {
+namespace sushi::internal::audio_frontend {
 
 /* These are calculated theoretical correction factors from the Sika board and
  * provide a mapping that works fine for parameters and reasonable for pitch.
@@ -89,7 +88,6 @@ inline float ramp_cv_output(float* output, float current_value, float target_val
     return target_value;
 }
 
-} // end namespace audio_frontend
-} // end namespace sushi
+} // end namespace sushi::internal::audio_frontend
 
-#endif //SUSHI_AUDIO_FRONTEND_INTERNALS_H
+#endif // SUSHI_AUDIO_FRONTEND_INTERNALS_H

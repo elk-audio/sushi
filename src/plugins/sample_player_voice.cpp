@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -23,7 +23,7 @@
 
 #include "plugins/sample_player_voice.h"
 
-namespace sample_player_voice {
+namespace sushi::internal::sample_player_voice {
 
 /* Using a method inspired by a vst example to track notes. The voice
  * itself has no event queue so only one note on and one note off
@@ -112,7 +112,6 @@ void Voice::render(sushi::SampleBuffer<AUDIO_CHUNK_SIZE>& output_buffer)
         default:
             break;
     }
-
 }
 
-}// namespace sample_player_voice
+} // end namespace sushi::internal::sample_player_voice

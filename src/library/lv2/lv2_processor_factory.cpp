@@ -7,7 +7,7 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
  * SUSHI. If not, see http://www.gnu.org/licenses/
@@ -17,17 +17,17 @@
  * @brief Factory for LV2 processors.
  */
 
+#include "elklog/static_logger.h"
+
 #include "lv2_processor_factory.h"
-#include "logging.h"
 
 #ifdef SUSHI_BUILD_WITH_LV2
 #include "lv2_wrapper.h"
 #endif
 
-namespace sushi {
-namespace lv2 {
+namespace sushi::internal::lv2 {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 #ifdef SUSHI_BUILD_WITH_LV2
 
@@ -44,7 +44,7 @@ std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> Lv2ProcessorFactory::
         world->create_world();
         if (world->world() == nullptr)
         {
-            SUSHI_LOG_ERROR("Failed to initialize Lilv World");
+            ELKLOG_LOG_ERROR("Failed to initialize Lilv World");
             return {ProcessorReturnCode::SHARED_LIBRARY_OPENING_ERROR, nullptr};
         }
         _world = world;
@@ -63,11 +63,10 @@ std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> Lv2ProcessorFactory::
                                                                                              [[maybe_unused]] float sample_rate)
 
 {
-    SUSHI_LOG_ERROR("Sushi was not built with support for LV2 plugins");
+    ELKLOG_LOG_ERROR("Sushi was not built with support for LV2 plugins");
     return {ProcessorReturnCode::UNSUPPORTED_OPERATION, nullptr};
 }
 
-#endif //SUSHI_BUILD_WITH_LV2
+#endif // SUSHI_BUILD_WITH_LV2
 
-} // end namespace lv2
-} // end namespace sushi
+} // end namespace sushi::internal::lv2

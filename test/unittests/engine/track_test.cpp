@@ -12,7 +12,8 @@
 #include "test_utils/dummy_processor.h"
 
 using namespace sushi;
-using namespace engine;
+using namespace sushi::internal;
+using namespace sushi::internal::engine;
 
 constexpr float TEST_SAMPLE_RATE = 48000;
 constexpr int TEST_CHANNEL_COUNT = 2;
@@ -20,12 +21,13 @@ constexpr bool CREATE_PAN_CONTROLS = true;
 class TrackTest : public ::testing::Test
 {
 protected:
-    TrackTest() {}
+    TrackTest() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         _module_under_test.init(TEST_SAMPLE_RATE);
     }
+
     HostControlMockup _host_control;
     performance::PerformanceTimer _timer;
     Track _module_under_test{_host_control.make_host_control_mockup(), TEST_CHANNEL_COUNT, &_timer, CREATE_PAN_CONTROLS};

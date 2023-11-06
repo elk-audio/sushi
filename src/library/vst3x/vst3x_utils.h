@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -23,6 +23,9 @@
 
 #include <cassert>
 
+#include "sushi/constants.h"
+#include "sushi/sample_buffer.h"
+
 #include "pluginterfaces/base/ipluginbase.h"
 #include "pluginterfaces/vst/ivstaudioprocessor.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
@@ -30,13 +33,10 @@
 #include "public.sdk/source/vst/hosting/eventlist.h"
 #include "public.sdk/source/vst/hosting/parameterchanges.h"
 
-#include "library/sample_buffer.h"
 #include "library/rt_event.h"
-#include "library/constants.h"
 #include "library/processor_state.h"
 
-namespace sushi {
-namespace vst3 {
+namespace sushi::internal::vst3 {
 
 constexpr int VST_WRAPPER_MAX_N_CHANNELS = MAX_TRACK_CHANNELS;
 
@@ -192,8 +192,6 @@ private:
     StateParamValue _transfer_value{0, 0.0f};
 };
 
-} // end namespace vst3
-} // end namespace sushi
+} // end namespace sushi::internal::vst3
 
-
-#endif //SUSHI_VST3X_UTILS_H
+#endif // SUSHI_VST3X_UTILS_H

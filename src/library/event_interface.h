@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -24,21 +24,13 @@
 
 #include "event.h"
 
-namespace sushi {
-
-enum EventPosterId : int
-{
-    AUDIO_ENGINE = 0,
-    MIDI_DISPATCHER,
-    OSC_FRONTEND,
-    WORKER,
-    CONTROLLER,
-    MAX_POSTERS
-};
+namespace sushi::internal {
 
 class EventPoster
 {
 public:
+    virtual ~EventPoster() = default;
+
     /**
      * @brief Function called when the poster receives an event
      * @param event The event received
@@ -47,14 +39,12 @@ public:
      *         does not have a completion callback, the return value will be
      *         ignored
      */
-    virtual int process(Event* /*event*/) {return EventStatus::UNRECOGNIZED_EVENT;};
-
-    /**
-     * @brief The unique id of this poster.
-     * @return
-     */
-    virtual int poster_id() = 0;
+    virtual int process(Event* /*event*/)
+    {
+        return EventStatus::UNRECOGNIZED_EVENT;
+    }
 };
 
-} // end namespace sushi
-#endif //SUSHI_EVENT_INTERFACE_H
+} // end namespace sushi::internal
+
+#endif // SUSHI_EVENT_INTERFACE_H

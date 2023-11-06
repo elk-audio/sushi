@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -27,7 +27,7 @@
 
 /* Forward declare grpc and service classes so their definitions can be
  * kept completely separate from the rest of the Sushi codebase. The macro
- * conditions ensure compability with ubunut 20's 1.16 grpc version and the
+ * conditions ensure compatibility with ubuntu 20's 1.16 grpc version and the
  * 1.24 grpc version on Elk OS. */
 
 #if GOOGLE_PROTOBUF_VERSION > 3007001
@@ -39,7 +39,6 @@ namespace grpc {
     class ServerBuilder;
     class ServerCompletionQueue;
 }
-
 
 namespace sushi_rpc {
 
@@ -61,11 +60,17 @@ constexpr std::chrono::duration SERVER_SHUTDOWN_DEADLINE = std::chrono::millisec
 class GrpcServer
 {
 public:
-    GrpcServer(const std::string& listenAddress, sushi::ext::SushiControl* controller);
+    GrpcServer(const std::string& listenAddress, sushi::control::SushiControl* controller);
 
     ~GrpcServer();
 
-    void start();
+    /**
+     * Attempts to instantiate and start the gRPC server.
+     * On failure, this GrpcServer class is in an undefined state and may be un-salvageable.
+     * Delete it retry with a different listenAddress.
+     * @return bool, reflecting the status of the resulting server.
+     */
+    [[nodiscard]] bool start();
 
     void stop();
 

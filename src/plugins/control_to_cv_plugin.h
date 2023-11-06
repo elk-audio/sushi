@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -25,12 +25,12 @@
 #include <array>
 #include <vector>
 
+#include "sushi/constants.h"
+
 #include "library/internal_plugin.h"
-#include "library/constants.h"
 #include "library/rt_event_fifo.h"
 
-namespace sushi {
-namespace control_to_cv_plugin {
+namespace sushi::internal::control_to_cv_plugin {
 
 constexpr int MAX_CV_VOICES = MAX_ENGINE_CV_IO_PORTS;
 
@@ -86,6 +86,6 @@ private:
 
 float pitch_to_cv(float value);
 
-}// namespace control_to_cv_plugin
-}// namespace sushi
-#endif //SUSHI_CONTROL_TO_CV_PLUGIN_H
+} // end namespace sushi::internal::control_to_cv_plugin
+
+#endif // SUSHI_CONTROL_TO_CV_PLUGIN_H

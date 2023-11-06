@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -24,12 +24,12 @@
 #include <memory>
 #include <vector>
 
-#include "library/constants.h"
+#include "sushi/constants.h"
+
 #include "library/processor.h"
 #include "engine/track.h"
 
-namespace sushi {
-namespace engine {
+namespace sushi::internal::engine {
 
 class BaseProcessorContainer
 {
@@ -78,6 +78,6 @@ protected:
     BaseProcessorContainer() = default;
 };
 
-} // namespace engine
-} // namespace sushi
-#endif //SUSHI_BASE_PROCESSOR_CONTAINER_H
+} // end namespace sushi::internal::engine
+
+#endif // SUSHI_BASE_PROCESSOR_CONTAINER_H

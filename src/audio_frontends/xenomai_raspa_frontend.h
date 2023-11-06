@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -26,8 +26,7 @@
 
 #include "base_audio_frontend.h"
 
-namespace sushi {
-namespace audio_frontend {
+namespace sushi::internal::audio_frontend {
 
 struct XenomaiRaspaFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
@@ -102,16 +101,16 @@ private:
     std::array<float, MAX_ENGINE_CV_IO_PORTS> _cv_output_hist{0};
 };
 
-}; // end namespace audio_frontend
-}; // end namespace sushi
+} // end namespace sushi::internal::audio_frontend
 
 
 #else // SUSHI_BUILD_WITH_RASPA
 // Dummy frontend for non-Cobalt builds
 
 #include "base_audio_frontend.h"
-namespace sushi {
-namespace audio_frontend {
+
+namespace sushi::internal::audio_frontend {
+
 struct XenomaiRaspaFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
     XenomaiRaspaFrontendConfiguration(bool, int, int) : BaseAudioFrontendConfiguration(0, 0) {}
@@ -127,8 +126,7 @@ public:
     void pause([[maybe_unused]] bool enabled) override {}
 };
 
-} // end namespace audio_frontend
-} // end namespace sushi
+} // end namespace sushi::internal::audio_frontend
 
 #endif // SUSHI_BUILD_WITH_RASPA
 #endif // SUSHI_XENOMAI_RASPA_FRONTEND_H

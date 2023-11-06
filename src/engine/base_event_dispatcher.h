@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -25,11 +25,9 @@
 #include "library/event.h"
 #include "library/event_interface.h"
 
+namespace sushi::internal::dispatcher {
 
-namespace sushi {
-namespace dispatcher {
-
-enum class EventDispatcherStatus
+enum class Status
 {
     OK,
     ALREADY_SUBSCRIBED,
@@ -37,32 +35,52 @@ enum class EventDispatcherStatus
 };
 
 /* Abstract base class is solely for test mockups */
-class BaseEventDispatcher : public EventPoster
+class BaseEventDispatcher
 {
 public:
     virtual ~BaseEventDispatcher() = default;
 
-    virtual void run() {}
-    virtual void stop() {}
+    virtual void run() = 0;
+    virtual void stop() = 0;
 
-    virtual void post_event(Event* event) = 0;
+    virtual void post_event(std::unique_ptr<Event> event) = 0;
 
-    virtual EventDispatcherStatus register_poster(EventPoster* /*poster*/) {return EventDispatcherStatus::OK;}
-    virtual EventDispatcherStatus subscribe_to_keyboard_events(EventPoster* /*receiver*/) {return EventDispatcherStatus::OK;}
-    virtual EventDispatcherStatus subscribe_to_parameter_change_notifications(EventPoster* /*receiver*/) { return EventDispatcherStatus::OK;}
-    virtual EventDispatcherStatus subscribe_to_engine_notifications(EventPoster* /*receiver*/) {return EventDispatcherStatus::OK;}
+    virtual Status subscribe_to_keyboard_events(EventPoster* /*receiver*/)
+    {
+        return Status::OK;
+    }
 
-    virtual EventDispatcherStatus deregister_poster(EventPoster* /*poster*/) {return EventDispatcherStatus::OK;}
-    virtual EventDispatcherStatus unsubscribe_from_keyboard_events(EventPoster* /*receiver*/) { return EventDispatcherStatus::OK;}
-    virtual EventDispatcherStatus unsubscribe_from_parameter_change_notifications(EventPoster* /*receiver*/) { return EventDispatcherStatus::OK;}
-    virtual EventDispatcherStatus unsubscribe_from_engine_notifications(EventPoster* /*receiver*/) {return EventDispatcherStatus::OK;}
+    virtual Status subscribe_to_parameter_change_notifications(EventPoster* /*receiver*/)
+    {
+        return Status::OK;
+    }
 
-    virtual void set_sample_rate(float /*sample_rate*/) {}
-    virtual void set_time(Time /*timestamp*/) {}
+    virtual Status subscribe_to_engine_notifications(EventPoster* /*receiver*/)
+    {
+        return Status::OK;
+    }
+
+    virtual Status unsubscribe_from_keyboard_events(EventPoster* /*receiver*/)
+    {
+        return Status::OK;
+    }
+
+    virtual Status unsubscribe_from_parameter_change_notifications(EventPoster* /*receiver*/)
+    {
+        return Status::OK;
+    }
+
+    virtual Status unsubscribe_from_engine_notifications(EventPoster* /*receiver*/)
+    {
+        return Status::OK;
+    }
+
+    virtual void set_sample_rate(float /*sample_rate*/) = 0;
+    virtual void set_time(Time /*timestamp*/)  = 0;
+
+    virtual int dispatch(std::unique_ptr<Event> /*event*/) = 0;
 };
 
+} // end namespace sushi::internal::dispatcher
 
-} // end namespace dispatcher
-} // end namespace sushi
-
-#endif //SUSHI_BASE_EVENT_DISPATCHER_H
+#endif // SUSHI_BASE_EVENT_DISPATCHER_H

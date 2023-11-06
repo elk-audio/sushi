@@ -6,7 +6,7 @@
 #ifndef SUSHI_TEST_UTILS_H
 #define SUSHI_TEST_UTILS_H
 
-#include "library/sample_buffer.h"
+#include "sushi/sample_buffer.h"
 
 #include <iomanip>
 #include <random>

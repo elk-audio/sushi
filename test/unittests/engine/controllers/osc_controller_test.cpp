@@ -18,10 +18,11 @@ using ::testing::_;
 
 using namespace midi;
 using namespace sushi;
-using namespace sushi::engine;
-using namespace sushi::control_frontend;
-using namespace sushi::midi_dispatcher;
-using namespace sushi::engine::controller_impl;
+using namespace sushi::internal;
+using namespace sushi::internal::engine;
+using namespace sushi::internal::control_frontend;
+using namespace sushi::internal::midi_dispatcher;
+using namespace sushi::internal::engine::controller_impl;
 
 constexpr float TEST_SAMPLE_RATE = 44100;
 constexpr int OSC_TEST_SERVER_PORT = 24024;
@@ -31,9 +32,9 @@ constexpr auto OSC_TEST_SEND_ADDRESS = "127.0.0.1";
 class OscControllerEventTestFrontend : public ::testing::Test
 {
 protected:
-    OscControllerEventTestFrontend() {}
+    OscControllerEventTestFrontend() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         auto mock_osc_interface = new NiceMock<MockOscInterface>(OSC_TEST_SERVER_PORT,
                                                                  OSC_TEST_SEND_PORT,
@@ -49,11 +50,9 @@ protected:
         _osc_controller.set_osc_frontend(_osc_frontend.get());
     }
 
-    void TearDown() {}
-
     EngineMockup _test_engine{TEST_SAMPLE_RATE};
 
-    sushi::ext::ControlMockup _controller;
+    sushi::control::ControlMockup _controller;
     OscController _osc_controller{&_test_engine};
 
     std::unique_ptr<OSCFrontend> _osc_frontend;
@@ -85,7 +84,7 @@ TEST_F(OscControllerEventTestFrontend, TestEnablingAndDisablingOfOSCOutput)
 
     auto event_status_enable = _osc_controller.enable_output_for_parameter(processor_id, parameter_id);
 
-    ASSERT_EQ(ext::ControlStatus::OK, event_status_enable);
+    ASSERT_EQ(control::ControlStatus::OK, event_status_enable);
     auto execution_status1 = _test_dispatcher->execute_engine_event(&_test_engine);
     ASSERT_EQ(execution_status1, EventStatus::HANDLED_OK);
 
@@ -97,7 +96,7 @@ TEST_F(OscControllerEventTestFrontend, TestEnablingAndDisablingOfOSCOutput)
 
     auto event_status_disable = _osc_controller.disable_output_for_parameter(processor_id, parameter_id);
 
-    ASSERT_EQ(ext::ControlStatus::OK, event_status_disable);
+    ASSERT_EQ(control::ControlStatus::OK, event_status_disable);
     auto execution_status2 = _test_dispatcher->execute_engine_event(&_test_engine);
     ASSERT_EQ(execution_status2, EventStatus::HANDLED_OK);
 

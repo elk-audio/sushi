@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -18,8 +18,9 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
+#include "elklog/static_logger.h"
+
 #include "vst3x_processor_factory.h"
-#include "logging.h"
 
 #ifdef SUSHI_BUILD_WITH_VST3
 #include "vst3x_host_app.h"
@@ -28,10 +29,10 @@
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-const-variable"
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("Vst3");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("Vst3");
 #pragma GCC diagnostic pop
-namespace sushi {
-namespace vst3 {
+
+namespace sushi::internal::vst3 {
 
 Vst3xProcessorFactory::~Vst3xProcessorFactory() = default;
 
@@ -62,10 +63,10 @@ std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> Vst3xProcessorFactory
                                                                                                [[maybe_unused]] HostControl& host_control,
                                                                                                [[maybe_unused]] float sample_rate)
 {
-    SUSHI_LOG_ERROR("Sushi was not built with support for VST3 plugins");
+    ELKLOG_LOG_ERROR("Sushi was not built with support for VST3 plugins");
     return {ProcessorReturnCode::UNSUPPORTED_OPERATION, nullptr};
 }
 
-#endif //SUSHI_BUILD_WITH_VST3
-} // end namespace vst3
-} // end namespace sushi
+#endif // SUSHI_BUILD_WITH_VST3
+
+} // end namespace sushi::internal::vst3

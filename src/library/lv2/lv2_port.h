@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -27,12 +27,11 @@
 
 #include <lilv-0/lilv/lilv.h>
 
-#include "library/constants.h"
+#include "sushi/constants.h"
 
 #include "lv2_host/lv2_evbuf.h"
 
-namespace sushi {
-namespace lv2 {
+namespace sushi::internal::lv2 {
 
 class Model;
 
@@ -107,9 +106,7 @@ private:
     bool _optional{true};
 };
 
-} // end namespace lv2
-} // end namespace sushi
-
+} // end namespace sushi::internal::lv2
 
 #endif // SUSHI_BUILD_WITH_LV2
 

@@ -7,17 +7,16 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 #include "lv2_worker.h"
 #include "lv2_wrapper.h"
 
-namespace sushi {
-namespace lv2 {
+namespace sushi::internal::lv2 {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // Static methods:
@@ -146,5 +145,4 @@ const LV2_Worker_Interface* Worker::iface()
     return _iface;
 }
 
-}
-}
+} // end namespace sushi::internal::lv2

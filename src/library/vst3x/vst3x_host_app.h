@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -21,8 +21,9 @@
 #ifndef SUSHI_VST3X_HOST_CONTEXT_H
 #define SUSHI_VST3X_HOST_CONTEXT_H
 
+#include "sushi/constants.h"
+
 #include "library/id_generator.h"
-#include "library/constants.h"
 
 #include "pluginterfaces/vst/ivsteditcontroller.h"
 #include "pluginterfaces/vst/ivstunits.h"
@@ -36,7 +37,8 @@
 #include "public.sdk/source/vst/hosting/hostclasses.h"
 #pragma GCC diagnostic pop
 
-namespace sushi {
+namespace sushi::internal {
+
 class HostControl;
 
 namespace vst3 {
@@ -120,7 +122,7 @@ Steinberg::Vst::IComponent* load_component(Steinberg::IPluginFactory* factory, c
 Steinberg::Vst::IAudioProcessor* load_processor(Steinberg::Vst::IComponent* component);
 Steinberg::Vst::IEditController* load_controller(Steinberg::IPluginFactory* factory, Steinberg::Vst::IComponent*);
 
-
 } // end namespace vst
-} // end namespace sushi
-#endif //SUSHI_VST3X_HOST_CONTEXT_H
+} // end namespace sushi::internal
+
+#endif // SUSHI_VST3X_HOST_CONTEXT_H

@@ -40,6 +40,8 @@ SET(TEST_FILES
     unittests/engine/controllers/osc_controller_test.cpp
     unittests/engine/controllers/midi_controller_test.cpp
     unittests/engine/controllers/session_controller_test.cpp
+    unittests/engine/controllers/reactive_controller_test.cpp
+    unittests/engine/factories/factories_test.cpp
     unittests/audio_frontends/offline_frontend_test.cpp
     unittests/control_frontends/osc_frontend_test.cpp
     unittests/control_frontends/oscpack_osc_messenger_test.cpp
@@ -69,6 +71,7 @@ set(TEST_HELPER_FILES ${TEST_HELPER_FILES}
     ${PROJECT_SOURCE_DIR}/src/library/lv2/lv2_processor_factory.cpp
     ${PROJECT_SOURCE_DIR}/src/library/vst2x/vst2x_processor_factory.cpp
     ${PROJECT_SOURCE_DIR}/src/library/vst3x/vst3x_processor_factory.cpp
+    ${PROJECT_SOURCE_DIR}/test/unittests/test_utils/portaudio_mockup.cpp
     ${FREEVERB_SOURCES}
 )
 
@@ -86,7 +89,7 @@ set(TEST_LINK_LIBRARIES
 )
 
 set(TEST_COMPILE_DEFINITIONS
-    -DSUSHI_DISABLE_LOGGING
+    -DELKLOG_DISABLE_LOGGING
     -D__cdecl=
     -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${SUSHI_AUDIO_BUFFER_SIZE}
 )
@@ -211,7 +214,13 @@ add_executable(unit_tests ${TEST_FILES} ${TEST_HELPER_FILES})
 
 target_compile_definitions(unit_tests PRIVATE ${TEST_COMPILE_DEFINITIONS})
 target_compile_options(unit_tests PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
-target_include_directories(unit_tests PRIVATE ${INCLUDE_DIRS})
+
+target_include_directories(unit_tests
+        PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+            ${INCLUDE_DIRS}
+            ${PUBLIC_INCLUDE_DIRS})
+
 target_link_libraries(unit_tests "${TEST_LINK_LIBRARIES}")
 if (TEST_DEPENDENCIES)
     add_dependencies(unit_tests ${TEST_DEPENDENCIES})

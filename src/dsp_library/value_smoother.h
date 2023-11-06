@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -25,7 +25,7 @@
 #include <cmath>
 #include <cassert>
 
-namespace sushi {
+namespace sushi::internal {
 
 /**
  * @brief Class that implements smoothing of a value over a set time period using either
@@ -219,7 +219,7 @@ using ValueSmootherFilter = ValueSmoother<FloatType, ValueSmoother<FloatType,0>:
 template <typename FloatType>
 using ValueSmootherExpRamp = ValueSmoother<FloatType, ValueSmoother<FloatType,0>::Mode::EXP_RAMP>;
 
-}  // namespace sushi
+}  // end namespace sushi::internal
 
-#endif //SUSHI_VALUE_SMOOTHER_H
+#endif // SUSHI_VALUE_SMOOTHER_H
 

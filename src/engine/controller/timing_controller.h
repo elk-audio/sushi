@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -21,15 +21,14 @@
 #ifndef SUSHI_TIMING_CONTROLLER_H
 #define SUSHI_TIMING_CONTROLLER_H
 
-#include "control_interface.h"
+#include "sushi/control_interface.h"
+
 #include "engine/base_engine.h"
 #include "library/base_performance_timer.h"
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
-class TimingController : public ext::TimingController
+class TimingController : public control::TimingController
 {
 public:
     explicit TimingController(BaseEngine* engine);
@@ -40,26 +39,24 @@ public:
 
     void set_timing_statistics_enabled(bool enabled) override;
 
-    std::pair<ext::ControlStatus, ext::CpuTimings> get_engine_timings() const override;
+    std::pair<control::ControlStatus, control::CpuTimings> get_engine_timings() const override;
 
-    std::pair<ext::ControlStatus, ext::CpuTimings> get_track_timings(int track_id) const override;
+    std::pair<control::ControlStatus, control::CpuTimings> get_track_timings(int track_id) const override;
 
-    std::pair<ext::ControlStatus, ext::CpuTimings> get_processor_timings(int processor_id) const override;
+    std::pair<control::ControlStatus, control::CpuTimings> get_processor_timings(int processor_id) const override;
 
-    ext::ControlStatus reset_all_timings() override;
+    control::ControlStatus reset_all_timings() override;
 
-    ext::ControlStatus reset_track_timings(int track_id) override;
+    control::ControlStatus reset_track_timings(int track_id) override;
 
-    ext::ControlStatus reset_processor_timings(int processor_id) override;
+    control::ControlStatus reset_processor_timings(int processor_id) override;
 
 private:
-    std::pair<ext::ControlStatus, ext::CpuTimings> _get_timings(int node) const;
+    std::pair<control::ControlStatus, control::CpuTimings> _get_timings(int node) const;
 
     performance::BasePerformanceTimer*  _performance_timer;
 };
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl
 
-#endif //SUSHI_TIMING_CONTROLLER_H
+#endif // SUSHI_TIMING_CONTROLLER_H

@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -18,14 +18,14 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include "lv2_wrapper.h"
-
 #include <exception>
 #include <cmath>
 
 #include <twine/twine.h>
 
-#include "logging.h"
+#include "elklog/static_logger.h"
+
+#include "lv2_wrapper.h"
 
 #include "lv2_port.h"
 #include "lv2_state.h"
@@ -33,10 +33,9 @@
 
 #include "lv2_worker.h"
 
-namespace sushi {
-namespace lv2 {
+namespace sushi::internal::lv2 {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 LilvWorldWrapper::~LilvWorldWrapper()
 {
@@ -86,7 +85,7 @@ ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
 
     if (library_handle == nullptr)
     {
-        SUSHI_LOG_ERROR("Failed to load LV2 plugin - handle not recognized.");
+        ELKLOG_LOG_ERROR("Failed to load LV2 plugin - handle not recognized.");
         return ProcessorReturnCode::SHARED_LIBRARY_OPENING_ERROR;
     }
 
@@ -105,7 +104,7 @@ ProcessorReturnCode LV2_Wrapper::init(float sample_rate)
 
     if (_register_parameters() == false) // Register internal parameters
     {
-        SUSHI_LOG_ERROR("Failed to allocate LV2 feature list.");
+        ELKLOG_LOG_ERROR("Failed to allocate LV2 feature list.");
         return ProcessorReturnCode::PARAMETER_ERROR;
     }
 
@@ -128,7 +127,7 @@ void LV2_Wrapper::_fetch_plugin_name_and_label()
 
 void LV2_Wrapper::configure(float /*sample_rate*/)
 {
-    SUSHI_LOG_WARNING("LV2 does not support altering the sample rate after initialization.");
+    ELKLOG_LOG_WARNING("LV2 does not support altering the sample rate after initialization.");
 }
 
 const ParameterDescriptor* LV2_Wrapper::parameter_from_id(ObjectId id) const
@@ -342,13 +341,12 @@ ProcessorReturnCode LV2_Wrapper::set_state(ProcessorState* state, bool realtime_
 
     if (realtime_running)
     {
-        auto event = new RtStateEvent(this->id(), std::move(rt_state), IMMEDIATE_PROCESS);
-        _host_control.post_event(event);
+        _host_control.post_event(std::make_unique<RtStateEvent>(this->id(), std::move(rt_state), IMMEDIATE_PROCESS));
     }
     else
     {
-        _host_control.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
-                                                                 this->id(), 0, IMMEDIATE_PROCESS));
+        _host_control.post_event(std::make_unique<AudioGraphNotificationEvent>(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
+                                                                               this->id(), 0, IMMEDIATE_PROCESS));
     }
 
     return ProcessorReturnCode::OK;
@@ -393,7 +391,7 @@ bool LV2_Wrapper::_register_parameters()
             if (current_port->flow() == PortFlow::FLOW_OUTPUT)
             {
                 direction = Direction::OUTPUT;
-                SUSHI_LOG_INFO("LV2 Plugin: {}, parameter: {} is output only, so not automatable.", name(), name_as_string);
+                ELKLOG_LOG_INFO("LV2 Plugin: {}, parameter: {} is output only, so not automatable.", name(), name_as_string);
             }
 
             param_inserted_ok = register_parameter(new FloatParameterDescriptor(name_as_string, // name
@@ -407,11 +405,11 @@ bool LV2_Wrapper::_register_parameters()
 
             if (param_inserted_ok)
             {
-                SUSHI_LOG_INFO("LV2 Plugin: {}, registered parameter: {}", name(), name_as_string);
+                ELKLOG_LOG_INFO("LV2 Plugin: {}, registered parameter: {}", name(), name_as_string);
             }
             else
             {
-                SUSHI_LOG_ERROR("Plugin: {}, Error while registering parameter: {}", name(), name_as_string);
+                ELKLOG_LOG_ERROR("Plugin: {}, Error while registering parameter: {}", name(), name_as_string);
             }
 
             lilv_node_free(name_node);
@@ -458,7 +456,7 @@ void LV2_Wrapper::process_event(const RtEvent& event)
     {
         if (_incoming_event_queue.push(event) == false)
         {
-            SUSHI_LOG_DEBUG("Plugin: {}, MIDI queue Overflow!", name());
+            ELKLOG_LOG_DEBUG("Plugin: {}, MIDI queue Overflow!", name());
         }
     }
     else if (event.type() == RtEventType::SET_BYPASS)
@@ -640,9 +638,9 @@ void LV2_Wrapper::set_enabled(bool enabled)
 void LV2_Wrapper::set_bypassed(bool bypassed)
 {
     assert(twine::is_current_thread_realtime() == false);
-    _host_control.post_event(new SetProcessorBypassEvent(this->id(),
-                                                                bypassed,
-                                                                IMMEDIATE_PROCESS));
+    _host_control.post_event(std::make_unique<SetProcessorBypassEvent>(this->id(),
+                                                                       bypassed,
+                                                                       IMMEDIATE_PROCESS));
 }
 
 bool LV2_Wrapper::bypassed() const
@@ -941,7 +939,7 @@ const LilvPlugin* LV2_Wrapper::_plugin_handle_from_URI(const std::string& plugin
 {
     if (plugin_URI_string.empty())
     {
-        SUSHI_LOG_ERROR("Empty library path");
+        ELKLOG_LOG_ERROR("Empty library path");
         return nullptr; // Calling dlopen with an empty string returns a handle to the calling
         // program, which can cause an infinite loop.
     }
@@ -951,18 +949,18 @@ const LilvPlugin* LV2_Wrapper::_plugin_handle_from_URI(const std::string& plugin
 
     if (plugin_uri == nullptr)
     {
-        SUSHI_LOG_ERROR("Missing plugin URI, try lv2ls to list plugins.");
+        ELKLOG_LOG_ERROR("Missing plugin URI, try lv2ls to list plugins.");
         return nullptr;
     }
 
     /* Find plugin */
-    SUSHI_LOG_INFO("Plugin: {}", lilv_node_as_string(plugin_uri));
+    ELKLOG_LOG_INFO("Plugin: {}", lilv_node_as_string(plugin_uri));
     const auto plugin = lilv_plugins_get_by_uri(plugins, plugin_uri);
     lilv_node_free(plugin_uri);
 
     if (plugin == nullptr)
     {
-        SUSHI_LOG_ERROR("Failed to find LV2 plugin.");
+        ELKLOG_LOG_ERROR("Failed to find LV2 plugin.");
         return nullptr;
     }
 
@@ -979,11 +977,10 @@ void LV2_Wrapper::_set_binary_state(ProcessorState* state)
     {
         auto state_handler = _model->state();
         state_handler->apply_state(lilv_state, true);
-        _host_control.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
-                                                                 this->id(), 0, IMMEDIATE_PROCESS));
+        _host_control.post_event(std::make_unique<AudioGraphNotificationEvent>(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
+                                                                               this->id(), 0, IMMEDIATE_PROCESS));
     }
-    SUSHI_LOG_ERROR_IF(lilv_state == nullptr, "Failed to decode lilv state from binary state");
+    ELKLOG_LOG_ERROR_IF(lilv_state == nullptr, "Failed to decode lilv state from binary state");
 }
 
-} // namespace lv2
-} // namespace sushi
+} // end namespace sushi::internal::lv2

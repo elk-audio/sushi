@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -24,8 +24,7 @@
 #include <array>
 #include <cmath>
 
-namespace dsp
-{
+namespace sushi::dsp {
 
 /**
  * Calculated using windowed sinc method. Basic tests in python
@@ -186,7 +185,7 @@ private:
     UpSampler<CHUNK_SIZE> _up_sampler;
 };
 
-} // namespace dsp
+} // end namespace sushi::dsp
 
 
 #endif // SUSHI_MASTER_LIMITER_H

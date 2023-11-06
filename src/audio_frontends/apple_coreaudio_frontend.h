@@ -7,16 +7,16 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
-* @brief Realtime audio frontend for Apple CoreAudio
-* @Copyright 2017-2023 Elk Audio AB, Stockholm
-*/
+ * @brief Realtime audio frontend for Apple CoreAudio
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
+ */
 
 #ifndef SUSHI_APPLE_COREAUDIO_FRONTEND_H
 #define SUSHI_APPLE_COREAUDIO_FRONTEND_H
@@ -25,7 +25,6 @@
 
 #include <memory>
 
-#include "json_utils.h"
 #include "base_audio_frontend.h"
 #include "apple_coreaudio/apple_coreaudio_object.h"
 #include "apple_coreaudio/apple_coreaudio_device.h"
@@ -33,7 +32,7 @@
 // See AppleCoreAudioFrontend::sample_rate_changed()
 #define EXIT_SUSHI_WHEN_AUDIO_DEVICE_CHANGES_TO_INCOMPATIBLE_SAMPLE_RATE
 
-namespace sushi::audio_frontend {
+namespace sushi::internal::audio_frontend {
 
 [[nodiscard]] std::optional<std::string> get_coreaudio_output_device_name(std::optional<std::string> coreaudio_output_device_uid);
 
@@ -67,8 +66,6 @@ public:
     bool start_io();
     bool stop_io();
 
-    static rapidjson::Document generate_devices_info_document();
-
 private:
     std::unique_ptr<apple_coreaudio::AudioDevice> _audio_device;
     apple_coreaudio::TimeConversions _time_conversions;
@@ -93,7 +90,7 @@ private:
     void sample_rate_changed(double new_sample_rate) override;
 };
 
-} // namespace sushi::audio_frontend
+} // namespace sushi::internal::audio_frontend
 
 #endif // SUSHI_BUILD_WITH_APPLE_COREAUDIO
 
@@ -103,7 +100,7 @@ private:
 
 #include "base_audio_frontend.h"
 
-namespace sushi::audio_frontend {
+namespace sushi::internal::audio_frontend {
 
 struct AppleCoreAudioFrontendConfiguration : public BaseAudioFrontendConfiguration {
     AppleCoreAudioFrontendConfiguration(const std::optional<std::string>&,
@@ -115,14 +112,14 @@ struct AppleCoreAudioFrontendConfiguration : public BaseAudioFrontendConfigurati
 class AppleCoreAudioFrontend : public BaseAudioFrontend
 {
 public:
-    explicit AppleCoreAudioFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine){};
+    explicit AppleCoreAudioFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {};
     AudioFrontendStatus init(BaseAudioFrontendConfiguration* config) override;
 
     void cleanup() override{};
     void run() override{};
 };
 
-} // namespace sushi::audio_frontend
+} // namespace sushi::internal::audio_frontend
 
 #endif // SUSHI_BUILD_WITH_APPLE_COREAUDIO
 

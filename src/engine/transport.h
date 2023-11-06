@@ -7,13 +7,13 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
- /**
+/**
  * @Brief Handles time, tempo and start/stop inside the engine
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
@@ -25,10 +25,11 @@
 #include <atomic>
 #include <cassert>
 
-#include "library/constants.h"
+#include "sushi/constants.h"
+#include "sushi/types.h"
+#include "sushi/sushi_time.h"
+
 #include "library/event_interface.h"
-#include "library/time.h"
-#include "library/types.h"
 #include "library/rt_event.h"
 #include "library/rt_event_pipe.h"
 #include "engine/base_event_dispatcher.h"
@@ -38,13 +39,19 @@
  * significantly otherwise. */
 namespace ableton {class Link;}
 
-namespace sushi {
+namespace sushi::internal {
 
 enum class PlayStateChange
 {
     UNCHANGED,
     STARTING,
     STOPPING,
+};
+
+enum class PositionSource
+{
+    EXTERNAL,
+    CALCULATED
 };
 
 namespace engine {
@@ -206,7 +213,34 @@ public:
     double current_bar_start_beats() const {return _bar_start_beat_count;}
 
     /**
-     * @brief Query any playing state changes occuring during the current processing chunk.
+     * @brief Sets which source to use for the beat count position: the internally calculated one, or the one set
+     *        using the set_current_beats method below.
+     * @param position_source Enum, EXTERNAL / CALCULATED
+     */
+    void set_position_source(PositionSource position_source) {_position_source = position_source;}
+
+    /**
+     * @brief Returns the position source setting.
+     * @return PositionSource enum
+     */
+    PositionSource position_source() {return _position_source;}
+
+    /**
+     * @brief Sets the beat count value. This is to be used alongside a position_source set to EXTERNAL,
+     *        or the set value will be overwritten by the internal calculation.
+     * @param beat_count double value
+     */
+    void set_current_beats(double beat_count) {_beat_count = beat_count;}
+
+    /**
+     * @brief Sets the bar beat count value. This is to be used alongside a position_source set to EXTERNAL,
+     *        or the set value will be overwritten by the internal calculation.
+     * @param bar_beat_count
+     */
+    void set_current_bar_beats(double bar_beat_count) {_current_bar_beat_count = bar_beat_count;}
+
+    /**
+     * @brief Query any playing state changes occurring during the current processing chunk.
      *        For instance, if Transport is starting, during the first chunk, Transport
      *        will report playing() as true and current_state_change() as STARTING.
      *        Subsequent chunks Transport will report playing() as true and
@@ -246,10 +280,13 @@ private:
 
     RtEventPipe*    _rt_event_dispatcher;
 
-    std::unique_ptr<SushiLink>  _link_controller;
+    std::unique_ptr<SushiLink> _link_controller;
+
+    PositionSource _position_source {PositionSource::CALCULATED};
 };
 
-} // namespace engine
-} // namespace sushi
+} // end namespace engine
 
-#endif //SUSHI_TRANSPORT_H
+} // end namespace sushi::internal
+
+#endif // SUSHI_TRANSPORT_H

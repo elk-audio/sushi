@@ -4,6 +4,7 @@
 #include "test_utils/test_utils.h"
 
 using namespace sushi;
+using namespace sushi::internal;
 
 class TestdBToLinPreProcessor : public ::testing::Test
 {

@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -23,13 +23,15 @@
 
 #include <atomic>
 
+#include "sushi/constants.h"
+
 #include "send_return_factory.h"
 #include "library/internal_plugin.h"
-#include "library/constants.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 class SendReturnFactory;
+
 namespace return_plugin { class ReturnPlugin; }
 
 constexpr int MAX_SEND_CHANNELS = MAX_TRACK_CHANNELS;
@@ -41,7 +43,7 @@ class SendPlugin : public InternalPlugin, public UidHelper<SendPlugin>
 public:
     SendPlugin(HostControl host_control, SendReturnFactory* manager);
 
-    virtual ~SendPlugin();
+    ~SendPlugin() override;
 
     void clear_destination();
 
@@ -81,7 +83,7 @@ private:
     BypassManager _bypass_manager;
 };
 
-} // namespace send_plugin
-} // namespace sushi
+} // end namespace sushi::internal
+} // end namespace send_plugin
 
-#endif //SUSHI_SEND_PLUGIN_H
+#endif // SUSHI_SEND_PLUGIN_H

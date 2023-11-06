@@ -12,6 +12,7 @@
 #include "test_utils/host_control_mockup.h"
 
 using namespace sushi;
+using namespace sushi::internal;
 
 using ::testing::Return;
 using ::testing::AllOf;
@@ -28,7 +29,7 @@ constexpr Time TEST_MAX_INTERVAL = std::chrono::milliseconds(10);
 // Custom Matcher to check the returned events
 MATCHER_P5(ParameterChangeNotificationMatcherFull, proc_id, param_id, norm_val, dom_val, txt_val, "")
 {
-    auto typed_ev = static_cast<ParameterChangeNotificationEvent*>(arg);
+    auto typed_ev = static_cast<ParameterChangeNotificationEvent*>(arg.get());
     return arg->is_parameter_change_notification() &&
            typed_ev->processor_id() == proc_id &&
            typed_ev->parameter_id() == param_id &&
@@ -39,7 +40,7 @@ MATCHER_P5(ParameterChangeNotificationMatcherFull, proc_id, param_id, norm_val, 
 
 MATCHER_P3(ParameterChangeNotificationMatcher, proc_id, param_id, norm_val, "")
 {
-    auto typed_ev = static_cast<ParameterChangeNotificationEvent*>(arg);
+    auto typed_ev = static_cast<ParameterChangeNotificationEvent*>(arg.get());
     return arg->is_parameter_change_notification() &&
            typed_ev->processor_id() == proc_id &&
            typed_ev->parameter_id() == param_id &&
@@ -51,12 +52,10 @@ class TestParameterManager : public ::testing::Test
 {
 protected:
     using ::testing::Test::SetUp; // Hide error of hidden overload of virtual function in clang when signatures differ but the name is the same
-    TestParameterManager()
-    {
 
-    }
+    TestParameterManager() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         _test_processor = std::make_shared<gain_plugin::GainPlugin>(_host_control_mockup.make_host_control_mockup());
         _test_track = std::make_shared<Track>(_host_control_mockup.make_host_control_mockup(), 2, nullptr);
@@ -84,7 +83,7 @@ protected:
 
 TEST_F(TestParameterManager, TestEventCreation)
 {
-    EXPECT_CALL(_mock_dispatcher, process(ParameterChangeNotificationMatcherFull(3u, 4u, 0.5f, 5.0f, "5.0"))).Times(1);
+    EXPECT_CALL(_mock_dispatcher, dispatch(ParameterChangeNotificationMatcherFull(3u, 4u, 0.5f, 5.0f, "5.0"))).Times(1);
     send_parameter_notification(3u, 4u, 0.5f, 5.0f, "5.0", &_mock_dispatcher);
 }
 
@@ -96,29 +95,29 @@ TEST_F(TestParameterManager, TestParameterUpdates)
     _module_under_test.mark_parameter_changed(_test_track->id(), 0, TEST_MAX_INTERVAL + Time(1));
 
     // Expect no notifications because time has not yet reached TEST_MAX_INTERVAL
-    EXPECT_CALL(_mock_dispatcher, process(_)).Times(0);
+    EXPECT_CALL(_mock_dispatcher, dispatch(_)).Times(0);
     _module_under_test.output_parameter_notifications(&_mock_dispatcher, Time(1));
 
     // Expect 1 notification from test_processor
-    EXPECT_CALL(_mock_dispatcher, process(ParameterChangeNotificationMatcher(_test_processor->id(), 0u, 0.6f))).Times(1);
+    EXPECT_CALL(_mock_dispatcher, dispatch(ParameterChangeNotificationMatcher(_test_processor->id(), 0u, 0.6f))).Times(1);
     _module_under_test.output_parameter_notifications(&_mock_dispatcher, TEST_MAX_INTERVAL );
 
     // Expect the other notification from test_track
-    EXPECT_CALL(_mock_dispatcher, process(ParameterChangeNotificationMatcher(_test_track->id(), 0u, 0.7f))).Times(1);
+    EXPECT_CALL(_mock_dispatcher, dispatch(ParameterChangeNotificationMatcher(_test_track->id(), 0u, 0.7f))).Times(1);
     _module_under_test.output_parameter_notifications(&_mock_dispatcher, TEST_MAX_INTERVAL + Time(3));
 
     // Expect no notifications as nothing has changed
-    EXPECT_CALL(_mock_dispatcher, process(_)).Times(0);
+    EXPECT_CALL(_mock_dispatcher, dispatch(_)).Times(0);
     _module_under_test.output_parameter_notifications(&_mock_dispatcher, TEST_MAX_INTERVAL + Time(5));
 
     // Change a parameter, still expect no notification as one was sent too recently
     _test_track->process_event(RtEvent::make_parameter_change_event(_test_track->id(), 0, 0, 0.3f));
     _module_under_test.mark_parameter_changed(_test_track->id(), 0, 2 * TEST_MAX_INTERVAL);
-    EXPECT_CALL(_mock_dispatcher, process(_)).Times(0);
+    EXPECT_CALL(_mock_dispatcher, dispatch(_)).Times(0);
     _module_under_test.output_parameter_notifications(&_mock_dispatcher, 2 * TEST_MAX_INTERVAL);
 
     // Expect 1 notification as we have advanced time sufficiently.
-    EXPECT_CALL(_mock_dispatcher, process(ParameterChangeNotificationMatcher(_test_track->id(), 0u, 0.3f))).Times(1);
+    EXPECT_CALL(_mock_dispatcher, dispatch(ParameterChangeNotificationMatcher(_test_track->id(), 0u, 0.3f))).Times(1);
     _module_under_test.output_parameter_notifications(&_mock_dispatcher, 3 * TEST_MAX_INTERVAL);
 }
 
@@ -132,18 +131,17 @@ TEST_F(TestParameterManager, TestProcessorUpdates)
     _module_under_test.mark_processor_changed(_test_track->id(), TEST_MAX_INTERVAL);
 
     // Expect no notifications because time has not yet reached TEST_MAX_INTERVAL
-    EXPECT_CALL(_mock_dispatcher, process(_)).Times(0);
+    EXPECT_CALL(_mock_dispatcher, dispatch(_)).Times(0);
     _module_under_test.output_parameter_notifications(&_mock_dispatcher, Time(0));
 
     // Expect 1 notification from every parameter of test_track
-    EXPECT_CALL(_mock_dispatcher, process(_)).Times(_test_track->parameter_count());
+    EXPECT_CALL(_mock_dispatcher, dispatch(_)).Times(_test_track->parameter_count());
     _module_under_test.output_parameter_notifications(&_mock_dispatcher, 2 * TEST_MAX_INTERVAL);
 
     // Expect no notifications as nothing has changed
-    EXPECT_CALL(_mock_dispatcher, process(_)).Times(0);
+    EXPECT_CALL(_mock_dispatcher, dispatch(_)).Times(0);
     _module_under_test.output_parameter_notifications(&_mock_dispatcher, TEST_MAX_INTERVAL + Time(5));
 }
-
 
 TEST_F(TestParameterManager, TestErrorHandling)
 {
@@ -151,13 +149,13 @@ TEST_F(TestParameterManager, TestErrorHandling)
     _module_under_test.mark_processor_changed(12345, TEST_MAX_INTERVAL);
     _module_under_test.mark_parameter_changed(2345, 6789, TEST_MAX_INTERVAL);
 
-    EXPECT_CALL(_mock_dispatcher, process(_)).Times(0);
+    EXPECT_CALL(_mock_dispatcher, dispatch(_)).Times(0);
     _module_under_test.output_parameter_notifications(&_mock_dispatcher, 2 * TEST_MAX_INTERVAL);
 
     // Notify with a non-existing parameter id, should not crash, nor output anything
     _module_under_test.mark_parameter_changed(_test_track->id(), 1234, TEST_MAX_INTERVAL);
 
-    EXPECT_CALL(_mock_dispatcher, process(_)).Times(0);
+    EXPECT_CALL(_mock_dispatcher, dispatch(_)).Times(0);
     _module_under_test.output_parameter_notifications(&_mock_dispatcher, 2 * TEST_MAX_INTERVAL);
 
     // Force a value change for this particular parameter, we still shouldn't output anything

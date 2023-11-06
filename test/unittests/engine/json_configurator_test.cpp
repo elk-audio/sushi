@@ -9,6 +9,7 @@
 #include <gmock/gmock-actions.h>
 
 #include "engine/json_configurator.cpp"
+#include "sushi/utils.h"
 
 #undef private
 #undef protected
@@ -28,29 +29,29 @@ constexpr unsigned int SAMPLE_RATE = 44000;
 constexpr unsigned int ENGINE_CHANNELS = 8;
 
 using namespace sushi;
-using namespace sushi::engine;
-using namespace sushi::jsonconfig;
-using namespace sushi::control_frontend;
+using namespace sushi::internal;
+using namespace sushi::internal::engine;
+using namespace sushi::internal::jsonconfig;
+using namespace sushi::internal::control_frontend;
 
 class TestJsonConfigurator : public ::testing::Test
 {
 protected:
     TestJsonConfigurator() {}
 
-    void SetUp()
+    void SetUp() override
     {
         _engine.set_audio_input_channels(ENGINE_CHANNELS);
         _engine.set_audio_output_channels(ENGINE_CHANNELS);
         _path = test_utils::get_data_dir_path();
         _path.append("config.json");
+
+        auto json_data = sushi::read_file(_path);
+
         _module_under_test = std::make_unique<JsonConfigurator>(&_engine,
                                                                 &_midi_dispatcher,
                                                                 _engine.processor_container(),
-                                                                _path);
-    }
-
-    void TearDown()
-    {
+                                                                json_data.value());
     }
 
     /* Helper functions */
@@ -59,7 +60,7 @@ protected:
     AudioEngine _engine{SAMPLE_RATE};
     MidiDispatcher _midi_dispatcher{_engine.event_dispatcher()};
 
-    sushi::ext::ControlMockup _controller;
+    sushi::control::ControlMockup _controller;
 
     std::unique_ptr<JsonConfigurator> _module_under_test;
 
@@ -73,12 +74,12 @@ JsonConfigReturnStatus TestJsonConfigurator::_make_track(const rapidjson::Value 
 
 TEST_F(TestJsonConfigurator, TestLoadAudioConfig)
 {
-    auto [status, audio_config] = _module_under_test->load_audio_config();
+    auto [status, control_config] = _module_under_test->load_control_config();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
-    ASSERT_TRUE(audio_config.cv_inputs.has_value());
-    ASSERT_EQ(1, audio_config.cv_inputs.value());
-    ASSERT_TRUE(audio_config.cv_outputs.has_value());
-    ASSERT_EQ(2, audio_config.cv_outputs.value());
+    ASSERT_TRUE(control_config.cv_inputs.has_value());
+    ASSERT_EQ(1, control_config.cv_inputs.value());
+    ASSERT_TRUE(control_config.cv_outputs.has_value());
+    ASSERT_EQ(2, control_config.cv_outputs.value());
 }
 
 TEST_F(TestJsonConfigurator, TestLoadHostConfig)

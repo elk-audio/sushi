@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -65,7 +65,6 @@ public:
                               _buffer(nullptr)
     {}
 
-
     /**
      * @brief Copy constructor.
      */
@@ -76,12 +75,12 @@ public:
         {
             _buffer = new float[size * o._channel_count];
             std::copy(o._buffer, o._buffer + (size * o._channel_count), _buffer);
-        } else
+        }
+        else
         {
             _buffer = o._buffer;
         }
     }
-
 
     /**
      * @brief Move constructor.
@@ -93,7 +92,6 @@ public:
         o._buffer = nullptr;
     }
 
-
     /**
      * @brief Destroy the buffer.
      */
@@ -104,7 +102,6 @@ public:
             delete[] _buffer;
         }
     }
-
 
     /**
      * @brief Assign to this buffer.
@@ -142,7 +139,6 @@ public:
         return *this;
     }
 
-
     /**
      * @brief Assign to this buffer using move semantics.
      */
@@ -168,7 +164,7 @@ public:
      *        the source buffers channels can be wrapped.
      * @param source The SampleBuffer whose data is wrapped.
      * @param start_channel The first channel to wrap. Defaults to 0.
-     * @param number_of_channels Must not exceed the channelcount of the source buffer
+     * @param number_of_channels Must not exceed the channel count of the source buffer
      *                           minus start_channel.
      * @return The created, non-owning SampleBuffer.
      */
@@ -193,14 +189,13 @@ public:
         return create_non_owning_buffer(source, 0, source.channel_count());
     }
 
-
     /**
-     * @brief Create a Samplebuffer by wrapping a raw data pointer.
+     * @brief Create a SampleBuffer by wrapping a raw data pointer.
      *
      * @param data raw pointer to data stored in the same format of SampleBuffer storage
      * @param start_channel Index of first channel to wrap.
      * @param start_channel The first channel to wrap. Defaults to 0.
-     * @param number_of_channels Must not exceed the channelcount of the source buffer
+     * @param number_of_channels Must not exceed the channel count of the source buffer
      *                           minus start_channel.
      * @return The created, non-owning SampleBuffer.
      */
@@ -548,26 +543,26 @@ public:
 
     /**
      * @brief Count the number of samples outside of [-1.0, 1.0] in one channel
-     * @param channel The channel to analyse, must not exceed the buffer's channelcount
+     * @param channel The channel to analyse, must not exceed the buffer's channel count
      * @return The number of samples in the buffer whose absolute value is > 1.0
      */
     int count_clipped_samples(int channel) const
     {
         assert(channel < _channel_count);
-        int clipcount = 0;
+        int clip_count = 0;
         const float* data = _buffer + size * channel;
         for (int i = 0 ; i < size; ++i)
         {
             /* std::abs() is more efficient than testing for upper and lower bound separately
                And GCC can compile this to vectorised, branchless code */
-            clipcount += std::abs(data[i]) >= 1.0f;
+            clip_count += std::abs(data[i]) >= 1.0f;
         }
-        return clipcount;
+        return clip_count;
     }
 
     /**
      * @brief Calculate the peak value / loudest sample for one channel
-     * @param channel The channel to analyse, must not exceed the buffer's channelcount
+     * @param channel The channel to analyse, must not exceed the buffer's channel count
      * @return The absolute value of the loudest sample
      */
     float calc_peak_value(int channel) const
@@ -584,7 +579,7 @@ public:
 
     /**
      * @brief Calculate the root-mean-square average for one channel
-     * @param channel The channel to analyse, must not exceed the buffer's channelcount
+     * @param channel The channel to analyse, must not exceed the buffer's channel count
      * @return The RMS value of all the samples in the channel
      */
     float calc_rms_value(int channel) const
@@ -609,7 +604,8 @@ private:
 };
 
 typedef SampleBuffer<AUDIO_CHUNK_SIZE> ChunkSampleBuffer;
-} // namespace sushi
+
+} // end namespace sushi
 
 
-#endif //SUSHI_SAMPLEBUFFER_H
+#endif // SUSHI_SAMPLEBUFFER_H

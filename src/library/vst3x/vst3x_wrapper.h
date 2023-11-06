@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -34,8 +34,7 @@
 #include "library/processor.h"
 #include "vst3x_utils.h"
 
-namespace sushi {
-namespace vst3 {
+namespace sushi::internal::vst3 {
 
 constexpr int VST_WRAPPER_NOTE_EVENT_QUEUE_SIZE = 256;
 // Maximum number of rt parameter changes passed on to the EditController
@@ -243,7 +242,6 @@ private:
 
 Steinberg::Vst::SpeakerArrangement speaker_arr_from_channels(int channels);
 
-} // end namespace vst3
-} // end namespace sushi
+} // end namespace sushi::internal::vst3
 
-#endif //SUSHI_VST3X_WRAPPER_H
+#endif // SUSHI_VST3X_WRAPPER_H

@@ -9,9 +9,10 @@
 #include "engine/midi_dispatcher.h"
 
 using namespace sushi;
-using namespace midi;
-using namespace sushi::engine;
-using namespace sushi::midi_dispatcher;
+using namespace sushi::internal;
+using namespace sushi::internal::midi;
+using namespace sushi::internal::engine;
+using namespace sushi::internal::midi_dispatcher;
 
 // Dummy event dispatcher
 class EventDispatcherMockup : public dispatcher::BaseEventDispatcher
@@ -22,26 +23,29 @@ public:
         Execute
     };
 
-    ~EventDispatcherMockup()
+    ~EventDispatcherMockup() override
     {
         while (!_queue.empty())
         {
-            auto e = _queue.back();
+            // unique_ptr's will delete content as they go out of scope.
             _queue.pop_back();
-            delete e;
         }
     }
 
-    int process(Event* /*event*/) override
+    void run() override {}
+    void stop() override {}
+
+    void set_sample_rate(float /*sample_rate*/) override {}
+    void set_time(Time /*timestamp*/) override {}
+
+    int dispatch(std::unique_ptr<Event> /*event*/) override
     {
         return EventStatus::HANDLED_OK;
     }
 
-    int poster_id() override {return EventPosterId::AUDIO_ENGINE;}
-
-    void post_event(Event* event) override
+    void post_event(std::unique_ptr<Event> event) override
     {
-        _queue.push_front(event);
+        _queue.push_front(std::move(event));
     }
 
     /**
@@ -53,11 +57,11 @@ public:
         if (_queue.empty())
         {
             return false;
-        } else
+        }
+        else
         {
-            Event* e = _queue.back();
+            // unique_ptr's will delete content as they go out of scope.
             _queue.pop_back();
-            delete e;
             return true;
         }
     }
@@ -68,31 +72,32 @@ public:
      * @param engine reference for the events execute method.
      * @return The execution status of the event.
      */
-    int execute_engine_event(engine::BaseEngine* engine)
+    int execute_engine_event(BaseEngine* engine)
     {
         EventStatus::EventStatus status = EventStatus::NOT_HANDLED;
 
-        while(_queue.empty() == false)
+        while (!_queue.empty())
         {
-            auto event = _queue.back();
+            auto event = _queue.back().get();
+
             // There can be notification events before, which we want to ignore when mocking.
             if (event->is_engine_event())
             {
                 /* TODO: If we go with Lambdas in all executable events,
-                 * the engine can just be captured in the Lambda.
-                 * If not, it should be a parameter to the Event class constructor.
+                 *  the engine can just be captured in the Lambda.
+                 *  If not, it should be a parameter to the Event class constructor.
                  */
                 auto typed_event = static_cast<EngineEvent*>(event);
 
                 status = static_cast<EventStatus::EventStatus>(typed_event->execute(engine));
 
                 _queue.pop_back();
-                delete event;
+
                 return status;
-            } else
+            }
+            else
             {
                 _queue.pop_back();
-                delete event;
             }
         }
 
@@ -104,16 +109,17 @@ public:
         if (_queue.empty())
         {
             return nullptr;
-        } else
+        }
+        else
         {
-            Event* e = _queue.back();
+            auto e = std::move(_queue.back());
             _queue.pop_back();
-            return std::unique_ptr<Event>(e);
+            return e;
         }
     }
 
 private:
-    std::deque<Event*> _queue;
+    std::deque<std::unique_ptr<Event>> _queue;
 };
 
 class ProcessorContainerMockup : public BaseProcessorContainer
@@ -168,11 +174,11 @@ private:
 class EngineMockup : public BaseEngine
 {
 public:
-    EngineMockup(float sample_rate) :
-        BaseEngine(sample_rate)
+    EngineMockup(float sample_rate) : BaseEngine(sample_rate),
+                                      _transport(sample_rate, &_rt_event_output)
     {}
 
-    ~EngineMockup()
+    ~EngineMockup() override
     {}
 
     void
@@ -196,7 +202,7 @@ public:
 
     void set_base_plugin_path(const std::string& /*path*/) override {}
 
-    EngineReturnStatus send_rt_event(const RtEvent& /*event*/) override
+    EngineReturnStatus send_rt_event_to_processor(const RtEvent& /*event*/) override
     {
         got_rt_event = true;
         return EngineReturnStatus::OK;
@@ -215,9 +221,52 @@ public:
     bool process_called{false};
     bool got_event{false};
     bool got_rt_event{false};
+
+    Transport* transport() override
+    {
+        return &_transport;
+    }
+
 private:
-    EventDispatcherMockup       _event_dispatcher;
-    ProcessorContainerMockup    _processor_container;
+    EventDispatcherMockup _event_dispatcher;
+    ProcessorContainerMockup _processor_container;
+
+    Transport _transport;
+    RtEventFifo<10> _rt_event_output;
+};
+
+// TODO: Should this really be here, or is it too specific for the engine_mockup scope,
+//   thus needing its own file?
+class DummyMidiFrontend : public sushi::internal::midi_frontend::BaseMidiFrontend
+{
+public:
+    DummyMidiFrontend() : BaseMidiFrontend(nullptr) {}
+
+    ~DummyMidiFrontend() override {}
+
+    bool init() override {return true;}
+    void run()  override {}
+    void stop() override {}
+
+    void send_midi(int input, MidiDataByte /*data*/, Time /*timestamp*/) override
+    {
+        _sent = true;
+        _input = input;
+    }
+
+    bool midi_sent_on_input(int input)
+    {
+        if (_sent && input == _input)
+        {
+            _sent = false;
+            return true;
+        }
+        return false;
+    }
+
+private:
+    bool _sent{false};
+    int  _input;
 };
 
 #endif //SUSHI_ENGINE_MOCKUP_H

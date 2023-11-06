@@ -6,17 +6,18 @@
 #include "engine/controller/audio_routing_controller.cpp"
 
 using namespace sushi;
-using namespace sushi::engine;
-using namespace sushi::engine::controller_impl;
+using namespace sushi::internal;
+using namespace sushi::internal::engine;
+using namespace sushi::internal::engine::controller_impl;
 
 constexpr float TEST_SAMPLE_RATE = 44100;
 
 class AudioRoutingControllerTest : public ::testing::Test
 {
 protected:
-    AudioRoutingControllerTest() {}
+    AudioRoutingControllerTest() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         bool debug_mode_sw = false;
         _audio_engine = std::make_unique<AudioEngine>(TEST_SAMPLE_RATE, 1, "", debug_mode_sw, new EventDispatcherMockup());
@@ -29,8 +30,6 @@ protected:
         _audio_engine->create_track("Track 1", 2);
         _track_id = _audio_engine->processor_container()->track("Track 1")->id();
     }
-
-    void TearDown() {}
 
     EventDispatcherMockup*                  _event_dispatcher_mockup{nullptr};
     std::unique_ptr<AudioEngine>            _audio_engine;
@@ -89,13 +88,13 @@ TEST_F(AudioRoutingControllerTest, TestSettingAudioRouting)
 {
     // Connect using controller functions (using events)
     auto status = _module_under_test->connect_input_channel_to_track(_track_id, 0, 2);
-    ASSERT_EQ(ext::ControlStatus::OK, status);
+    ASSERT_EQ(control::ControlStatus::OK, status);
 
     auto execution_status1 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
     ASSERT_EQ(execution_status1, EventStatus::HANDLED_OK);
 
     status = _module_under_test->connect_input_channel_to_track(_track_id, 1, 3);
-    ASSERT_EQ(ext::ControlStatus::OK, status);
+    ASSERT_EQ(control::ControlStatus::OK, status);
 
     auto execution_status2 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
     ASSERT_EQ(execution_status2, EventStatus::HANDLED_OK);
@@ -111,13 +110,13 @@ TEST_F(AudioRoutingControllerTest, TestSettingAudioRouting)
 
     // Do the same for output connections
     status = _module_under_test->connect_output_channel_to_track(_track_id, 0, 4);
-    ASSERT_EQ(ext::ControlStatus::OK, status);
+    ASSERT_EQ(control::ControlStatus::OK, status);
 
     auto execution_status3 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
     ASSERT_EQ(execution_status3, EventStatus::HANDLED_OK);
 
     status = _module_under_test->connect_output_channel_to_track(_track_id, 1, 5);
-    ASSERT_EQ(ext::ControlStatus::OK, status);
+    ASSERT_EQ(control::ControlStatus::OK, status);
 
     auto execution_status4 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
     ASSERT_EQ(execution_status4, EventStatus::HANDLED_OK);
@@ -142,7 +141,7 @@ TEST_F(AudioRoutingControllerTest, TestRemovingAudioRouting)
 
     // Disconnect using controller functions (using events)
     auto status = _module_under_test->disconnect_input(_track_id, 0, 2);
-    ASSERT_EQ(ext::ControlStatus::OK, status);
+    ASSERT_EQ(control::ControlStatus::OK, status);
 
     auto execution_status1 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
     ASSERT_EQ(execution_status1, EventStatus::HANDLED_OK);
@@ -153,7 +152,7 @@ TEST_F(AudioRoutingControllerTest, TestRemovingAudioRouting)
     EXPECT_EQ(2u, connections.size());
 
     status = _module_under_test->disconnect_all_outputs_from_track(_track_id);
-    ASSERT_EQ(ext::ControlStatus::OK, status);
+    ASSERT_EQ(control::ControlStatus::OK, status);
 
     auto execution_status2 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
     ASSERT_EQ(execution_status2, EventStatus::HANDLED_OK);

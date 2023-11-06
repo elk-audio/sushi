@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -21,10 +21,9 @@
 #ifndef SUSHI_MIDI_ENCODER_H
 #define SUSHI_MIDI_ENCODER_H
 
-#include "types.h"
+#include "sushi/types.h"
 
-namespace sushi {
-namespace midi {
+namespace sushi::internal::midi {
 
 /**
  * @brief Encode a midi note on message
@@ -122,7 +121,6 @@ MidiDataByte encode_active_sensing();
 MidiDataByte encode_reset_message();
 
 
-} // end namespace midi
-} // end namespace sushi
+} // end namespace sushi::internal::midi
 
-#endif //SUSHI_MIDI_ENCODER_H
+#endif // SUSHI_MIDI_ENCODER_H

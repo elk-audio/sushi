@@ -5,6 +5,7 @@
 #include "dsp_library/value_smoother.h"
 
 using namespace sushi;
+using namespace sushi::internal;
 
 constexpr float TEST_SAMPLE_RATE = 1000;
 constexpr float TEST_TARGET_VALUE = 1;
@@ -31,9 +32,9 @@ void test_common(ValueSmoother<T, mode>& module_under_test)
 class ValueSmootherTest : public ::testing::Test
 {
 protected:
-    ValueSmootherTest() {}
+    ValueSmootherTest() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         _module_under_test_filter.set_lag_time(std::chrono::milliseconds(5), TEST_SAMPLE_RATE);
         _module_under_test_ramp.set_lag_time(std::chrono::milliseconds(5), TEST_SAMPLE_RATE);

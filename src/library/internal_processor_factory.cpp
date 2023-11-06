@@ -56,7 +56,7 @@
 #include "plugins/brickworks/notch_plugin.h"
 #include "plugins/brickworks/simple_synth_plugin.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 /**
  * @brief Simplified factory only used internally in this file
@@ -152,8 +152,8 @@ InternalProcessorFactory::new_instance(const PluginInfo &plugin_info,
 
 InternalProcessorFactory::~InternalProcessorFactory() = default;
 
-std::shared_ptr<Processor> sushi::InternalProcessorFactory::_create_internal_plugin(const std::string &uid,
-                                                                                    sushi::HostControl &host_control)
+std::shared_ptr<Processor> InternalProcessorFactory::_create_internal_plugin(const std::string &uid,
+                                                                             HostControl &host_control)
 {
     auto factory = _internal_plugin_factories.find(uid);
     if (factory == _internal_plugin_factories.end())
@@ -168,4 +168,4 @@ void InternalProcessorFactory::_add(std::unique_ptr<BaseInternalPlugFactory> fac
     _internal_plugin_factories.insert({factory->uid(), std::move(factory)});
 }
 
-} // namespace sushi
+} // end namespace sushi::internal

@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -18,13 +18,13 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
+#include "elklog/static_logger.h"
+
 #include "processor_container.h"
-#include "logging.h"
 
-namespace sushi {
-namespace engine {
+namespace sushi::internal::engine {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("engine");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("engine");
 
 bool ProcessorContainer::add_processor(std::shared_ptr<Processor> processor)
 {
@@ -59,12 +59,12 @@ bool ProcessorContainer::remove_processor(ObjectId id)
     {
         std::scoped_lock<std::mutex> lock(_processors_by_id_lock);
         [[maybe_unused]] auto count = _processors_by_id.erase(processor->id());
-        SUSHI_LOG_WARNING_IF(count != 1, "Erased {} instances of processor {}", count, processor->name())
+        ELKLOG_LOG_WARNING_IF(count != 1, "Erased {} instances of processor {}", count, processor->name())
     }
     {
         std::scoped_lock<std::mutex> lock(_processors_by_name_lock);
         [[maybe_unused]] auto count = _processors_by_name.erase(processor->name());
-        SUSHI_LOG_WARNING_IF(count != 1, "Erased {} instances of processor {}", count, processor->name())
+        ELKLOG_LOG_WARNING_IF(count != 1, "Erased {} instances of processor {}", count, processor->name())
     }
     return true;
 }
@@ -253,5 +253,4 @@ std::vector<std::shared_ptr<const Track>> ProcessorContainer::all_tracks() const
     return tracks;
 }
 
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine

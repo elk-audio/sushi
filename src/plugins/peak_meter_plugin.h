@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -26,8 +26,7 @@
 
 #include "engine/track.h"
 
-namespace sushi {
-namespace peak_meter_plugin {
+namespace sushi::internal::peak_meter_plugin {
 
 constexpr int MAX_METERED_CHANNELS = MAX_TRACK_CHANNELS;
 
@@ -78,7 +77,6 @@ private:
     std::array<ValueSmootherFilter<float>, MAX_METERED_CHANNELS> _smoothers;
 };
 
-}// namespace peak_meter_plugin
-}// namespace sushi
+} // end namespace sushi::internal::peak_meter_plugin
 
-#endif //SUSHI_PEAK_METER_PLUGIN_H
+#endif // SUSHI_PEAK_METER_PLUGIN_H

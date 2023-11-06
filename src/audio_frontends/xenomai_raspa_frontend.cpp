@@ -7,16 +7,17 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
  /**
- * @brief Frontend using Xenomai with RASPA library for XMOS board.
- * @Copyright 2017-2023 Elk Audio AB, Stockholm
- */
+  * @brief Frontend using Xenomai with RASPA library for XMOS board.
+  * @Copyright 2017-2023 Elk Audio AB, Stockholm
+  */
+
 #ifdef SUSHI_BUILD_WITH_RASPA
 
 #include <cerrno>
@@ -25,10 +26,8 @@
 
 #include "xenomai_raspa_frontend.h"
 #include "audio_frontend_internals.h"
-#include "logging.h"
 
-namespace sushi {
-namespace audio_frontend {
+namespace sushi::internal::audio_frontend {
 
 /**
  * Ensure version compatibility with raspa library
@@ -38,7 +37,7 @@ constexpr int REQUIRED_RASPA_VER_MIN = 1;
 static_assert(REQUIRED_RASPA_VER_MAJ == RASPA_VERSION_MAJ, "Raspa major version mismatch");
 static_assert(REQUIRED_RASPA_VER_MIN == RASPA_VERSION_MIN, "Raspa minor version mismatch");
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("raspa audio");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("raspa audio");
 
 bool XenomaiRaspaFrontend::_raspa_initialised = false;
 
@@ -61,27 +60,27 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
     auto raspa_ret = raspa_open(AUDIO_CHUNK_SIZE, rt_process_callback, this, debug_flags);
     if (raspa_ret < 0)
     {
-        SUSHI_LOG_ERROR("Error opening RASPA: {}", raspa_get_error_msg(-raspa_ret));
+        ELKLOG_LOG_ERROR("Error opening RASPA: {}", raspa_get_error_msg(-raspa_ret));
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
     auto cv_audio_status = config_audio_channels(raspa_config);
     if (cv_audio_status != AudioFrontendStatus::OK)
     {
-        SUSHI_LOG_ERROR("Incompatible cv and audio channel setup");
+        ELKLOG_LOG_ERROR("Incompatible cv and audio channel setup");
         return cv_audio_status;
     }
 
     auto raspa_sample_rate = raspa_get_sampling_rate();
     if (raspa_sample_rate == 0)
     {
-        SUSHI_LOG_ERROR("Raspa has invalid sample rate of 0.");
+        ELKLOG_LOG_ERROR("Raspa has invalid sample rate of 0.");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
     if (_engine->sample_rate() != raspa_sample_rate)
     {
-        SUSHI_LOG_WARNING("Sample rate mismatch between engine ({}) and Raspa ({}), setting to {}",
+        ELKLOG_LOG_WARNING("Sample rate mismatch between engine ({}) and Raspa ({}), setting to {}",
                           _engine->sample_rate(), raspa_sample_rate, raspa_sample_rate);
         _engine->set_sample_rate(raspa_sample_rate);
     }
@@ -95,7 +94,7 @@ void XenomaiRaspaFrontend::cleanup()
     _engine->enable_realtime(false);
     if (_raspa_initialised)
     {
-        SUSHI_LOG_INFO("Closing Raspa driver.");
+        ELKLOG_LOG_INFO("Closing Raspa driver.");
         raspa_close();
     }
     _raspa_initialised = false;
@@ -175,7 +174,7 @@ AudioFrontendStatus XenomaiRaspaFrontend::config_audio_channels(const XenomaiRas
     auto num_total_output_channels = raspa_get_num_output_channels();
     if (num_total_input_channels == 0 && num_total_output_channels == 0)
     {
-        SUSHI_LOG_ERROR("RASPA has no input or output channels.");
+        ELKLOG_LOG_ERROR("RASPA has no input or output channels.");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
@@ -198,25 +197,28 @@ AudioFrontendStatus XenomaiRaspaFrontend::config_audio_channels(const XenomaiRas
     return AudioFrontendStatus::OK;
 }
 
-}; // end namespace audio_frontend
-}; // end namespace sushi
+} // end namespace sushi::internal::audio_frontend
 
 #else // SUSHI_BUILD_WITH_RASPA
 
-#include "audio_frontends/xenomai_raspa_frontend.h"
-#include "logging.h"
-namespace sushi {
-namespace audio_frontend {
-SUSHI_GET_LOGGER;
+#include "elklog/static_logger.h"
+
+#include "xenomai_raspa_frontend.h"
+
+namespace sushi::internal::audio_frontend {
+
+ELKLOG_GET_LOGGER;
+
 XenomaiRaspaFrontend::XenomaiRaspaFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine)
 {}
 
 AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration*)
 {
     /* The log print needs to be in a cpp file for initialisation order reasons */
-    SUSHI_LOG_ERROR("Sushi was not built with Xenomai Cobalt support!");
+    ELKLOG_LOG_ERROR("Sushi was not built with Xenomai Cobalt support!");
     return AudioFrontendStatus::AUDIO_HW_ERROR;
 }
-}}
+
+}
 
 #endif // SUSHI_BUILD_WITH_RASPA

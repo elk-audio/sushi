@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -24,8 +24,7 @@
 #include "library/internal_plugin.h"
 #include "library/rt_event_fifo.h"
 
-namespace sushi {
-namespace passthrough_plugin {
+namespace sushi::internal::passthrough_plugin {
 
 class PassthroughPlugin : public InternalPlugin, public UidHelper<PassthroughPlugin>
 {
@@ -41,6 +40,7 @@ public:
 private:
 };
 
-}// namespace passthrough_plugin
-}// namespace sushi
-#endif //PASSTHROUGH_PLUGIN_H
+} // end namespace sushi::internal::passthrough_plugin
+
+#endif // PASSTHROUGH_PLUGIN_H
+

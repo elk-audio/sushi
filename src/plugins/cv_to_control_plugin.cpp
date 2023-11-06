@@ -7,25 +7,24 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
-* @brief Adapter plugin to convert cv/gate information to note on and note
-*        off messages to enable cv/gate control of synthesizer plugins.
-* @Copyright 2017-2023 Elk Audio AB, Stockholm
-*/
+ * @brief Adapter plugin to convert cv/gate information to note on and note
+ *        off messages to enable cv/gate control of synthesizer plugins.
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
+ */
 
 #include <algorithm>
 #include <cmath>
 
 #include "plugins/cv_to_control_plugin.h"
 
-namespace sushi {
-namespace cv_to_control_plugin {
+namespace sushi::internal::cv_to_control_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.testing.cv_to_control";
 constexpr auto DEFAULT_LABEL = "Cv to control adapter";
@@ -210,5 +209,5 @@ std::pair<int, float> cv_to_pitch(float value)
     double fraction = modf(value * 120.0f , &int_note);
     return {static_cast<int>(int_note), static_cast<float>(fraction)};
 }
-}// namespace cv_to_control_plugin
-}// namespace sushi
+
+} // end namespace sushi::internal::cv_to_control_plugin

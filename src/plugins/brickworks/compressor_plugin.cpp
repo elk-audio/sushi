@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -22,13 +22,13 @@
 
 #include "compressor_plugin.h"
 
-namespace sushi {
-namespace compressor_plugin {
+namespace sushi::internal::compressor_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.compressor";
 constexpr auto DEFAULT_LABEL = "Compressor";
 
 constexpr float MINUS_3DB = 0.7071067811865476f;
+
 
 CompressorPlugin::CompressorPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
@@ -90,7 +90,7 @@ void CompressorPlugin::set_enabled(bool enabled)
 
 void CompressorPlugin::set_bypassed(bool bypassed)
 {
-    _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
+    _host_control.post_event(std::make_unique<SetProcessorBypassEvent>(this->id(), bypassed, IMMEDIATE_PROCESS));
 }
 
 void CompressorPlugin::process_event(const RtEvent& event)
@@ -167,6 +167,5 @@ std::string_view CompressorPlugin::static_uid()
 }
 
 
-}// namespace compressor_plugin
-}// namespace sushi
+} // namespace sushi::internal::compressor_plugin
 

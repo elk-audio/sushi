@@ -5,8 +5,7 @@
 #include <variant>
 #include "control_interface.h"
 
-namespace sushi {
-namespace ext {
+namespace sushi::control {
 
 using TransportNotificationValue = std::variant<float, PlayingMode, SyncMode, TimeSignature>;
 
@@ -127,7 +126,6 @@ private:
     std::string _value;
 };
 
-} // ext
-} // sushi
+} // end namespace sushi::control
 
 #endif //SUSHI_CONTROL_NOTIFICATIONS_H

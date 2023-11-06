@@ -3,7 +3,8 @@
 #include "library/midi_encoder.cpp"
 
 using namespace sushi;
-using namespace midi;
+using namespace sushi::internal;
+using namespace sushi::internal::midi;
 
 TEST(TestMidiEncoder, EncodeNoteOn)
 {

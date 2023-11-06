@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -20,9 +20,7 @@
 
 #include "osc_controller.h"
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
 OscController::OscController(BaseEngine* engine) : _event_dispatcher(engine->event_dispatcher()),
                                                    _processors(engine->processor_container()) {}
@@ -64,11 +62,11 @@ std::vector<std::string> OscController::get_enabled_parameter_outputs() const
     return {};
 }
 
-ext::ControlStatus OscController::enable_output_for_parameter(int processor_id, int parameter_id)
+control::ControlStatus OscController::enable_output_for_parameter(int processor_id, int parameter_id)
 {
     if (_osc_frontend == nullptr)
     {
-        return ext::ControlStatus::UNSUPPORTED_OPERATION;
+        return control::ControlStatus::UNSUPPORTED_OPERATION;
     }
 
     auto lambda = [=] () -> int
@@ -98,16 +96,16 @@ ext::ControlStatus OscController::enable_output_for_parameter(int processor_id, 
         return EventStatus::HANDLED_OK;
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
+    return control::ControlStatus::OK;
 }
 
-ext::ControlStatus OscController::disable_output_for_parameter(int processor_id, int parameter_id)
+control::ControlStatus OscController::disable_output_for_parameter(int processor_id, int parameter_id)
 {
     if (_osc_frontend == nullptr)
     {
-        return ext::ControlStatus::UNSUPPORTED_OPERATION;
+        return control::ControlStatus::UNSUPPORTED_OPERATION;
     }
 
     auto lambda = [=] () -> int
@@ -137,9 +135,9 @@ ext::ControlStatus OscController::disable_output_for_parameter(int processor_id,
         return EventStatus::HANDLED_OK;
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
+    return control::ControlStatus::OK;
 }
 
 void OscController::set_osc_frontend(control_frontend::OSCFrontend* osc_frontend)
@@ -147,11 +145,11 @@ void OscController::set_osc_frontend(control_frontend::OSCFrontend* osc_frontend
     _osc_frontend = osc_frontend;
 }
 
-ext::ControlStatus OscController::enable_all_output()
+control::ControlStatus OscController::enable_all_output()
 {
     if (_osc_frontend == nullptr)
     {
-        return ext::ControlStatus::UNSUPPORTED_OPERATION;
+        return control::ControlStatus::UNSUPPORTED_OPERATION;
     }
 
     auto lambda = [=] () -> int
@@ -160,16 +158,16 @@ ext::ControlStatus OscController::enable_all_output()
         return EventStatus::HANDLED_OK;
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
+    return control::ControlStatus::OK;
 }
 
-ext::ControlStatus OscController::disable_all_output()
+control::ControlStatus OscController::disable_all_output()
 {
     if (_osc_frontend == nullptr)
     {
-        return ext::ControlStatus::UNSUPPORTED_OPERATION;
+        return control::ControlStatus::UNSUPPORTED_OPERATION;
     }
 
     auto lambda = [=] () -> int
@@ -178,11 +176,9 @@ ext::ControlStatus OscController::disable_all_output()
         return EventStatus::HANDLED_OK;
     };
 
-    auto event = new LambdaEvent(lambda, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
+    return control::ControlStatus::OK;
 }
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl

@@ -5,17 +5,16 @@
 #include "test_utils/host_control_mockup.h"
 
 using namespace sushi;
-using namespace sushi::step_sequencer_plugin;
+using namespace sushi::internal::step_sequencer_plugin;
 
 constexpr float TEST_SAMPLERATE = 48000;
 
 class TestStepSequencerPlugin : public ::testing::Test
 {
 protected:
-    TestStepSequencerPlugin()
-    {
-    }
-    void SetUp()
+    TestStepSequencerPlugin() = default;
+
+    void SetUp() override
     {
         ProcessorReturnCode status = _module_under_test.init(TEST_SAMPLERATE);
         ASSERT_EQ(ProcessorReturnCode::OK, status);

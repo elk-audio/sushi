@@ -28,7 +28,7 @@
 #include "library/base_processor_factory.h"
 #include "engine/base_engine.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 struct Hash
 {
@@ -49,6 +49,6 @@ private:
     std::unordered_map<PluginType, std::unique_ptr<BaseProcessorFactory>, Hash> _factories;
 };
 
-} // end namespace sushi
+} // end namespace sushi::internal
 
-#endif //SUSHI_PLUGIN_REGISTRY_H
+#endif // SUSHI_PLUGIN_REGISTRY_H

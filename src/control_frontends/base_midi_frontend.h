@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
  /**
@@ -23,11 +23,11 @@
 #ifndef SUSHI_BASE_MIDI_FRONTEND_H
 #define SUSHI_BASE_MIDI_FRONTEND_H
 
-#include "library/types.h"
+#include "sushi/types.h"
+
 #include "engine/midi_receiver.h"
 
-namespace sushi {
-namespace midi_frontend {
+namespace sushi::internal::midi_frontend {
 
 class BaseMidiFrontend
 {
@@ -67,6 +67,6 @@ public:
     void send_midi(int /*input*/, MidiDataByte /*data*/, Time /*timestamp*/) override {};
 };
 
-} // end namespace midi_frontend
-} // end namespace sushi
-#endif //SUSHI_BASE_MIDI_FRONTEND_H
+} // end namespace sushi::internal::midi_frontend
+
+#endif // SUSHI_BASE_MIDI_FRONTEND_H

@@ -18,20 +18,10 @@ class TestVst2xPluginLoading : public ::testing::Test
 protected:
     TestVst2xPluginLoading():
             _host_control(_hc.make_host_control_mockup(SAMPLE_RATE))
-    {
-
-    }
-
-    void SetUp()
-    {
-    }
-
-    void TearDown()
-    {
-    }
+    {}
 
     HostControlMockup _hc;
-    sushi::HostControl _host_control;
+    HostControl _host_control;
     PluginRegistry _plugin_registry;
 };
 

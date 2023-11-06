@@ -7,7 +7,7 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
  * SUSHI. If not, see http://www.gnu.org/licenses/
@@ -22,8 +22,7 @@
 
 #include "library/base_processor_factory.h"
 
-namespace sushi {
-namespace lv2 {
+namespace sushi::internal::lv2 {
 
 class LilvWorldWrapper;
 
@@ -40,7 +39,6 @@ private:
     std::weak_ptr<LilvWorldWrapper> _world;
 };
 
-} // end namespace lv2
-} // end namespace sushi
+} // end namespace sushi::internal::lv2
 
-#endif //SUSHI_LV2_PROCESSOR_FACTORY_H
+#endif // SUSHI_LV2_PROCESSOR_FACTORY_H

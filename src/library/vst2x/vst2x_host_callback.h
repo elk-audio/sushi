@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -27,8 +27,7 @@
 #include "aeffectx.h"
 #pragma GCC diagnostic pop
 
-namespace sushi {
-namespace vst2 {
+namespace sushi::internal::vst2 {
 
 typedef AEffect *(*plugin_entry_proc)(audioMasterCallback host);
 
@@ -36,7 +35,6 @@ extern VstIntPtr VSTCALLBACK host_callback(AEffect* effect,
                                            VstInt32 opcode, VstInt32 index,
                                            VstIntPtr value, void* ptr, float opt);
 
-} // namespace vst2
-} // namespace sushi
+} // end namespace sushi::internal::vst2
 
-#endif //SUSHI_VST2X_HOST_CALLBACK_H
+#endif // SUSHI_VST2X_HOST_CALLBACK_H

@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -28,10 +28,9 @@
 
 #include <cassert>
 
-#include "types.h"
+#include "sushi/types.h"
 
-namespace sushi {
-namespace midi {
+namespace sushi::internal::midi {
 
 /* Max value for midi velocity, pressure, controller value, etc. */
 constexpr int MAX_VALUE = 127;
@@ -279,8 +278,7 @@ SongPositionMessage decode_song_position(MidiDataByte data);
 SongSelectMessage decode_song_select(MidiDataByte data);
 
 
-} // end namespace midi
-} // end namespace sushi
+} // end namespace sushi::internal::midi
 
 
-#endif //SUSHI_MIDI_DECODER_H
+#endif // SUSHI_MIDI_DECODER_H

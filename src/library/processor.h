@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -26,15 +26,16 @@
 #include <unordered_map>
 #include <vector>
 
-#include "library/sample_buffer.h"
-#include "library/rt_event.h"
-#include "library/rt_event_pipe.h"
+#include "sushi/sample_buffer.h"
+
+#include "engine/host_control.h"
 #include "library/id_generator.h"
 #include "library/plugin_parameters.h"
+#include "library/rt_event.h"
+#include "library/rt_event_pipe.h"
 #include "processor_state.h"
-#include "engine/host_control.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 enum class ProcessorReturnCode
 {
@@ -653,5 +654,6 @@ private:
     int _ramp_count{0};
 };
 
-} // end namespace sushi
-#endif //SUSHI_PROCESSOR_H
+} // end namespace sushi::internal
+
+#endif // SUSHI_PROCESSOR_H

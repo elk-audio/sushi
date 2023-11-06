@@ -6,13 +6,17 @@
 #include "test_utils/test_utils.h"
 
 #define private public
+
 #include "audio_frontends/offline_frontend.cpp"
+
+#include "utils.cpp"
 
 using ::testing::internal::posix::GetEnv;
 
 using namespace sushi;
-using namespace sushi::audio_frontend;
-using namespace sushi::midi_dispatcher;
+using namespace sushi::internal;
+using namespace sushi::internal::audio_frontend;
+using namespace sushi::internal::midi_dispatcher;
 
 constexpr float SAMPLE_RATE = 44000;
 constexpr int CV_CHANNELS = 0;
@@ -25,21 +29,21 @@ protected:
     {
     }
 
-    void SetUp()
+    void SetUp() override
     {
         _module_under_test = new OfflineFrontend(&_engine);
         _engine.set_audio_input_channels(AUDIO_CHANNELS);
         _engine.set_audio_output_channels(AUDIO_CHANNELS);
     }
 
-    void TearDown()
+    void TearDown() override
     {
         delete _module_under_test;
     }
 
     EngineMockup _engine{SAMPLE_RATE};
     MidiDispatcher _midi_dispatcher{_engine.event_dispatcher()};
-    OfflineFrontend* _module_under_test;
+    OfflineFrontend* _module_under_test{};
 };
 
 TEST_F(TestOfflineFrontend, TestWavProcessing)
@@ -64,8 +68,9 @@ TEST_F(TestOfflineFrontend, TestWavProcessing)
     _module_under_test->run();
 
     // Read the generated file and verify the result
-    SNDFILE*    output_file;
-    SF_INFO     soundfile_info;
+    SNDFILE* output_file;
+    SF_INFO soundfile_info;
+
     memset(&soundfile_info, 0, sizeof(soundfile_info));
 
     if (! (output_file = sf_open(output_file_name.c_str(), SFM_READ, &soundfile_info)) )
@@ -79,7 +84,7 @@ TEST_F(TestOfflineFrontend, TestWavProcessing)
                                                          &file_buffer[0],
                                                          static_cast<sf_count_t>(AUDIO_CHUNK_SIZE)))) )
     {
-        for (unsigned int n=0; n<(readcount * AUDIO_CHANNELS); n++)
+        for (unsigned int n = 0; n < (readcount * AUDIO_CHANNELS); n++)
         {
             ASSERT_FLOAT_EQ(0.5f, file_buffer[n]);
         }
@@ -125,31 +130,27 @@ TEST_F(TestOfflineFrontend, TestAddSequencerEvents)
     // Initialize with a file containing 0.5 on both channels
     std::string test_config_file = test_utils::get_data_dir_path();
     test_config_file.append("config.json");
-    sushi::jsonconfig::JsonConfigurator configurator(&_engine,
-                                                     &_midi_dispatcher,
-                                                     _engine.processor_container(),
-                                                     test_config_file);
+
+    auto json_data = read_file(test_config_file);
+
+    jsonconfig::JsonConfigurator configurator(&_engine,
+                                              &_midi_dispatcher,
+                                              _engine.processor_container(),
+                                              json_data.value());
     rapidjson::Document config;
     auto [status, events] = configurator.load_event_list();
     ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, status);
-    _module_under_test->add_sequencer_events(events);
+    _module_under_test->add_sequencer_events(std::move(events));
 
-    auto event_q = _module_under_test->_event_queue;
-    ASSERT_EQ(4u, event_q.size());
+    auto event_q = &_module_under_test->_event_queue;
+    ASSERT_EQ(4u, event_q->size());
 
     // Check that queue is sorted by time
-    auto jt = --event_q.end();
-    for(auto it = event_q.begin(); it != jt; ++it)
+    auto jt = --event_q->end();
+    for(auto it = event_q->begin(); it != jt; ++it)
     {
         ASSERT_GE((*it)->time(), (*(it + 1))->time());
     }
-
-    // Clear events manually, as that would be done by the EventDispatcher otherwise
-    for (auto* event : events)
-    {
-        delete event;
-    }
-
 }
 
 TEST_F(TestOfflineFrontend, TestNoiseGeneration)

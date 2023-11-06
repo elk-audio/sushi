@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -23,8 +23,15 @@
 
 #include <string>
 #include <array>
-#include "generated/version.h"
+
 #include "options.h"
+
+#include "generated/version.h"
+
+// For AUDIO_CHUNK_SIZE.
+#include "constants.h"
+
+namespace sushi {
 
 struct CompileTimeSettings
 {
@@ -61,7 +68,22 @@ struct CompileTimeSettings
 #ifdef SUSHI_BUILD_WITH_SENTRY
             "sentry"
 #endif
+
+// Without this entry, if all ifdefs are false, compiling will fail.
+// Not as uncommon as you may think: building without LV2, VST2 and VST3 causes this for unit-tests.
+#if    !defined (SUSHI_BUILD_WITH_VST2) \
+    && !defined (SUSHI_BUILD_WITH_VST3) \
+    && !defined (SUSHI_BUILD_WITH_LV2)  \
+    && !defined (SUSHI_BUILD_WITH_JACK) \
+    && !defined (SUSHI_BUILD_WITH_RASPA)\
+    && !defined (SUSHI_BUILD_WITH_RPC_INTERFACE) \
+    && !defined (SUSHI_BUILD_WITH_ABLETON_LINK)  \
+    && !defined (SUSHI_BUILD_WITH_SENTRY)
+            ""
+#endif
     };
 };
 
-#endif //SUSHI_COMPILE_TIME_SETTINGS_H
+} // end namespace sushi
+
+#endif // SUSHI_COMPILE_TIME_SETTINGS_H

@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -18,19 +18,16 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#ifndef SUSHI_PORTAUDIO_DEVICES_DUMP_H
-#define SUSHI_PORTAUDIO_DEVICES_DUMP_H
+#include "elklog/static_logger.h"
 
-#include "portaudio_devices_dump.h"
+#include "sushi/portaudio_devices_dump.h"
+
 #include "portaudio_frontend.h"
-#include "rapidjson/rapidjson.h"
 
-#include "logging.h"
 
 namespace sushi {
-namespace audio_frontend {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("portaudio");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("portaudio");
 
 /**
  * @brief Retrieve Portaudio's registered devices information.
@@ -40,7 +37,7 @@ SUSHI_GET_LOGGER_WITH_MODULE_NAME("portaudio");
  */
 rapidjson::Document generate_portaudio_devices_info_document()
 {
-    PortAudioFrontend frontend {nullptr};
+    sushi::internal::audio_frontend::PortAudioFrontend frontend {nullptr};
 
     rapidjson::Document document;
     document.SetObject();
@@ -49,7 +46,7 @@ rapidjson::Document generate_portaudio_devices_info_document()
     auto n_devs = frontend.devices_count();
     if ( !n_devs.has_value() || (n_devs.value() <= 0) )
     {
-        SUSHI_LOG_ERROR("No Portaudio devices found");
+        ELKLOG_LOG_ERROR("No Portaudio devices found");
         return document;
     }
 
@@ -60,7 +57,7 @@ rapidjson::Document generate_portaudio_devices_info_document()
         auto devinfo = frontend.device_info(i);
         if (!devinfo.has_value())
         {
-            SUSHI_LOG_ERROR("Could not retrieve device info for Portaudio device with idx: {}", i);
+            ELKLOG_LOG_ERROR("Could not retrieve device info for Portaudio device with idx: {}", i);
             continue;
         }
         auto di = devinfo.value();
@@ -79,7 +76,7 @@ rapidjson::Document generate_portaudio_devices_info_document()
     auto default_input = frontend.default_input_device();
     if (! default_input.has_value() )
     {
-        SUSHI_LOG_ERROR("Could not retrieve Portaudio default input device");
+        ELKLOG_LOG_ERROR("Could not retrieve Portaudio default input device");
     }
     else
     {
@@ -89,7 +86,7 @@ rapidjson::Document generate_portaudio_devices_info_document()
     auto default_output = frontend.default_output_device();
     if (! default_output.has_value() )
     {
-        SUSHI_LOG_ERROR("Could not retrieve Portaudio default output device");
+        ELKLOG_LOG_ERROR("Could not retrieve Portaudio default output device");
     }
     else
     {
@@ -102,8 +99,5 @@ rapidjson::Document generate_portaudio_devices_info_document()
     return document;
 }
 
-} // end namespace audio_frontend
 } // end namespace sushi
-
-#endif // SUSHI_PORTAUDIO_DEVICES_DUMP_H
 

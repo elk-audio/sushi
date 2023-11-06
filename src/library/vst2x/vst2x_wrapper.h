@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -23,14 +23,14 @@
 
 #include <map>
 
+#include "sushi/constants.h"
+
 #include "library/processor.h"
-#include "library/constants.h"
 #include "vst2x_plugin_loader.h"
 #include "vst2x_midi_event_fifo.h"
 #include "engine/base_event_dispatcher.h"
 
-namespace sushi {
-namespace vst2 {
+namespace sushi::internal::vst2 {
 
 /* Should match the maximum reasonable number of channels of a vst */
 constexpr int VST_WRAPPER_MAX_N_CHANNELS = MAX_TRACK_CHANNELS;
@@ -192,7 +192,6 @@ private:
 
 VstSpeakerArrangementType arrangement_from_channels(int channels);
 
-} // end namespace vst2
-} // end namespace sushi
+} // end namespace sushi::internal::vst2
 
-#endif //SUSHI_VST2X_PLUGIN_H
+#endif // SUSHI_VST2X_PLUGIN_H

@@ -14,18 +14,20 @@
 #include "test_utils/control_mockup.h"
 
 using namespace sushi;
-using namespace sushi::control_frontend;
-using namespace sushi::midi_dispatcher;
-using namespace sushi::engine;
-using namespace sushi::engine::controller_impl;
+using namespace sushi::internal;
+using namespace sushi::internal::control_frontend;
+using namespace sushi::internal::midi_dispatcher;
+using namespace sushi::internal::engine;
+using namespace sushi::internal::engine::controller_impl;
 
 constexpr float TEST_SAMPLE_RATE = 44100;
 
 class SessionControllerTest : public ::testing::Test
 {
 protected:
-    SessionControllerTest() {}
-    void SetUp()
+    SessionControllerTest() = default;
+
+    void SetUp() override
     {
         _audio_engine = std::make_unique<AudioEngine>(TEST_SAMPLE_RATE, 1, "", false, new EventDispatcherMockup());
         _mock_osc_interface = new MockOscInterface(0, 0, "");
@@ -41,9 +43,8 @@ protected:
 
     }
 
-    void TearDown() {}
     MockOscInterface*                     _mock_osc_interface;
-    sushi::ext::ControlMockup             _mock_controller;
+    sushi::control::ControlMockup         _mock_controller;
     EventDispatcherMockup*                _event_dispatcher_mockup;
 
     AudioFrontendMockup                   _audio_frontend;
@@ -83,7 +84,7 @@ TEST_F(SessionControllerTest, TestSaveMidiState)
     constexpr int PARAMETER_ID = 1;
     constexpr int CC_ID = 15;
     constexpr MidiChannel MIDI_CH = MidiChannel::CH_10;
-    constexpr ext::MidiChannel EXT_MIDI_CH = ext::MidiChannel::MIDI_CH_10;
+    constexpr control::MidiChannel EXT_MIDI_CH = control::MidiChannel::MIDI_CH_10;
 
     auto [track_status, track_id] = _audio_engine->create_track(TRACK_NAME, 2);
     ASSERT_EQ(EngineReturnStatus::OK, track_status);
@@ -115,7 +116,7 @@ TEST_F(SessionControllerTest, TestSaveMidiState)
     EXPECT_TRUE(kbd_con.raw_midi);
     EXPECT_EQ(TRACK_NAME, kbd_con.track);
     EXPECT_EQ(MIDI_PORT, kbd_con.port);
-    EXPECT_EQ(ext::MidiChannel::MIDI_CH_OMNI, kbd_con.channel);
+    EXPECT_EQ(control::MidiChannel::MIDI_CH_OMNI, kbd_con.channel);
 
     auto cc_con = midi_state.cc_connections.front();
     EXPECT_EQ(PROCESSOR_NAME, cc_con.processor);
@@ -162,8 +163,8 @@ TEST_F(SessionControllerTest, TestSaveEngineState)
     EXPECT_EQ(2, engine_state.used_audio_outputs);
     EXPECT_EQ(TEST_SAMPLE_RATE, engine_state.sample_rate);
     EXPECT_EQ(125, engine_state.tempo);
-    EXPECT_EQ(ext::PlayingMode::STOPPED, engine_state.playing_mode);
-    EXPECT_EQ(ext::SyncMode::MIDI, engine_state.sync_mode);
+    EXPECT_EQ(control::PlayingMode::STOPPED, engine_state.playing_mode);
+    EXPECT_EQ(control::SyncMode::MIDI, engine_state.sync_mode);
     EXPECT_EQ(6, engine_state.time_signature.numerator);
     EXPECT_EQ(8, engine_state.time_signature.denominator);
     EXPECT_TRUE(engine_state.input_clip_detection);
@@ -217,7 +218,7 @@ TEST_F(SessionControllerTest, TestSaveTracks)
     EXPECT_EQ("Equalizer", processor.label);
     EXPECT_EQ("", processor.path);
     EXPECT_EQ(equalizer_plugin::EqualizerPlugin::static_uid(), processor.uid);
-    EXPECT_EQ(ext::PluginType::INTERNAL, processor.type);
+    EXPECT_EQ(control::PluginType::INTERNAL, processor.type);
     EXPECT_EQ(3u, processor.state.parameters.size());
 }
 
@@ -283,7 +284,7 @@ TEST_F(SessionControllerTest, TestSaveAndRestore)
 
     // Check that tracks and processors were restored correctly
     auto processors = _audio_engine->processor_container();
-    ASSERT_EQ(ext::ControlStatus::OK, controller_status);
+    ASSERT_EQ(control::ControlStatus::OK, controller_status);
     ASSERT_EQ(1, processors->all_tracks().size());
     auto restored_track = processors->all_tracks().front();
 

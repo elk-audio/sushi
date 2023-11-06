@@ -7,29 +7,30 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
-* @brief Offline frontend to process audio files in chunks
-* @Copyright 2017-2023 Elk Audio AB, Stockholm
-*/
+ * @brief Offline frontend to process audio files in chunks
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
+ */
 
 #include <cmath>
 #include <cstring>
 #include <random>
 
-#include "logging.h"
+#include "elklog/static_logger.h"
+
 #include "offline_frontend.h"
+
 #include "audio_frontend_internals.h"
 
-namespace sushi {
-namespace audio_frontend {
+namespace sushi::internal::audio_frontend {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("offline audio");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("offline audio");
 
 #if defined(__clang__)
 constexpr float INPUT_NOISE_LEVEL = 0.06309573444801933; // pow(10, (-24.0f/20.0f)) pre-computed
@@ -79,14 +80,14 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
         if (!(_input_file = sf_open(off_config->input_filename.c_str(), SFM_READ, &_soundfile_info)))
         {
             cleanup();
-            SUSHI_LOG_ERROR("Unable to open input file {}", off_config->input_filename);
+            ELKLOG_LOG_ERROR("Unable to open input file {}", off_config->input_filename);
             return AudioFrontendStatus::INVALID_INPUT_FILE;
         }
         _mono = _soundfile_info.channels == 1;
         auto sample_rate_file = _soundfile_info.samplerate;
         if (sample_rate_file != _engine->sample_rate())
         {
-            SUSHI_LOG_WARNING("Sample rate mismatch between file ({}) and engine ({})",
+            ELKLOG_LOG_WARNING("Sample rate mismatch between file ({}) and engine ({})",
                               sample_rate_file,
                               _engine->sample_rate());
         }
@@ -95,7 +96,7 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
         if (!(_output_file = sf_open(off_config->output_filename.c_str(), SFM_WRITE, &_soundfile_info)))
         {
             cleanup();
-            SUSHI_LOG_ERROR("Unable to open output file {}", off_config->output_filename);
+            ELKLOG_LOG_ERROR("Unable to open output file {}", off_config->output_filename);
             return AudioFrontendStatus::INVALID_OUTPUT_FILE;
         }
         _engine->set_audio_input_channels(OFFLINE_FRONTEND_CHANNELS);
@@ -110,13 +111,13 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
     auto status = _engine->set_cv_input_channels(off_config->cv_inputs);
     if (status != engine::EngineReturnStatus::OK)
     {
-        SUSHI_LOG_ERROR("Setting {} cv inputs failed", off_config->cv_inputs);
+        ELKLOG_LOG_ERROR("Setting {} cv inputs failed", off_config->cv_inputs);
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     status = _engine->set_cv_output_channels(off_config->cv_outputs);
     if (status != engine::EngineReturnStatus::OK)
     {
-        SUSHI_LOG_ERROR("Setting {} cv outputs failed", off_config->cv_outputs);
+        ELKLOG_LOG_ERROR("Setting {} cv outputs failed", off_config->cv_outputs);
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
     _engine->set_output_latency(std::chrono::microseconds(0));
@@ -124,10 +125,10 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
     return ret_code;
 }
 
-void OfflineFrontend::add_sequencer_events(std::vector<Event*> events)
+void OfflineFrontend::add_sequencer_events(std::vector<std::unique_ptr<Event>> events)
 {
     // Sort events by reverse time
-    std::sort(events.begin(), events.end(), [](const Event* lhs, const Event* rhs)
+    std::sort(events.begin(), events.end(), [](const std::unique_ptr<Event>& lhs, const std::unique_ptr<Event>& rhs)
                                               {
                                                   return lhs->time() >= rhs->time();
                                               });
@@ -176,15 +177,16 @@ void OfflineFrontend::_process_events(Time end_time)
 {
     while (!_event_queue.empty() && _event_queue.back()->time() < end_time)
     {
-        auto next_event = _event_queue.back();
+        auto next_event = std::move(_event_queue.back());
+
         if (next_event->maps_to_rt_event())
         {
             int offset = time_to_sample_offset(end_time, next_event->time(), _engine->sample_rate());
             auto rt_event = next_event->to_rt_event(offset);
-            _engine->send_rt_event(rt_event);
+            _engine->send_rt_event_to_processor(rt_event);
         }
+
         _event_queue.pop_back();
-        delete next_event;
     }
 }
 
@@ -272,7 +274,4 @@ void OfflineFrontend::pause(bool /*enabled*/)
     // Currently a no-op
 }
 
-
-} // end namespace audio_frontend
-
-} // end namespace sushi
+} // end namespace sushi::internal::audio_frontend

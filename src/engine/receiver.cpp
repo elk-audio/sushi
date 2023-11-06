@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -20,13 +20,13 @@
 
 #include <thread>
 
-#include "logging.h"
+#include "elklog/static_logger.h"
+
 #include "engine/receiver.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("event_receiver");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("event_receiver");
 
-namespace sushi {
-namespace receiver {
+namespace sushi::internal::receiver {
 
 constexpr int MAX_RETRIES = 100;
 
@@ -44,7 +44,7 @@ bool AsynchronousEventReceiver::wait_for_response(EventId id, std::chrono::milli
                 if (typed_event->event_id() == id)
                 {
                     auto handled_ok = typed_event->status() == ReturnableRtEvent::EventStatus::HANDLED_OK;
-                    SUSHI_LOG_ERROR_IF(handled_ok == false, "RtEvent with id {} returned with error", id);
+                    ELKLOG_LOG_ERROR_IF(handled_ok == false, "RtEvent with id {} returned with error", id);
                     return handled_ok;
                 }
                 bool status = (typed_event->status() == ReturnableRtEvent::EventStatus::HANDLED_OK);
@@ -63,8 +63,8 @@ bool AsynchronousEventReceiver::wait_for_response(EventId id, std::chrono::milli
         std::this_thread::sleep_for(timeout / MAX_RETRIES);
         retries++;
     }
-    SUSHI_LOG_WARNING("Waiting for RtEvent with id {} timed out", id);
+    ELKLOG_LOG_WARNING("Waiting for RtEvent with id {} timed out", id);
     return false;
 }
-} // end namespace receiver
-} // end namespace sushi
+
+} // end namespace sushi::internal::receiver

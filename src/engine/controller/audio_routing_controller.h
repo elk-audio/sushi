@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -21,15 +21,13 @@
 #ifndef SUSHI_AUDIO_ROUTING_CONTROLLER_H
 #define SUSHI_AUDIO_ROUTING_CONTROLLER_H
 
-#include "control_interface.h"
+#include "sushi/control_interface.h"
 #include "engine/base_engine.h"
 #include "engine/base_event_dispatcher.h"
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
-class AudioRoutingController : public ext::AudioRoutingController
+class AudioRoutingController : public control::AudioRoutingController
 {
 public:
     explicit AudioRoutingController(BaseEngine* engine) : _engine(engine),
@@ -37,33 +35,31 @@ public:
 
     ~AudioRoutingController() override = default;
 
-    std::vector<ext::AudioConnection> get_all_input_connections() const override;
+    std::vector<control::AudioConnection> get_all_input_connections() const override;
 
-    std::vector<ext::AudioConnection> get_all_output_connections() const override;
+    std::vector<control::AudioConnection> get_all_output_connections() const override;
 
-    std::vector<ext::AudioConnection> get_input_connections_for_track(int track_id) const override;
+    std::vector<control::AudioConnection> get_input_connections_for_track(int track_id) const override;
 
-    std::vector<ext::AudioConnection> get_output_connections_for_track(int track_id) const override;
+    std::vector<control::AudioConnection> get_output_connections_for_track(int track_id) const override;
 
-    ext::ControlStatus connect_input_channel_to_track(int track_id, int track_channel, int input_channel) override;
+    control::ControlStatus connect_input_channel_to_track(int track_id, int track_channel, int input_channel) override;
 
-    ext::ControlStatus connect_output_channel_to_track(int track_id, int track_channel, int output_channel) override;
+    control::ControlStatus connect_output_channel_to_track(int track_id, int track_channel, int output_channel) override;
 
-    ext::ControlStatus disconnect_input(int track_id, int track_channel, int input_channel) override;
+    control::ControlStatus disconnect_input(int track_id, int track_channel, int input_channel) override;
 
-    ext::ControlStatus disconnect_output(int track_id, int track_channel, int output_channel) override;
+    control::ControlStatus disconnect_output(int track_id, int track_channel, int output_channel) override;
 
-    ext::ControlStatus disconnect_all_inputs_from_track(int track_id) override;
+    control::ControlStatus disconnect_all_inputs_from_track(int track_id) override;
 
-    ext::ControlStatus disconnect_all_outputs_from_track(int track_id) override;
+    control::ControlStatus disconnect_all_outputs_from_track(int track_id) override;
 
 private:
     BaseEngine* _engine;
     dispatcher::BaseEventDispatcher* _event_dispatcher;
 };
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl
 
-#endif //SUSHI_AUDIO_ROUTING_CONTROLLER_H
+#endif // SUSHI_AUDIO_ROUTING_CONTROLLER_H

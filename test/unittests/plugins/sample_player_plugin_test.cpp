@@ -10,7 +10,8 @@
 #include "plugins/sample_player_plugin.cpp"
 
 using namespace sushi;
-using namespace sushi::sample_player_plugin;
+using namespace sushi::internal;
+using namespace sushi::internal::sample_player_plugin;
 using namespace sample_player_voice;
 
 constexpr float TEST_SAMPLERATE = 44100;
@@ -24,7 +25,7 @@ static const std::string SAMPLE_FILE = "Kawai-K11-GrPiano-C4_mono.wav";
 class TestSamplerVoice : public ::testing::Test
 {
 protected:
-    void SetUp()
+    void SetUp() override
     {
         _module_under_test.set_sample(&_sample);
         _module_under_test.set_samplerate(TEST_SAMPLERATE);
@@ -84,19 +85,20 @@ TEST_F(TestSamplerVoice, TestNoteOff)
 class TestSamplePlayerPlugin : public ::testing::Test
 {
 protected:
-    TestSamplePlayerPlugin()
-    {
-    }
-    void SetUp()
+    TestSamplePlayerPlugin() = default;
+
+    void SetUp() override
     {
         _module_under_test = new SamplePlayerPlugin(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
         ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
         ASSERT_EQ(ProcessorReturnCode::OK, status);
     }
-    void TearDown()
+
+    void TearDown() override
     {
         delete _module_under_test;
     }
+
     HostControlMockup _host_control;
     SamplePlayerPlugin* _module_under_test;
 
@@ -166,5 +168,5 @@ TEST_F(TestSamplePlayerPlugin, TestEventProcessing)
     _module_under_test->set_bypassed(false);
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(0.0f, out_buffer);
-    delete data.data;
+    delete[] data.data;
 }

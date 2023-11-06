@@ -12,7 +12,7 @@
 #include "library/vst3x/vst3x_host_app.cpp"
 
 using namespace sushi;
-using namespace sushi::vst3;
+using namespace sushi::internal::vst3;
 
 #ifdef NDEBUG
 const char PLUGIN_FILE[] = "../VST3/Release/adelay.vst3";
@@ -389,8 +389,7 @@ TEST_F(TestVst3xWrapper, TestStateHandling)
         {
             auto delete_event = Event::from_rt_event(rt_event, IMMEDIATE_PROCESS);
             ASSERT_TRUE(delete_event);
-            static_cast<AsynchronousDeleteEvent*>(delete_event)->execute();
-            delete delete_event;
+            static_cast<AsynchronousDeleteEvent*>(delete_event.get())->execute();
             deleted_states++;
         }
         if (rt_event.type() == RtEventType::NOTIFY)
@@ -450,10 +449,10 @@ TEST_F(TestVst3xWrapper, TestMultipleStates)
         {
             auto delete_event = Event::from_rt_event(rt_event, IMMEDIATE_PROCESS);
             ASSERT_TRUE(delete_event);
-            static_cast<AsynchronousDeleteEvent*>(delete_event)->execute();
-            delete delete_event;
+            static_cast<AsynchronousDeleteEvent*>(delete_event.get())->execute();
             deleted_states++;
         }
+
         if (rt_event.type() == RtEventType::NOTIFY)
         {
             notifications++;

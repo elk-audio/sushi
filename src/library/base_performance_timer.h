@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -23,8 +23,7 @@
 
 #include <optional>
 
-namespace sushi {
-namespace performance {
+namespace sushi::internal::performance {
 
 struct ProcessTimings
 {
@@ -85,8 +84,6 @@ public:
     virtual void clear_all_timings() = 0;
 };
 
+} // end namespace sushi::internal::performance
 
-} // namespace performance
-} // namespace sushi
-
-#endif //SUSHI_BASE_PERFORMANCE_TIMER_H
+#endif // SUSHI_BASE_PERFORMANCE_TIMER_H

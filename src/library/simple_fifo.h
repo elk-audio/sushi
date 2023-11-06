@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -29,7 +29,7 @@
 #include <array>
 #include <cassert>
 
-namespace sushi {
+namespace sushi::internal {
 
 template<typename T, size_t storage_capacity>
 class SimpleFifo
@@ -108,6 +108,6 @@ private:
     int _tail{0};
 };
 
-}// namespace sushi
+} // end namespace sushi
 
-#endif //SUSHI_SIMPLE_FIFO_H
+#endif // SUSHI_SIMPLE_FIFO_H

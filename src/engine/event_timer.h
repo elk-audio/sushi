@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -24,10 +24,9 @@
 #include <atomic>
 #include <tuple>
 
-#include "library/time.h"
+#include "sushi/sushi_time.h"
 
-namespace sushi {
-namespace event_timer {
+namespace sushi::internal::event_timer {
 
 class EventTimer
 {
@@ -44,14 +43,14 @@ public:
      *         lies further in the future, the function returns false and
      *         the returned offset is not valid.
      */
-    std::pair<bool, int>  sample_offset_from_realtime(Time timestamp);
+    std::pair<bool, int> sample_offset_from_realtime(Time timestamp) const;
 
     /**
      * @brief Convert a sample offset to real time.
      * @param offset Offset in samples
      * @return Timestamp
      */
-    Time real_time_from_sample_offset(int offset);
+    Time real_time_from_sample_offset(int offset) const;
 
     /**
      * @brief Set the samplerate of the converter.
@@ -80,8 +79,6 @@ private:
     std::atomic<Time>   _incoming_chunk_time{IMMEDIATE_PROCESS};
 };
 
-} // end event_timer
-} // end sushi
+} // end namespace sushi::internal::event_timer
 
-
-#endif //SUSHI_EVENT_TIMER_H
+#endif // SUSHI_EVENT_TIMER_H

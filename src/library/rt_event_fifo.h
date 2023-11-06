@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -26,7 +26,7 @@
 #include "library/rt_event.h"
 #include "library/rt_event_pipe.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 constexpr int MAX_EVENTS_IN_QUEUE = 1024;
 
@@ -36,17 +36,25 @@ constexpr int MAX_EVENTS_IN_QUEUE = 1024;
 class RtSafeRtEventFifo : public RtEventPipe
 {
 public:
-
-    inline bool push(const RtEvent& event) {return _fifo.push(event);}
+    inline bool push(const RtEvent& event)
+    {
+        return _fifo.push(event);
+    }
 
     inline bool pop(RtEvent& event)
     {
         return _fifo.pop(event);
     }
 
-    inline bool empty() {return _fifo.wasEmpty();}
+    inline bool empty()
+    {
+        return _fifo.wasEmpty();
+    }
 
-    void send_event(const RtEvent &event) override {push(event);}
+    void send_event(const RtEvent &event) override
+    {
+        push(event);
+    }
 
 private:
     memory_relaxed_aquire_release::CircularFifo<RtEvent, MAX_EVENTS_IN_QUEUE> _fifo;
@@ -67,6 +75,6 @@ public:
     void send_event(const RtEvent &event) override {SimpleFifo<RtEvent, size>::push(event);}
 };
 
-} //end namespace sushi
+} //end namespace sushi::internal
 
-#endif //SUSHI_REALTIME_FIFO_H
+#endif // SUSHI_REALTIME_FIFO_H

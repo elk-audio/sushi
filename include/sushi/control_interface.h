@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -28,8 +28,7 @@
 #include <vector>
 #include <chrono>
 
-namespace sushi {
-namespace ext {
+namespace sushi::control {
 
 using Time = std::chrono::microseconds;
 
@@ -705,7 +704,6 @@ private:
     SessionController*          _session_controller;
 };
 
-} // ext
-} // sushi
+} // end namespace sushi::control
 
 #endif //SUSHI_CONTROL_INTERFACE_H

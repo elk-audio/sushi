@@ -1,4 +1,14 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.8..3.23)
+
+if(${CMAKE_VERSION} VERSION_LESS 3.12)
+    cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
+endif()
+
+# Require out-of-source builds
+file(TO_CMAKE_PATH "${PROJECT_BINARY_DIR}/CMakeLists.txt" LOC_PATH)
+if(EXISTS "${LOC_PATH}")
+    message(FATAL_ERROR "You cannot build in a source directory (or any directory with a CMakeLists.txt file). Please make a build subdirectory. Feel free to remove CMakeCache.txt and CMakeFiles.")
+endif()
 
 #####################
 #  Project Version  #
@@ -9,7 +19,7 @@ set(SUSHI_VERSION_MAJOR 1)
 set(SUSHI_VERSION_MINOR 1)
 set(SUSHI_VERSION_REVISION 0)
 
-project(sushi
+project(sushi_library
     DESCRIPTION "Headless plugin host for Elk Audio OS"
     HOMEPAGE_URL "https://github.com/elk-audio/sushi"
     LANGUAGES CXX
@@ -21,6 +31,8 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 set(CMAKE_CXX_STANDARD 17)
+
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 ##################################
 #  Generate build information    #
@@ -49,6 +61,7 @@ configure_file(
 set(SUSHI_WITH_JACK_DEFAULT OFF)
 set(SUSHI_WITH_VST2_DEFAULT OFF)
 set(SUSHI_WITH_VST3_DEFAULT ON)
+set(SUSHI_LINK_VST3_DEFAULT ON)
 set(SUSHI_WITH_LINK_DEFAULT ON)
 set(SUSHI_WITH_RPC_INTERFACE_DEFAULT ON)
 set(SUSHI_TWINE_STATIC_DEFAULT OFF)
@@ -56,6 +69,8 @@ set(SUSHI_AUDIO_BUFFER_SIZE_DEFAULT 64)
 set(SUSHI_WITH_SENTRY_DEFAULT OFF)
 set(SUSHI_SENTRY_DSN_DEFAULT "--Sentry default DSN is undefined--")
 set(SUSHI_DISABLE_MULTICORE_UNIT_TESTS_DEFAULT OFF)
+set(SUSHI_BUILD_STANDALONE_APP_DEFAULT ON)
+set(SUSHI_BUILD_WITH_SANITIZERS_DEFAULT OFF)
 
 set(SUSHI_RASPA_FLAVOR_DEFAULT "evl")
 set(TWINE_WITH_XENOMAI_DEFAULT OFF)
@@ -107,6 +122,7 @@ option(SUSHI_WITH_ALSA_MIDI "Enable alsa midi support" ${SUSHI_WITH_ALSA_MIDI_DE
 option(SUSHI_WITH_RT_MIDI "Enable RtMidi support" ${SUSHI_WITH_RT_MIDI_DEFAULT})
 option(SUSHI_WITH_VST2 "Enable Vst 2 support" ${SUSHI_WITH_VST2_DEFAULT})
 option(SUSHI_WITH_VST3 "Enable Vst 3 support" ${SUSHI_WITH_VST3_DEFAULT})
+option(SUSHI_LINK_VST3 "Link Vst 3 library to Sushi" ${SUSHI_LINK_VST3_DEFAULT})
 option(SUSHI_WITH_LV2 "Enable LV2 support" ${SUSHI_WITH_LV2_DEFAULT})
 option(SUSHI_WITH_LV2_MDA_TESTS "Include unit tests depending on LV2 drobilla MDA plugin port." ${SUSHI_WITH_LV2_MDA_TESTS_DEFAULT})
 option(SUSHI_WITH_UNIT_TESTS "Build and run unit tests after compilation" ${SUSHI_WITH_UNIT_TESTS_DEFAULT})
@@ -117,6 +133,8 @@ option(SUSHI_TWINE_STATIC "Link against static version of TWINE library" ${SUSHI
 option(SUSHI_WITH_SENTRY "Enable sentry.io support" ${SUSHI_WITH_SENTRY_DEFAULT})
 option(SUSHI_SENTRY_DSN "Required Sentry DSN Path" ${SUSHI_SENTRY_DSN_DEFAULT})
 option(SUSHI_DISABLE_MULTICORE_UNIT_TESTS "Disable unit-tests dependent on multi-core processing." ${SUSHI_DISABLE_MULTICORE_UNIT_TESTS_DEFAULT})
+option(SUSHI_BUILD_STANDALONE_APP "Build standalone Sushi executable" ${SUSHI_BUILD_STANDALONE_APP_DEFAULT})
+option(SUSHI_BUILD_WITH_SANITIZERS "Build Sushi with google address sanitizer on" ${SUSHI_BUILD_WITH_SANITIZERS_DEFAULT})
 
 set(SUSHI_AUDIO_BUFFER_SIZE ${SUSHI_AUDIO_BUFFER_SIZE_DEFAULT} CACHE STRING "Set internal audio buffer size in frames")
 set(SUSHI_RASPA_FLAVOR ${SUSHI_RASPA_FLAVOR_DEFAULT} CACHE STRING "Set raspa flavor. Options are xenomai or evl")
@@ -148,20 +166,26 @@ if (${SUSHI_BUILD_TWINE})
     add_subdirectory(twine)
 
     if (${SUSHI_TWINE_STATIC})
-        set(TWINE_LIB twine_static)
+        set(TWINE_LIB twine::twine_static)
     else()
-        set(TWINE_LIB twine)
+        set(TWINE_LIB twine::twine)
     endif()
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${TWINE_LIB})
 else()
-    find_path(TWINE_PATH NAMES "twine/twine.h")
-    find_library(TWINE_LIB
-            NAMES twine
-            PATHS /usr/lib /usr/local/lib
-    )
+    find_package(twine 0.4)
     set(INCLUDE_DIRS ${INCLUDE_DIRS} ${TWINE_PATH})
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${twine_lib})
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${TWINE_LIB})
 endif()
+
+set(ELKLOG_WITH_UNIT_TESTS OFF CACHE BOOL "")
+set(ELKLOG_USE_INCLUDED_TWINE OFF CACHE BOOL "")
+set(ELKLOG_WITH_EXAMPLES OFF CACHE BOOL "")
+set(ELKLOG_MULTITHREADED_RT_LOGGING OFF CACHE BOOL "")
+set(ELKLOG_FILE_SIZE 10000000 CACHE STRING "")
+set(ELKLOG_RT_MESSAGE_SIZE 2048 CACHE STRING "")
+set(ELKLOG_RT_QUEUE_SIZE 1024 CACHE STRING "")
+
+add_subdirectory(elklog)
 
 add_subdirectory(third-party EXCLUDE_FROM_ALL)
 
@@ -179,8 +203,8 @@ if (${SUSHI_WITH_RASPA})
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_RASPA)
 
     if (NOT "$ENV{CMAKE_SYSROOT}" STREQUAL "")
-            set(CMAKE_SYSROOT "$ENV{CMAKE_SYSROOT}")
-            message("ENV_CMAKE_SYSROOT = " $ENV{CMAKE_SYSROOT})
+        set(CMAKE_SYSROOT "$ENV{CMAKE_SYSROOT}")
+        message("ENV_CMAKE_SYSROOT = " $ENV{CMAKE_SYSROOT})
     endif()
 
     # Determine whether to link with evl or cobalt lib
@@ -194,7 +218,7 @@ if (${SUSHI_WITH_RASPA})
             set(CMAKE_SYSROOT "$ENV{CMAKE_SYSROOT}")
             message("ENV_CMAKE_SYSROOT = " $ENV{CMAKE_SYSROOT})
         endif()
-    
+
         if (NOT "${CMAKE_SYSROOT}" STREQUAL "")
             set(XENOMAI_BASE_DIR "${CMAKE_SYSROOT}/usr/xenomai")
             message("XENOMAI_BASE_DIR is " ${XENOMAI_BASE_DIR})
@@ -206,9 +230,9 @@ if (${SUSHI_WITH_RASPA})
     elseif (${SUSHI_RASPA_FLAVOR} MATCHES "evl")
         message("Building with EVL support")
         find_library(EVL_LIB
-        NAMES evl
-        PATHS /usr/lib /usr/local/lib
-        )
+            NAMES evl
+            PATHS /usr/lib /usr/local/lib
+            )
         set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${EVL_LIB})
     endif()
 endif()
@@ -287,9 +311,9 @@ if (${SUSHI_WITH_ALSA_MIDI})
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_ALSA_MIDI)
 endif()
 
-#################
-# RtMidi ssetup #
-#################
+################
+# RtMidi setup #
+################
 
 if (${SUSHI_WITH_RT_MIDI})
     message("Building with RtMidi support.")
@@ -326,8 +350,8 @@ if (${SUSHI_WITH_VST2})
         set(SUSHI_VST2_SDK_PATH ${VST_2_SDK_BASE_DIR})
     else()
         find_file(SUSHI_VST2_SDK_PATH NAMES VST2_SDK vstsdk2.4 HINTS $ENV{HOME}/workspace
-                                                                $ENV{HOME}/workspace/VST_SDK
-                                                                $ENV{HOME}/workspace/vstsdk3610_11_06_2018_build_37)
+                                                                     $ENV{HOME}/workspace/VST_SDK
+                                                                     $ENV{HOME}/workspace/vstsdk3610_11_06_2018_build_37)
     endif()
     if (${SUSHI_VST2_SDK_PATH} STREQUAL "VST2_SDK_PATH-NOTFOUND")
         message("Warning! Could not find Steinberg SDK for VST 2.4")
@@ -343,6 +367,7 @@ endif()
 # VST 3 setup #
 ###############
 
+# TODO: use this ${SUSHI_LINK_VST3}, and when it's off, link to VST3 SDK included by JUCE.
 if (${SUSHI_WITH_VST3})
     message("Building with Vst3 support.")
 
@@ -363,16 +388,16 @@ if (${SUSHI_WITH_VST3})
     set(VST3_COMPILE_FLAGS "-Wno-unused-parameter -Wno-extra -Wno-deprecated -Wno-cpp -Wno-pointer-bool-conversion -Wno-suggest-override")
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-            set(VST3_HOST_SOURCES ${VST3_HOST_SOURCES} "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_linux.cpp")
-            set(AUDIOHOST_PLATFORM_LIBS)
+        set(VST3_HOST_SOURCES ${VST3_HOST_SOURCES} "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_linux.cpp")
+        set(AUDIOHOST_PLATFORM_LIBS)
     endif()
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-            set(VST3_HOST_SOURCES
-                ${VST3_HOST_SOURCES}
-                "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_mac.mm")
-            set(AUDIOHOST_PLATFORM_LIBS "-framework Cocoa")
-            set(VST3_COMPILE_FLAGS "${VST3_COMPILE_FLAGS} -fobjc-arc")
+        set(VST3_HOST_SOURCES
+            ${VST3_HOST_SOURCES}
+            "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_mac.mm")
+        set(AUDIOHOST_PLATFORM_LIBS "-framework Cocoa")
+        set(VST3_COMPILE_FLAGS "${VST3_COMPILE_FLAGS} -fobjc-arc")
     endif()
 
     add_library(vst3_host STATIC ${VST3_HOST_SOURCES})
@@ -402,7 +427,7 @@ if (${SUSHI_WITH_VST3})
     # Compiler definitions
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_VST3)
 
-    
+
     # In yocto env / cross compiling scenrarios, this is not needed as mda-vst3 plugins are
     # built already. Also, this causes an "exec-format" error since the plugins need a specific
     # method of compilation during cross compilation process.
@@ -497,35 +522,27 @@ if (${SUSHI_WITH_SENTRY})
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_SENTRY -DSUSHI_SENTRY_DSN="${SUSHI_SENTRY_DSN}")
 endif()
 
-##############
-#  Freeverb  #
-##############
-
-set(FREEVERB_DIR ${PROJECT_SOURCE_DIR}/third-party/freeverb/Components)
-set(FREEVERB_SOURCES ${FREEVERB_DIR}/allpass.cpp
-                     ${FREEVERB_DIR}/comb.cpp
-                     ${FREEVERB_DIR}/revmodel.cpp
-)
-
-
 ####################
 #  Main Target     #
 ####################
 
 set(SOURCE_FILES
-    src/main.cpp
-    src/exit_control.cpp
-    src/logging.cpp
-    src/json_utils.cpp
+    src/utils.cpp
     src/audio_frontends/base_audio_frontend.cpp
+    src/concrete_sushi.cpp
     src/audio_frontends/offline_frontend.cpp
+    src/audio_frontends/reactive_frontend.cpp
     src/audio_frontends/jack_frontend.cpp
     src/audio_frontends/portaudio_frontend.cpp
     src/audio_frontends/apple_coreaudio_frontend.cpp
     src/audio_frontends/portaudio_devices_dump.cpp
+    src/audio_frontends/coreaudio_devices_dump.cpp
     src/audio_frontends/xenomai_raspa_frontend.cpp
+    src/audio_frontends/offline_frontend.cpp
+    src/audio_frontends/reactive_frontend.cpp
     src/control_frontends/base_control_frontend.cpp
     src/control_frontends/oscpack_osc_messenger.cpp
+    src/control_frontends/reactive_midi_frontend.cpp
     src/control_frontends/osc_frontend.cpp
     src/dsp_library/biquad_filter.cpp
     src/engine/audio_engine.cpp
@@ -553,6 +570,14 @@ set(SOURCE_FILES
     src/engine/controller/cv_gate_controller.cpp
     src/engine/controller/osc_controller.cpp
     src/engine/controller/session_controller.cpp
+    src/engine/controller/real_time_controller.cpp
+    src/factories/base_factory.cpp
+    src/factories/reactive_factory.cpp
+    src/factories/reactive_factory_implementation.cpp
+    src/factories/standalone_factory.cpp
+    src/factories/standalone_factory_implementation.cpp
+    src/factories/offline_factory.cpp
+    src/factories/offline_factory_implementation.cpp
     src/library/event.cpp
     src/library/midi_decoder.cpp
     src/library/midi_encoder.cpp
@@ -607,17 +632,16 @@ set(SOURCE_FILES
     src/plugins/brickworks/dist_plugin.cpp
     src/plugins/brickworks/drive_plugin.cpp
     src/plugins/brickworks/simple_synth_plugin.cpp
-    src/audio_frontends/offline_frontend.cpp)
-
-add_executable(sushi MACOSX_BUNDLE
-    "${SOURCE_FILES}"
-    "${ADDITIONAL_VST2_SOURCES}"
-    "${ADDITIONAL_VST3_SOURCES}"
-    "${ADDITIONAL_LV2_SOURCES}"
-    "${ADDITIONAL_APPLE_COREAUDIO_SOURCES}"
-    "${MIDI_SOURCES}"
-    "${FREEVERB_SOURCES}"
 )
+
+add_library(${PROJECT_NAME} STATIC "${SOURCE_FILES}"
+                                   "${ADDITIONAL_APPLE_COREAUDIO_SOURCES}"
+                                   "${ADDITIONAL_VST2_SOURCES}"
+                                   "${ADDITIONAL_VST3_SOURCES}"
+                                   "${ADDITIONAL_LV2_SOURCES}"
+                                   "${MIDI_SOURCES}")
+
+set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
 #########################
 #  Include Directories  #
@@ -625,17 +649,16 @@ add_executable(sushi MACOSX_BUNDLE
 
 set(INCLUDE_DIRS ${INCLUDE_DIRS}
                  "${PROJECT_SOURCE_DIR}/src"
-                 "${PROJECT_SOURCE_DIR}/include"
-                 "${CMAKE_BINARY_DIR}" # for generated version.h
                  "${PROJECT_SOURCE_DIR}"
-                 "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
-                 "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include"
                  "${PROJECT_SOURCE_DIR}/third-party/vst3sdk"
                  "${PROJECT_SOURCE_DIR}/third-party/link/include"
                  "${PROJECT_SOURCE_DIR}/third-party/brickworks/include"
-                 "${FREEVERB_DIR}"
 )
 
+
+set(PUBLIC_INCLUDE_DIRS "${CMAKE_BINARY_DIR}" # for generated version.h
+                        "${PROJECT_SOURCE_DIR}/third-party/optionparser/"
+                        "${PROJECT_SOURCE_DIR}/third-party/rapidjson/include")
 
 #################################
 #  Linked libraries             #
@@ -648,24 +671,49 @@ set(COMMON_LIBRARIES
     pthread
     dl
     fifo
-    spdlog::spdlog
     oscpack
+    elklog
+    freeverb
     ${TWINE_LIB}
 )
+
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     set(COMMON_LIBRARIES ${COMMON_LIBRARIES} atomic)
 endif()
 
-target_include_directories(sushi PRIVATE ${INCLUDE_DIRS})
-target_link_libraries(sushi PRIVATE ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES})
+target_include_directories(${PROJECT_NAME}
+        PRIVATE
+            ${INCLUDE_DIRS}
+        PUBLIC
+            ${PUBLIC_INCLUDE_DIRS}
+            # where top-level project will look for the library's public headers
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+
+target_link_libraries(${PROJECT_NAME} PUBLIC ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES})
 
 ####################################
 #  Compiler Flags and definitions  #
 ####################################
 
-target_compile_features(sushi PRIVATE cxx_std_17)
-target_compile_options(sushi PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
-target_compile_definitions(sushi PRIVATE -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${SUSHI_AUDIO_BUFFER_SIZE} ${EXTRA_COMPILE_DEFINITIONS})
+target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Wextra -Wno-psabi -fPIC -ffast-math)
+
+target_compile_options(${PROJECT_NAME}  PRIVATE -fno-rtti)
+
+if (SUSHI_BUILD_WITH_SANITIZERS)
+    target_compile_options(${PROJECT_NAME}  PUBLIC -fsanitize=address -g)
+endif()
+
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+target_compile_definitions(${PROJECT_NAME} PUBLIC -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${SUSHI_AUDIO_BUFFER_SIZE} ${EXTRA_COMPILE_DEFINITIONS})
+
+#####################
+#  Sub projects     #
+#####################
+
+if (${SUSHI_BUILD_STANDALONE_APP})
+    add_subdirectory(apps)
+endif()
 
 ######################
 #  Tests subproject  #
@@ -674,25 +722,3 @@ target_compile_definitions(sushi PRIVATE -DSUSHI_CUSTOM_AUDIO_CHUNK_SIZE=${SUSHI
 if (${SUSHI_WITH_UNIT_TESTS})
     add_subdirectory(test)
 endif()
-
-####################
-#  Install         #
-####################
-set(DOC_FILES_INSTALL
-    "${PROJECT_SOURCE_DIR}/LICENSE.md"
-    "${PROJECT_SOURCE_DIR}/README.md"
-    "${PROJECT_SOURCE_DIR}/HISTORY.md"
-)
-
-if (APPLE)
-    install(CODE [[
-    include(BundleUtilities)
-    fixup_bundle($<TARGET_FILE:sushi> "" "") # TODO: fix to work when not submodule
-    ]] COMPONENT Runtime)
-endif()
-
-install(TARGETS sushi RUNTIME DESTINATION bin BUNDLE DESTINATION Applications)
-foreach (ITEM ${DOC_FILES_INSTALL})
-    install(FILES ${ITEM} DESTINATION share/sushi/doc)
-endforeach()
-

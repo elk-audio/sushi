@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -22,12 +22,11 @@
 #ifndef SUSHI_HOST_CONTROL_H
 #define SUSHI_HOST_CONTROL_H
 
-
 #include "base_event_dispatcher.h"
 #include "engine/transport.h"
 #include "engine/plugin_library.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 class HostControl
 {
@@ -43,11 +42,11 @@ public:
     /**
      * @brief Post an event into the dispatcher's queue
      *
-     * @param event Non-owning pointer to the event
+     * @param event the event
      */
-    void post_event(Event* event)
+    void post_event(std::unique_ptr<Event> event)
     {
-        _event_dispatcher->post_event(event);
+        _event_dispatcher->post_event(std::move(event));
     }
 
     /**
@@ -79,5 +78,6 @@ protected:
     engine::PluginLibrary*           _plugin_library;
 };
 
-} // end namespace sushi
-#endif //SUSHI_HOST_CONTROL_H
+} // end namespace sushi::internal
+
+#endif // SUSHI_HOST_CONTROL_H

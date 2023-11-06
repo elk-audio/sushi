@@ -11,8 +11,10 @@
 #include "engine/processor_container.cpp"
 
 constexpr float SAMPLE_RATE = 44000;
+
 using namespace sushi;
-using namespace sushi::engine;
+using namespace sushi::internal;
+using namespace sushi::internal::engine;
 
 class TestProcessorContainer : public ::testing::Test
 {

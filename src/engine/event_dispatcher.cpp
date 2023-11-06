@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -18,20 +18,21 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
+#include "elklog/static_logger.h"
+
 #include "event_dispatcher.h"
 #include "engine/base_engine.h"
 
-namespace sushi {
-namespace dispatcher {
+namespace sushi::internal::dispatcher {
 
-
-constexpr int AUDIO_ENGINE_ID = 0;
 constexpr std::chrono::milliseconds THREAD_PERIODICITY = std::chrono::milliseconds(1);
 constexpr auto WORKER_THREAD_PERIODICITY = std::chrono::milliseconds(1);
 constexpr auto TIMING_UPDATE_INTERVAL = std::chrono::seconds(1);
 constexpr auto PARAMETER_UPDATE_RATE = 10;
-// Rate limits broadcasted parameter updates to 25 Hz
+// Rate limits broadcast parameter updates to 25 Hz
 constexpr auto MAX_PARAMETER_UPDATE_INTERVAL = std::chrono::milliseconds(40);
+
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("event dispatcher");
 
 EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
                                  RtSafeRtEventFifo* in_rt_queue,
@@ -43,11 +44,7 @@ EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
                                                                     _parameter_manager{MAX_PARAMETER_UPDATE_INTERVAL,
                                                                                        engine->processor_container()},
                                                                     _parameter_update_count{0}
-{
-    std::fill(_posters.begin(), _posters.end(), nullptr);
-    register_poster(this);
-    register_poster(&_worker);
-}
+{}
 
 
 EventDispatcher::~EventDispatcher()
@@ -56,31 +53,22 @@ EventDispatcher::~EventDispatcher()
     {
         stop();
     }
-    while(_in_queue.empty() == false)
+
+    while (!_in_queue.empty())
     {
-        Event* event = _in_queue.pop();
-        delete event;
+        // As each event goes out of scope, it's deleted.
+        auto event = _in_queue.pop();
     }
 }
 
-void EventDispatcher::post_event(Event* event)
+void EventDispatcher::post_event(std::unique_ptr<Event> event)
 {
-    _in_queue.push(event);
-}
-
-EventDispatcherStatus EventDispatcher::register_poster(EventPoster* poster)
-{
-    if (_posters[poster->poster_id()] != nullptr)
-    {
-        return EventDispatcherStatus::ALREADY_SUBSCRIBED;
-    }
-    _posters[poster->poster_id()] = poster;
-    return EventDispatcherStatus::OK;
+    _in_queue.push(std::move(event));
 }
 
 void EventDispatcher::run()
 {
-    if (_running == false)
+    if (!_running)
     {
         _running = true;
         _event_thread = std::thread(&EventDispatcher::_event_loop, this);
@@ -98,54 +86,59 @@ void EventDispatcher::stop()
     }
 }
 
-EventDispatcherStatus EventDispatcher::subscribe_to_keyboard_events(EventPoster* receiver)
+Status EventDispatcher::subscribe_to_keyboard_events(EventPoster* receiver)
 {
     std::lock_guard<std::mutex> lock(_keyboard_listener_lock);
 
     for (auto r : _keyboard_event_listeners)
     {
-        if (r == receiver) return EventDispatcherStatus::ALREADY_SUBSCRIBED;
+        if (r == receiver) return Status::ALREADY_SUBSCRIBED;
     }
     _keyboard_event_listeners.push_back(receiver);
-    return EventDispatcherStatus::OK;
+    return Status::OK;
 }
 
-EventDispatcherStatus EventDispatcher::subscribe_to_parameter_change_notifications(EventPoster* receiver)
+Status EventDispatcher::subscribe_to_parameter_change_notifications(EventPoster* receiver)
 {
     std::lock_guard<std::mutex> lock(_parameter_listener_lock);
 
     for (auto r : _parameter_change_listeners)
     {
-        if (r == receiver) return EventDispatcherStatus::ALREADY_SUBSCRIBED;
+        if (r == receiver) return Status::ALREADY_SUBSCRIBED;
     }
     _parameter_change_listeners.push_back(receiver);
-    return EventDispatcherStatus::OK;
+    return Status::OK;
 }
 
-EventDispatcherStatus EventDispatcher::subscribe_to_engine_notifications(EventPoster*receiver)
+Status EventDispatcher::subscribe_to_engine_notifications(EventPoster*receiver)
 {
     std::lock_guard<std::mutex> lock(_engine_listener_lock);
 
     for (auto r : _engine_notification_listeners)
     {
-        if (r == receiver) return EventDispatcherStatus::ALREADY_SUBSCRIBED;
+        if (r == receiver) return Status::ALREADY_SUBSCRIBED;
     }
     _engine_notification_listeners.push_back(receiver);
-    return EventDispatcherStatus::OK;
+    return Status::OK;
 }
 
-int EventDispatcher::process(Event* event)
+int EventDispatcher::dispatch(std::unique_ptr<Event> event)
 {
+    int status = EventStatus::NOT_HANDLED;
+
     if (event->process_asynchronously())
     {
-        event->set_receiver(EventPosterId::WORKER);
-        return _posters[event->receiver()]->process(event);
+        return _worker.dispatch(std::move(event));
     }
+
     if (event->is_parameter_change_event())
     {
-        auto typed_event = static_cast<const ParameterChangeEvent*>(event);
-        _parameter_manager.mark_parameter_changed(typed_event->processor_id(), typed_event->parameter_id(), typed_event->time());
+        auto typed_event = static_cast<const ParameterChangeEvent*>(event.get());
+        _parameter_manager.mark_parameter_changed(typed_event->processor_id(),
+                                                  typed_event->parameter_id(),
+                                                  typed_event->time());
     }
+
     if (event->maps_to_rt_event())
     {
         auto [send_now, sample_offset] = _event_timer.sample_offset_from_realtime(event->time());
@@ -153,24 +146,49 @@ int EventDispatcher::process(Event* event)
         {
             if (_out_rt_queue->push(event->to_rt_event(sample_offset)))
             {
-                return EventStatus::HANDLED_OK;
+                status = EventStatus::HANDLED_OK;
             }
         }
-        _waiting_list.push_front(event);
-        return EventStatus::QUEUED_HANDLING;
+        else
+        {
+            _waiting_list.push_front(std::move(event));
+
+            // Dispatch will be called with this event again. When it HAS run, callback is called.
+            return EventStatus::QUEUED_HANDLING;
+        }
     }
+
     if (event->is_parameter_change_notification() || event->is_property_change_notification())
     {
-        _publish_parameter_events(event);
-        return EventStatus::HANDLED_OK;
+        _publish_parameter_events(event.get());
+        status = EventStatus::HANDLED_OK;
     }
+
     if (event->is_engine_notification())
     {
-        _handle_engine_notifications_internally(static_cast<EngineNotificationEvent*>(event));
-        _publish_engine_notification_events(event);
-        return EventStatus::HANDLED_OK;
+        _handle_engine_notifications_internally(static_cast<EngineNotificationEvent*>(event.get()));
+        _publish_engine_notification_events(event.get());
+        status = EventStatus::HANDLED_OK;
     }
-    return EventStatus::UNRECOGNIZED_EVENT;
+
+    if (status == EventStatus::HANDLED_OK)
+    {
+        if (event->completion_cb() != nullptr)
+        {
+            event->completion_cb()(event->callback_arg(), event.get(), status);
+        }
+    }
+    else
+    {
+        ELKLOG_LOG_ERROR("There should never be an unrecognized event.");
+        // If there is one, the above event handling chain is broken.
+
+        assert(false);
+
+        status = EventStatus::UNRECOGNIZED_EVENT;
+    }
+
+    return status;
 }
 
 void EventDispatcher::_event_loop()
@@ -180,26 +198,11 @@ void EventDispatcher::_event_loop()
         auto start_time = std::chrono::system_clock::now();
 
         // Handle incoming Events
-        while (Event* event = _next_event())
+        while (auto event = _next_event())
         {
-            assert(event->receiver() < static_cast<int>(_posters.size()));
-            EventPoster* receiver = _posters[event->receiver()];
-            int status = EventStatus::UNRECOGNIZED_RECEIVER;
-            if (receiver != nullptr)
-            {
-                status = _posters[event->receiver()]->process(event);
-            }
-            if (status == EventStatus::QUEUED_HANDLING)
-            {
-                /* Event has not finished processing, so don't call comp cb or delete it */
-                continue;
-            }
-            if (event->completion_cb() != nullptr)
-            {
-                event->completion_cb()(event->callback_arg(), event, status);
-            }
-            delete(event);
+            dispatch(std::move(event));
         }
+
         // Handle incoming RtEvents
         while (!_in_rt_queue->empty())
         {
@@ -207,12 +210,14 @@ void EventDispatcher::_event_loop()
             _in_rt_queue->pop(rt_event);
             _process_rt_event(rt_event);
         }
+
         // Send updates for any parameters that have changed
         if (_parameter_update_count++ >= PARAMETER_UPDATE_RATE)
         {
             _parameter_manager.output_parameter_notifications(this, _last_rt_event_time);
             _parameter_update_count = 0;
         }
+
         std::this_thread::sleep_until(start_time + THREAD_PERIODICITY);
     }
     while (_running);
@@ -230,7 +235,7 @@ int EventDispatcher::_process_rt_event(RtEvent &rt_event)
     }
 
     Time timestamp = _event_timer.real_time_from_sample_offset(rt_event.sample_offset());
-    Event* event = Event::from_rt_event(rt_event, timestamp);
+    auto event = Event::from_rt_event(rt_event, timestamp);
     if (event == nullptr)
     {
         switch (rt_event.type())
@@ -247,35 +252,37 @@ int EventDispatcher::_process_rt_event(RtEvent &rt_event)
                 return EventStatus::UNRECOGNIZED_EVENT;
         }
     }
+
     if (event->is_keyboard_event())
     {
-        _publish_keyboard_events(event);
+        _publish_keyboard_events(event.get());
     }
-    if (event->is_engine_notification())
+    else if (event->is_engine_notification())
     {
-        _publish_engine_notification_events(event);
+        _publish_engine_notification_events(event.get());
     }
+
     if (event->process_asynchronously())
     {
-        return _worker.process(event);
+        return _worker.dispatch(std::move(event));
     }
-    // TODO - better lifetime management of events
-    delete event;
+
     return EventStatus::HANDLED_OK;
 }
 
-Event* EventDispatcher::_next_event()
+std::unique_ptr<Event> EventDispatcher::_next_event()
 {
-    Event* event = nullptr;
+    std::unique_ptr<Event> event = nullptr;
     if (!_waiting_list.empty())
     {
-        event = _waiting_list.back();
+        event = std::move(_waiting_list.back());
         _waiting_list.pop_back();
     }
     else if (!_in_queue.empty())
     {
         event = _in_queue.pop();
     }
+
     return event;
 }
 
@@ -299,7 +306,7 @@ void EventDispatcher::_publish_parameter_events(Event* event)
     }
 }
 
-void EventDispatcher::_publish_engine_notification_events(sushi::Event* event)
+void EventDispatcher::_publish_engine_notification_events(Event* event)
 {
     std::lock_guard<std::mutex> lock(_engine_listener_lock);
 
@@ -309,17 +316,7 @@ void EventDispatcher::_publish_engine_notification_events(sushi::Event* event)
     }
 }
 
-EventDispatcherStatus EventDispatcher::deregister_poster(EventPoster* poster)
-{
-    if (_posters[poster->poster_id()] != nullptr)
-    {
-        _posters[poster->poster_id()] = nullptr;
-        return EventDispatcherStatus::OK;
-    }
-    return EventDispatcherStatus::UNKNOWN_POSTER;
-}
-
-EventDispatcherStatus EventDispatcher::unsubscribe_from_keyboard_events(EventPoster* receiver)
+Status EventDispatcher::unsubscribe_from_keyboard_events(EventPoster* receiver)
 {
     std::lock_guard<std::mutex> lock(_keyboard_listener_lock);
 
@@ -328,13 +325,13 @@ EventDispatcherStatus EventDispatcher::unsubscribe_from_keyboard_events(EventPos
         if (*i == receiver)
         {
             _keyboard_event_listeners.erase(i);
-            return EventDispatcherStatus::OK;
+            return Status::OK;
         }
     }
-    return EventDispatcherStatus::UNKNOWN_POSTER;
+    return Status::UNKNOWN_POSTER;
 }
 
-EventDispatcherStatus EventDispatcher::unsubscribe_from_parameter_change_notifications(EventPoster* receiver)
+Status EventDispatcher::unsubscribe_from_parameter_change_notifications(EventPoster* receiver)
 {
     std::lock_guard<std::mutex> lock(_parameter_listener_lock);
 
@@ -343,13 +340,13 @@ EventDispatcherStatus EventDispatcher::unsubscribe_from_parameter_change_notific
         if (*i == receiver)
         {
             _parameter_change_listeners.erase(i);
-            return EventDispatcherStatus::OK;
+            return Status::OK;
         }
     }
-    return EventDispatcherStatus::UNKNOWN_POSTER;
+    return Status::UNKNOWN_POSTER;
 }
 
-EventDispatcherStatus EventDispatcher::unsubscribe_from_engine_notifications(EventPoster*receiver)
+Status EventDispatcher::unsubscribe_from_engine_notifications(EventPoster* receiver)
 {
     std::lock_guard<std::mutex> lock(_engine_listener_lock);
 
@@ -358,15 +355,10 @@ EventDispatcherStatus EventDispatcher::unsubscribe_from_engine_notifications(Eve
         if (*i == receiver)
         {
             _engine_notification_listeners.erase(i);
-            return EventDispatcherStatus::OK;
+            return Status::OK;
         }
     }
-    return EventDispatcherStatus::UNKNOWN_POSTER;
-}
-
-int EventDispatcher::poster_id()
-{
-    return AUDIO_ENGINE_ID;
+    return Status::UNKNOWN_POSTER;
 }
 
 void EventDispatcher::_handle_engine_notifications_internally(EngineNotificationEvent* event)
@@ -417,9 +409,10 @@ void Worker::stop()
     }
 }
 
-int Worker::process(Event*event)
+int Worker::dispatch(std::unique_ptr<Event> event)
 {
-    _queue.push(event);
+    _queue.push(std::move(event));
+
     return EventStatus::QUEUED_HANDLING;
 }
 
@@ -432,29 +425,32 @@ void Worker::_worker()
         while (!_queue.empty())
         {
             int status = EventStatus::UNRECOGNIZED_EVENT;
-            Event* event = _queue.pop();
+            auto event = _queue.pop();
 
             if (event->is_engine_event())
             {
-                auto typed_event = static_cast<EngineEvent*>(event);
+                auto typed_event = static_cast<EngineEvent*>(event.get());
                 status = typed_event->execute(_engine);
             }
+
             if (event->is_async_work_event())
             {
-                auto typed_event = static_cast<AsynchronousWorkEvent*>(event);
-                Event* response_event = typed_event->execute();
+                auto typed_event = static_cast<AsynchronousWorkEvent*>(event.get());
+                auto response_event = typed_event->execute();
                 if (response_event != nullptr)
                 {
-                    _dispatcher->post_event(response_event);
+                    _dispatcher->post_event(std::move(response_event));
                 }
             }
 
+            // This is a synchronous call to the completion callback,
+            // meaning it's fine that the event then goes out of scope and is deleted.
             if (event->completion_cb() != nullptr)
             {
-                event->completion_cb()(event->callback_arg(), event, status);
+                event->completion_cb()(event->callback_arg(), event.get(), status);
             }
-            delete (event);
         }
+
         if (start_time > timing_update_counter + TIMING_UPDATE_INTERVAL)
         {
             timing_update_counter = start_time;
@@ -466,6 +462,4 @@ void Worker::_worker()
     while (_running);
 }
 
-
-} // end namespace dispatcher
-} // end namespace sushi
+} // end namespace sushi::internal::dispatcher

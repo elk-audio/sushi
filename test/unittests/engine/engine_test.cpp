@@ -17,15 +17,15 @@
 constexpr float SAMPLE_RATE = 44000;
 constexpr int TEST_CHANNEL_COUNT = 4;
 using namespace sushi;
-using namespace sushi::engine;
+using namespace sushi::internal;
+using namespace sushi::internal::engine;
 
 class TestClipDetector : public ::testing::Test
 {
 protected:
-    TestClipDetector()
-    {}
+    TestClipDetector() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         _module_under_test.set_input_channels(TEST_CHANNEL_COUNT);
         _module_under_test.set_output_channels(TEST_CHANNEL_COUNT);
@@ -75,9 +75,9 @@ TEST_F(TestClipDetector, TestClipping)
 class TestEngine : public ::testing::Test
 {
 protected:
-    TestEngine() {}
+    TestEngine() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         _module_under_test = std::make_unique<AudioEngine>(SAMPLE_RATE, 1);
         _module_under_test->set_audio_input_channels(TEST_CHANNEL_COUNT);

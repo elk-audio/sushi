@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -31,8 +31,7 @@
 #include "track.h"
 #include "library/processor.h"
 
-namespace sushi {
-namespace engine {
+namespace sushi::internal::engine {
 
 class ProcessorContainer : public BaseProcessorContainer
 {
@@ -85,7 +84,7 @@ public:
      * @brief Remove a processor from a track entry
      * @param processor_id The id of the processor to remove.
      * @param track_id  The id of the track to remove from
-     * @return true if the processor was successfullt removed from the track,
+     * @return true if the processor was successfully removed from the track,
      *         false otherwise
      */
     bool remove_from_track(ObjectId processor_id, ObjectId track_id) override;
@@ -197,7 +196,6 @@ private:
     mutable std::mutex _processors_by_track_lock;
 };
 
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine
 
-#endif //SUSHI_PROCESSOR_CONTAINER_H
+#endif // SUSHI_PROCESSOR_CONTAINER_H

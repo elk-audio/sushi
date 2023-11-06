@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -22,8 +22,7 @@
 
 #include "plugins/step_sequencer_plugin.h"
 
-namespace sushi {
-namespace step_sequencer_plugin {
+namespace sushi::internal::step_sequencer_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.testing.step_sequencer";
 constexpr auto DEFAULT_LABEL = "Step Sequencer";
@@ -183,5 +182,5 @@ int snap_to_scale(int note, const std::array<int, 12>& scale)
     int octave = note / OCTAVE;
     return scale[note % OCTAVE] + octave * OCTAVE;
 }
-}// namespace step_sequencer_plugin
-}// namespace sushi
+
+} // end namespace sushi::internal::step_sequencer_plugin

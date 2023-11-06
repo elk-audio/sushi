@@ -1,22 +1,23 @@
 /*
-* Copyright 2017-2023 Elk Audio AB
-*
-* SUSHI is free software: you can redistribute it and/or modify it under the terms of
-* the GNU Affero General Public License as published by the Free Software Foundation,
-* either version 3 of the License, or (at your option) any later version.
-*
-* SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-* PURPOSE.  See the GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License along with
-* SUSHI.  If not, see http://www.gnu.org/licenses/
-*/
+ * Copyright 2017-2023 Elk Audio AB
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE. See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI. If not, see http://www.gnu.org/licenses/
+ */
+
+#include "elklog/static_logger.h"
 
 #include "apple_coreaudio_object.h"
-#include "logging.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("AppleCoreAudio");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("AppleCoreAudio");
 
 namespace apple_coreaudio {
 
@@ -135,7 +136,7 @@ OSStatus AudioObject::_audio_object_property_listener_proc(AudioObjectID audio_o
 {
     if (address == nullptr || client_data == nullptr)
     {
-        SUSHI_LOG_ERROR("Invalid object passed to _audio_object_property_listener_proc");
+        ELKLOG_LOG_ERROR("Invalid object passed to _audio_object_property_listener_proc");
         return kAudioHardwareBadObjectError;
     }
 
@@ -143,9 +144,9 @@ OSStatus AudioObject::_audio_object_property_listener_proc(AudioObjectID audio_o
 
     if (audio_object_id != audio_object->_audio_object_id)
     {
-        SUSHI_LOG_ERROR("AudioObjectID mismatch (in _audio_object_property_listener_proc)");
+        ELKLOG_LOG_ERROR("AudioObjectID mismatch (in _audio_object_property_listener_proc)");
 
-        SUSHI_LOG_ERROR("AudioObjectID mismatch (in _audio_object_property_listener_proc)");
+        ELKLOG_LOG_ERROR("AudioObjectID mismatch (in _audio_object_property_listener_proc)");
 
         return kAudioHardwareBadObjectError;
     }
@@ -173,7 +174,7 @@ bool AudioObject::get_property_array(AudioObjectID audio_object_id, const AudioO
 
     if (!has_property(audio_object_id, address))
     {
-        SUSHI_LOG_ERROR("AudioObject doesn't have requested property");
+        ELKLOG_LOG_ERROR("AudioObject doesn't have requested property");
         return false;
     }
 
@@ -186,7 +187,7 @@ bool AudioObject::get_property_array(AudioObjectID audio_object_id, const AudioO
 
     if (data_size % sizeof(T) != 0)
     {
-        SUSHI_LOG_ERROR("Invalid array property size");
+        ELKLOG_LOG_ERROR("Invalid array property size");
         return false;
     }
 
@@ -212,13 +213,13 @@ bool AudioObject::set_property(AudioObjectID audio_object_id, const AudioObjectP
 {
     if (!has_property(audio_object_id, address))
     {
-        SUSHI_LOG_ERROR("AudioObject doesn't have requested property");
+        ELKLOG_LOG_ERROR("AudioObject doesn't have requested property");
         return false;
     }
 
     if (!is_property_settable(audio_object_id, address))
     {
-        SUSHI_LOG_ERROR("Property is not settable");
+        ELKLOG_LOG_ERROR("Property is not settable");
         return false;
     }
 
@@ -226,7 +227,7 @@ bool AudioObject::set_property(AudioObjectID audio_object_id, const AudioObjectP
 
     if (get_property_data_size(audio_object_id, address) != type_size)
     {
-        SUSHI_LOG_ERROR("AudioObject's property size invalid");
+        ELKLOG_LOG_ERROR("AudioObject's property size invalid");
         return false;
     }
 
@@ -242,7 +243,7 @@ T AudioObject::get_property(AudioObjectID audio_object_id, const AudioObjectProp
 {
     if (!has_property(audio_object_id, address))
     {
-        SUSHI_LOG_ERROR("AudioObject doesn't have requested property");
+        ELKLOG_LOG_ERROR("AudioObject doesn't have requested property");
         return {};
     }
 
@@ -250,7 +251,7 @@ T AudioObject::get_property(AudioObjectID audio_object_id, const AudioObjectProp
 
     if (get_property_data_size(audio_object_id, address) != type_size)
     {
-        SUSHI_LOG_ERROR("AudioObject's property size invalid");
+        ELKLOG_LOG_ERROR("AudioObject's property size invalid");
         return {};
     }
 
@@ -258,7 +259,7 @@ T AudioObject::get_property(AudioObjectID audio_object_id, const AudioObjectProp
     auto data_size = get_property_data(audio_object_id, address, type_size, &data);
     if (data_size != type_size)
     {
-        SUSHI_LOG_ERROR("Failed to get data from AudioObject");
+        ELKLOG_LOG_ERROR("Failed to get data from AudioObject");
         return {};
     }
 

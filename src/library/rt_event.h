@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -25,13 +25,14 @@
 #include <cassert>
 #include <optional>
 
+#include "sushi/types.h"
+#include "sushi/sushi_time.h"
+
 #include "id_generator.h"
-#include "library/types.h"
-#include "library/time.h"
 #include "library/connection_types.h"
 #include "library/midi_decoder.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 /* Currently limiting the size of an event to 32 bytes and forcing it to align
  * to 32 byte boundaries. We could possibly extend this to 64 bytes if neccesary,
@@ -107,7 +108,7 @@ public:
      * @brief Type of event.
      * @return
      */
-    RtEventType type() const {return _type;};
+    RtEventType type() const {return _type;}
 
     /**
      * @brief The processor id of the target for this message.
@@ -1292,6 +1293,6 @@ inline bool is_returnable_event(const RtEvent& event)
     return event.type() >= RtEventType::INSERT_PROCESSOR && event.type() <= RtEventType::REMOVE_GATE_CONNECTION;
 }
 
-} // namespace sushi
+} // end namespace sushi::internal
 
-#endif //SUSHI_RT_EVENTS_H
+#endif // SUSHI_RT_EVENTS_H

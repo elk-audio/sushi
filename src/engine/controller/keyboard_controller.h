@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -21,39 +21,36 @@
 #ifndef SUSHI_KEYBOARD_CONTROLLER_H
 #define SUSHI_KEYBOARD_CONTROLLER_H
 
-#include "control_interface.h"
+#include "sushi/control_interface.h"
+
 #include "engine/base_engine.h"
 #include "engine/base_event_dispatcher.h"
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
-class KeyboardController : public ext::KeyboardController
+class KeyboardController : public control::KeyboardController
 {
 public:
     explicit KeyboardController(BaseEngine* engine);
 
     ~KeyboardController() override = default;
 
-    ext::ControlStatus send_note_on(int track_id, int channel, int note, float velocity) override;
+    control::ControlStatus send_note_on(int track_id, int channel, int note, float velocity) override;
 
-    ext::ControlStatus send_note_off(int track_id, int channel, int note, float velocity) override;
+    control::ControlStatus send_note_off(int track_id, int channel, int note, float velocity) override;
 
-    ext::ControlStatus send_note_aftertouch(int track_id, int channel, int note, float value) override;
+    control::ControlStatus send_note_aftertouch(int track_id, int channel, int note, float value) override;
 
-    ext::ControlStatus send_aftertouch(int track_id, int channel, float value) override;
+    control::ControlStatus send_aftertouch(int track_id, int channel, float value) override;
 
-    ext::ControlStatus send_pitch_bend(int track_id, int channel, float value) override;
+    control::ControlStatus send_pitch_bend(int track_id, int channel, float value) override;
 
-    ext::ControlStatus send_modulation(int track_id, int channel, float value) override;
+    control::ControlStatus send_modulation(int track_id, int channel, float value) override;
 
 private:
     dispatcher::BaseEventDispatcher* _event_dispatcher;
 };
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl
 
-#endif //SUSHI_KEYBOARD_CONTROLLER_H
+#endif // SUSHI_KEYBOARD_CONTROLLER_H

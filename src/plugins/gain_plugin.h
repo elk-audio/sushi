@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -23,8 +23,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace gain_plugin {
+namespace sushi::internal::gain_plugin {
 
 class GainPlugin : public InternalPlugin, public UidHelper<GainPlugin>
 {
@@ -41,6 +40,6 @@ private:
     FloatParameterValue* _gain_parameter;
 };
 
-}// namespace gain_plugin
-}// namespace sushi
+} // end namespace sushi::internal::gain_plugin
+
 #endif // GAIN_PLUGIN_H

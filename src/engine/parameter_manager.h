@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -24,16 +24,17 @@
 #include <unordered_map>
 #include <vector>
 
-#include "library/types.h"
-#include "library/constants.h"
+#include "sushi/constants.h"
+#include "sushi/types.h"
+
 #include "library/plugin_parameters.h"
 #include "library/event_interface.h"
 #include "library/event.h"
 
-namespace sushi {
+namespace sushi::internal {
 
-namespace engine { class BaseProcessorContainer;}
-namespace dispatcher { class BaseEventDispatcher;}
+namespace engine {class BaseProcessorContainer;}
+namespace dispatcher {class BaseEventDispatcher;}
 
 class ParameterManager
 {
@@ -115,5 +116,7 @@ private:
     std::unordered_map<ObjectId, std::unordered_map<ObjectId, ParameterEntry>> _parameters;
 
 };
-} // namespace sushi
-#endif //SUSHI_PARAMETER_MANAGER_H
+
+} // end namespace sushi::internal
+
+#endif // SUSHI_PARAMETER_MANAGER_H

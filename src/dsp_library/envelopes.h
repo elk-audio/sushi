@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -21,13 +21,13 @@
 #ifndef SUSHI_ENVELOPES_H
 #define SUSHI_ENVELOPES_H
 
-#include "library/constants.h"
+#include "sushi/constants.h"
 
 // VST3SDK defines RELEASE globally, which leaks into all including code
 // And conflict with the RELEASE phase of the Adsr enum.
 #undef RELEASE
 
-namespace dsp {
+namespace sushi::dsp {
 
 /**
  * @brief Too avoid divisions by zero and extensive branching, we limit the
@@ -188,6 +188,6 @@ private:
     EnvelopeState _state{EnvelopeState::OFF};
 };
 
-} // end namespace dsp
+} // end namespace sushi::dsp
 
-#endif //SUSHI_ENVELOPES_H
+#endif // SUSHI_ENVELOPES_H

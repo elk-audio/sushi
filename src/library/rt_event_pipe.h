@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -27,7 +27,7 @@
 
 #include "library/rt_event.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 class RtEventPipe
 {
@@ -35,6 +35,6 @@ public:
     virtual void send_event(const RtEvent& event) = 0;
 };
 
-} // end namespace sushi
+} // end namespace sushi::internal
 
-#endif //SUSHI_RT_EVENT_PIPE_H
+#endif // SUSHI_RT_EVENT_PIPE_H

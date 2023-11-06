@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -29,19 +29,20 @@
 #include <limits>
 #include <string>
 
-#include "library/constants.h"
+#include "sushi/constants.h"
+#include "sushi/types.h"
+#include "sushi/sushi_time.h"
+#include "sushi/sample_buffer.h"
+#include "sushi/control_interface.h"
+
 #include "base_event_dispatcher.h"
 #include "base_processor_container.h"
 #include "track.h"
-#include "library/base_performance_timer.h"
-#include "library/time.h"
-#include "library/sample_buffer.h"
-#include "library/types.h"
-#include "library/connection_types.h"
-#include "control_interface.h"
 
-namespace sushi {
-namespace engine {
+#include "library/base_performance_timer.h"
+#include "library/connection_types.h"
+
+namespace sushi::internal::engine {
 
 using BitSet32 = std::bitset<std::numeric_limits<uint32_t>::digits>;
 
@@ -243,8 +244,8 @@ public:
 
     virtual void process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
                                SampleBuffer<AUDIO_CHUNK_SIZE>* out_buffer,
-                               ControlBuffer *in_controls,
-                               ControlBuffer *out_controls,
+                               ControlBuffer* in_controls,
+                               ControlBuffer* out_controls,
                                Time timestamp,
                                int64_t samplecount) = 0;
 
@@ -260,7 +261,7 @@ public:
 
     virtual void set_base_plugin_path(const std::string& /*path*/) = 0;
 
-    virtual EngineReturnStatus send_rt_event(const RtEvent& /*event*/) = 0;
+    virtual EngineReturnStatus send_rt_event_to_processor(const RtEvent& /*event*/) = 0;
 
     virtual std::pair<EngineReturnStatus, ObjectId> create_track(const std::string & /*track_id*/,
                                                                  int /*channel_count*/)
@@ -355,7 +356,6 @@ protected:
     int _cv_outputs{0};
 };
 
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine
 
-#endif //SUSHI_BASE_ENGINE_H
+#endif // SUSHI_BASE_ENGINE_H

@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -26,8 +26,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace bitcrusher_plugin {
+namespace sushi::internal::bitcrusher_plugin {
 
 class BitcrusherPlugin : public InternalPlugin, public UidHelper<BitcrusherPlugin>
 {
@@ -65,6 +64,6 @@ private:
     std::array<bw_sr_reduce_state, MAX_TRACK_CHANNELS> _sr_reduce_states;
 };
 
-}// namespace bitcrusher_plugin
-}// namespace sushi
+} // namespace sshi::internal::bitcrusher_plugin
+
 #endif // BITCRUSHER_PLUGIN_H

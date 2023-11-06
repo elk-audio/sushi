@@ -9,7 +9,7 @@
 #include "plugins/wav_streamer_plugin.cpp"
 
 using namespace sushi;
-using namespace sushi::wav_streamer_plugin;
+using namespace sushi::internal::wav_streamer_plugin;
 
 constexpr float TEST_SAMPLERATE = 48000;
 constexpr int   TEST_CHANNEL_COUNT = 2;

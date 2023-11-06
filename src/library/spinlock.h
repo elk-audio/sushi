@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -23,12 +23,12 @@
 
 #include <atomic>
 
-#include "constants.h"
+#include "sushi/constants.h"
 
 // since std::hardware_destructive_interference_size is not yet supported in GCC 7
 constexpr int ASSUMED_CACHE_LINE_SIZE = 64;
 
-namespace sushi {
+namespace sushi::internal {
 /**
  * @brief Simple rt-safe test-and-set spinlock
  */
@@ -60,5 +60,6 @@ private:
     alignas(ASSUMED_CACHE_LINE_SIZE) std::atomic_bool flag{false};
 };
 
-} // end namespace sushi
-#endif //SUSHI_SPINLOCK_H
+} // end namespace sushi::internal
+
+#endif // SUSHI_SPINLOCK_H

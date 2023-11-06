@@ -1,22 +1,22 @@
 /*
-* Copyright 2017-2023 Elk Audio AB
-*
-* SUSHI is free software: you can redistribute it and/or modify it under the terms of
-* the GNU Affero General Public License as published by the Free Software Foundation,
-* either version 3 of the License, or (at your option) any later version.
-*
-* SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-* PURPOSE.  See the GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License along with
-* SUSHI.  If not, see http://www.gnu.org/licenses/
-*/
+ * Copyright 2017-2023 Elk Audio AB
+ *
+ * SUSHI is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE. See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with
+ * SUSHI. If not, see http://www.gnu.org/licenses/
+ */
 
 /**
-* @brief Utilities for working with Apple's CoreAudio
-* @Copyright 2017-2023 Elk Audio AB, Stockholm
-*/
+ * @brief Utilities for working with Apple's CoreAudio
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
+ */
 
 #ifndef SUSHI_APPLE_COREAUDIO_UTILS_H
 #define SUSHI_APPLE_COREAUDIO_UTILS_H
@@ -29,28 +29,28 @@
 /**
  * Helper macro to log OSStatus errors in a consistent and convenient way.
  */
-#define CA_LOG_IF_ERROR(command)                                         \
-    do                                                                   \
-    {                                                                    \
-        OSStatus result = command;                                       \
-        if (result != kAudioHardwareNoError)                             \
-        {                                                                \
-            SUSHI_LOG_ERROR("{} returned error : {}", #command, result); \
-        }                                                                \
+#define CA_LOG_IF_ERROR(command)                                          \
+    do                                                                    \
+    {                                                                     \
+        OSStatus result = command;                                        \
+        if (result != kAudioHardwareNoError)                              \
+        {                                                                 \
+            ELKLOG_LOG_ERROR("{} returned error : {}", #command, result); \
+        }                                                                 \
     } while (false)
 
 /**
  * Helper macro to return with a value when the OSStatus indicates an error.
  */
-#define CA_RETURN_IF_ERROR(command, return_value)                        \
-    do                                                                   \
-    {                                                                    \
-        OSStatus result = command;                                       \
-        if (result != kAudioHardwareNoError)                             \
-        {                                                                \
-            SUSHI_LOG_ERROR("{} returned error : {}", #command, result); \
-            return return_value;                                         \
-        }                                                                \
+#define CA_RETURN_IF_ERROR(command, return_value)                         \
+    do                                                                    \
+    {                                                                     \
+        OSStatus result = command;                                        \
+        if (result != kAudioHardwareNoError)                              \
+        {                                                                 \
+            ELKLOG_LOG_ERROR("{} returned error : {}", #command, result); \
+            return return_value;                                          \
+        }                                                                 \
     } while (false)
 
 /**

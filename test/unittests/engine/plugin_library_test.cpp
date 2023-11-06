@@ -6,20 +6,12 @@
 #include "engine/plugin_library.cpp"
 
 using namespace sushi;
-
+using namespace sushi::internal;
 
 class TestPluginLibrary : public ::testing::Test
 {
 protected:
-    TestPluginLibrary()
-    {
-    }
-
-    void SetUp()
-    {}
-
-    void TearDown()
-    { }
+    TestPluginLibrary() = default;
 
     engine::PluginLibrary _module_under_test;
 };

@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -19,13 +19,13 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
+#include "elklog/static_logger.h"
+
 #include "audio_graph.h"
-#include "logging.h"
-#include "exit_control.h"
 
-namespace sushi::engine {
+namespace sushi::internal::engine {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("audio graph");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("audio graph");
 
 constexpr bool DISABLE_DENORMALS = true;
 
@@ -36,7 +36,7 @@ constexpr int SUSHI_EXIT_SIGNAL = 32;
  */
 void external_render_callback(void* data)
 {
-    auto tracks = reinterpret_cast<std::vector<sushi::engine::Track*>*>(data);
+    auto tracks = reinterpret_cast<std::vector<sushi::internal::engine::Track*>*>(data);
 
     for (auto track : *tracks)
     {
@@ -57,7 +57,7 @@ AudioGraph::AudioGraph(int cpu_cores,
 
     if (_cores > 1)
     {
-        twine::apple::AppleMultiThreadData apple_data;
+        twine::apple::AppleMultiThreadData apple_data {};
 #ifdef SUSHI_APPLE_THREADING
         apple_data.chunk_size = AUDIO_CHUNK_SIZE;
         apple_data.current_sample_rate = sample_rate;
@@ -65,8 +65,6 @@ AudioGraph::AudioGraph(int cpu_cores,
         {
             apple_data.device_name = device_name.value();
         }
-#else
-        apple_data = nullptr;
 #endif
 
         _worker_pool = twine::WorkerPool::create_worker_pool(_cores,
@@ -82,8 +80,7 @@ AudioGraph::AudioGraph(int cpu_cores,
             if (status.first != twine::WorkerPoolStatus::OK)
             {
 #ifdef SUSHI_APPLE_THREADING
-                SUSHI_LOG_ERROR("Failed to start twine worker: {}",  twine::apple::status_to_string(status.second));
-                exit_on_signal(SUSHI_EXIT_SIGNAL);
+                ELKLOG_LOG_ERROR("Failed to start twine worker: {}",  twine::apple::status_to_string(status.second));
 #endif
             }
 
@@ -153,4 +150,4 @@ void AudioGraph::render()
     }
 }
 
-} // namespace sushi::engine
+} // end namespace sushi::internal::engine

@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -19,155 +19,156 @@
  */
 
 #include "control_service.h"
-#include "control_notifications.h"
+
+#include "sushi/control_notifications.h"
 
 #include "async_service_call_data.h"
 
 namespace sushi_rpc {
 
 /* Convenience conversion functions between sushi enums and their respective grpc implementations */
-inline sushi_rpc::ParameterType::Type to_grpc(const sushi::ext::ParameterType type)
+inline sushi_rpc::ParameterType::Type to_grpc(const sushi::control::ParameterType type)
 {
     switch (type)
     {
-        case sushi::ext::ParameterType::FLOAT:            return sushi_rpc::ParameterType::FLOAT;
-        case sushi::ext::ParameterType::INT:              return sushi_rpc::ParameterType::INT;
-        case sushi::ext::ParameterType::BOOL:             return sushi_rpc::ParameterType::BOOL;
+        case sushi::control::ParameterType::FLOAT:        return sushi_rpc::ParameterType::FLOAT;
+        case sushi::control::ParameterType::INT:          return sushi_rpc::ParameterType::INT;
+        case sushi::control::ParameterType::BOOL:         return sushi_rpc::ParameterType::BOOL;
         default:                                          return sushi_rpc::ParameterType::FLOAT;
     }
 }
 
-inline sushi_rpc::PlayingMode::Mode to_grpc(const sushi::ext::PlayingMode mode)
+inline sushi_rpc::PlayingMode::Mode to_grpc(const sushi::control::PlayingMode mode)
 {
     switch (mode)
     {
-        case sushi::ext::PlayingMode::STOPPED:      return sushi_rpc::PlayingMode::STOPPED;
-        case sushi::ext::PlayingMode::PLAYING:      return sushi_rpc::PlayingMode::PLAYING;
-        case sushi::ext::PlayingMode::RECORDING:    return sushi_rpc::PlayingMode::RECORDING;
-        default:                                    return sushi_rpc::PlayingMode::PLAYING;
+        case sushi::control::PlayingMode::STOPPED:      return sushi_rpc::PlayingMode::STOPPED;
+        case sushi::control::PlayingMode::PLAYING:      return sushi_rpc::PlayingMode::PLAYING;
+        case sushi::control::PlayingMode::RECORDING:    return sushi_rpc::PlayingMode::RECORDING;
+        default:                                        return sushi_rpc::PlayingMode::PLAYING;
     }
 }
 
-inline MidiChannel_Channel to_grpc(const sushi::ext::MidiChannel channel)
+inline MidiChannel_Channel to_grpc(const sushi::control::MidiChannel channel)
 {
     switch (channel)
     {
-        case sushi::ext::MidiChannel::MIDI_CH_1:    return sushi_rpc::MidiChannel::MIDI_CH_1;
-        case sushi::ext::MidiChannel::MIDI_CH_2:    return sushi_rpc::MidiChannel::MIDI_CH_2;
-        case sushi::ext::MidiChannel::MIDI_CH_3:    return sushi_rpc::MidiChannel::MIDI_CH_3;
-        case sushi::ext::MidiChannel::MIDI_CH_4:    return sushi_rpc::MidiChannel::MIDI_CH_4;
-        case sushi::ext::MidiChannel::MIDI_CH_5:    return sushi_rpc::MidiChannel::MIDI_CH_5;
-        case sushi::ext::MidiChannel::MIDI_CH_6:    return sushi_rpc::MidiChannel::MIDI_CH_6;
-        case sushi::ext::MidiChannel::MIDI_CH_7:    return sushi_rpc::MidiChannel::MIDI_CH_7;
-        case sushi::ext::MidiChannel::MIDI_CH_8:    return sushi_rpc::MidiChannel::MIDI_CH_8;
-        case sushi::ext::MidiChannel::MIDI_CH_9:    return sushi_rpc::MidiChannel::MIDI_CH_9;
-        case sushi::ext::MidiChannel::MIDI_CH_10:   return sushi_rpc::MidiChannel::MIDI_CH_10;
-        case sushi::ext::MidiChannel::MIDI_CH_11:   return sushi_rpc::MidiChannel::MIDI_CH_11;
-        case sushi::ext::MidiChannel::MIDI_CH_12:   return sushi_rpc::MidiChannel::MIDI_CH_12;
-        case sushi::ext::MidiChannel::MIDI_CH_13:   return sushi_rpc::MidiChannel::MIDI_CH_13;
-        case sushi::ext::MidiChannel::MIDI_CH_14:   return sushi_rpc::MidiChannel::MIDI_CH_14;
-        case sushi::ext::MidiChannel::MIDI_CH_15:   return sushi_rpc::MidiChannel::MIDI_CH_15;
-        case sushi::ext::MidiChannel::MIDI_CH_16:   return sushi_rpc::MidiChannel::MIDI_CH_16;
-        case sushi::ext::MidiChannel::MIDI_CH_OMNI: return sushi_rpc::MidiChannel::MIDI_CH_OMNI;
-        default:                                    return sushi_rpc::MidiChannel::MIDI_CH_OMNI;
+        case sushi::control::MidiChannel::MIDI_CH_1:    return sushi_rpc::MidiChannel::MIDI_CH_1;
+        case sushi::control::MidiChannel::MIDI_CH_2:    return sushi_rpc::MidiChannel::MIDI_CH_2;
+        case sushi::control::MidiChannel::MIDI_CH_3:    return sushi_rpc::MidiChannel::MIDI_CH_3;
+        case sushi::control::MidiChannel::MIDI_CH_4:    return sushi_rpc::MidiChannel::MIDI_CH_4;
+        case sushi::control::MidiChannel::MIDI_CH_5:    return sushi_rpc::MidiChannel::MIDI_CH_5;
+        case sushi::control::MidiChannel::MIDI_CH_6:    return sushi_rpc::MidiChannel::MIDI_CH_6;
+        case sushi::control::MidiChannel::MIDI_CH_7:    return sushi_rpc::MidiChannel::MIDI_CH_7;
+        case sushi::control::MidiChannel::MIDI_CH_8:    return sushi_rpc::MidiChannel::MIDI_CH_8;
+        case sushi::control::MidiChannel::MIDI_CH_9:    return sushi_rpc::MidiChannel::MIDI_CH_9;
+        case sushi::control::MidiChannel::MIDI_CH_10:   return sushi_rpc::MidiChannel::MIDI_CH_10;
+        case sushi::control::MidiChannel::MIDI_CH_11:   return sushi_rpc::MidiChannel::MIDI_CH_11;
+        case sushi::control::MidiChannel::MIDI_CH_12:   return sushi_rpc::MidiChannel::MIDI_CH_12;
+        case sushi::control::MidiChannel::MIDI_CH_13:   return sushi_rpc::MidiChannel::MIDI_CH_13;
+        case sushi::control::MidiChannel::MIDI_CH_14:   return sushi_rpc::MidiChannel::MIDI_CH_14;
+        case sushi::control::MidiChannel::MIDI_CH_15:   return sushi_rpc::MidiChannel::MIDI_CH_15;
+        case sushi::control::MidiChannel::MIDI_CH_16:   return sushi_rpc::MidiChannel::MIDI_CH_16;
+        case sushi::control::MidiChannel::MIDI_CH_OMNI: return sushi_rpc::MidiChannel::MIDI_CH_OMNI;
+        default:                                        return sushi_rpc::MidiChannel::MIDI_CH_OMNI;
     }
 }
 
-inline sushi::ext::MidiChannel to_sushi_ext(const MidiChannel_Channel channel)
+inline sushi::control::MidiChannel to_sushi_ext(const MidiChannel_Channel channel)
 {
     switch (channel)
     {
-        case sushi_rpc::MidiChannel::MIDI_CH_1:    return sushi::ext::MidiChannel::MIDI_CH_1;
-        case sushi_rpc::MidiChannel::MIDI_CH_2:    return sushi::ext::MidiChannel::MIDI_CH_2;
-        case sushi_rpc::MidiChannel::MIDI_CH_3:    return sushi::ext::MidiChannel::MIDI_CH_3;
-        case sushi_rpc::MidiChannel::MIDI_CH_4:    return sushi::ext::MidiChannel::MIDI_CH_4;
-        case sushi_rpc::MidiChannel::MIDI_CH_5:    return sushi::ext::MidiChannel::MIDI_CH_5;
-        case sushi_rpc::MidiChannel::MIDI_CH_6:    return sushi::ext::MidiChannel::MIDI_CH_6;
-        case sushi_rpc::MidiChannel::MIDI_CH_7:    return sushi::ext::MidiChannel::MIDI_CH_7;
-        case sushi_rpc::MidiChannel::MIDI_CH_8:    return sushi::ext::MidiChannel::MIDI_CH_8;
-        case sushi_rpc::MidiChannel::MIDI_CH_9:    return sushi::ext::MidiChannel::MIDI_CH_9;
-        case sushi_rpc::MidiChannel::MIDI_CH_10:   return sushi::ext::MidiChannel::MIDI_CH_10;
-        case sushi_rpc::MidiChannel::MIDI_CH_11:   return sushi::ext::MidiChannel::MIDI_CH_11;
-        case sushi_rpc::MidiChannel::MIDI_CH_12:   return sushi::ext::MidiChannel::MIDI_CH_12;
-        case sushi_rpc::MidiChannel::MIDI_CH_13:   return sushi::ext::MidiChannel::MIDI_CH_13;
-        case sushi_rpc::MidiChannel::MIDI_CH_14:   return sushi::ext::MidiChannel::MIDI_CH_14;
-        case sushi_rpc::MidiChannel::MIDI_CH_15:   return sushi::ext::MidiChannel::MIDI_CH_15;
-        case sushi_rpc::MidiChannel::MIDI_CH_16:   return sushi::ext::MidiChannel::MIDI_CH_16;
-        case sushi_rpc::MidiChannel::MIDI_CH_OMNI: return sushi::ext::MidiChannel::MIDI_CH_OMNI;
-        default:                                   return sushi::ext::MidiChannel::MIDI_CH_OMNI;
+        case sushi_rpc::MidiChannel::MIDI_CH_1:    return sushi::control::MidiChannel::MIDI_CH_1;
+        case sushi_rpc::MidiChannel::MIDI_CH_2:    return sushi::control::MidiChannel::MIDI_CH_2;
+        case sushi_rpc::MidiChannel::MIDI_CH_3:    return sushi::control::MidiChannel::MIDI_CH_3;
+        case sushi_rpc::MidiChannel::MIDI_CH_4:    return sushi::control::MidiChannel::MIDI_CH_4;
+        case sushi_rpc::MidiChannel::MIDI_CH_5:    return sushi::control::MidiChannel::MIDI_CH_5;
+        case sushi_rpc::MidiChannel::MIDI_CH_6:    return sushi::control::MidiChannel::MIDI_CH_6;
+        case sushi_rpc::MidiChannel::MIDI_CH_7:    return sushi::control::MidiChannel::MIDI_CH_7;
+        case sushi_rpc::MidiChannel::MIDI_CH_8:    return sushi::control::MidiChannel::MIDI_CH_8;
+        case sushi_rpc::MidiChannel::MIDI_CH_9:    return sushi::control::MidiChannel::MIDI_CH_9;
+        case sushi_rpc::MidiChannel::MIDI_CH_10:   return sushi::control::MidiChannel::MIDI_CH_10;
+        case sushi_rpc::MidiChannel::MIDI_CH_11:   return sushi::control::MidiChannel::MIDI_CH_11;
+        case sushi_rpc::MidiChannel::MIDI_CH_12:   return sushi::control::MidiChannel::MIDI_CH_12;
+        case sushi_rpc::MidiChannel::MIDI_CH_13:   return sushi::control::MidiChannel::MIDI_CH_13;
+        case sushi_rpc::MidiChannel::MIDI_CH_14:   return sushi::control::MidiChannel::MIDI_CH_14;
+        case sushi_rpc::MidiChannel::MIDI_CH_15:   return sushi::control::MidiChannel::MIDI_CH_15;
+        case sushi_rpc::MidiChannel::MIDI_CH_16:   return sushi::control::MidiChannel::MIDI_CH_16;
+        case sushi_rpc::MidiChannel::MIDI_CH_OMNI: return sushi::control::MidiChannel::MIDI_CH_OMNI;
+        default:                                   return sushi::control::MidiChannel::MIDI_CH_OMNI;
     }
 }
 
-inline sushi::ext::PlayingMode to_sushi_ext(const sushi_rpc::PlayingMode::Mode mode)
+inline sushi::control::PlayingMode to_sushi_ext(const sushi_rpc::PlayingMode::Mode mode)
 {
     switch (mode)
     {
-        case sushi_rpc::PlayingMode::STOPPED:   return sushi::ext::PlayingMode::STOPPED;
-        case sushi_rpc::PlayingMode::PLAYING:   return sushi::ext::PlayingMode::PLAYING;
-        case sushi_rpc::PlayingMode::RECORDING: return sushi::ext::PlayingMode::RECORDING;
-        default:                                return sushi::ext::PlayingMode::PLAYING;
+        case sushi_rpc::PlayingMode::STOPPED:   return sushi::control::PlayingMode::STOPPED;
+        case sushi_rpc::PlayingMode::PLAYING:   return sushi::control::PlayingMode::PLAYING;
+        case sushi_rpc::PlayingMode::RECORDING: return sushi::control::PlayingMode::RECORDING;
+        default:                                return sushi::control::PlayingMode::PLAYING;
     }
 }
 
-inline sushi_rpc::SyncMode::Mode to_grpc(const sushi::ext::SyncMode mode)
+inline sushi_rpc::SyncMode::Mode to_grpc(const sushi::control::SyncMode mode)
 {
     switch (mode)
     {
-        case sushi::ext::SyncMode::INTERNAL: return sushi_rpc::SyncMode::INTERNAL;
-        case sushi::ext::SyncMode::MIDI:     return sushi_rpc::SyncMode::MIDI;
-        case sushi::ext::SyncMode::LINK:     return sushi_rpc::SyncMode::LINK;
-        default:                             return sushi_rpc::SyncMode::INTERNAL;
+        case sushi::control::SyncMode::INTERNAL: return sushi_rpc::SyncMode::INTERNAL;
+        case sushi::control::SyncMode::MIDI:     return sushi_rpc::SyncMode::MIDI;
+        case sushi::control::SyncMode::LINK:     return sushi_rpc::SyncMode::LINK;
+        default:                                 return sushi_rpc::SyncMode::INTERNAL;
     }
 }
 
-inline sushi::ext::SyncMode to_sushi_ext(const sushi_rpc::SyncMode::Mode mode)
+inline sushi::control::SyncMode to_sushi_ext(const sushi_rpc::SyncMode::Mode mode)
 {
     switch (mode)
     {
-        case sushi_rpc::SyncMode::INTERNAL: return sushi::ext::SyncMode::INTERNAL;
-        case sushi_rpc::SyncMode::MIDI:     return sushi::ext::SyncMode::MIDI;
-        case sushi_rpc::SyncMode::LINK:     return sushi::ext::SyncMode::LINK;
-        default:                            return sushi::ext::SyncMode::INTERNAL;
+        case sushi_rpc::SyncMode::INTERNAL: return sushi::control::SyncMode::INTERNAL;
+        case sushi_rpc::SyncMode::MIDI:     return sushi::control::SyncMode::MIDI;
+        case sushi_rpc::SyncMode::LINK:     return sushi::control::SyncMode::LINK;
+        default:                            return sushi::control::SyncMode::INTERNAL;
     }
 }
 
-inline sushi_rpc::TrackType::Type to_grpc(const sushi::ext::TrackType type)
+inline sushi_rpc::TrackType::Type to_grpc(const sushi::control::TrackType type)
 {
     switch (type)
     {
-        case sushi::ext::TrackType::REGULAR:  return sushi_rpc::TrackType::REGULAR;
-        case sushi::ext::TrackType::PRE:      return sushi_rpc::TrackType::PRE;
-        case sushi::ext::TrackType::POST:     return sushi_rpc::TrackType::POST;
-        default:                              return sushi_rpc::TrackType::REGULAR;
+        case sushi::control::TrackType::REGULAR:  return sushi_rpc::TrackType::REGULAR;
+        case sushi::control::TrackType::PRE:      return sushi_rpc::TrackType::PRE;
+        case sushi::control::TrackType::POST:     return sushi_rpc::TrackType::POST;
+        default:                                  return sushi_rpc::TrackType::REGULAR;
     }
 }
 
-inline sushi::ext::TrackType to_sushi_ext(const sushi_rpc::TrackType::Type type)
+inline sushi::control::TrackType to_sushi_ext(const sushi_rpc::TrackType::Type type)
 {
     switch (type)
     {
-        case sushi_rpc::TrackType::REGULAR: return sushi::ext::TrackType::REGULAR;
-        case sushi_rpc::TrackType::PRE:     return sushi::ext::TrackType::PRE;
-        case sushi_rpc::TrackType::POST:    return sushi::ext::TrackType::POST;
-        default:                            return sushi::ext::TrackType::REGULAR;
+        case sushi_rpc::TrackType::REGULAR: return sushi::control::TrackType::REGULAR;
+        case sushi_rpc::TrackType::PRE:     return sushi::control::TrackType::PRE;
+        case sushi_rpc::TrackType::POST:    return sushi::control::TrackType::POST;
+        default:                            return sushi::control::TrackType::REGULAR;
     }
 }
 
-inline const char* to_string(const sushi::ext::ControlStatus status)
+inline const char* to_string(const sushi::control::ControlStatus status)
 {
    switch (status)
     {
-        case sushi::ext::ControlStatus::OK:                    return "OK";
-        case sushi::ext::ControlStatus::ERROR:                 return "ERROR";
-        case sushi::ext::ControlStatus::UNSUPPORTED_OPERATION: return "UNSUPPORTED OPERATION";
-        case sushi::ext::ControlStatus::NOT_FOUND:             return "NOT FOUND";
-        case sushi::ext::ControlStatus::OUT_OF_RANGE:          return "OUT OF RANGE";
-        case sushi::ext::ControlStatus::INVALID_ARGUMENTS:     return "INVALID ARGUMENTS";
-        default:                                               return "INTERNAL";
+        case sushi::control::ControlStatus::OK:                    return "OK";
+        case sushi::control::ControlStatus::ERROR:                 return "ERROR";
+        case sushi::control::ControlStatus::UNSUPPORTED_OPERATION: return "UNSUPPORTED OPERATION";
+        case sushi::control::ControlStatus::NOT_FOUND:             return "NOT FOUND";
+        case sushi::control::ControlStatus::OUT_OF_RANGE:          return "OUT OF RANGE";
+        case sushi::control::ControlStatus::INVALID_ARGUMENTS:     return "INVALID ARGUMENTS";
+        default:                                                   return "INTERNAL";
     }
 }
 
-inline grpc::Status to_grpc_status(sushi::ext::ControlStatus status, const char* error = nullptr)
+inline grpc::Status to_grpc_status(sushi::control::ControlStatus status, const char* error = nullptr)
 {
     if (!error)
     {
@@ -175,22 +176,22 @@ inline grpc::Status to_grpc_status(sushi::ext::ControlStatus status, const char*
     }
     switch (status)
     {
-        case sushi::ext::ControlStatus::OK:
+        case sushi::control::ControlStatus::OK:
             return ::grpc::Status::OK;
 
-        case sushi::ext::ControlStatus::ERROR:
+        case sushi::control::ControlStatus::ERROR:
             return ::grpc::Status(::grpc::StatusCode::UNKNOWN, error);
 
-        case sushi::ext::ControlStatus::UNSUPPORTED_OPERATION:
+        case sushi::control::ControlStatus::UNSUPPORTED_OPERATION:
             return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, error);
 
-        case sushi::ext::ControlStatus::NOT_FOUND:
+        case sushi::control::ControlStatus::NOT_FOUND:
             return ::grpc::Status(::grpc::StatusCode::NOT_FOUND, error);
 
-        case sushi::ext::ControlStatus::OUT_OF_RANGE:
+        case sushi::control::ControlStatus::OUT_OF_RANGE:
             return ::grpc::Status(::grpc::StatusCode::OUT_OF_RANGE, error);
 
-        case sushi::ext::ControlStatus::INVALID_ARGUMENTS:
+        case sushi::control::ControlStatus::INVALID_ARGUMENTS:
             return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, error);
 
         default:
@@ -198,7 +199,7 @@ inline grpc::Status to_grpc_status(sushi::ext::ControlStatus status, const char*
     }
 }
 
-inline void to_grpc(ParameterInfo& dest, const sushi::ext::ParameterInfo& src)
+inline void to_grpc(ParameterInfo& dest, const sushi::control::ParameterInfo& src)
 {
     dest.set_id(src.id);
     dest.mutable_type()->set_type(to_grpc(src.type));
@@ -210,7 +211,7 @@ inline void to_grpc(ParameterInfo& dest, const sushi::ext::ParameterInfo& src)
     dest.set_max_domain_value(src.max_domain_value);
 }
 
-inline void to_grpc(PropertyInfo& dest, const sushi::ext::PropertyInfo& src)
+inline void to_grpc(PropertyInfo& dest, const sushi::control::PropertyInfo& src)
 {
     dest.set_id(src.id);
     dest.set_name(src.name);
@@ -218,7 +219,7 @@ inline void to_grpc(PropertyInfo& dest, const sushi::ext::PropertyInfo& src)
 }
 
 
-inline void to_grpc(sushi_rpc::ProcessorInfo& dest, const sushi::ext::ProcessorInfo& src)
+inline void to_grpc(sushi_rpc::ProcessorInfo& dest, const sushi::control::ProcessorInfo& src)
 {
     dest.set_id(src.id);
     dest.set_label(src.label);
@@ -227,7 +228,7 @@ inline void to_grpc(sushi_rpc::ProcessorInfo& dest, const sushi::ext::ProcessorI
     dest.set_program_count(src.program_count);
 }
 
-inline void to_grpc(sushi_rpc::MidiKbdConnection& dest, const sushi::ext::MidiKbdConnection& src)
+inline void to_grpc(sushi_rpc::MidiKbdConnection& dest, const sushi::control::MidiKbdConnection& src)
 {
     dest.mutable_track()->set_id(src.track_id);
     dest.mutable_channel()->set_channel(to_grpc(src.channel));
@@ -235,7 +236,7 @@ inline void to_grpc(sushi_rpc::MidiKbdConnection& dest, const sushi::ext::MidiKb
     dest.set_raw_midi(src.raw_midi);
 }
 
-inline void to_grpc(sushi_rpc::MidiCCConnection& dest, const sushi::ext::MidiCCConnection& src)
+inline void to_grpc(sushi_rpc::MidiCCConnection& dest, const sushi::control::MidiCCConnection& src)
 {
     dest.mutable_parameter()->set_processor_id(src.processor_id);
     dest.mutable_parameter()->set_parameter_id(src.parameter_id);
@@ -248,14 +249,14 @@ inline void to_grpc(sushi_rpc::MidiCCConnection& dest, const sushi::ext::MidiCCC
     dest.set_relative_mode(src.relative_mode);
 }
 
-inline void to_grpc(sushi_rpc::MidiPCConnection& dest, const sushi::ext::MidiPCConnection& src)
+inline void to_grpc(sushi_rpc::MidiPCConnection& dest, const sushi::control::MidiPCConnection& src)
 {
     dest.mutable_processor()->set_id(src.processor_id);
     dest.mutable_channel()->set_channel(to_grpc(src.channel));
     dest.set_port(src.port);
 }
 
-inline void to_grpc(sushi_rpc::TrackInfo& dest, const sushi::ext::TrackInfo& src)
+inline void to_grpc(sushi_rpc::TrackInfo& dest, const sushi::control::TrackInfo& src)
 {
     dest.set_id(src.id);
     dest.set_label(src.label);
@@ -269,45 +270,45 @@ inline void to_grpc(sushi_rpc::TrackInfo& dest, const sushi::ext::TrackInfo& src
     }
 }
 
-inline void to_grpc(sushi_rpc::CpuTimings& dest, const sushi::ext::CpuTimings& src)
+inline void to_grpc(sushi_rpc::CpuTimings& dest, const sushi::control::CpuTimings& src)
 {
     dest.set_average(src.avg);
     dest.set_min(src.min);
     dest.set_max(src.max);
 }
 
-inline void to_grpc(sushi_rpc::AudioConnection& dest, const sushi::ext::AudioConnection& src)
+inline void to_grpc(sushi_rpc::AudioConnection& dest, const sushi::control::AudioConnection& src)
 {
     dest.mutable_track()->set_id(src.track_id);
     dest.set_track_channel(src.track_channel);
     dest.set_engine_channel(src.engine_channel);
 }
 
-inline sushi_rpc::PluginType::Type to_grpc(const sushi::ext::PluginType type)
+inline sushi_rpc::PluginType::Type to_grpc(const sushi::control::PluginType type)
 {
     switch (type)
     {
-        case sushi::ext::PluginType::INTERNAL:       return sushi_rpc::PluginType::INTERNAL;
-        case sushi::ext::PluginType::VST2X:          return sushi_rpc::PluginType::VST2X;
-        case sushi::ext::PluginType::VST3X:          return sushi_rpc::PluginType::VST3X;
-        case sushi::ext::PluginType::LV2:            return sushi_rpc::PluginType::LV2;
-        default:                                     return sushi_rpc::PluginType::INTERNAL;
+        case sushi::control::PluginType::INTERNAL:       return sushi_rpc::PluginType::INTERNAL;
+        case sushi::control::PluginType::VST2X:          return sushi_rpc::PluginType::VST2X;
+        case sushi::control::PluginType::VST3X:          return sushi_rpc::PluginType::VST3X;
+        case sushi::control::PluginType::LV2:            return sushi_rpc::PluginType::LV2;
+        default:                                         return sushi_rpc::PluginType::INTERNAL;
     }
 }
 
-inline sushi::ext::PluginType to_sushi_ext(const sushi_rpc::PluginType::Type type)
+inline sushi::control::PluginType to_sushi_ext(const sushi_rpc::PluginType::Type type)
 {
     switch (type)
     {
-        case sushi_rpc::PluginType::INTERNAL:       return sushi::ext::PluginType::INTERNAL;
-        case sushi_rpc::PluginType::VST2X:          return sushi::ext::PluginType::VST2X;
-        case sushi_rpc::PluginType::VST3X:          return sushi::ext::PluginType::VST3X;
-        case sushi_rpc::PluginType::LV2:            return sushi::ext::PluginType::LV2;
-        default:                                    return sushi::ext::PluginType::INTERNAL;
+        case sushi_rpc::PluginType::INTERNAL:       return sushi::control::PluginType::INTERNAL;
+        case sushi_rpc::PluginType::VST2X:          return sushi::control::PluginType::VST2X;
+        case sushi_rpc::PluginType::VST3X:          return sushi::control::PluginType::VST3X;
+        case sushi_rpc::PluginType::LV2:            return sushi::control::PluginType::LV2;
+        default:                                    return sushi::control::PluginType::INTERNAL;
     }
 }
 
-inline void to_grpc(sushi_rpc::ProcessorState& dest, sushi::ext::ProcessorState& src)
+inline void to_grpc(sushi_rpc::ProcessorState& dest, sushi::control::ProcessorState& src)
 {
     if (src.program.has_value())
     {
@@ -341,7 +342,7 @@ inline void to_grpc(sushi_rpc::ProcessorState& dest, sushi::ext::ProcessorState&
                                        reinterpret_cast<const char*>(src.binary_data.data()) + src.binary_data.size());
 }
 
-inline void to_sushi_ext(sushi::ext::ProcessorState& dest, const sushi_rpc::ProcessorState& src)
+inline void to_sushi_ext(sushi::control::ProcessorState& dest, const sushi_rpc::ProcessorState& src)
 {
     if (src.program_id().has_value())
     {
@@ -370,7 +371,7 @@ inline void to_sushi_ext(sushi::ext::ProcessorState& dest, const sushi_rpc::Proc
                             reinterpret_cast<const std::byte*>(src.binary_data().data()) + src.binary_data().size());
 }
 
-inline void to_grpc(sushi_rpc::SushiBuildInfo& dest, sushi::ext::SushiBuildInfo& src)
+inline void to_grpc(sushi_rpc::SushiBuildInfo& dest, sushi::control::SushiBuildInfo& src)
 {
     dest.set_version(std::move(src.version));
 
@@ -384,7 +385,7 @@ inline void to_grpc(sushi_rpc::SushiBuildInfo& dest, sushi::ext::SushiBuildInfo&
     dest.set_build_date(std::move(src.build_date));
 }
 
-inline void to_sushi_ext(sushi::ext::SushiBuildInfo& dest, const sushi_rpc::SushiBuildInfo& src)
+inline void to_sushi_ext(sushi::control::SushiBuildInfo& dest, const sushi_rpc::SushiBuildInfo& src)
 {
     dest.version = src.version();
 
@@ -398,7 +399,7 @@ inline void to_sushi_ext(sushi::ext::SushiBuildInfo& dest, const sushi_rpc::Sush
     dest.build_date = src.build_date();
 }
 
-inline void to_grpc(sushi_rpc::OscParameterState& dest, sushi::ext::OscParameterState& src)
+inline void to_grpc(sushi_rpc::OscParameterState& dest, sushi::control::OscParameterState& src)
 {
     dest.set_processor(std::move(src.processor));
     dest.mutable_parameter_ids()->Reserve(src.parameter_ids.size());
@@ -408,15 +409,15 @@ inline void to_grpc(sushi_rpc::OscParameterState& dest, sushi::ext::OscParameter
     }
 }
 
-inline sushi::ext::OscParameterState to_sushi_ext(const sushi_rpc::OscParameterState& src)
+inline sushi::control::OscParameterState to_sushi_ext(const sushi_rpc::OscParameterState& src)
 {
-    sushi::ext::OscParameterState dest;
+    sushi::control::OscParameterState dest;
     dest.processor = src.processor();
     dest.parameter_ids.insert(dest.parameter_ids.begin(), src.parameter_ids().begin(), src.parameter_ids().end());
     return dest;
 }
 
-inline void to_grpc(sushi_rpc::OscState& dest, sushi::ext::OscState& src)
+inline void to_grpc(sushi_rpc::OscState& dest, sushi::control::OscState& src)
 {
     dest.set_enable_all_processor_outputs(src.enable_all_processor_outputs);
     dest.mutable_enabled_processor_outputs()->Reserve(src.enabled_processor_outputs.size());
@@ -427,7 +428,7 @@ inline void to_grpc(sushi_rpc::OscState& dest, sushi::ext::OscState& src)
     }
 }
 
-inline void to_sushi_ext(sushi::ext::OscState& dest, const sushi_rpc::OscState& src)
+inline void to_sushi_ext(sushi::control::OscState& dest, const sushi_rpc::OscState& src)
 {
     dest.enable_all_processor_outputs = src.enable_all_processor_outputs();
     dest.enabled_processor_outputs.reserve(src.enabled_processor_outputs_size());
@@ -437,7 +438,7 @@ inline void to_sushi_ext(sushi::ext::OscState& dest, const sushi_rpc::OscState& 
     }
 }
 
-inline void to_grpc(sushi_rpc::MidiKbdConnectionState& dest, sushi::ext::MidiKbdConnectionState& src)
+inline void to_grpc(sushi_rpc::MidiKbdConnectionState& dest, sushi::control::MidiKbdConnectionState& src)
 {
     dest.set_track(std::move(src.track));
     dest.mutable_channel()->set_channel(to_grpc(src.channel));
@@ -445,9 +446,9 @@ inline void to_grpc(sushi_rpc::MidiKbdConnectionState& dest, sushi::ext::MidiKbd
     dest.set_raw_midi(src.raw_midi);
 }
 
-inline sushi::ext::MidiKbdConnectionState to_sushi_ext(const sushi_rpc::MidiKbdConnectionState& src)
+inline sushi::control::MidiKbdConnectionState to_sushi_ext(const sushi_rpc::MidiKbdConnectionState& src)
 {
-    sushi::ext::MidiKbdConnectionState dest;
+    sushi::control::MidiKbdConnectionState dest;
     dest.track = src.track();
     dest.channel = to_sushi_ext(src.channel().channel());
     dest.port = src.port();
@@ -455,7 +456,7 @@ inline sushi::ext::MidiKbdConnectionState to_sushi_ext(const sushi_rpc::MidiKbdC
     return dest;
 }
 
-inline void to_grpc(sushi_rpc::MidiCCConnectionState& dest, sushi::ext::MidiCCConnectionState& src)
+inline void to_grpc(sushi_rpc::MidiCCConnectionState& dest, sushi::control::MidiCCConnectionState& src)
 {
     dest.set_processor(std::move(src.processor));
     dest.mutable_parameter()->set_parameter_id(src.parameter_id);
@@ -467,9 +468,9 @@ inline void to_grpc(sushi_rpc::MidiCCConnectionState& dest, sushi::ext::MidiCCCo
     dest.set_relative_mode(src.relative_mode);
 }
 
-inline sushi::ext::MidiCCConnectionState to_sushi_ext(const sushi_rpc::MidiCCConnectionState& src)
+inline sushi::control::MidiCCConnectionState to_sushi_ext(const sushi_rpc::MidiCCConnectionState& src)
 {
-    sushi::ext::MidiCCConnectionState dest;
+    sushi::control::MidiCCConnectionState dest;
     dest.processor = src.processor();
     dest.channel = to_sushi_ext(src.channel().channel());
     dest.port = src.port();
@@ -480,23 +481,23 @@ inline sushi::ext::MidiCCConnectionState to_sushi_ext(const sushi_rpc::MidiCCCon
     return dest;
 }
 
-inline void to_grpc(sushi_rpc::MidiPCConnectionState& dest, sushi::ext::MidiPCConnectionState& src)
+inline void to_grpc(sushi_rpc::MidiPCConnectionState& dest, sushi::control::MidiPCConnectionState& src)
 {
     dest.set_processor(std::move(src.processor));
     dest.mutable_channel()->set_channel(to_grpc(src.channel));
     dest.set_port(src.port);
 }
 
-inline sushi::ext::MidiPCConnectionState to_sushi_ext(const sushi_rpc::MidiPCConnectionState& src)
+inline sushi::control::MidiPCConnectionState to_sushi_ext(const sushi_rpc::MidiPCConnectionState& src)
 {
-    sushi::ext::MidiPCConnectionState dest;
+    sushi::control::MidiPCConnectionState dest;
     dest.processor = src.processor();
     dest.channel = to_sushi_ext(src.channel().channel());
     dest.port = src.port();
     return dest;
 }
 
-inline void to_grpc(sushi_rpc::MidiState& dest, sushi::ext::MidiState& src)
+inline void to_grpc(sushi_rpc::MidiState& dest, sushi::control::MidiState& src)
 {
     dest.set_inputs(src.inputs);
     dest.set_outputs(src.outputs);
@@ -536,7 +537,7 @@ inline void to_grpc(sushi_rpc::MidiState& dest, sushi::ext::MidiState& src)
     }
 }
 
-inline void to_sushi_ext(sushi::ext::MidiState& dest, const sushi_rpc::MidiState& src)
+inline void to_sushi_ext(sushi::control::MidiState& dest, const sushi_rpc::MidiState& src)
 {
     dest.inputs = src.inputs();
     dest.outputs = src.outputs();
@@ -566,23 +567,23 @@ inline void to_sushi_ext(sushi::ext::MidiState& dest, const sushi_rpc::MidiState
     dest.enabled_clock_outputs = std::vector<int>(src.enabled_clock_outputs().begin(), src.enabled_clock_outputs().end());
 }
 
-inline void to_grpc(sushi_rpc::TrackAudioConnectionState& dest, sushi::ext::TrackAudioConnectionState& src)
+inline void to_grpc(sushi_rpc::TrackAudioConnectionState& dest, sushi::control::TrackAudioConnectionState& src)
 {
     dest.set_track(std::move(src.track));
     dest.set_track_channel(src.track_channel);
     dest.set_engine_channel(src.engine_channel);
 }
 
-inline sushi::ext::TrackAudioConnectionState to_sushi_ext(const sushi_rpc::TrackAudioConnectionState& src)
+inline sushi::control::TrackAudioConnectionState to_sushi_ext(const sushi_rpc::TrackAudioConnectionState& src)
 {
-    sushi::ext::TrackAudioConnectionState dest;
+    sushi::control::TrackAudioConnectionState dest;
     dest.track = src.track();
     dest.track_channel = src.track_channel();
     dest.engine_channel = src.engine_channel();
     return dest;
 }
 
-inline void to_grpc(sushi_rpc::EngineState& dest, sushi::ext::EngineState& src)
+inline void to_grpc(sushi_rpc::EngineState& dest, sushi::control::EngineState& src)
 {
     dest.set_sample_rate(src.sample_rate);
     dest.set_tempo(src.tempo);
@@ -611,7 +612,7 @@ inline void to_grpc(sushi_rpc::EngineState& dest, sushi::ext::EngineState& src)
     }
 }
 
-inline void to_sushi_ext(sushi::ext::EngineState& dest, const sushi_rpc::EngineState& src)
+inline void to_sushi_ext(sushi::control::EngineState& dest, const sushi_rpc::EngineState& src)
 {
     dest.sample_rate = src.sample_rate();
     dest.tempo = src.tempo();
@@ -637,7 +638,7 @@ inline void to_sushi_ext(sushi::ext::EngineState& dest, const sushi_rpc::EngineS
     }
 }
 
-inline void to_grpc(sushi_rpc::PluginClass& dest, sushi::ext::PluginClass& src)
+inline void to_grpc(sushi_rpc::PluginClass& dest, sushi::control::PluginClass& src)
 {
     dest.set_name(std::move(src.name));
     dest.set_label(std::move(src.label));
@@ -647,9 +648,9 @@ inline void to_grpc(sushi_rpc::PluginClass& dest, sushi::ext::PluginClass& src)
     to_grpc(*dest.mutable_state(), src.state);
 }
 
-inline sushi::ext::PluginClass to_sushi_ext(const sushi_rpc::PluginClass& src)
+inline sushi::control::PluginClass to_sushi_ext(const sushi_rpc::PluginClass& src)
 {
-    sushi::ext::PluginClass dest;
+    sushi::control::PluginClass dest;
     dest.name = src.name();
     dest.label = src.label();
     dest.uid = src.uid();
@@ -659,7 +660,7 @@ inline sushi::ext::PluginClass to_sushi_ext(const sushi_rpc::PluginClass& src)
     return dest;
 }
 
-inline void to_grpc(sushi_rpc::TrackState& dest, sushi::ext::TrackState& src)
+inline void to_grpc(sushi_rpc::TrackState& dest, sushi::control::TrackState& src)
 {
     dest.set_name(std::move(src.name));
     dest.set_label(std::move(src.label));
@@ -676,9 +677,9 @@ inline void to_grpc(sushi_rpc::TrackState& dest, sushi::ext::TrackState& src)
     }
 }
 
-inline sushi::ext::TrackState to_sushi_ext(const sushi_rpc::TrackState& src)
+inline sushi::control::TrackState to_sushi_ext(const sushi_rpc::TrackState& src)
 {
-    sushi::ext::TrackState dest;
+    sushi::control::TrackState dest;
     dest.name = src.name();
     dest.label = src.label();
     dest.channels = src.channels();
@@ -694,7 +695,7 @@ inline sushi::ext::TrackState to_sushi_ext(const sushi_rpc::TrackState& src)
     return dest;
 }
 
-inline void to_grpc(sushi_rpc::SessionState& dest, sushi::ext::SessionState& src)
+inline void to_grpc(sushi_rpc::SessionState& dest, sushi::control::SessionState& src)
 {
     to_grpc(*dest.mutable_sushi_info(), src.sushi_info);
     dest.set_save_date(std::move(src.save_date));
@@ -710,7 +711,7 @@ inline void to_grpc(sushi_rpc::SessionState& dest, sushi::ext::SessionState& src
     }
 }
 
-inline void to_sushi_ext(sushi::ext::SessionState& dest, const sushi_rpc::SessionState& src)
+inline void to_sushi_ext(sushi::control::SessionState& dest, const sushi_rpc::SessionState& src)
 {
     to_sushi_ext(dest.sushi_info, src.sushi_info());
     dest.save_date = src.save_date();
@@ -830,7 +831,7 @@ grpc::Status TransportControlService::SetTimeSignature(grpc::ServerContext* /*co
                                                        const sushi_rpc::TimeSignature* request,
                                                        sushi_rpc::GenericVoidValue* /*response*/)
 {
-    sushi::ext::TimeSignature ts;
+    sushi::control::TimeSignature ts;
     ts.numerator = request->numerator();
     ts.denominator = request->denominator();
     auto status = _controller->set_time_signature(ts);
@@ -859,7 +860,7 @@ grpc::Status TimingControlService::GetEngineTimings(grpc::ServerContext* /*conte
                                                     sushi_rpc::CpuTimings* response)
 {
     auto [status, timings] = _controller->get_engine_timings();
-    if (status != sushi::ext::ControlStatus::OK)
+    if (status != sushi::control::ControlStatus::OK)
     {
         return to_grpc_status(status);
     }
@@ -872,7 +873,7 @@ grpc::Status TimingControlService::GetTrackTimings(grpc::ServerContext* /*contex
                                                    sushi_rpc::CpuTimings* response)
 {
     auto [status, timings] = _controller->get_track_timings(request->id());
-    if (status != sushi::ext::ControlStatus::OK)
+    if (status != sushi::control::ControlStatus::OK)
     {
         return to_grpc_status(status);
     }
@@ -885,7 +886,7 @@ grpc::Status TimingControlService::GetProcessorTimings(grpc::ServerContext* /*co
                                                        sushi_rpc::CpuTimings* response)
 {
     auto [status, timings] = _controller->get_processor_timings(request->id());
-    if (status != sushi::ext::ControlStatus::OK)
+    if (status != sushi::control::ControlStatus::OK)
     {
         return to_grpc_status(status);
     }
@@ -996,7 +997,7 @@ grpc::Status AudioGraphControlService::GetTrackId(grpc::ServerContext* /*context
                                                   sushi_rpc::TrackIdentifier* response)
 {
     auto [status, id] = _controller->get_track_id(request->value());
-    if (status != sushi::ext::ControlStatus::OK)
+    if (status != sushi::control::ControlStatus::OK)
     {
         return to_grpc_status(status, "No track with that name");
     }
@@ -1009,7 +1010,7 @@ grpc::Status AudioGraphControlService::GetTrackInfo(grpc::ServerContext* /*conte
                                                     sushi_rpc::TrackInfo* response)
 {
     auto [status, track] = _controller->get_track_info(request->id());
-    if (status != sushi::ext::ControlStatus::OK)
+    if (status != sushi::control::ControlStatus::OK)
     {
         return to_grpc_status(status, nullptr);
     }
@@ -1035,7 +1036,7 @@ grpc::Status AudioGraphControlService::GetProcessorId(grpc::ServerContext* /*con
                                                       sushi_rpc::ProcessorIdentifier* response)
 {
     auto [status, id] = _controller->get_processor_id(request->value());
-    if (status != sushi::ext::ControlStatus::OK)
+    if (status != sushi::control::ControlStatus::OK)
     {
         return to_grpc_status(status, "No processor with that name");
     }
@@ -1048,7 +1049,7 @@ grpc::Status AudioGraphControlService::GetProcessorInfo(grpc::ServerContext* /*c
                                                         sushi_rpc::ProcessorInfo* response)
 {
     auto [status, processor] = _controller->get_processor_info(request->id());
-    if (status != sushi::ext::ControlStatus::OK)
+    if (status != sushi::control::ControlStatus::OK)
     {
         return to_grpc_status(status);
     }
@@ -1061,7 +1062,7 @@ grpc::Status AudioGraphControlService::GetProcessorBypassState(grpc::ServerConte
                                                                sushi_rpc::GenericBoolValue* response)
 {
     auto [status, state] = _controller->get_processor_bypass_state(request->id());
-    if (status != sushi::ext::ControlStatus::OK)
+    if (status != sushi::control::ControlStatus::OK)
     {
         return to_grpc_status(status);
     }
@@ -1074,7 +1075,7 @@ grpc::Status AudioGraphControlService::GetProcessorState(grpc::ServerContext* /*
                                                          sushi_rpc::ProcessorState* response)
 {
     auto [status, state] = _controller->get_processor_state(request->id());
-    if (status != sushi::ext::ControlStatus::OK)
+    if (status != sushi::control::ControlStatus::OK)
     {
         return to_grpc_status(status);
     }
@@ -1094,7 +1095,7 @@ grpc::Status AudioGraphControlService::SetProcessorState(grpc::ServerContext* /*
                                                          const sushi_rpc::ProcessorStateSetRequest* request,
                                                          sushi_rpc::GenericVoidValue* /*response*/)
 {
-    sushi::ext::ProcessorState sushi_state;
+    sushi::control::ProcessorState sushi_state;
     to_sushi_ext(sushi_state, request->state());
     auto status = _controller->set_processor_state(request->processor().id(), sushi_state);
     return to_grpc_status(status);
@@ -1201,7 +1202,7 @@ grpc::Status ParameterControlService::GetParameterId(grpc::ServerContext* /*cont
                                                      sushi_rpc::ParameterIdentifier* response)
 {
     auto [status, id] = _controller->get_parameter_id(request->processor().id(), request->parametername());
-    if (status != sushi::ext::ControlStatus::OK)
+    if (status != sushi::control::ControlStatus::OK)
     {
         return to_grpc_status(status,  "No parameter with that name");
     }
@@ -1214,7 +1215,7 @@ grpc::Status ParameterControlService::GetParameterInfo(grpc::ServerContext* /*co
                                                        sushi_rpc::ParameterInfo* response)
 {
     auto [status, parameter] = _controller->get_parameter_info(request->processor_id(), request->parameter_id());
-    if (status != sushi::ext::ControlStatus::OK)
+    if (status != sushi::control::ControlStatus::OK)
     {
         return to_grpc_status(status);
     }
@@ -1227,7 +1228,7 @@ grpc::Status ParameterControlService::GetParameterValue(grpc::ServerContext* /*c
                                                         sushi_rpc::GenericFloatValue* response)
 {
     auto [status, value] = _controller->get_parameter_value(request->processor_id(), request->parameter_id());
-    if (status != sushi::ext::ControlStatus::OK)
+    if (status != sushi::control::ControlStatus::OK)
     {
         return to_grpc_status(status);
     }
@@ -1240,7 +1241,7 @@ grpc::Status ParameterControlService::GetParameterValueInDomain(grpc::ServerCont
                                                                 sushi_rpc::GenericFloatValue* response)
 {
     auto [status, value] = _controller->get_parameter_value_in_domain(request->processor_id(), request->parameter_id());
-    if (status != sushi::ext::ControlStatus::OK)
+    if (status != sushi::control::ControlStatus::OK)
     {
         return to_grpc_status(status);
     }
@@ -1253,7 +1254,7 @@ grpc::Status ParameterControlService::GetParameterValueAsString(grpc::ServerCont
                                                             sushi_rpc::GenericStringValue* response)
 {
     auto [status, value] = _controller->get_parameter_value_as_string(request->processor_id(), request->parameter_id());
-    if (status != sushi::ext::ControlStatus::OK)
+    if (status != sushi::control::ControlStatus::OK)
     {
         return to_grpc_status(status);
     }
@@ -1276,7 +1277,7 @@ grpc::Status ProgramControlService::GetProcessorCurrentProgram(grpc::ServerConte
                                                                sushi_rpc::ProgramIdentifier* response)
 {
     auto [status, program] = _controller->get_processor_current_program(request->id());
-    if (status != sushi::ext::ControlStatus::OK)
+    if (status != sushi::control::ControlStatus::OK)
     {
         return to_grpc_status(status);
     }
@@ -1289,7 +1290,7 @@ grpc::Status ProgramControlService::GetProcessorCurrentProgramName(grpc::ServerC
                                                                    sushi_rpc::GenericStringValue* response)
 {
     auto [status, program] = _controller->get_processor_current_program_name(request->id());
-    if (status != sushi::ext::ControlStatus::OK)
+    if (status != sushi::control::ControlStatus::OK)
     {
         return to_grpc_status(status);
     }
@@ -1302,7 +1303,7 @@ grpc::Status ProgramControlService::GetProcessorProgramName(grpc::ServerContext*
                                                             sushi_rpc::GenericStringValue* response)
 {
     auto [status, program] = _controller->get_processor_program_name(request->processor().id(), request->program());
-    if (status != sushi::ext::ControlStatus::OK)
+    if (status != sushi::control::ControlStatus::OK)
     {
         return to_grpc_status(status);
     }
@@ -1376,7 +1377,7 @@ grpc::Status ParameterControlService::GetPropertyId(grpc::ServerContext* /*conte
                                                     sushi_rpc::PropertyIdentifier* response)
 {
     auto [status, id] = _controller->get_property_id(request->processor().id(), request->property_name());
-    if (status != sushi::ext::ControlStatus::OK)
+    if (status != sushi::control::ControlStatus::OK)
     {
         return to_grpc_status(status,  "No property with that name");
     }
@@ -1389,7 +1390,7 @@ grpc::Status ParameterControlService::GetPropertyInfo(grpc::ServerContext* /*con
                                                       sushi_rpc::PropertyInfo* response)
 {
     auto [status, property] = _controller->get_property_info(request->processor_id(), request->property_id());
-    if (status != sushi::ext::ControlStatus::OK)
+    if (status != sushi::control::ControlStatus::OK)
     {
         return to_grpc_status(status);
     }
@@ -1402,7 +1403,7 @@ grpc::Status ParameterControlService::GetPropertyValue(grpc::ServerContext* /*co
                                                        sushi_rpc::GenericStringValue* response)
 {
     auto [status, value] = _controller->get_property_value(request->processor_id(), request->property_id());
-    if (status != sushi::ext::ControlStatus::OK)
+    if (status != sushi::control::ControlStatus::OK)
     {
         return to_grpc_status(status);
     }
@@ -1494,7 +1495,7 @@ grpc::Status MidiControlService::GetCCInputConnectionsForProcessor(grpc::ServerC
 {
     const auto processor_id = request->id();
     auto output_connections = _midi_controller->get_cc_input_connections_for_processor(processor_id);
-    if(output_connections.first == sushi::ext::ControlStatus::OK)
+    if(output_connections.first == sushi::control::ControlStatus::OK)
     {
         for (const auto& connection : output_connections.second)
         {
@@ -1515,7 +1516,7 @@ grpc::Status MidiControlService::GetPCInputConnectionsForProcessor(grpc::ServerC
 {
     const auto processor_id = request->id();
     auto output_connections = _midi_controller->get_pc_input_connections_for_processor(processor_id);
-    if(output_connections.first == sushi::ext::ControlStatus::OK)
+    if(output_connections.first == sushi::control::ControlStatus::OK)
     {
         for (const auto& connection : output_connections.second)
         {
@@ -1601,7 +1602,7 @@ grpc::Status MidiControlService::ConnectPCToProcessor(grpc::ServerContext* /*con
     const MidiChannel_Channel channel = request->channel().channel();
     const auto port = request->port();
 
-    sushi::ext::MidiChannel midi_channel = to_sushi_ext(channel);
+    sushi::control::MidiChannel midi_channel = to_sushi_ext(channel);
 
     const auto status = _midi_controller->connect_pc_to_processor(processor_id, midi_channel, port);
 
@@ -1656,7 +1657,7 @@ grpc::Status MidiControlService::DisconnectPC(grpc::ServerContext* /*context*/,
     const auto processor_id = request->processor().id();
     const MidiChannel_Channel channel = request->channel().channel();
     const auto port = request->port();
-    sushi::ext::MidiChannel midi_channel = to_sushi_ext(channel);
+    sushi::control::MidiChannel midi_channel = to_sushi_ext(channel);
 
     const auto status = _midi_controller->disconnect_pc(processor_id, midi_channel, port);
     return to_grpc_status(status);
@@ -2041,7 +2042,7 @@ grpc::Status SessionControlService::RestoreSession(grpc::ServerContext* /*contex
                                                    const sushi_rpc::SessionState* request,
                                                    sushi_rpc::GenericVoidValue* /*response*/)
 {
-    sushi::ext::SessionState sushi_state;
+    sushi::control::SessionState sushi_state;
     to_sushi_ext(sushi_state, *request);
 
     auto status = _controller->restore_session(sushi_state);
@@ -2049,47 +2050,47 @@ grpc::Status SessionControlService::RestoreSession(grpc::ServerContext* /*contex
     return to_grpc_status(status);
 }
 
-NotificationControlService::NotificationControlService(sushi::ext::SushiControl* controller) : _controller{controller},
+NotificationControlService::NotificationControlService(sushi::control::SushiControl* controller) : _controller{controller},
                                                                                                _audio_graph_controller{controller->audio_graph_controller()}
 {
-    _controller->subscribe_to_notifications(sushi::ext::NotificationType::TRANSPORT_UPDATE, this);
-    _controller->subscribe_to_notifications(sushi::ext::NotificationType::CPU_TIMING_UPDATE, this);
-    _controller->subscribe_to_notifications(sushi::ext::NotificationType::TRACK_UPDATE, this);
-    _controller->subscribe_to_notifications(sushi::ext::NotificationType::PROCESSOR_UPDATE, this);
-    _controller->subscribe_to_notifications(sushi::ext::NotificationType::PARAMETER_CHANGE, this);
-    _controller->subscribe_to_notifications(sushi::ext::NotificationType::PROPERTY_CHANGE, this);
+    _controller->subscribe_to_notifications(sushi::control::NotificationType::TRANSPORT_UPDATE, this);
+    _controller->subscribe_to_notifications(sushi::control::NotificationType::CPU_TIMING_UPDATE, this);
+    _controller->subscribe_to_notifications(sushi::control::NotificationType::TRACK_UPDATE, this);
+    _controller->subscribe_to_notifications(sushi::control::NotificationType::PROCESSOR_UPDATE, this);
+    _controller->subscribe_to_notifications(sushi::control::NotificationType::PARAMETER_CHANGE, this);
+    _controller->subscribe_to_notifications(sushi::control::NotificationType::PROPERTY_CHANGE, this);
 }
 
-void NotificationControlService::notification(const sushi::ext::ControlNotification* notification)
+void NotificationControlService::notification(const sushi::control::ControlNotification* notification)
 {
     switch(notification->type())
     {
-        case sushi::ext::NotificationType::TRANSPORT_UPDATE:
+        case sushi::control::NotificationType::TRANSPORT_UPDATE:
         {
             _forward_transport_notification_to_subscribers(notification);
             break;
         }
-        case sushi::ext::NotificationType::CPU_TIMING_UPDATE:
+        case sushi::control::NotificationType::CPU_TIMING_UPDATE:
         {
             _forward_cpu_timing_notification_to_subscribers(notification);
             break;
         }
-        case sushi::ext::NotificationType::TRACK_UPDATE:
+        case sushi::control::NotificationType::TRACK_UPDATE:
         {
             _forward_track_notification_to_subscribers(notification);
             break;
         }
-        case sushi::ext::NotificationType::PROCESSOR_UPDATE:
+        case sushi::control::NotificationType::PROCESSOR_UPDATE:
         {
             _forward_processor_notification_to_subscribers(notification);
             break;
         }
-        case sushi::ext::NotificationType::PARAMETER_CHANGE:
+        case sushi::control::NotificationType::PARAMETER_CHANGE:
         {
             _forward_parameter_notification_to_subscribers(notification);
             break;
         }
-        case sushi::ext::NotificationType::PROPERTY_CHANGE:
+        case sushi::control::NotificationType::PROPERTY_CHANGE:
         {
             _forward_property_notification_to_subscribers(notification);
             break;
@@ -2099,36 +2100,36 @@ void NotificationControlService::notification(const sushi::ext::ControlNotificat
     }
 }
 
-void NotificationControlService::_forward_transport_notification_to_subscribers(const sushi::ext::ControlNotification* notification)
+void NotificationControlService::_forward_transport_notification_to_subscribers(const sushi::control::ControlNotification* notification)
 {
-    auto typed_notification = static_cast<const sushi::ext::TransportNotification*>(notification);
+    auto typed_notification = static_cast<const sushi::control::TransportNotification*>(notification);
     auto notification_content = std::make_shared<TransportUpdate>();
     auto action = typed_notification->action();
 
     switch(action)
     {
-        case sushi::ext::TransportAction::TEMPO_CHANGED:
+        case sushi::control::TransportAction::TEMPO_CHANGED:
         {
             float value = std::get<float>(typed_notification->value());
             notification_content->set_tempo(value);
             break;
         }
-        case sushi::ext::TransportAction::PLAYING_MODE_CHANGED:
+        case sushi::control::TransportAction::PLAYING_MODE_CHANGED:
         {
-            auto grpc_playing_mode = to_grpc(std::get<sushi::ext::PlayingMode>(typed_notification->value()));
+            auto grpc_playing_mode = to_grpc(std::get<sushi::control::PlayingMode>(typed_notification->value()));
             notification_content->mutable_playing_mode()->set_mode(grpc_playing_mode);
             break;
         }
-        case sushi::ext::TransportAction::SYNC_MODE_CHANGED:
+        case sushi::control::TransportAction::SYNC_MODE_CHANGED:
         {
-            auto grpc_sync_mode = to_grpc(std::get<sushi::ext::SyncMode>(typed_notification->value()));
+            auto grpc_sync_mode = to_grpc(std::get<sushi::control::SyncMode>(typed_notification->value()));
             notification_content->mutable_sync_mode()->set_mode(grpc_sync_mode);
             break;
         }
-        case sushi::ext::TransportAction::TIME_SIGNATURE_CHANGED:
+        case sushi::control::TransportAction::TIME_SIGNATURE_CHANGED:
         {
             auto mutable_time_signature = notification_content->mutable_time_signature();
-            const auto source_time_signature = std::get<sushi::ext::TimeSignature>(typed_notification->value());
+            const auto source_time_signature = std::get<sushi::control::TimeSignature>(typed_notification->value());
             mutable_time_signature->set_denominator(source_time_signature.denominator);
             mutable_time_signature->set_numerator(source_time_signature.numerator);
             break;
@@ -2147,9 +2148,9 @@ void NotificationControlService::_forward_transport_notification_to_subscribers(
     }
 }
 
-void NotificationControlService::_forward_cpu_timing_notification_to_subscribers(const sushi::ext::ControlNotification* notification)
+void NotificationControlService::_forward_cpu_timing_notification_to_subscribers(const sushi::control::ControlNotification* notification)
 {
-    auto typed_notification = static_cast<const sushi::ext::CpuTimingNotification*>(notification);
+    auto typed_notification = static_cast<const sushi::control::CpuTimingNotification*>(notification);
     auto notification_content = std::make_shared<CpuTimings>();
     auto timings = typed_notification->cpu_timings();
     notification_content->set_average(timings.avg);
@@ -2163,20 +2164,20 @@ void NotificationControlService::_forward_cpu_timing_notification_to_subscribers
     }
 }
 
-void NotificationControlService::_forward_track_notification_to_subscribers(const sushi::ext::ControlNotification* notification)
+void NotificationControlService::_forward_track_notification_to_subscribers(const sushi::control::ControlNotification* notification)
 {
-    auto typed_notification = static_cast<const sushi::ext::TrackNotification*>(notification);
+    auto typed_notification = static_cast<const sushi::control::TrackNotification*>(notification);
     auto notification_content = std::make_shared<TrackUpdate>();
     auto action = typed_notification->action();
 
     switch(action)
     {
-        case sushi::ext::TrackAction::ADDED:
+        case sushi::control::TrackAction::ADDED:
         {
             notification_content->set_action(TrackUpdate_Action_TRACK_ADDED);
             break;
         }
-        case sushi::ext::TrackAction::DELETED:
+        case sushi::control::TrackAction::DELETED:
         {
             notification_content->set_action(TrackUpdate_Action_TRACK_DELETED);
             break;
@@ -2197,20 +2198,20 @@ void NotificationControlService::_forward_track_notification_to_subscribers(cons
     }
 }
 
-void NotificationControlService::_forward_processor_notification_to_subscribers(const sushi::ext::ControlNotification* notification)
+void NotificationControlService::_forward_processor_notification_to_subscribers(const sushi::control::ControlNotification* notification)
 {
-    auto typed_notification = static_cast<const sushi::ext::ProcessorNotification*>(notification);
+    auto typed_notification = static_cast<const sushi::control::ProcessorNotification*>(notification);
     auto notification_content = std::make_shared<ProcessorUpdate>();
     auto action = typed_notification->action();
 
     switch(action)
     {
-        case sushi::ext::ProcessorAction::ADDED:
+        case sushi::control::ProcessorAction::ADDED:
         {
             notification_content->set_action(ProcessorUpdate_Action_PROCESSOR_ADDED);
             break;
         }
-        case sushi::ext::ProcessorAction::DELETED:
+        case sushi::control::ProcessorAction::DELETED:
         {
             notification_content->set_action(ProcessorUpdate_Action_PROCESSOR_DELETED);
             break;
@@ -2232,9 +2233,9 @@ void NotificationControlService::_forward_processor_notification_to_subscribers(
     }
 }
 
-void NotificationControlService::_forward_parameter_notification_to_subscribers(const sushi::ext::ControlNotification* notification)
+void NotificationControlService::_forward_parameter_notification_to_subscribers(const sushi::control::ControlNotification* notification)
 {
-    auto typed_notification = static_cast<const sushi::ext::ParameterChangeNotification*>(notification);
+    auto typed_notification = static_cast<const sushi::control::ParameterChangeNotification*>(notification);
     auto notification_content = std::make_shared<ParameterUpdate>();
     notification_content->set_normalized_value(typed_notification->value());
     notification_content->set_domain_value(typed_notification->domain_value());
@@ -2249,9 +2250,9 @@ void NotificationControlService::_forward_parameter_notification_to_subscribers(
     }
 }
 
-void NotificationControlService::_forward_property_notification_to_subscribers(const sushi::ext::ControlNotification* notification)
+void NotificationControlService::_forward_property_notification_to_subscribers(const sushi::control::ControlNotification* notification)
 {
-    auto typed_notification = static_cast<const sushi::ext::PropertyChangeNotification*>(notification);
+    auto typed_notification = static_cast<const sushi::control::PropertyChangeNotification*>(notification);
     auto notification_content = std::make_shared<PropertyValue>();
     notification_content->set_value(typed_notification->value());
     notification_content->mutable_property()->set_property_id(typed_notification->parameter_id());

@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -31,12 +31,12 @@
 #include "fifo/circularfifo_memory_relaxed_aquire_release.h"
 #include "twine/twine.h"
 
+#include "sushi/constants.h"
+
 #include "base_performance_timer.h"
-#include "constants.h"
 #include "spinlock.h"
 
-namespace sushi {
-namespace performance {
+namespace sushi::internal::performance {
 
 using TimePoint = std::chrono::nanoseconds;
 constexpr int MAX_LOG_ENTRIES = 20000;
@@ -170,7 +170,6 @@ protected:
     alignas(ASSUMED_CACHE_LINE_SIZE) memory_relaxed_aquire_release::CircularFifo<TimingLogPoint, MAX_LOG_ENTRIES> _entry_queue;
 };
 
-} // namespace performance
-} // namespace sushi
+} // end namespace sushi::internal::performance
 
-#endif //SUSHI_PERFORMANCE_TIMER_H
+#endif // SUSHI_PERFORMANCE_TIMER_H

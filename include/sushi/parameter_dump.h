@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -21,12 +21,15 @@
 #ifndef SUSHI_PARAMETER_DUMP_H
 #define SUSHI_PARAMETER_DUMP_H
 
-#include "engine/controller/controller.h"
-#include "json_utils.h"
+#include "rapidjson/document.h"
 
 namespace sushi {
 
-rapidjson::Document generate_processor_parameter_document(sushi::ext::SushiControl* engine_controller);
+namespace control {
+    class SushiControl;
+}
+
+rapidjson::Document generate_processor_parameter_document(sushi::control::SushiControl* engine_controller);
 
 } // end namespace sushi
 

@@ -2,9 +2,6 @@
 	path = third-party/rapidjson
 	url = https://github.com/miloyip/rapidjson.git
 	branch = master
-[submodule "third-party/spdlog"]
-	path = third-party/spdlog
-	url = https://github.com/gabime/spdlog.git
 [submodule "twine"]
 	path = twine
 	url = ../twine.git
@@ -34,4 +31,7 @@
 	url = https://github.com/sdangelo/brickworks/
 [submodule "third-party/freeverb"]
 	path = third-party/freeverb
-	url = https://github.com/elk-audio/freeverb
+	url = ../freeverb.git
+[submodule "elklog"]
+	path = elklog
+	url = ../elklog.git

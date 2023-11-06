@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -24,8 +24,7 @@
 #include <cmath>
 #include <algorithm>
 
-namespace dsp {
-namespace biquad {
+namespace sushi::dsp::biquad {
 
 const int TIME_CONSTANTS_IN_SMOOTHING_FILTER = 3;
 
@@ -122,5 +121,5 @@ void BiquadFilter::process(const float *input, float *output, int samples)
         output[n] = y;
     }
 }
-} // end namespace biquad
-} // end namespace dsp
+
+} // end namespace sushi::dsp::biquad

@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -18,19 +18,17 @@
  * @copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include <cassert>
-
 #include <bw_buf.h>
 
+#include "elklog/static_logger.h"
+
 #include "simple_synth_plugin.h"
-#include "logging.h"
 
 #include <iostream>
 
-namespace sushi {
-namespace simple_synth_plugin {
+namespace sushi::internal::simple_synth_plugin {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("simplesynth");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("simplesynth");
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.simple_synth";
 constexpr auto DEFAULT_LABEL = "Simple synthesizer";
@@ -38,6 +36,7 @@ constexpr auto DEFAULT_LABEL = "Simple synthesizer";
 constexpr float A4_FREQUENCY = 440.0f;
 constexpr int A4_NOTENUM = 69;
 constexpr float NOTE2FREQ_SCALE = 5.0f / 60.0f;
+
 
 SimpleSynthPlugin::SimpleSynthPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
@@ -142,7 +141,7 @@ void SimpleSynthPlugin::process_event(const RtEvent& event)
             }
             if (!_event_fifo.push(event))
             {
-                SUSHI_LOG_ERROR("Internal queue full while processing event");
+                ELKLOG_LOG_ERROR("Internal queue full while processing event");
             }
             break;
         }
@@ -185,8 +184,8 @@ void SimpleSynthPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */, 
         // if that's not the case simply drop the event
         if (next_offset < previous_offset)
         {
-            SUSHI_LOG_DEBUG("Dropping unordered event of type {} with sample offset {}",
-                            event.type(), event.sample_offset());
+            ELKLOG_LOG_DEBUG("Dropping unordered event of type {} with sample offset {}",
+                             event.type(), event.sample_offset());
             continue;
         }
         _render_loop(previous_offset, next_offset);
@@ -197,8 +196,8 @@ void SimpleSynthPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */, 
         {
         case RtEventType::NOTE_ON:
         {
-            SUSHI_LOG_DEBUG("Note ON, num. {}, vel. {}",
-                            note, key_event->velocity());
+            ELKLOG_LOG_DEBUG("Note ON, num. {}, vel. {}",
+                             note, key_event->velocity());
             bw_env_gen_set_gate(&_env_gen_coeffs, 1);
             _change_active_note(note);
             _held_notes[note] = true;
@@ -208,7 +207,7 @@ void SimpleSynthPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */, 
 
         case RtEventType::NOTE_OFF:
         {
-            SUSHI_LOG_DEBUG("Note OFF, num. {}, vel. {}",
+            ELKLOG_LOG_DEBUG("Note OFF, num. {}, vel. {}",
                             note, key_event->velocity());
             _held_notes[note] = false;
             // if there are other held notes, switch to the highest one
@@ -229,7 +228,7 @@ void SimpleSynthPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */, 
         }
 
         default:
-            SUSHI_LOG_DEBUG("Unexpected event type passed to process(): {}", key_event->type());
+            ELKLOG_LOG_DEBUG("Unexpected event type passed to process(): {}", key_event->type());
 
         }
         previous_offset = next_offset;
@@ -269,5 +268,5 @@ std::string_view SimpleSynthPlugin::static_uid()
     return PLUGIN_UID;
 }
 
-}// namespace simple_synth_plugin
-}// namespace sushi
+
+} // namespace sushi::internal::simple_synth_plugin

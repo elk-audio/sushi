@@ -10,13 +10,15 @@
 * PURPOSE.  See the GNU Affero General Public License for more details.
 *
 * You should have received a copy of the GNU Affero General Public License along with
-* SUSHI.  If not, see http://www.gnu.org/licenses/
+* SUSHI. If not, see http://www.gnu.org/licenses/
 */
 
 #ifndef SUSHI_MOCK_OSCPACK_H
 #define SUSHI_MOCK_OSCPACK_H
 
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <gmock/gmock-actions.h>
 
 class IpEndpointName
 {
@@ -52,7 +54,15 @@ class UdpListeningReceiveSocket
 {
 public:
     UdpListeningReceiveSocket() = default;
-    UdpListeningReceiveSocket(const IpEndpointName& /*remoteEndpoint*/, PacketListener* /*listener*/) {}
+    UdpListeningReceiveSocket(const IpEndpointName& /*remoteEndpoint*/, PacketListener* /*listener*/)
+    {
+        // This suppresses warnings about calls to AsynchronousBreak.
+        // The method is only called internally from OscPack anyway, so we do not need to
+        // anticipate its invocations in our tests - just mock the sockets to avoid
+        // unit test execution failure caused by unavailable sockets.
+        EXPECT_CALL(*this, AsynchronousBreak()).Times(testing::AnyNumber());
+    }
+
     virtual ~UdpListeningReceiveSocket() = default;
 
     MOCK_METHOD(void,

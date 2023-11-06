@@ -2,8 +2,8 @@
 
 #include "library/vst2x/vst2x_midi_event_fifo.h"
 
-using namespace sushi;
-using namespace sushi::vst2;
+using namespace sushi::internal;
+using namespace sushi::internal::vst2;
 
 namespace {
     constexpr int TEST_FIFO_CAPACITY = 128;
@@ -13,22 +13,16 @@ namespace {
 class TestVst2xMidiEventFIFO : public ::testing::Test
 {
 protected:
-    TestVst2xMidiEventFIFO()
-    {
-    }
+    TestVst2xMidiEventFIFO() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         // Pre-fill queue
-        for (int i=0; i<TEST_DATA_SIZE; i++)
+        for (int i = 0; i < TEST_DATA_SIZE; i++)
         {
             auto ev = RtEvent::make_note_on_event(0, i, 0, 0, 1.0f);
             ASSERT_EQ(true, _module_under_test.push(ev));
         }
-    }
-
-    void TearDown()
-    {
     }
 
     Vst2xMidiEventFIFO<TEST_FIFO_CAPACITY> _module_under_test;

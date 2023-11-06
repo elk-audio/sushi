@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -25,8 +25,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace noise_gate_plugin {
+namespace sushi::internal::noise_gate_plugin {
 
 class NoiseGatePlugin : public InternalPlugin, public UidHelper<NoiseGatePlugin>
 {
@@ -62,6 +61,6 @@ private:
     std::array<bw_noise_gate_state, MAX_TRACK_CHANNELS> _noise_gate_states;
 };
 
-}// namespace noise_gate_plugin
-}// namespace sushi
+} // namespace sushi::internal::noise_gate_plugin
+
 #endif // NOISE_GATE_PLUGIN_H

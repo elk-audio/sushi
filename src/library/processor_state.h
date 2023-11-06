@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -24,12 +24,13 @@
 #include <optional>
 #include <vector>
 
-#include "library/constants.h"
-#include "library/types.h"
+#include "sushi/constants.h"
+#include "sushi/types.h"
+
 #include "library/id_generator.h"
 #include "engine/host_control.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 class ProcessorState
 {
@@ -162,6 +163,6 @@ protected:
     std::vector<std::pair<ObjectId, float>> _parameter_changes;
 };
 
-} // end namespace sushi
+} // end namespace sushi::internal
 
-#endif //SUSHI_PROCESSOR_STATE_H
+#endif // SUSHI_PROCESSOR_STATE_H

@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -18,13 +18,13 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
+#include "elklog/static_logger.h"
+
 #include "plugins/wav_writer_plugin.h"
-#include "logging.h"
 
-namespace sushi {
-namespace wav_writer_plugin {
+namespace sushi::internal::wav_writer_plugin {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("wav_writer");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("wav_writer");
 
 constexpr auto PLUGIN_UID = "sushi.testing.wav_writer";
 constexpr auto DEFAULT_LABEL = "Wav writer";
@@ -122,10 +122,10 @@ WavWriterStatus WavWriterPlugin::_start_recording()
     _output_file = sf_open(_actual_file_path.c_str(), SFM_WRITE, &_soundfile_info);
     if (_output_file == nullptr)
     {
-        SUSHI_LOG_ERROR("libsndfile error: {}", sf_strerror(_output_file));
+        ELKLOG_LOG_ERROR("libsndfile error: {}", sf_strerror(_output_file));
         return WavWriterStatus::FAILURE;
     }
-    SUSHI_LOG_INFO("Started recording to file: {}", _actual_file_path);
+    ELKLOG_LOG_INFO("Started recording to file: {}", _actual_file_path);
     return WavWriterStatus::SUCCESS;
 }
 
@@ -135,10 +135,10 @@ WavWriterStatus WavWriterPlugin::_stop_recording()
     int status = sf_close(_output_file);
     if (status != 0)
     {
-        SUSHI_LOG_ERROR("libsndfile error: {}", sf_error_number(status));
+        ELKLOG_LOG_ERROR("libsndfile error: {}", sf_error_number(status));
         return WavWriterStatus::FAILURE;
     }
-    SUSHI_LOG_INFO("Finished recording to file: {}", _actual_file_path);
+    ELKLOG_LOG_INFO("Finished recording to file: {}", _actual_file_path);
     _output_file = nullptr;
     return WavWriterStatus::SUCCESS;
 }
@@ -177,7 +177,7 @@ int WavWriterPlugin::_write_to_file()
             }
             else
             {
-                SUSHI_LOG_ERROR("libsndfile: {}", sf_strerror(_output_file));
+                ELKLOG_LOG_ERROR("libsndfile: {}", sf_strerror(_output_file));
                 return 0;
             }
 
@@ -207,7 +207,7 @@ int WavWriterPlugin::_non_rt_callback(EventId /* id */)
         int samples_written = _write_to_file();
         if (samples_written > 0)
         {
-            SUSHI_LOG_DEBUG("Sucessfully wrote {} samples", samples_written);
+            ELKLOG_LOG_DEBUG("Sucessfully wrote {} samples", samples_written);
         }
         _total_samples_written += samples_written;
     }
@@ -234,9 +234,9 @@ std::string WavWriterPlugin::_available_path(const std::string& requested_path)
         int status = sf_close(temp_file);
         if (status != 0)
         {
-            SUSHI_LOG_ERROR("libsndfile error: {} {}",status, sf_error_number(status));
+            ELKLOG_LOG_ERROR("libsndfile error: {} {}",status, sf_error_number(status));
         }
-        SUSHI_LOG_DEBUG("File {} already exists", new_path);
+        ELKLOG_LOG_DEBUG("File {} already exists", new_path);
         new_path = requested_path + "_" + std::to_string(suffix_counter) + suffix;
         temp_file = sf_open(new_path.c_str(), SFM_READ, &temp_info);
         suffix_counter++;
@@ -244,7 +244,7 @@ std::string WavWriterPlugin::_available_path(const std::string& requested_path)
     int status = sf_close(temp_file);
     if (status != 0)
     {
-        SUSHI_LOG_ERROR("libsndfile error: {}", sf_error_number(status));
+        ELKLOG_LOG_ERROR("libsndfile error: {}", sf_error_number(status));
     }
     return new_path;
 }
@@ -254,5 +254,4 @@ std::string_view WavWriterPlugin::static_uid()
     return PLUGIN_UID;
 }
 
-} // namespace wav_writer_plugin
-} // namespace sushis
+} // end namespace sushi::internal::wav_writer_plugin

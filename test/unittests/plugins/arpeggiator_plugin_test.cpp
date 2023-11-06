@@ -8,7 +8,8 @@
 #include "plugins/arpeggiator_plugin.cpp"
 
 using namespace sushi;
-using namespace sushi::arpeggiator_plugin;
+using namespace sushi::internal;
+using namespace sushi::internal::arpeggiator_plugin;
 
 constexpr float TEST_SAMPLERATE = 48000;
 
@@ -16,9 +17,6 @@ class TestArpeggiator : public ::testing::Test
 {
 protected:
     TestArpeggiator() = default;
-
-    void SetUp()
-    {}
 
     Arpeggiator _module_under_test;
 };
@@ -79,7 +77,7 @@ class TestArpeggiatorPlugin : public ::testing::Test
 protected:
     TestArpeggiatorPlugin() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         _module_under_test = new arpeggiator_plugin::ArpeggiatorPlugin(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
         ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
@@ -87,10 +85,11 @@ protected:
         _module_under_test->set_event_output(&_fifo);
     }
 
-    void TearDown()
+    void TearDown() override
     {
         delete _module_under_test;
     }
+
     RtSafeRtEventFifo _fifo;
     HostControlMockup _host_control;
     arpeggiator_plugin::ArpeggiatorPlugin* _module_under_test;

@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -20,12 +20,11 @@
 
 #include <vector>
 
+#include "elklog/static_logger.h"
+
 #include "performance_timer.h"
-#include "logging.h"
 
-
-namespace sushi {
-namespace performance {
+namespace sushi::internal::performance {
 
 constexpr auto EVALUATION_INTERVAL = std::chrono::seconds(1);
 constexpr double SEC_TO_NANOSEC = 1'000'000'000.0;
@@ -163,5 +162,4 @@ void PerformanceTimer::clear_all_timings()
     }
 }
 
-} // namespace performance
-} // namespace sushi
+} // end namespace sushi::internal::performance

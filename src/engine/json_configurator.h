@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
  /**
@@ -36,8 +36,7 @@
 #include "engine/midi_dispatcher.h"
 #include "control_frontends/osc_frontend.h"
 
-namespace sushi {
-namespace jsonconfig {
+namespace sushi::internal::jsonconfig {
 
 enum class JsonConfigReturnStatus
 {
@@ -65,7 +64,7 @@ enum class JsonSection
     STATE
 };
 
-struct AudioConfig
+struct ControlConfig
 {
     std::optional<int> cv_inputs;
     std::optional<int> cv_outputs;
@@ -81,20 +80,20 @@ public:
     JsonConfigurator(engine::BaseEngine* engine,
                      midi_dispatcher::MidiDispatcher* midi_dispatcher,
                      const engine::BaseProcessorContainer* processor_container,
-                     const std::string& path) : _engine(engine),
-                                                _midi_dispatcher(midi_dispatcher),
-                                                _processor_container(processor_container),
-                                                _document_path(path) {}
+                     const std::string& json_string) : _engine(engine),
+                                                       _midi_dispatcher(midi_dispatcher),
+                                                       _processor_container(processor_container),
+                                                       _json_string(json_string) {}
 
     ~JsonConfigurator() = default;
 
     /**
-     * @brief Reads the json config, and returns all audio frontend configuration options
+     * @brief Reads the json config, and returns all control frontend configuration options
      *        that are not set on the audio engine directly.
-     * @return A tuple of status and AudioConfig struct, AudioConfig is only valid if status is
+     * @return A tuple of status and AudioConfig struct, ControlConfig is only valid if status is
      *         JsonConfigReturnStatus::OK
      */
-    std::pair<JsonConfigReturnStatus, AudioConfig> load_audio_config();
+    std::pair<JsonConfigReturnStatus, ControlConfig> load_control_config();
 
     /**
      * @brief Reads the json config, and set the given host configuration options
@@ -144,7 +143,7 @@ public:
      * @return An std::vector with the parsed events which is only valid if the status
      *         returned is JsonConfigReturnStatus::OK
      */
-    std::pair<JsonConfigReturnStatus, std::vector<Event*>> load_event_list();
+    std::pair<JsonConfigReturnStatus, std::vector<std::unique_ptr<Event>>> load_event_list();
 
     /**
      * @brief Reads the json config, searches for a valid "initial_state" definition
@@ -158,7 +157,7 @@ public:
 private:
     /**
      * @brief Helper function to retrieve a particular section of the json configuration
-     * @param section Jsonsection to denote which section is to be validated.
+     * @param section JsonSection to denote which section is to be validated.
      * @return JsonConfigReturnStatus::OK if success, different error code otherwise.
      */
     std::pair<JsonConfigReturnStatus, const rapidjson::Value&> _parse_section(JsonSection section);
@@ -195,7 +194,7 @@ private:
      *        if set to false, the event timestamp will be set for immediate processing
      * @return A pointer to an Event if successful, nullptr otherwise
      */
-    Event* _parse_event(const rapidjson::Value& json_event, bool with_timestamp);
+    std::unique_ptr<Event> _parse_event(const rapidjson::Value& json_event, bool with_timestamp);
 
     /**
      * @brief function which validates the json data against the respective schema.
@@ -205,18 +204,17 @@ private:
      */
     static bool _validate_against_schema(rapidjson::Value& config, JsonSection section);
 
-    JsonConfigReturnStatus _load_data();
+    JsonConfigReturnStatus _load_data(const std::string& data);
 
     engine::BaseEngine* _engine;
     midi_dispatcher::MidiDispatcher* _midi_dispatcher;
     control_frontend::OSCFrontend* _osc_frontend {nullptr};
     const engine::BaseProcessorContainer* _processor_container;
 
-    std::string _document_path;
+    std::string _json_string;
     rapidjson::Document _json_data;
 };
 
-}/* namespace JSONCONFIG */
-}/* namespace SUSHI */
+} // end namespace sushi::internal::jsonconfig
 
-#endif //SUSHI_CONFIG_FROM_JSON_H
+#endif // SUSHI_CONFIG_FROM_JSON_H

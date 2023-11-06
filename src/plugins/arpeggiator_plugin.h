@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -25,8 +25,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace arpeggiator_plugin {
+namespace sushi::internal::arpeggiator_plugin {
 
 /**
  * @brief Simple arpeggiator module with only 1 mode (up)
@@ -98,7 +97,6 @@ private:
     Arpeggiator          _arp;
 };
 
-}// namespace sample_player_plugin
-}// namespace sushi
+} // end namespace sushi::internal::sample_player_plugin
 
-#endif //SUSHI_ARPEGGIATOR_PLUGIN_H
+#endif // SUSHI_ARPEGGIATOR_PLUGIN_H

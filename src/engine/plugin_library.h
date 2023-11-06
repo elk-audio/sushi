@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
  /**
@@ -23,8 +23,7 @@
 
 #include <string>
 
-namespace sushi {
-namespace engine {
+namespace sushi::internal::engine {
 
 class PluginLibrary
 {
@@ -55,6 +54,6 @@ protected:
     std::string _base_plugin_path;
 };
 
-} // end namespace engine
-} // end namespace sushi
+} // end namespace sushi::internal::engine
+
 #endif // SUSHI_PLUGIN_LIBRARY_H

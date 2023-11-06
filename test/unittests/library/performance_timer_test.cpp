@@ -6,7 +6,8 @@
 #include "library/performance_timer.cpp"
 
 using namespace sushi;
-using namespace sushi::performance;
+using namespace sushi::internal;
+using namespace sushi::internal::performance;
 
 constexpr auto TEST_PERIOD = std::chrono::microseconds(100);
 
@@ -39,14 +40,15 @@ void run_test_scenario(PerformanceTimer& timer)
 class TestPerformanceTimer : public ::testing::Test
 {
 protected:
-    TestPerformanceTimer()
-    {}
-    void SetUp()
+    TestPerformanceTimer() = default;
+
+    void SetUp() override
     {
         _module_under_test.set_timing_period(TEST_PERIOD);
         /* Hack to store records while not using the worker thread */
         _module_under_test._enabled = true;
     }
+
     PerformanceTimer _module_under_test;
 };
 

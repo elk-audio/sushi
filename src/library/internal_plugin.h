@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -27,9 +27,8 @@
 
 #include "library/processor.h"
 #include "library/plugin_parameters.h"
-#include "library/constants.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 constexpr int DEFAULT_CHANNELS = MAX_TRACK_CHANNELS;
 
@@ -222,5 +221,5 @@ private:
     std::unordered_map<ObjectId, std::string> _property_values;
 };
 
-} // end namespace sushi
-#endif //SUSHI_INTERNAL_PLUGIN_H
+} // end namespace sushi::internal
+#endif // SUSHI_INTERNAL_PLUGIN_H

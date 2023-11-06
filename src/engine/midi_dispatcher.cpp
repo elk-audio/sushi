@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -20,88 +20,89 @@
 
 #include <algorithm>
 
-#include "base_event_dispatcher.h"
+#include "elklog/static_logger.h"
+
 #include "engine/midi_dispatcher.h"
+
+#include "base_event_dispatcher.h"
 #include "base_engine.h"
 #include "library/midi_encoder.h"
-#include "logging.h"
 
-namespace sushi {
-namespace midi_dispatcher {
+namespace sushi::internal::midi_dispatcher {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("midi dispatcher");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("midi dispatcher");
 
-inline Event* make_note_on_event(const InputConnection& c,
-                                 const midi::NoteOnMessage& msg,
-                                 Time timestamp)
+inline std::unique_ptr<Event> make_note_on_event(const InputConnection& c,
+                                                 const midi::NoteOnMessage& msg,
+                                                 Time timestamp)
 {
     if (msg.velocity == 0)
     {
-        return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, c.target, msg.channel, msg.note, 0.5f, timestamp);
+        return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::NOTE_OFF, c.target, msg.channel, msg.note, 0.5f, timestamp);
     }
 
     float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
-    return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_ON, c.target, msg.channel, msg.note, velocity, timestamp);
+    return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::NOTE_ON, c.target, msg.channel, msg.note, velocity, timestamp);
 }
 
-inline Event* make_note_off_event(const InputConnection& c,
-                                  const midi::NoteOffMessage& msg,
-                                  Time timestamp)
+inline std::unique_ptr<Event> make_note_off_event(const InputConnection& c,
+                                                  const midi::NoteOffMessage& msg,
+                                                  Time timestamp)
 {
     float velocity = msg.velocity / static_cast<float>(midi::MAX_VALUE);
-    return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_OFF, c.target, msg.channel, msg.note, velocity, timestamp);
+    return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::NOTE_OFF, c.target, msg.channel, msg.note, velocity, timestamp);
 }
 
-inline Event* make_note_aftertouch_event(const InputConnection& c,
-                                         const midi::PolyKeyPressureMessage& msg,
-                                         Time timestamp)
+inline std::unique_ptr<Event> make_note_aftertouch_event(const InputConnection& c,
+                                                         const midi::PolyKeyPressureMessage& msg,
+                                                         Time timestamp)
 {
     float pressure = msg.pressure / static_cast<float>(midi::MAX_VALUE);
-    return new KeyboardEvent(KeyboardEvent::Subtype::NOTE_AFTERTOUCH, c.target, msg.channel, msg.note, pressure, timestamp);
+    return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::NOTE_AFTERTOUCH, c.target, msg.channel, msg.note, pressure, timestamp);
 }
 
-inline Event* make_aftertouch_event(const InputConnection& c,
-                                    const midi::ChannelPressureMessage& msg,
-                                    Time timestamp)
+inline std::unique_ptr<Event> make_aftertouch_event(const InputConnection& c,
+                                                    const midi::ChannelPressureMessage& msg,
+                                                    Time timestamp)
 {
     float pressure = msg.pressure / static_cast<float>(midi::MAX_VALUE);
-    return new KeyboardEvent(KeyboardEvent::Subtype::AFTERTOUCH, c.target, msg.channel, pressure, timestamp);
+    return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::AFTERTOUCH, c.target, msg.channel, pressure, timestamp);
 }
 
-inline Event* make_modulation_event(const InputConnection& c,
-                                    const midi::ControlChangeMessage& msg,
-                                    Time timestamp)
+inline std::unique_ptr<Event> make_modulation_event(const InputConnection& c,
+                                                    const midi::ControlChangeMessage& msg,
+                                                    Time timestamp)
 {
     float value = msg.value / static_cast<float>(midi::MAX_VALUE);
-    return new KeyboardEvent(KeyboardEvent::Subtype::MODULATION, c.target, msg.channel, value, timestamp);
+    return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::MODULATION, c.target, msg.channel, value, timestamp);
 }
 
-inline Event* make_pitch_bend_event(const InputConnection& c,
-                                    const midi::PitchBendMessage& msg,
-                                    Time timestamp)
+inline std::unique_ptr<Event> make_pitch_bend_event(const InputConnection& c,
+                                                    const midi::PitchBendMessage& msg,
+                                                    Time timestamp)
 {
     float value = (msg.value / static_cast<float>(midi::PITCH_BEND_MIDDLE)) - 1.0f;
-    return new KeyboardEvent(KeyboardEvent::Subtype::PITCH_BEND, c.target, msg.channel, value, timestamp);
+    return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::PITCH_BEND, c.target, msg.channel, value, timestamp);
 }
 
-inline Event* make_wrapped_midi_event(const InputConnection& c,
-                                      const uint8_t* data,
-                                      size_t size,
-                                      Time timestamp)
+inline std::unique_ptr<Event> make_wrapped_midi_event(const InputConnection& c,
+                                                      const uint8_t* data,
+                                                      size_t size,
+                                                      Time timestamp)
 {
     MidiDataByte midi_data{0};
     std::copy(data, data + size, midi_data.data());
-    return new KeyboardEvent(KeyboardEvent::Subtype::WRAPPED_MIDI, c.target, midi_data, timestamp);
+    return std::make_unique<KeyboardEvent>(KeyboardEvent::Subtype::WRAPPED_MIDI, c.target, midi_data, timestamp);
 }
 
-inline Event* make_param_change_event(InputConnection& c,
-                                      const midi::ControlChangeMessage& msg,
-                                      Time timestamp)
+inline std::unique_ptr<Event> make_param_change_event(InputConnection& c,
+                                                      const midi::ControlChangeMessage& msg,
+                                                      Time timestamp)
 {
     uint8_t abs_value = msg.value;
-    // Maybe TODO: currently this is based on a virtual controller absolute value which is
-    // initialized at 64. An alternative would be to read the parameter value from the plugin
-    // and compute a change from that. We should investigate what other DAWs are doing.
+    // TODO: Maybe? Currently this is based on a virtual controller absolute value which is
+    //  initialized at 64. An alternative would be to read the parameter value from the plugin
+    //  and compute a change from that. We should investigate what other DAWs are doing.
     if (c.relative)
     {
         abs_value = c.virtual_abs_value;
@@ -119,20 +120,19 @@ inline Event* make_param_change_event(InputConnection& c,
         c.virtual_abs_value = abs_value;
     }
     float value = static_cast<float>(abs_value) / midi::MAX_VALUE * (c.max_range - c.min_range) + c.min_range;
-    return new ParameterChangeEvent(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE, c.target, c.parameter, value, timestamp);
+    return std::make_unique<ParameterChangeEvent>(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE, c.target, c.parameter, value, timestamp);
 }
 
-inline Event* make_program_change_event(const InputConnection& c,
-                                        const midi::ProgramChangeMessage& msg,
-                                        Time timestamp)
+inline std::unique_ptr<Event> make_program_change_event(const InputConnection& c,
+                                                        const midi::ProgramChangeMessage& msg,
+                                                        Time timestamp)
 {
-    return new ProgramChangeEvent(c.target, msg.program, timestamp);
+    return std::make_unique<ProgramChangeEvent>(c.target, msg.program, timestamp);
 }
 
 MidiDispatcher::MidiDispatcher(dispatcher::BaseEventDispatcher* event_dispatcher) : _frontend(nullptr),
                                                                                     _event_dispatcher(event_dispatcher)
 {
-    _event_dispatcher->register_poster(this);
     _event_dispatcher->subscribe_to_keyboard_events(this);
     _event_dispatcher->subscribe_to_engine_notifications(this);
 }
@@ -141,7 +141,6 @@ MidiDispatcher::~MidiDispatcher()
 {
     _event_dispatcher->unsubscribe_from_keyboard_events(this);
     _event_dispatcher->unsubscribe_from_engine_notifications(this);
-    _event_dispatcher->deregister_poster(this);
 }
 
 
@@ -176,7 +175,7 @@ MidiDispatcherStatus MidiDispatcher::connect_cc_to_parameter(int midi_input,
     std::scoped_lock lock(_cc_routes_lock);
 
     _cc_routes[midi_input][cc_no][channel].push_back(connection);
-    SUSHI_LOG_INFO("Connected parameter ID \"{}\" "
+    ELKLOG_LOG_INFO("Connected parameter ID \"{}\" "
                            "(cc number \"{}\") to processor ID \"{}\"", parameter_id, cc_no, processor_id);
     return MidiDispatcherStatus::OK;
 }
@@ -207,7 +206,7 @@ MidiDispatcherStatus MidiDispatcher::disconnect_cc_from_parameter(int midi_input
         connection_vector.erase(erase_iterator, connection_vector.end());
     }
 
-    SUSHI_LOG_INFO("Disconnected "
+    ELKLOG_LOG_INFO("Disconnected "
                    "(cc number \"{}\") from processor ID \"{}\"", cc_no, processor_id);
     return MidiDispatcherStatus::OK;
 }
@@ -234,7 +233,7 @@ MidiDispatcherStatus MidiDispatcher::disconnect_all_cc_from_processor(ObjectId p
 
                 connection_vector.erase(erase_iterator, connection_vector.end());
 
-                SUSHI_LOG_DEBUG("Disconnected all CC's from processor ID \"{}\"", processor_id);
+                ELKLOG_LOG_DEBUG("Disconnected all CC's from processor ID \"{}\"", processor_id);
             }
         }
     }
@@ -270,7 +269,7 @@ MidiDispatcherStatus MidiDispatcher::connect_pc_to_processor(int midi_input,
     std::scoped_lock lock(_pc_routes_lock);
 
     _pc_routes[midi_input][channel].push_back(connection);
-    SUSHI_LOG_INFO("Connected program changes from MIDI port \"{}\" to processor id\"{}\"", midi_input, processor_id);
+    ELKLOG_LOG_INFO("Connected program changes from MIDI port \"{}\" to processor id\"{}\"", midi_input, processor_id);
     return MidiDispatcherStatus::OK;
 }
 
@@ -299,7 +298,7 @@ MidiDispatcherStatus MidiDispatcher::disconnect_pc_from_processor(int midi_input
         connection_vector.erase(erase_iterator, connection_vector.end());
     }
 
-    SUSHI_LOG_INFO("Disconnected program changes from MIDI port \"{}\" to processor ID \"{}\"", midi_input, processor_id);
+    ELKLOG_LOG_INFO("Disconnected program changes from MIDI port \"{}\" to processor ID \"{}\"", midi_input, processor_id);
     return MidiDispatcherStatus::OK;
 }
 
@@ -323,7 +322,7 @@ MidiDispatcherStatus MidiDispatcher::disconnect_all_pc_from_processor(ObjectId p
             connection_vector.erase(erase_iterator, connection_vector.end());
         }
     }
-    SUSHI_LOG_DEBUG("Disconnected all PC's from processor ID \"{}\"", processor_id);
+    ELKLOG_LOG_DEBUG("Disconnected all PC's from processor ID \"{}\"", processor_id);
 
     return MidiDispatcherStatus::OK;
 }
@@ -356,7 +355,7 @@ MidiDispatcherStatus MidiDispatcher::connect_kb_to_track(int midi_input,
     std::scoped_lock lock(_kb_routes_in_lock);
 
     _kb_routes_in[midi_input][channel].push_back(connection);
-    SUSHI_LOG_INFO("Connected MIDI port \"{}\" to track ID \"{}\"", midi_input, track_id);
+    ELKLOG_LOG_INFO("Connected MIDI port \"{}\" to track ID \"{}\"", midi_input, track_id);
     return MidiDispatcherStatus::OK;
 }
 
@@ -386,7 +385,7 @@ MidiDispatcherStatus MidiDispatcher::disconnect_kb_from_track(int midi_input,
         connection_vector.erase(erase_iterator, connection_vector.end());
     }
 
-    SUSHI_LOG_INFO("Disconnected MIDI port \"{}\" from track ID \"{}\"", midi_input, track_id);
+    ELKLOG_LOG_INFO("Disconnected MIDI port \"{}\" from track ID \"{}\"", midi_input, track_id);
     return MidiDispatcherStatus::OK;
 }
 
@@ -455,7 +454,7 @@ MidiDispatcherStatus MidiDispatcher::connect_raw_midi_to_track(int midi_input,
     std::scoped_lock lock(_raw_routes_in_lock);
 
     _raw_routes_in[midi_input][channel].push_back(connection);
-    SUSHI_LOG_INFO("Connected MIDI port \"{}\" to track ID \"{}\"", midi_input, track_id);
+    ELKLOG_LOG_INFO("Connected MIDI port \"{}\" to track ID \"{}\"", midi_input, track_id);
     return MidiDispatcherStatus::OK;
 }
 
@@ -484,7 +483,7 @@ MidiDispatcherStatus MidiDispatcher::disconnect_raw_midi_from_track(int midi_inp
         connection_vector.erase(erase_iterator, connection_vector.end());
     }
 
-    SUSHI_LOG_INFO("Disconnected MIDI port \"{}\" from track ID \"{}\"", midi_input, track_id);
+    ELKLOG_LOG_INFO("Disconnected MIDI port \"{}\" from track ID \"{}\"", midi_input, track_id);
     return MidiDispatcherStatus::OK;
 }
 
@@ -512,7 +511,7 @@ MidiDispatcherStatus MidiDispatcher::connect_track_to_output(int midi_output, Ob
     std::scoped_lock lock(_kb_routes_out_lock);
 
     _kb_routes_out[track_id].push_back(connection);
-    SUSHI_LOG_INFO("Connected MIDI from track ID \"{}\" to port \"{}\" with channel {}", track_id, midi_output, channel);
+    ELKLOG_LOG_INFO("Connected MIDI from track ID \"{}\" to port \"{}\" with channel {}", track_id, midi_output, channel);
     return MidiDispatcherStatus::OK;
 }
 
@@ -545,7 +544,7 @@ MidiDispatcherStatus MidiDispatcher::disconnect_track_from_output(int midi_outpu
         connection_vector.erase(erase_iterator, connection_vector.end());
     }
 
-    SUSHI_LOG_INFO("Disconnected MIDI from track ID \"{}\" to port \"{}\" with channel {}", track_id, midi_output, channel);
+    ELKLOG_LOG_INFO("Disconnected MIDI from track ID \"{}\" to port \"{}\" with channel {}", track_id, midi_output, channel);
     return MidiDispatcherStatus::OK;
 }
 
@@ -577,7 +576,7 @@ MidiDispatcherStatus MidiDispatcher::enable_midi_clock(bool enabled, int midi_ou
         _enabled_clock_out[midi_output] = enabled;
         return MidiDispatcherStatus::OK;
     }
-    SUSHI_LOG_ERROR("Failed to {} midi clock for port {}, no such port", enabled? "enable" : "disable", midi_output);
+    ELKLOG_LOG_ERROR("Failed to {} midi clock for port {}, no such port", enabled? "enable" : "disable", midi_output);
     return MidiDispatcherStatus::INVALID_MIDI_OUTPUT;
 }
 
@@ -804,7 +803,7 @@ int MidiDispatcher::process(Event* event)
                     case KeyboardEvent::Subtype::WRAPPED_MIDI:
                         midi_data = typed_event->midi_data();
                 }
-                SUSHI_LOG_DEBUG("Dispatching midi [{:x} {:x} {:x} {:x}], timestamp: {}",
+                ELKLOG_LOG_DEBUG("Dispatching midi [{:x} {:x} {:x} {:x}], timestamp: {}",
                                 midi_data[0], midi_data[1], midi_data[2], midi_data[3], event->time().count());
                 _frontend->send_midi(c.output, midi_data, event->time());
             }
@@ -895,7 +894,7 @@ bool MidiDispatcher::_handle_audio_graph_notification(const AudioGraphNotificati
 
             disconnect_all_pc_from_processor(processor_id);
 
-            SUSHI_LOG_DEBUG("MidiController received a PROCESSOR_DELETED notification for processor {}",
+            ELKLOG_LOG_DEBUG("MidiController received a PROCESSOR_DELETED notification for processor {}",
                             event->processor());
             break;
         }
@@ -943,7 +942,7 @@ bool MidiDispatcher::_handle_audio_graph_notification(const AudioGraphNotificati
                 outputs_found++;
             }
 
-            SUSHI_LOG_DEBUG("MidiController received a TRACK_DELETED notification for track {}", event->track());
+            ELKLOG_LOG_DEBUG("MidiController received a TRACK_DELETED notification for track {}", event->track());
             break;
         }
         default:
@@ -979,7 +978,7 @@ bool MidiDispatcher::_handle_transport_notification(const PlayingModeNotificatio
             {
                 if (_enabled_clock_out[i])
                 {
-                    SUSHI_LOG_DEBUG("Sending midi start message");
+                    ELKLOG_LOG_DEBUG("Sending midi start message");
                     _frontend->send_midi(i, midi::encode_start_message(), event->time());
                 }
             }
@@ -990,7 +989,7 @@ bool MidiDispatcher::_handle_transport_notification(const PlayingModeNotificatio
             {
                 if (_enabled_clock_out[i])
                 {
-                    SUSHI_LOG_DEBUG("Sending midi stop message");
+                    ELKLOG_LOG_DEBUG("Sending midi stop message");
                     _frontend->send_midi(i, midi::encode_stop_message(), event->time());
                 }
             }
@@ -1014,5 +1013,4 @@ bool MidiDispatcher::_handle_tick_notification(const EngineTimingTickNotificatio
     return EventStatus::HANDLED_OK;
 }
 
-} // end namespace midi_dispatcher
-} // end namespace sushi
+} // end namespace sushi::internal::midi_dispatcher

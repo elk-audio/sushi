@@ -7,29 +7,29 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
+#include "elklog/static_logger.h"
+
 #include "plugin_library.h"
-#include "logging.h"
 
 #include <filesystem>
 
-namespace sushi {
-namespace engine {
+namespace sushi::internal::engine {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("plugin_library");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("plugin_library");
 
 void PluginLibrary::set_base_plugin_path(const std::string& path)
 {
     _base_plugin_path = path;
-    SUSHI_LOG_WARNING_IF(_base_plugin_path != path,
+    ELKLOG_LOG_WARNING_IF(_base_plugin_path != path,
                          "Overriding previously defined base plugin path: {} with: {}",
                          _base_plugin_path, path);
-    SUSHI_LOG_INFO("Setting base plugin path to: {}", _base_plugin_path);
+    ELKLOG_LOG_INFO("Setting base plugin path to: {}", _base_plugin_path);
 }
 
 std::string PluginLibrary::to_absolute_path(const std::string& path)
@@ -44,5 +44,5 @@ std::string PluginLibrary::to_absolute_path(const std::string& path)
     return std::string(std::filesystem::absolute(full_path));
 }
 
-} // end namespace engine
-} // end namespace sushi
+} // end namespace sushi::internal::engine
+

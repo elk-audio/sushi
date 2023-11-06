@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -22,7 +22,7 @@
 #include "library/processor.h"
 #include "engine/base_processor_container.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 inline void send_parameter_notification(ObjectId processor_id,
                                         ObjectId parameter_id,
@@ -31,17 +31,17 @@ inline void send_parameter_notification(ObjectId processor_id,
                                         const std::string& formatted_value,
                                         dispatcher::BaseEventDispatcher* dispatcher)
 {
-    ParameterChangeNotificationEvent event(processor_id,
-                                           parameter_id,
-                                           normalized_value,
-                                           domain_value,
-                                           formatted_value,
-                                           IMMEDIATE_PROCESS);
-    dispatcher->process(&event);
+    auto event = std::make_unique<ParameterChangeNotificationEvent>(processor_id,
+                                                                    parameter_id,
+                                                                    normalized_value,
+                                                                    domain_value,
+                                                                    formatted_value,
+                                                                    IMMEDIATE_PROCESS);
+    dispatcher->dispatch(std::move(event));
 }
 
 ParameterManager::ParameterManager(Time update_rate,
-                                   const sushi::engine::BaseProcessorContainer* processor_container) : _processors(processor_container),
+                                   const engine::BaseProcessorContainer* processor_container) : _processors(processor_container),
                                                                                                        _update_rate(update_rate)
 {}
 
@@ -176,4 +176,4 @@ void ParameterManager::_output_processor_notifications(dispatcher::BaseEventDisp
     _processor_change_queue.erase(swap_iter, _processor_change_queue.end());
 }
 
-} // namespace sushi
+} // end namespace sushi::internal

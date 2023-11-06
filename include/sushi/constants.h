@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -23,7 +23,7 @@
 #ifndef SUSHI_CONSTANTS_H
 #define SUSHI_CONSTANTS_H
 
-#include <chrono>
+namespace sushi {
 
 /* The number of samples to process in one chunk. It is defined as a
 compile-time constant to give more room for optimizations */
@@ -56,5 +56,7 @@ constexpr int SUSHI_PPQN_TICK = 24;
  */
 #define SUSHI_DECLARE_NON_COPYABLE(type) type(const type& other) = delete; \
                                          type& operator=(const type&) = delete;
+
+} // end namespace sushi
 
 #endif //SUSHI_CONSTANTS_H

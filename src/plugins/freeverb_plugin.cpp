@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -21,14 +21,14 @@
 #include <cassert>
 #include <memory>
 
+#include <revmodel.hpp>
+
 #include "freeverb_plugin.h"
 
-namespace sushi {
-namespace freeverb_plugin {
+namespace sushi::internal::freeverb_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.testing.freeverb";
 constexpr auto DEFAULT_LABEL = "Freeverb";
-
 
 FreeverbPlugin::FreeverbPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
@@ -71,6 +71,8 @@ FreeverbPlugin::FreeverbPlugin(HostControl host_control) : InternalPlugin(host_c
     assert(_damp);
 }
 
+FreeverbPlugin::~FreeverbPlugin() = default;
+
 ProcessorReturnCode FreeverbPlugin::init(float sample_rate)
 {
     configure(sample_rate);
@@ -90,7 +92,7 @@ void FreeverbPlugin::set_enabled(bool enabled)
 
 void FreeverbPlugin::set_bypassed(bool bypassed)
 {
-    _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
+    _host_control.post_event(std::make_unique<SetProcessorBypassEvent>(this->id(), bypassed, IMMEDIATE_PROCESS));
 }
 
 void FreeverbPlugin::process_event(const RtEvent& event)
@@ -190,6 +192,5 @@ std::string_view FreeverbPlugin::static_uid()
 }
 
 
-}// namespace freeverb_plugin
-}// namespace sushi
+} // namespace sushi::internal::freeverb_plugin
 

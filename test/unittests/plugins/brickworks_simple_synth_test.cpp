@@ -13,7 +13,7 @@
 #include "plugins/brickworks/simple_synth_plugin.cpp"
 
 using namespace sushi;
-using namespace sushi::simple_synth_plugin;
+using namespace sushi::internal::simple_synth_plugin;
 
 constexpr float TEST_SAMPLERATE = 48000;
 constexpr int   TEST_CHANNEL_COUNT = 2;
@@ -31,11 +31,6 @@ protected:
         _module_under_test->set_input_channels(0);
         _module_under_test->set_output_channels(TEST_CHANNEL_COUNT);
         _module_under_test->set_enabled(true);
-    }
-
-    void TearDown() override
-    {
-
     }
 
     HostControlMockup _host_control;

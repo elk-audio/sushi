@@ -4,6 +4,7 @@
 #include "library/rt_event.h"
 
 using namespace sushi;
+using namespace sushi::internal;
 
 TEST (TestRealtimeEvents, TestFactoryFunction)
 {

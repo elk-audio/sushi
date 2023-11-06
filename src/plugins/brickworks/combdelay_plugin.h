@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -27,8 +27,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace comb_plugin {
+namespace sushi::internal::comb_plugin {
 
 class CombPlugin : public InternalPlugin, public UidHelper<CombPlugin>
 {
@@ -66,6 +65,6 @@ private:
     std::array<std::vector<std::byte>, MAX_TRACK_CHANNELS> _delay_mem_areas;
 };
 
-}// namespace comb_plugin
-}// namespace sushi
+} // namespace sushi::internal::comb_plugin
+
 #endif // COMBDELAY_PLUGIN_H

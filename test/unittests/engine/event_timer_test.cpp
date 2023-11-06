@@ -5,7 +5,8 @@
 #include "engine/event_timer.cpp"
 
 using namespace sushi;
-using namespace sushi::event_timer;
+using namespace sushi::internal;
+using namespace sushi::internal::event_timer;
 using namespace std::chrono_literals;
 
 constexpr float TEST_SAMPLE_RATE = 44000.0f;

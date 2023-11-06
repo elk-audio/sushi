@@ -7,16 +7,16 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
  /**
- * @brief Offline frontend to process audio files in chunks
- * @Copyright 2017-2023 Elk Audio AB, Stockholm
- */
+  * @brief Offline frontend to process audio files in chunks
+  * @Copyright 2017-2023 Elk Audio AB, Stockholm
+  */
 
 #ifndef SUSHI_OFFLINE_FRONTEND_H
 #define SUSHI_OFFLINE_FRONTEND_H
@@ -31,16 +31,13 @@
 #include "base_audio_frontend.h"
 #include "library/rt_event.h"
 
-namespace sushi {
-
-namespace audio_frontend {
+namespace sushi::internal::audio_frontend {
 
 constexpr int OFFLINE_FRONTEND_CHANNELS = 2;
 constexpr int DUMMY_FRONTEND_CHANNELS = 10;
 
 struct OfflineFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
-
     OfflineFrontendConfiguration(const std::string input_filename,
                                  const std::string output_filename,
                                  bool dummy_mode,
@@ -80,7 +77,7 @@ public:
      * @brief Add events that should be run during the processing
      * @param An std::vector containing the timestamped events.
      */
-    void add_sequencer_events(std::vector<Event*> events);
+    void add_sequencer_events(std::vector<std::unique_ptr<Event>> events);
 
     void cleanup() override;
 
@@ -104,11 +101,9 @@ private:
     SampleBuffer<AUDIO_CHUNK_SIZE> _buffer{DUMMY_FRONTEND_CHANNELS};
     engine::ControlBuffer _control_buffer;
 
-    std::vector<Event*> _event_queue;
+    std::vector<std::unique_ptr<Event>> _event_queue;
 };
 
-} // end namespace audio_frontend
+} // end namespace sushi::internal::audio_frontend
 
-} // end namespace sushi
-
-#endif //SUSHI_OFFLINE_FRONTEND_H
+#endif // SUSHI_OFFLINE_FRONTEND_H

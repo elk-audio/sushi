@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -27,7 +27,7 @@
 #include "send_plugin.h"
 #include "return_plugin.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 class SendReturnFactory : public BaseProcessorFactory
 {
@@ -52,6 +52,6 @@ private:
     std::mutex _return_inst_lock;
 };
 
-}// namespace sushi
+} // end namespace sushi::internal
 
-#endif //SUSHI_SEND_RETURN_FACTORY_H
+#endif // SUSHI_SEND_RETURN_FACTORY_H

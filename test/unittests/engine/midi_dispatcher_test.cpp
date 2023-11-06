@@ -11,8 +11,9 @@ using ::testing::_;
 
 using namespace midi;
 using namespace sushi;
-using namespace sushi::engine;
-using namespace sushi::midi_dispatcher;
+using namespace sushi::internal;
+using namespace sushi::internal::engine;
+using namespace sushi::internal::midi_dispatcher;
 
 const MidiDataByte TEST_NOTE_ON_CH2   = {0x91, 62, 55, 0}; /* Channel 2 */
 const MidiDataByte TEST_NOTE_OFF_CH3  = {0x82, 60, 45, 0}; /* Channel 3 */
@@ -27,106 +28,94 @@ TEST(TestMidiDispatcherEventCreation, TestMakeNoteOnEvent)
 {
     InputConnection connection = {25, 26, 0, 1, false, 64};
     NoteOnMessage message = {1, 46, 64};
-    Event* event = make_note_on_event(connection, message, IMMEDIATE_PROCESS);
+    auto event = make_note_on_event(connection, message, IMMEDIATE_PROCESS);
     EXPECT_TRUE(event->is_keyboard_event());
     EXPECT_EQ(IMMEDIATE_PROCESS, event->time());
-    auto typed_event = static_cast<KeyboardEvent*>(event);
+    auto typed_event = static_cast<KeyboardEvent*>(event.get());
     EXPECT_EQ(KeyboardEvent::Subtype::NOTE_ON, typed_event->subtype());
     EXPECT_EQ(25u, typed_event->processor_id());
     EXPECT_EQ(1, typed_event->channel());
     EXPECT_EQ(46, typed_event->note());
     EXPECT_NEAR(0.5, typed_event->velocity(), 0.05);
-    delete event;
 }
 
 TEST(TestMidiDispatcherEventCreation, TestMakeNoteOnWithZeroVelEvent)
 {
     InputConnection connection = {25, 26, 0, 1, false, 64};
     NoteOnMessage message = {1, 60, 0};
-    Event* event = make_note_on_event(connection, message, IMMEDIATE_PROCESS);
+    auto event = make_note_on_event(connection, message, IMMEDIATE_PROCESS);
     EXPECT_TRUE(event->is_keyboard_event());
     EXPECT_EQ(IMMEDIATE_PROCESS, event->time());
-    auto typed_event = static_cast<KeyboardEvent*>(event);
+    auto typed_event = static_cast<KeyboardEvent*>(event.get());
     EXPECT_EQ(KeyboardEvent::Subtype::NOTE_OFF, typed_event->subtype());
     EXPECT_EQ(25u, typed_event->processor_id());
     EXPECT_EQ(1, typed_event->channel());
     EXPECT_EQ(60, typed_event->note());
     EXPECT_NEAR(0.5, typed_event->velocity(), 0.05);
-    delete event;
 }
 
 TEST(TestMidiDispatcherEventCreation, TestMakeNoteOffEvent)
 {
     InputConnection connection = {25, 26, 0, 1, false, 64};
     NoteOffMessage message = {2, 46, 64};
-    Event* event = make_note_off_event(connection, message, IMMEDIATE_PROCESS);
+    auto event = make_note_off_event(connection, message, IMMEDIATE_PROCESS);
     EXPECT_TRUE(event->is_keyboard_event());
     EXPECT_EQ(IMMEDIATE_PROCESS, event->time());
-    auto typed_event = static_cast<KeyboardEvent*>(event);
+    auto typed_event = static_cast<KeyboardEvent*>(event.get());
     EXPECT_EQ(KeyboardEvent::Subtype::NOTE_OFF, typed_event->subtype());
     EXPECT_EQ(25u, typed_event->processor_id());
     EXPECT_EQ(2, typed_event->channel());
     EXPECT_EQ(46, typed_event->note());
     EXPECT_NEAR(0.5, typed_event->velocity(), 0.05);
-    delete event;
 }
 
 TEST(TestMidiDispatcherEventCreation, TestMakeWrappedMidiEvent)
 {
     InputConnection connection = {25, 26, 0, 1, false, 64};
     uint8_t message[] = {3, 46, 64};
-    Event* event = make_wrapped_midi_event(connection, message, sizeof(message), IMMEDIATE_PROCESS);
+    auto event = make_wrapped_midi_event(connection, message, sizeof(message), IMMEDIATE_PROCESS);
     EXPECT_TRUE(event->is_keyboard_event());
     EXPECT_EQ(IMMEDIATE_PROCESS, event->time());
-    auto typed_event = static_cast<KeyboardEvent*>(event);
+    auto typed_event = static_cast<KeyboardEvent*>(event.get());
     EXPECT_EQ(KeyboardEvent::Subtype::WRAPPED_MIDI, typed_event->subtype());
     EXPECT_EQ(25u, typed_event->processor_id());
     EXPECT_EQ(3u, typed_event->midi_data()[0]);
     EXPECT_EQ(46u, typed_event->midi_data()[1]);
     EXPECT_EQ(64u, typed_event->midi_data()[2]);
     EXPECT_EQ(0u, typed_event->midi_data()[3]);
-    delete event;
 }
 
 TEST(TestMidiDispatcherEventCreation, TestMakeParameterChangeEvent)
 {
     InputConnection connection = {25, 26, 0, 1, false, 64};
     ControlChangeMessage message = {1, 50, 32};
-    Event* event = make_param_change_event(connection, message, IMMEDIATE_PROCESS);
+    auto event = make_param_change_event(connection, message, IMMEDIATE_PROCESS);
     EXPECT_EQ(IMMEDIATE_PROCESS, event->time());
-    auto typed_event = static_cast<ParameterChangeEvent*>(event);
+    auto typed_event = static_cast<ParameterChangeEvent*>(event.get());
     EXPECT_EQ(25u, typed_event->processor_id());
     EXPECT_EQ(26u, typed_event->parameter_id());
     EXPECT_NEAR(0.25, typed_event->float_value(), 0.01);
-    delete event;
 }
 
 TEST(TestMidiDispatcherEventCreation, TestMakeProgramChangeEvent)
 {
     InputConnection connection = {25, 0, 0, 0, false, 64};
     ProgramChangeMessage message = {1, 32};
-    Event* event = make_program_change_event(connection, message, IMMEDIATE_PROCESS);
+    auto event = make_program_change_event(connection, message, IMMEDIATE_PROCESS);
     EXPECT_EQ(IMMEDIATE_PROCESS, event->time());
-    auto typed_event = static_cast<ProgramChangeEvent*>(event);
+    auto typed_event = static_cast<ProgramChangeEvent*>(event.get());
     EXPECT_EQ(25u, typed_event->processor_id());
     EXPECT_EQ(32, typed_event->program_no());
-    delete event;
 }
 
 class TestMidiDispatcher : public ::testing::Test
 {
 protected:
-    TestMidiDispatcher()
-    {
-    }
+    TestMidiDispatcher() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         _module_under_test.set_frontend(&_mock_frontend);
-    }
-
-    void TearDown()
-    {
     }
 
     EngineMockup _test_engine{48000};
@@ -214,7 +203,8 @@ TEST_F(TestMidiDispatcher, TestKeyboardDataOutConnection)
                             IMMEDIATE_PROCESS);
 
     /* Send midi message without connections */
-    auto status = _module_under_test.process(&event_ch12);
+    auto event = std::make_unique<KeyboardEvent>(event_ch12);
+    auto status = _module_under_test.process(event.get());
     EXPECT_EQ(EventStatus::HANDLED_OK, status);
 
     /* Connect track to output 1, channel 5 */
@@ -226,7 +216,8 @@ TEST_F(TestMidiDispatcher, TestKeyboardDataOutConnection)
 
     /* Expect a midi output message */
     EXPECT_CALL(_mock_frontend, send_midi(1, midi::encode_note_on(4, 48, 0.5f), _)).Times(1);
-    status = _module_under_test.process(&event_ch5);
+    event = std::make_unique<KeyboardEvent>(event_ch5);
+    status = _module_under_test.process(event.get());
     EXPECT_EQ(EventStatus::HANDLED_OK, status);
 
     output_connections = _module_under_test.get_all_kb_output_connections();
@@ -237,10 +228,12 @@ TEST_F(TestMidiDispatcher, TestKeyboardDataOutConnection)
                                                           midi::MidiChannel::CH_5);
     ASSERT_EQ(MidiDispatcherStatus::OK, ret);
 
-    status = _module_under_test.process(&event_ch5);
+    event = std::make_unique<KeyboardEvent>(event_ch5);
+    status = _module_under_test.process(event.get());
     EXPECT_EQ(EventStatus::HANDLED_OK, status);
 
-    status = _module_under_test.process(&event_ch12);
+    event = std::make_unique<KeyboardEvent>(event_ch12);
+    status = _module_under_test.process(event.get());
     EXPECT_EQ(EventStatus::HANDLED_OK, status);
 
     output_connections = _module_under_test.get_all_kb_output_connections();
@@ -259,19 +252,19 @@ TEST_F(TestMidiDispatcher, TestTransportOutputs)
     EXPECT_FALSE(_module_under_test.midi_clock_enabled(0));
     EXPECT_TRUE(_module_under_test.midi_clock_enabled(1));
 
-    auto start_event = PlayingModeNotificationEvent(PlayingMode::PLAYING, IMMEDIATE_PROCESS);
-    auto stop_event = PlayingModeNotificationEvent(PlayingMode::STOPPED, IMMEDIATE_PROCESS);
-    auto rec_event = PlayingModeNotificationEvent(PlayingMode::RECORDING, IMMEDIATE_PROCESS);
-    auto tick_event = EngineTimingTickNotificationEvent(0, IMMEDIATE_PROCESS);
+    auto start_event = std::make_unique<PlayingModeNotificationEvent>(PlayingMode::PLAYING, IMMEDIATE_PROCESS);
+    auto stop_event = std::make_unique<PlayingModeNotificationEvent>(PlayingMode::STOPPED, IMMEDIATE_PROCESS);
+    auto rec_event = std::make_unique<PlayingModeNotificationEvent>(PlayingMode::RECORDING, IMMEDIATE_PROCESS);
+    auto tick_event = std::make_unique<EngineTimingTickNotificationEvent>(0, IMMEDIATE_PROCESS);
 
     EXPECT_CALL(_mock_frontend, send_midi(1, midi::encode_start_message(), _)).Times(1);
     EXPECT_CALL(_mock_frontend, send_midi(1, midi::encode_stop_message(), _)).Times(1);
     EXPECT_CALL(_mock_frontend, send_midi(1, midi::encode_timing_clock(), _)).Times(1);
 
-    _module_under_test.process(&start_event);
-    _module_under_test.process(&stop_event);
-    _module_under_test.process(&rec_event);
-    _module_under_test.process(&tick_event);
+    _module_under_test.process(start_event.get());
+    _module_under_test.process(stop_event.get());
+    _module_under_test.process(rec_event.get());
+    _module_under_test.process(tick_event.get());
 }
 
 TEST_F(TestMidiDispatcher, TestRawDataConnection)

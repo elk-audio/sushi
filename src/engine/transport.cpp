@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -27,17 +27,17 @@
 #include "ableton/Link.hpp"
 #else //SUSHI_BUILD_WITH_ABLETON_LINK
 #include "link_dummy.h"
-#endif //SUSHI_BUILD_WITH_ABLETON_LINK
+#endif // SUSHI_BUILD_WITH_ABLETON_LINK
 
 #include "twine/twine.h"
 
-#include "library/rt_event.h"
-#include "library/constants.h"
-#include "transport.h"
-#include "logging.h"
+#include "elklog/static_logger.h"
 
-namespace sushi {
-namespace engine {
+#include "sushi/constants.h"
+#include "library/rt_event.h"
+#include "transport.h"
+
+namespace sushi::internal::engine {
 
 constexpr float MIN_TEMPO = 20.0;
 constexpr float MAX_TEMPO = 1000.0;
@@ -76,21 +76,21 @@ public:
 
 #endif
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("transport");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("transport");
 
 void peer_callback([[maybe_unused]] size_t peers)
 {
-    SUSHI_LOG_INFO("Ableton link reports {} peers connected ", peers);
+    ELKLOG_LOG_INFO("Ableton link reports {} peers connected ", peers);
 }
 
 void tempo_callback([[maybe_unused]] double tempo)
 {
-    SUSHI_LOG_DEBUG("Ableton link reports tempo is now {} bpm ", tempo);
+    ELKLOG_LOG_DEBUG("Ableton link reports tempo is now {} bpm ", tempo);
 }
 
 void start_stop_callback([[maybe_unused]] bool playing)
 {
-    SUSHI_LOG_INFO("Ableton link reports {}", playing? "now playing" : "now stopped");
+    ELKLOG_LOG_INFO("Ableton link reports {}", playing? "now playing" : "now stopped");
 }
 
 inline bool valid_time_signature(const TimeSignature& sig)
@@ -136,6 +136,7 @@ void Transport::set_time(Time timestamp, int64_t samples)
             break;
         }
     }
+
     if (_playmode != PlayingMode::STOPPED)
     {
         _output_ppqn_ticks();
@@ -236,7 +237,7 @@ void Transport::set_sync_mode(SyncMode mode, bool update_via_event)
 #ifndef SUSHI_BUILD_WITH_ABLETON_LINK
     if (mode == SyncMode::ABLETON_LINK)
     {
-        SUSHI_LOG_INFO("Ableton Link sync mode requested, but sushi was built without Link support");
+        ELKLOG_LOG_INFO("Ableton Link sync mode requested, but sushi was built without Link support");
         return;
     }
 #endif
@@ -297,11 +298,12 @@ void Transport::_update_internal_sync(int64_t samples)
     {
         _state_change = _set_playmode == PlayingMode::STOPPED? PlayStateChange::STOPPING : PlayStateChange::STARTING;
         _playmode = _set_playmode;
-        // Notify new playing mode
+        // Notify of new playing mode
         _rt_event_dispatcher->send_event(RtEvent::make_playing_mode_event(0, _set_playmode));
     }
 
-    double beats_per_chunk =  _set_tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
+    double beats_per_chunk = _set_tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
+
     _beats_per_chunk = beats_per_chunk;
 
     if (_state_change == PlayStateChange::STARTING) // Reset bar beat count when starting
@@ -312,18 +314,25 @@ void Transport::_update_internal_sync(int64_t samples)
     }
     else if (_playmode != PlayingMode::STOPPED)
     {
-        _current_bar_beat_count += chunks_passed * beats_per_chunk;
-        if (_current_bar_beat_count > _beats_per_bar)
+        if (_position_source == PositionSource::CALCULATED)
         {
-            _current_bar_beat_count = std::fmod(_current_bar_beat_count, _beats_per_bar);
-            _bar_start_beat_count += _beats_per_bar;
+            _current_bar_beat_count += chunks_passed * beats_per_chunk;
+            if (_current_bar_beat_count > _beats_per_bar)
+            {
+                _current_bar_beat_count = std::fmod(_current_bar_beat_count, _beats_per_bar);
+                _bar_start_beat_count += _beats_per_bar;
+            }
+            _beat_count += chunks_passed * beats_per_chunk;
         }
-        _beat_count += chunks_passed * beats_per_chunk;
+        else
+        {
+            _bar_start_beat_count = _beat_count - _current_bar_beat_count;
+        }
     }
 
     if (_tempo != _set_tempo)
     {
-        // Notify tempo change
+        // Notify of tempo change
         _rt_event_dispatcher->send_event(RtEvent::make_tempo_event(0, _set_tempo));
         _tempo = _set_tempo;
     }
@@ -336,22 +345,25 @@ void Transport::_update_link_sync(Time timestamp)
     if (tempo != _set_tempo)
     {
         _set_tempo = tempo;
-        // Notify new tempo
+        // Notify of new tempo
         _rt_event_dispatcher->send_event(RtEvent::make_tempo_event(0, tempo));
     }
     _tempo = tempo;
 
+    assert(_position_source == PositionSource::CALCULATED);
+
     if (session.isPlaying() != this->playing())
     {
-        auto new_playmode = session.isPlaying() ? PlayingMode::PLAYING: PlayingMode::STOPPED;
-        _state_change = new_playmode == PlayingMode::STOPPED? PlayStateChange::STOPPING : PlayStateChange::STARTING;
-        _playmode = new_playmode;
-        _set_playmode = new_playmode;
-        // Notify new playing mode
+        auto new_playing_mode = session.isPlaying() ? PlayingMode::PLAYING: PlayingMode::STOPPED;
+        _state_change = new_playing_mode == PlayingMode::STOPPED? PlayStateChange::STOPPING : PlayStateChange::STARTING;
+        _playmode = new_playing_mode;
+        _set_playmode = new_playing_mode;
+        // Notify of new playing mode
         _rt_event_dispatcher->send_event(RtEvent::make_playing_mode_event(0, _set_playmode));
     }
 
     _beats_per_chunk =  _tempo / 60.0 * static_cast<double>(AUDIO_CHUNK_SIZE) / _samplerate;
+
     if (session.isPlaying())
     {
         _beat_count = session.beatAtTime(timestamp, _beats_per_bar);
@@ -432,8 +444,4 @@ void Transport::_set_link_tempo(float /*tempo*/) {}
 void Transport::_set_link_quantum(TimeSignature /*signature*/) {}
 #endif
 
-
-
-
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine

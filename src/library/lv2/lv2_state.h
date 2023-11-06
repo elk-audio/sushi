@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -24,13 +24,14 @@
 #include <vector>
 
 #include "lv2/lv2plug.in/ns/ext/state/state.h"
-#include "library/constants.h"
 #include "lv2/state/state.h"
+
+#include "sushi/constants.h"
+
 #include "lv2_model.h"
 #include "lv2_features.h"
 
-namespace sushi {
-namespace lv2 {
+namespace sushi::internal::lv2 {
 
 class State
 {
@@ -85,7 +86,6 @@ private:
 const void* get_port_value(const char* port_symbol, void* user_data, uint32_t *size, uint32_t* type);
 void set_port_value(const char* port_symbol, void* user_data, const void* value, uint32_t size, uint32_t type);
 
-}
-}
+} // end namespace sushi::internal::lv2
 
 #endif

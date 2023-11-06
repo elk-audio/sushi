@@ -20,11 +20,11 @@
 #include "vst3x/vst3x_processor_factory.h"
 #include "lv2/lv2_processor_factory.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 std::pair<ProcessorReturnCode, std::shared_ptr<Processor>>
 PluginRegistry::new_instance(const PluginInfo& plugin_info,
-                             sushi::HostControl& host_control,
+                             HostControl& host_control,
                              float sample_rate)
 {
     if (_factories.count(plugin_info.type) == 0)
@@ -63,4 +63,4 @@ PluginRegistry::new_instance(const PluginInfo& plugin_info,
     return _factories[plugin_info.type]->new_instance(plugin_info, host_control, sample_rate);
 }
 
-} // end namespace sushi
+} // end namespace sushi::internal

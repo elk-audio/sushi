@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
  /**
@@ -30,8 +30,7 @@
 
 #include "base_audio_frontend.h"
 
-namespace sushi {
-namespace audio_frontend {
+namespace sushi::internal::audio_frontend {
 
 struct JackFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
@@ -143,18 +142,17 @@ private:
     engine::ControlBuffer          _out_controls;
 };
 
-} // end namespace jack_frontend
-} // end namespace sushi
+} // end namespace sushi::internal::jack_frontend
 
-#endif //SUSHI_BUILD_WITH_JACK
+#endif // SUSHI_BUILD_WITH_JACK
 #ifndef SUSHI_BUILD_WITH_JACK
 /* If Jack is disabled in the build config, the jack frontend is replaced with
    this dummy frontend whose only purpose is to assert if you try to use it */
 #include <string>
 #include "base_audio_frontend.h"
 #include "engine/midi_dispatcher.h"
-namespace sushi {
-namespace audio_frontend {
+namespace sushi::internal::audio_frontend {
+
 struct JackFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
     JackFrontendConfiguration(const std::string&,
@@ -171,8 +169,9 @@ public:
     void run() override {}
     void pause([[maybe_unused]] bool enabled) override {}
 };
-}; // end namespace jack_frontend
-}; // end namespace sushi
+
+} // end namespace sushi::internal::jack_frontend
+
 #endif
 
-#endif //SUSHI_JACK_FRONTEND_H
+#endif // SUSHI_JACK_FRONTEND_H

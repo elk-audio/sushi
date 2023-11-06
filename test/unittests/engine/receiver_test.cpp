@@ -6,22 +6,15 @@
 #include "engine/receiver.cpp"
 
 using namespace sushi;
-using namespace sushi::receiver;
+using namespace sushi::internal;
+using namespace sushi::internal::receiver;
 
 constexpr auto ZERO_TIMEOUT = std::chrono::milliseconds(0);
 
 class TestAsyncReceiver : public ::testing::Test
 {
 protected:
-    TestAsyncReceiver()
-    {
-    }
-
-    void SetUp()
-    {}
-
-    void TearDown()
-    { }
+    TestAsyncReceiver() = default;
 
     RtSafeRtEventFifo _queue;
     AsynchronousEventReceiver _module_under_test{&_queue};

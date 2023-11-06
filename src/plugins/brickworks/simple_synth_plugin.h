@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -34,8 +34,7 @@
 #include "library/internal_plugin.h"
 #include "library/rt_event_fifo.h"
 
-namespace sushi {
-namespace simple_synth_plugin {
+namespace sushi::internal::simple_synth_plugin {
 
 constexpr int MAX_MIDI_NOTE = 128;
 
@@ -91,7 +90,6 @@ private:
     int _highest_held_note{-1};
 };
 
-}// namespace simple_synth_plugin
-}// namespace sushi
+} // namespace sushi::internal::simple_synth_plugin
 
 #endif //SUSHI_SIMPLE_SYNTH_PLUGIN_H

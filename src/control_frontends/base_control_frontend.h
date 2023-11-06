@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
  /**
@@ -27,9 +27,7 @@
 #include "library/event_interface.h"
 #include "engine/base_engine.h"
 
-namespace sushi {
-namespace control_frontend {
-
+namespace sushi::internal::control_frontend {
 
 enum class ControlFrontendStatus
 {
@@ -41,17 +39,12 @@ enum class ControlFrontendStatus
 class BaseControlFrontend : public EventPoster
 {
 public:
-    BaseControlFrontend(engine::BaseEngine* engine, EventPosterId id) : _engine(engine),
-                                                                        _poster_id(id)
+    explicit BaseControlFrontend(engine::BaseEngine* engine) : _engine(engine)
     {
         _event_dispatcher = _engine->event_dispatcher();
-        _event_dispatcher->register_poster(this);
     }
 
-    virtual ~BaseControlFrontend()
-    {
-        _event_dispatcher->deregister_poster(this);
-    };
+    ~BaseControlFrontend() override = default;
 
     static void completion_callback(void *arg, Event* event, int return_status)
     {
@@ -84,21 +77,16 @@ public:
 
     void send_set_sync_mode_event(SyncMode mode);
 
-    int poster_id() override {return _poster_id;}
-
 protected:
     virtual void _completion_callback(Event* event, int return_status) = 0;
 
-    void send_with_callback(Event *event);
+    void send_with_callback(std::unique_ptr<Event> event);
 
-    engine::BaseEngine* _engine;
+    engine::BaseEngine* _engine {nullptr};
     dispatcher::BaseEventDispatcher* _event_dispatcher;
 
-private:
-    EventPosterId _poster_id;
 };
 
-} // namespace control_frontend
-} // namespace sushi
+} // end namespace sushi::internal::control_frontend
 
-#endif //SUSHI_BASE_CONTROL_FRONTEND_H
+#endif // SUSHI_BASE_CONTROL_FRONTEND_H

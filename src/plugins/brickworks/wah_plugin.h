@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -25,8 +25,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace wah_plugin {
+namespace sushi::internal::wah_plugin {
 
 class WahPlugin : public InternalPlugin, public UidHelper<WahPlugin>
 {
@@ -59,6 +58,6 @@ private:
     std::array<bw_wah_state, MAX_TRACK_CHANNELS> _wah_states;
 };
 
-}// namespace wah_plugin
-}// namespace sushi
+} // namespace sushi::internal::wah_plugin
+
 #endif // WAH_PLUGIN_H

@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -19,10 +19,11 @@
  */
 
 #include "twine/twine.h"
+#include "elklog/static_logger.h"
 
 #include "vst2x_wrapper.h"
+
 #include "library/midi_decoder.h"
-#include "logging.h"
 
 namespace {
 
@@ -32,17 +33,16 @@ char canDoBypass[] = "bypass";
 
 } // anonymous namespace
 
-namespace sushi {
-namespace vst2 {
+namespace sushi::internal::vst2 {
 
 constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = kVstNanosValid | kVstPpqPosValid | kVstTempoValid |
                                                   kVstBarsValid | kVstTimeSigValid;
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("vst2");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("vst2");
 
 Vst2xWrapper::~Vst2xWrapper()
 {
-    SUSHI_LOG_DEBUG("Unloading plugin {}", this->name());
+    ELKLOG_LOG_DEBUG("Unloading plugin {}", this->name());
     _cleanup();
 }
 
@@ -88,7 +88,7 @@ ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
     int enabled = _vst_dispatcher(effCanDo, 0, 0, canDoBypass, 0);
     _can_do_soft_bypass = (enabled == 1);
     _number_of_programs = _plugin_handle->numPrograms;
-    SUSHI_LOG_INFO_IF(enabled, "Plugin supports soft bypass");
+    ELKLOG_LOG_INFO_IF(enabled, "Plugin supports soft bypass");
 
     _has_binary_programs = _plugin_handle->flags &= effFlagsProgramChunks;
 
@@ -132,14 +132,14 @@ void Vst2xWrapper::set_input_channels(int channels)
 {
     Processor::set_input_channels(channels);
     [[maybe_unused]] bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
-    SUSHI_LOG_WARNING_IF(!valid_arr, "Failed to set a valid speaker arrangement")
+    ELKLOG_LOG_WARNING_IF(!valid_arr, "Failed to set a valid speaker arrangement")
 }
 
 void Vst2xWrapper::set_output_channels(int channels)
 {
     Processor::set_output_channels(channels);
     [[maybe_unused]] bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
-    SUSHI_LOG_WARNING_IF(!valid_arr, "Failed to set a valid speaker arrangement")
+    ELKLOG_LOG_WARNING_IF(!valid_arr, "Failed to set a valid speaker arrangement")
 }
 
 
@@ -161,7 +161,7 @@ void Vst2xWrapper::set_enabled(bool enabled)
 void Vst2xWrapper::set_bypassed(bool bypassed)
 {
     assert(twine::is_current_thread_realtime() == false);
-    _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
+    _host_control.post_event(std::make_unique<SetProcessorBypassEvent>(this->id(), bypassed, IMMEDIATE_PROCESS));
 }
 
 std::pair<ProcessorReturnCode, float> Vst2xWrapper::parameter_value(ObjectId parameter_id) const
@@ -220,7 +220,7 @@ std::pair<ProcessorReturnCode, std::string> Vst2xWrapper::program_name(int progr
     {
         char buffer[VST_STRING_BUFFER_SIZE] = "";
         auto success = _vst_dispatcher(effGetProgramNameIndexed, program, 0, buffer, 0);
-        buffer[VST_STRING_BUFFER_SIZE-1] = 0;
+        buffer[VST_STRING_BUFFER_SIZE - 1] = 0;
         return {success ? ProcessorReturnCode::OK : ProcessorReturnCode::PARAMETER_NOT_FOUND, buffer};
     }
     return {ProcessorReturnCode::UNSUPPORTED_OPERATION, ""};
@@ -251,8 +251,9 @@ ProcessorReturnCode Vst2xWrapper::set_program(int program)
         /* Vst2 lacks a mechanism for signaling that the program change was successful */
         _vst_dispatcher(effSetProgram, 0, program, nullptr, 0);
         _vst_dispatcher(effEndSetProgram, 0, 0, nullptr, 0);
-        _host_control.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
-                                                                 this->id(), 0, IMMEDIATE_PROCESS));
+
+        _host_control.post_event(std::make_unique<AudioGraphNotificationEvent>(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
+                                                                               this->id(), 0, IMMEDIATE_PROCESS));
         return ProcessorReturnCode::OK;
     }
     return ProcessorReturnCode::UNSUPPORTED_OPERATION;
@@ -297,11 +298,11 @@ bool Vst2xWrapper::_register_parameters()
                                                                             nullptr));
         if (param_inserted_ok)
         {
-            SUSHI_LOG_DEBUG("Plugin: {}, registered param: {}", name(), param_name);
+            ELKLOG_LOG_DEBUG("Plugin: {}, registered param: {}", name(), param_name);
         }
         else
         {
-            SUSHI_LOG_ERROR("Plugin: {}, Error while registering param: {}", name(), param_name);
+            ELKLOG_LOG_ERROR("Plugin: {}, Error while registering param: {}", name(), param_name);
         }
         idx++;
     }
@@ -333,7 +334,7 @@ void Vst2xWrapper::process_event(const RtEvent& event)
         {
             if (_vst_midi_events_fifo.push(event) == false)
             {
-                SUSHI_LOG_WARNING("Plugin: {}, MIDI queue Overflow!", name());
+                ELKLOG_LOG_WARNING("Plugin: {}, MIDI queue Overflow!", name());
             }
             break;
         }
@@ -394,13 +395,13 @@ void Vst2xWrapper::notify_parameter_change_rt(VstInt32 parameter_index, float va
 
 void Vst2xWrapper::notify_parameter_change(VstInt32 parameter_index, float value)
 {
-    auto e = new ParameterChangeNotificationEvent(this->id(),
-                                                  static_cast<ObjectId>(parameter_index),
-                                                  value,
-                                                  value,
-                                                  this->parameter_value_formatted(parameter_index).second,
-                                                  IMMEDIATE_PROCESS);
-    _host_control.post_event(e);
+    auto e = std::make_unique<ParameterChangeNotificationEvent>(this->id(),
+                                                                static_cast<ObjectId>(parameter_index),
+                                                                value,
+                                                                value,
+                                                                this->parameter_value_formatted(parameter_index).second,
+                                                                IMMEDIATE_PROCESS);
+    _host_control.post_event(std::move(e));
 }
 
 bool Vst2xWrapper::_update_speaker_arrangements(int inputs, int outputs)
@@ -480,8 +481,7 @@ ProcessorReturnCode Vst2xWrapper::set_state(ProcessorState* state, bool realtime
     if (realtime_running)
     {
         auto rt_state = std::make_unique<RtState>(*state);
-        auto event = new RtStateEvent(this->id(), std::move(rt_state), IMMEDIATE_PROCESS);
-        _host_control.post_event(event);
+        _host_control.post_event(std::make_unique<RtStateEvent>(this->id(), std::move(rt_state), IMMEDIATE_PROCESS));
     }
 
     else
@@ -594,5 +594,4 @@ VstSpeakerArrangementType arrangement_from_channels(int channels)
     }
 }
 
-} // namespace vst2
-} // namespace sushi
+} // end namespace sushi::internal::vst2

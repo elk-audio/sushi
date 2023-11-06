@@ -10,8 +10,9 @@
 #include "plugins/return_plugin.cpp"
 
 using namespace sushi;
-using namespace sushi::send_plugin;
-using namespace sushi::return_plugin;
+using namespace sushi::internal;
+using namespace sushi::internal::send_plugin;
+using namespace sushi::internal::return_plugin;
 
 constexpr float TEST_SAMPLERATE = 44100;
 
@@ -48,7 +49,7 @@ class TestSendReturnPlugins : public ::testing::Test
 protected:
     TestSendReturnPlugins() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         ASSERT_EQ(ProcessorReturnCode::OK, _send_instance.init(TEST_SAMPLERATE));
         _send_instance.set_input_channels(2);
@@ -57,10 +58,6 @@ protected:
         ASSERT_EQ(ProcessorReturnCode::OK, _return_instance.init(TEST_SAMPLERATE));
         _return_instance.set_input_channels(2);
         _return_instance.set_output_channels(2);
-    }
-
-    void TearDown()
-    {
     }
 
     SendReturnFactory   _factory;

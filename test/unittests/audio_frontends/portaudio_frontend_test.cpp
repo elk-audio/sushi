@@ -15,8 +15,9 @@ using ::testing::NiceMock;
 using ::testing::SetArgPointee;
 
 using namespace sushi;
-using namespace sushi::audio_frontend;
-using namespace sushi::midi_dispatcher;
+using namespace sushi::internal;
+using namespace sushi::internal::audio_frontend;
+using namespace sushi::internal::midi_dispatcher;
 
 constexpr float SAMPLE_RATE = 44000;
 
@@ -28,13 +29,13 @@ protected:
     {
     }
 
-    void SetUp()
+    void SetUp() override
     {
-        mockPortAudio = new NiceMock<MockPortAudio>();
+        mockPortAudio = std::make_unique<NiceMock<MockPortAudio>>();
         _module_under_test = std::make_unique<PortAudioFrontend>(&_engine);
     }
 
-    void TearDown()
+    void TearDown() override
     {
         if (_module_under_test->_stream_initialized)
         {
@@ -43,7 +44,7 @@ protected:
         }
         EXPECT_CALL(*mockPortAudio, Pa_Terminate);
         _module_under_test.reset();
-        delete mockPortAudio;
+        mockPortAudio.reset();
     }
 
     EngineMockup _engine{SAMPLE_RATE};
@@ -185,17 +186,17 @@ TEST_F(TestPortAudioFrontend, TestGetDeviceName)
 
     std::optional<int> portaudio_output_device_id = 1;
 
-    auto device_name = sushi::audio_frontend::get_portaudio_output_device_name(portaudio_output_device_id);
+    auto device_name = sushi::internal::audio_frontend::get_portaudio_output_device_name(portaudio_output_device_id);
 
     ASSERT_EQ(device_name, expected_name); // The specified device
 
     EXPECT_CALL(*mockPortAudio, Pa_GetDefaultOutputDevice);
 
-    device_name = sushi::audio_frontend::get_portaudio_output_device_name(std::nullopt);
+    device_name = sushi::internal::audio_frontend::get_portaudio_output_device_name(std::nullopt);
 
     ASSERT_EQ(device_name, expected_name); // The default device
 
-    device_name = sushi::audio_frontend::get_portaudio_output_device_name(4);
+    device_name = sushi::internal::audio_frontend::get_portaudio_output_device_name(4);
 
     EXPECT_FALSE(device_name.has_value());
 }

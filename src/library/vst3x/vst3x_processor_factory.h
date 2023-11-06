@@ -24,8 +24,7 @@
 
 #include "library/base_processor_factory.h"
 
-namespace sushi {
-namespace vst3 {
+namespace sushi::internal::vst3 {
 
 class SushiHostApplication;
 
@@ -42,7 +41,6 @@ private:
     std::unique_ptr<SushiHostApplication> _host_app;
 };
 
-} // end namespace vst3
-} // end namespace sushi
+} // end namespace sushi::internal::vst3
 
-#endif //SUSHI_VST3X_PROCESSOR_FACTORY_H
+#endif // SUSHI_VST3X_PROCESSOR_FACTORY_H

@@ -6,7 +6,7 @@
  * either version 3 of the License, or (at your option) any later version.
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
  * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
@@ -14,31 +14,26 @@
  */
 
 /**
- * @brief For signalling that Sushi should exit.
+ * @brief Public Sushi factory for offline use.
  * @copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include "exit_control.h"
+#include "sushi/offline_factory.h"
 
-#include <iostream>
+#include "offline_factory_implementation.h"
 
-bool exit_flag = false;
-std::condition_variable exit_notifier;
+namespace sushi {
 
-bool exit_condition()
+OfflineFactory::OfflineFactory()
 {
-    return exit_flag;
+    _implementation = std::make_unique<internal::OfflineFactoryImplementation>();
 }
 
-void exit_on_signal([[maybe_unused]] int sig)
+OfflineFactory::~OfflineFactory() = default;
+
+std::pair<std::unique_ptr<Sushi>, Status> OfflineFactory::new_instance(SushiOptions& options)
 {
-    exit_flag = true;
-    exit_notifier.notify_one();
+    return _implementation->new_instance(options);
 }
 
-void error_exit(const std::string& message)
-{
-    std::cerr << message << std::endl;
-    std::exit(1);
 }
-

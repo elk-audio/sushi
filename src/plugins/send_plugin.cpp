@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -20,15 +20,17 @@
 
 #include <string>
 
-#include "logging.h"
+#include "elklog/static_logger.h"
+
 #include "send_plugin.h"
+
+#include "sushi/constants.h"
+
 #include "return_plugin.h"
-#include "library/constants.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("send_plugin");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("send_plugin");
 
-namespace sushi {
-namespace send_plugin {
+namespace sushi::internal::send_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.testing.send";
 constexpr auto DEFAULT_LABEL = "Send";
@@ -171,7 +173,7 @@ bool SendPlugin::bypassed() const
 
 void SendPlugin::set_bypassed(bool bypassed)
 {
-    _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
+    _host_control.post_event(std::make_unique<SetProcessorBypassEvent>(this->id(), bypassed, IMMEDIATE_PROCESS));
 }
 
 ProcessorReturnCode SendPlugin::set_property_value(ObjectId property_id, const std::string& value)
@@ -197,9 +199,8 @@ void SendPlugin::_change_return_destination(const std::string& dest_name)
     }
     else
     {
-        SUSHI_LOG_WARNING("Return plugin {} not found", dest_name);
+        ELKLOG_LOG_WARNING("Return plugin {} not found", dest_name);
     }
 }
 
-}// namespace send_plugin
-}// namespace sushi
+} // end namespace sushi::internal::send_plugin

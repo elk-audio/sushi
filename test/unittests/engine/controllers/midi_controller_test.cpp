@@ -14,10 +14,11 @@ using ::testing::_;
 
 using namespace midi;
 using namespace sushi;
-using namespace sushi::engine;
-using namespace sushi::control_frontend;
-using namespace sushi::midi_dispatcher;
-using namespace sushi::engine::controller_impl;
+using namespace sushi::internal;
+using namespace sushi::internal::engine;
+using namespace sushi::internal::control_frontend;
+using namespace sushi::internal::midi_dispatcher;
+using namespace controller_impl;
 
 constexpr float TEST_SAMPLE_RATE = 44100;
 
@@ -32,19 +33,17 @@ const MidiDataByte TEST_PRG_CH_CH7 = {0xC6, 40, 0, 0};  /* Channel 7, prg 40 */
 class MidiControllerEventTestFrontend : public ::testing::Test
 {
 protected:
-    MidiControllerEventTestFrontend() {}
+    MidiControllerEventTestFrontend() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         _test_dispatcher = static_cast<EventDispatcherMockup*>(_test_engine.event_dispatcher());
         _midi_dispatcher.set_frontend(&_mock_frontend);
     }
 
-    void TearDown() {}
-
     EngineMockup _test_engine{TEST_SAMPLE_RATE};
     MidiDispatcher _midi_dispatcher{_test_engine.event_dispatcher()};
-    sushi::ext::ControlMockup _controller; // TODO: Maybe just the ParameterControllerMockup?
+    sushi::control::ControlMockup _controller; // TODO: Maybe just the ParameterControllerMockup?
     MidiController _midi_controller{&_test_engine, &_midi_dispatcher};
     EventDispatcherMockup* _test_dispatcher;
     ::testing::NiceMock<MockMidiFrontend> _mock_frontend{nullptr};
@@ -55,7 +54,7 @@ TEST_F(MidiControllerEventTestFrontend, TestKbdInputConectionDisconnection)
     auto track = _test_engine.processor_container()->track("track 1");
     ObjectId track_id = track->id();
     bool raw_midi = false;
-    ext::MidiChannel channel = sushi::ext::MidiChannel::MIDI_CH_3;
+    control::MidiChannel channel = sushi::control::MidiChannel::MIDI_CH_3;
     int port = 1;
 
     _midi_dispatcher.set_midi_inputs(5);
@@ -64,7 +63,7 @@ TEST_F(MidiControllerEventTestFrontend, TestKbdInputConectionDisconnection)
     EXPECT_FALSE(_test_dispatcher->got_event());
 
     auto event_status_connect = _midi_controller.connect_kbd_input_to_track(track_id, channel, port, raw_midi);
-    ASSERT_EQ(ext::ControlStatus::OK, event_status_connect);
+    ASSERT_EQ(control::ControlStatus::OK, event_status_connect);
     // That the engine is passed as argument to execute violates the Liskov Substitution Principle and should not be necessary.
     // A refactor to how events work would solve that.
 
@@ -75,7 +74,7 @@ TEST_F(MidiControllerEventTestFrontend, TestKbdInputConectionDisconnection)
     EXPECT_TRUE(_test_dispatcher->got_event());
 
     auto event_status_disconnect =  _midi_controller.disconnect_kbd_input(track_id, channel, port, raw_midi);
-    ASSERT_EQ(ext::ControlStatus::OK, event_status_disconnect);
+    ASSERT_EQ(control::ControlStatus::OK, event_status_disconnect);
     auto execution_status2 = _test_dispatcher->execute_engine_event(&_test_engine);
     ASSERT_EQ(execution_status2, EventStatus::HANDLED_OK);
 
@@ -88,13 +87,13 @@ TEST_F(MidiControllerEventTestFrontend, TestKbdInputConectionDisconnectionRaw)
     auto track = _test_engine.processor_container()->track("track 1");
     ObjectId track_id = track->id();
     bool raw_midi = true;
-    ext::MidiChannel channel = sushi::ext::MidiChannel::MIDI_CH_3;
+    control::MidiChannel channel = sushi::control::MidiChannel::MIDI_CH_3;
     int port = 1;
 
     _midi_dispatcher.set_midi_inputs(5);
 
     auto event_status_connect = _midi_controller.connect_kbd_input_to_track(track_id, channel, port, raw_midi);
-    ASSERT_EQ(ext::ControlStatus::OK, event_status_connect);
+    ASSERT_EQ(control::ControlStatus::OK, event_status_connect);
     auto execution_status1 = _test_dispatcher->execute_engine_event(&_test_engine);
     ASSERT_EQ(execution_status1, EventStatus::HANDLED_OK);
 
@@ -102,7 +101,7 @@ TEST_F(MidiControllerEventTestFrontend, TestKbdInputConectionDisconnectionRaw)
     EXPECT_TRUE(_test_dispatcher->got_event());
 
     auto event_status_disconnect =  _midi_controller.disconnect_kbd_input(track_id, channel, port, raw_midi);
-    ASSERT_EQ(ext::ControlStatus::OK, event_status_disconnect);
+    ASSERT_EQ(control::ControlStatus::OK, event_status_disconnect);
     auto execution_status2 = _test_dispatcher->execute_engine_event(&_test_engine);
     ASSERT_EQ(execution_status2, EventStatus::HANDLED_OK);
 
@@ -118,7 +117,7 @@ TEST_F(MidiControllerEventTestFrontend, TestKbdOutputConectionDisconnection)
 
     _midi_dispatcher.set_midi_outputs(5);
 
-    ext::MidiChannel channel_3 = sushi::ext::MidiChannel::MIDI_CH_3;
+    control::MidiChannel channel_3 = sushi::control::MidiChannel::MIDI_CH_3;
 
     int int_channel_3 = int_from_ext_midi_channel(channel_3);
 
@@ -130,30 +129,33 @@ TEST_F(MidiControllerEventTestFrontend, TestKbdOutputConectionDisconnection)
                             IMMEDIATE_PROCESS);
 
     /* Send midi message without connections */
-    auto status1 = _midi_dispatcher.process(&event_ch3);
+    auto event = std::make_unique<KeyboardEvent>(event_ch3);
+    auto status1 = _midi_dispatcher.process(event.get());
     EXPECT_EQ(EventStatus::HANDLED_OK, status1);
 
     auto event_status_connect = _midi_controller.connect_kbd_output_from_track(track_id, channel_3, port);
-    ASSERT_EQ(ext::ControlStatus::OK, event_status_connect);
+    ASSERT_EQ(control::ControlStatus::OK, event_status_connect);
     auto execution_status1 = _test_dispatcher->execute_engine_event(&_test_engine);
     ASSERT_EQ(execution_status1, EventStatus::HANDLED_OK);
 
     EXPECT_CALL(_mock_frontend, send_midi(0, midi::encode_note_on(2, 48, 0.5f), _)).Times(1);
-    auto status2 = _midi_dispatcher.process(&event_ch3);
+    event = std::make_unique<KeyboardEvent>(event_ch3);
+    auto status2 = _midi_dispatcher.process(event.get());
     EXPECT_EQ(EventStatus::HANDLED_OK, status2);
 
     auto event_status_disconnect =  _midi_controller.disconnect_kbd_output(track_id, channel_3, port);
-    ASSERT_EQ(ext::ControlStatus::OK, event_status_disconnect);
+    ASSERT_EQ(control::ControlStatus::OK, event_status_disconnect);
     auto execution_status2 = _test_dispatcher->execute_engine_event(&_test_engine);
     ASSERT_EQ(execution_status2, EventStatus::HANDLED_OK);
 
-    auto status3 = _midi_dispatcher.process(&event_ch3);
+    event = std::make_unique<KeyboardEvent>(event_ch3);
+    auto status3 = _midi_dispatcher.process(event.get());
     EXPECT_EQ(EventStatus::HANDLED_OK, status3);
 }
 
 TEST_F(MidiControllerEventTestFrontend, TestCCDataConnectionDisconnection)
 {
-    ext::MidiChannel channel = sushi::ext::MidiChannel::MIDI_CH_4;
+    control::MidiChannel channel = sushi::control::MidiChannel::MIDI_CH_4;
     int port = 0;
 
     // The id for the mock processor is generated by a static atomic counter in BaseIdGenetator, so needs to be fetched.
@@ -184,7 +186,7 @@ TEST_F(MidiControllerEventTestFrontend, TestCCDataConnectionDisconnection)
                                                                           0, // min_range
                                                                           100, // max_range
                                                                           false); // use_relative_mode
-    ASSERT_EQ(ext::ControlStatus::OK, event_status_connect1);
+    ASSERT_EQ(control::ControlStatus::OK, event_status_connect1);
     auto execution_status1 = _test_dispatcher->execute_engine_event(&_test_engine);
     ASSERT_EQ(execution_status1, EventStatus::HANDLED_OK);
 
@@ -198,7 +200,7 @@ TEST_F(MidiControllerEventTestFrontend, TestCCDataConnectionDisconnection)
                                                                           0, // min_range
                                                                           100, // max_range
                                                                           false); // use_relative_mode
-    ASSERT_EQ(ext::ControlStatus::OK, event_status_connect2);
+    ASSERT_EQ(control::ControlStatus::OK, event_status_connect2);
     auto execution_status2 = _test_dispatcher->execute_engine_event(&_test_engine);
     ASSERT_EQ(execution_status2, EventStatus::HANDLED_OK);
 
@@ -221,7 +223,7 @@ TEST_F(MidiControllerEventTestFrontend, TestCCDataConnectionDisconnection)
                                                                           0, // min_range
                                                                           100, // max_range
                                                                           false); // use_relative_mode
-    ASSERT_EQ(ext::ControlStatus::OK, event_status_connect3);
+    ASSERT_EQ(control::ControlStatus::OK, event_status_connect3);
     auto execution_status3 = _test_dispatcher->execute_engine_event(&_test_engine);
     ASSERT_EQ(execution_status3, EventStatus::HANDLED_OK);
 
@@ -241,7 +243,7 @@ TEST_F(MidiControllerEventTestFrontend, TestCCDataConnectionDisconnection)
                                                                   port,
                                                                   67); // cc_number
 
-    ASSERT_EQ(ext::ControlStatus::OK, event_status_disconnect);
+    ASSERT_EQ(control::ControlStatus::OK, event_status_disconnect);
     auto execution_status_disconnect = _test_dispatcher->execute_engine_event(&_test_engine);
     ASSERT_EQ(execution_status_disconnect, EventStatus::HANDLED_OK);
 
@@ -258,7 +260,7 @@ TEST_F(MidiControllerEventTestFrontend, TestCCDataConnectionDisconnection)
 
     auto event_status_disconnect_all = _midi_controller.disconnect_all_cc_from_processor(processor_id);
 
-    ASSERT_EQ(ext::ControlStatus::OK, event_status_disconnect_all);
+    ASSERT_EQ(control::ControlStatus::OK, event_status_disconnect_all);
     auto execution_status_disconnect_all = _test_dispatcher->execute_engine_event(&_test_engine);
     ASSERT_EQ(execution_status_disconnect_all, EventStatus::HANDLED_OK);
 
@@ -288,9 +290,9 @@ TEST_F(MidiControllerEventTestFrontend, TestPCDataConnectionDisconnection)
     EXPECT_FALSE(_test_dispatcher->got_event());
 
     auto event_status_connect1 = _midi_controller.connect_pc_to_processor(processor_id,
-                                                                          sushi::ext::MidiChannel::MIDI_CH_5,
+                                                                          sushi::control::MidiChannel::MIDI_CH_5,
                                                                           port);
-    ASSERT_EQ(ext::ControlStatus::OK, event_status_connect1);
+    ASSERT_EQ(control::ControlStatus::OK, event_status_connect1);
     auto execution_status1 = _test_dispatcher->execute_engine_event(&_test_engine);
     ASSERT_EQ(execution_status1, EventStatus::HANDLED_OK);
 
@@ -303,9 +305,9 @@ TEST_F(MidiControllerEventTestFrontend, TestPCDataConnectionDisconnection)
     EXPECT_FALSE(_test_dispatcher->got_event());
 
     auto event_status_connect2 = _midi_controller.connect_pc_to_processor(processor_id,
-                                                                          sushi::ext::MidiChannel::MIDI_CH_6,
+                                                                          sushi::control::MidiChannel::MIDI_CH_6,
                                                                           port);
-    ASSERT_EQ(ext::ControlStatus::OK, event_status_connect2);
+    ASSERT_EQ(control::ControlStatus::OK, event_status_connect2);
     auto execution_status2 = _test_dispatcher->execute_engine_event(&_test_engine);
     ASSERT_EQ(execution_status2, EventStatus::HANDLED_OK);
 
@@ -318,9 +320,9 @@ TEST_F(MidiControllerEventTestFrontend, TestPCDataConnectionDisconnection)
     EXPECT_FALSE(_test_dispatcher->got_event());
 
     auto event_status_connect3 = _midi_controller.connect_pc_to_processor(processor_id,
-                                                                          sushi::ext::MidiChannel::MIDI_CH_7,
+                                                                          sushi::control::MidiChannel::MIDI_CH_7,
                                                                           port);
-    ASSERT_EQ(ext::ControlStatus::OK, event_status_connect3);
+    ASSERT_EQ(control::ControlStatus::OK, event_status_connect3);
     auto execution_status3 = _test_dispatcher->execute_engine_event(&_test_engine);
     ASSERT_EQ(execution_status3, EventStatus::HANDLED_OK);
 
@@ -330,10 +332,10 @@ TEST_F(MidiControllerEventTestFrontend, TestPCDataConnectionDisconnection)
     // Disconnect Channel 5 only:
 
     auto event_status_disconnect1 = _midi_controller.disconnect_pc(processor_id,
-                                                                   sushi::ext::MidiChannel::MIDI_CH_5,
+                                                                   sushi::control::MidiChannel::MIDI_CH_5,
                                                                    port);
 
-    ASSERT_EQ(ext::ControlStatus::OK, event_status_disconnect1);
+    ASSERT_EQ(control::ControlStatus::OK, event_status_disconnect1);
     auto execution_status4 = _test_dispatcher->execute_engine_event(&_test_engine);
     ASSERT_EQ(execution_status4, EventStatus::HANDLED_OK);
 
@@ -350,7 +352,7 @@ TEST_F(MidiControllerEventTestFrontend, TestPCDataConnectionDisconnection)
 
     auto event_status_disconnect_all = _midi_controller.disconnect_all_pc_from_processor(processor_id);
 
-    ASSERT_EQ(ext::ControlStatus::OK, event_status_disconnect_all);
+    ASSERT_EQ(control::ControlStatus::OK, event_status_disconnect_all);
     auto execution_status_disconnect_all = _test_dispatcher->execute_engine_event(&_test_engine);
     ASSERT_EQ(execution_status_disconnect_all, EventStatus::HANDLED_OK);
 
@@ -368,10 +370,10 @@ TEST_F(MidiControllerEventTestFrontend, TestSettingClockOutput)
 {
     int port = 0;
     _midi_dispatcher.set_midi_outputs(1);
-    EXPECT_EQ(ext::ControlStatus::OK, _midi_controller.set_midi_clock_output_enabled(true, port));
+    EXPECT_EQ(control::ControlStatus::OK, _midi_controller.set_midi_clock_output_enabled(true, port));
     EXPECT_EQ(EventStatus::HANDLED_OK, _test_dispatcher->execute_engine_event(&_test_engine));
 
-    EXPECT_EQ(ext::ControlStatus::OK, _midi_controller.set_midi_clock_output_enabled(true, 1234));
+    EXPECT_EQ(control::ControlStatus::OK, _midi_controller.set_midi_clock_output_enabled(true, 1234));
     EXPECT_NE(EventStatus::HANDLED_OK, _test_dispatcher->execute_engine_event(&_test_engine));
 
     _midi_dispatcher.enable_midi_clock(true, port);

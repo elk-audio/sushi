@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -21,14 +21,12 @@
 #ifndef SUSHI_SYSTEM_CONTROLLER_H
 #define SUSHI_SYSTEM_CONTROLLER_H
 
-#include <compile_time_settings.h>
-#include "control_interface.h"
+#include "sushi/compile_time_settings.h"
+#include "sushi/control_interface.h"
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
-class SystemController : public ext::SystemController
+class SystemController : public control::SystemController
 {
 public:
     SystemController(int inputs, int outputs);
@@ -37,7 +35,7 @@ public:
 
     std::string get_sushi_version() const override;
 
-    ext::SushiBuildInfo get_sushi_build_info() const override;
+    control::SushiBuildInfo get_sushi_build_info() const override;
 
     int get_input_audio_channel_count() const override;
 
@@ -45,14 +43,12 @@ public:
 
 private:
     std::vector<std::string> _build_options;
-    ext::SushiBuildInfo _build_info;
+    control::SushiBuildInfo _build_info;
 
     const int _audio_inputs{0};
     const int _audio_outputs{0};
 };
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl
 
-#endif //SUSHI_SYSTEM_CONTROLLER_H
+#endif // SUSHI_SYSTEM_CONTROLLER_H

@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -28,21 +28,21 @@
 namespace sushi_rpc {
 
 GrpcServer::GrpcServer(const std::string& listen_address,
-                       sushi::ext::SushiControl* controller) : _listen_address{listen_address},
-                                                               _system_control_service{std::make_unique<SystemControlService>(controller)},
-                                                               _transport_control_service{std::make_unique<TransportControlService>(controller)},
-                                                               _timing_control_service{std::make_unique<TimingControlService>(controller)},
-                                                               _keyboard_control_service{std::make_unique<KeyboardControlService>(controller)},
-                                                               _audio_graph_control_service{std::make_unique<AudioGraphControlService>(controller)},
-                                                               _parameter_control_service{std::make_unique<ParameterControlService>(controller)},
-                                                               _program_control_service{std::make_unique<ProgramControlService>(controller)},
-                                                               _midi_control_service{std::make_unique<MidiControlService>(controller)},
-                                                               _audio_routing_control_service{std::make_unique<AudioRoutingControlService>(controller)},
-                                                               _osc_control_service{std::make_unique<OscControlService>(controller)},
-                                                               _session_control_service{std::make_unique<SessionControlService>(controller)},
-                                                               _notification_control_service{std::make_unique<NotificationControlService>(controller)},
-                                                               _server_builder{std::make_unique<grpc::ServerBuilder>()},
-                                                               _running{false}
+                       sushi::control::SushiControl* controller) : _listen_address{listen_address},
+                                                                   _system_control_service{std::make_unique<SystemControlService>(controller)},
+                                                                   _transport_control_service{std::make_unique<TransportControlService>(controller)},
+                                                                   _timing_control_service{std::make_unique<TimingControlService>(controller)},
+                                                                   _keyboard_control_service{std::make_unique<KeyboardControlService>(controller)},
+                                                                   _audio_graph_control_service{std::make_unique<AudioGraphControlService>(controller)},
+                                                                   _parameter_control_service{std::make_unique<ParameterControlService>(controller)},
+                                                                   _program_control_service{std::make_unique<ProgramControlService>(controller)},
+                                                                   _midi_control_service{std::make_unique<MidiControlService>(controller)},
+                                                                   _audio_routing_control_service{std::make_unique<AudioRoutingControlService>(controller)},
+                                                                   _osc_control_service{std::make_unique<OscControlService>(controller)},
+                                                                   _session_control_service{std::make_unique<SessionControlService>(controller)},
+                                                                   _notification_control_service{std::make_unique<NotificationControlService>(controller)},
+                                                                   _server_builder{std::make_unique<grpc::ServerBuilder>()},
+                                                                   _running{false}
 {}
 
 GrpcServer::~GrpcServer() = default;
@@ -70,8 +70,10 @@ void GrpcServer::AsyncRpcLoop()
     }
 }
 
-void GrpcServer::start()
+bool GrpcServer::start()
 {
+    _server_builder->AddChannelArgument(GRPC_ARG_ALLOW_REUSEPORT, 0);
+
     _server_builder->AddListeningPort(_listen_address, grpc::InsecureServerCredentials());
 
     _server_builder->RegisterService(_system_control_service.get());
@@ -89,27 +91,38 @@ void GrpcServer::start()
 
     _async_rpc_queue = _server_builder->AddCompletionQueue();
     _server = _server_builder->BuildAndStart();
+
+    if (_server == nullptr)
+    {
+        return false;
+    }
+
     _running.store(true);
     _worker = std::thread(&GrpcServer::AsyncRpcLoop, this);
+
+    return true;
 }
 
 void GrpcServer::stop()
 {
-    auto now = std::chrono::system_clock::now();
-    _running.store(false);
-    _server->Shutdown(now + SERVER_SHUTDOWN_DEADLINE);
-    _async_rpc_queue->Shutdown();
-    if (_worker.joinable())
+    if (_running == true)
     {
-        _worker.join();
+        auto now = std::chrono::system_clock::now();
+        _running.store(false);
+        _server->Shutdown(now + SERVER_SHUTDOWN_DEADLINE);
+        _async_rpc_queue->Shutdown();
+        if (_worker.joinable())
+        {
+            _worker.join();
+        }
+
+        void* tag;
+        bool ok;
+
+        // Empty completion queue
+        while (_async_rpc_queue->Next (&tag, &ok));
+        _notification_control_service->delete_all_subscribers();
     }
-
-    void* tag;
-    bool ok;
-
-    // Empty completion queue
-    while(_async_rpc_queue->Next(&tag, &ok));
-    _notification_control_service->delete_all_subscribers();
 }
 
 void GrpcServer::waitForCompletion()

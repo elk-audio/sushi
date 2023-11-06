@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -23,8 +23,7 @@
 
 #include "plugins/control_to_cv_plugin.h"
 
-namespace sushi {
-namespace control_to_cv_plugin {
+namespace sushi::internal::control_to_cv_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.testing.control_to_cv";
 constexpr auto DEFAULT_LABEL = "Keyboard control to CV adapter";
@@ -250,5 +249,5 @@ float pitch_to_cv(float value)
     // Currently just assuming [0, 1] covers a 10 octave linear range.
     return std::clamp(value / 120.f, 0.0f, 1.0f);
 }
-}// namespace control_to_cv_plugin
-}// namespace sushi
+
+} // end namespace sushi::internal::control_to_cv_plugin

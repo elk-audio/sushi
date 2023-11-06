@@ -4,13 +4,14 @@
 #include "audio_frontends/base_audio_frontend.h"
 
 using namespace sushi;
-using namespace sushi::audio_frontend;
+using namespace sushi::internal;
+using namespace sushi::internal::audio_frontend;
 
-class AudioFrontendMockup : public audio_frontend::BaseAudioFrontend
+class AudioFrontendMockup : public BaseAudioFrontend
 {
 public:
     AudioFrontendMockup() : BaseAudioFrontend(nullptr) {}
-    AudioFrontendMockup(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
+    AudioFrontendMockup(internal::engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
 
     void cleanup() override {}
 

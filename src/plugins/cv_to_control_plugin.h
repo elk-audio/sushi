@@ -7,17 +7,17 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
  /**
- * @brief Adapter plugin to convert cv/gate information to note on and note
- *        off messages to enable cv/gate control of synthesizer plugins.
- * @Copyright 2017-2023 Elk Audio AB, Stockholm
- */
+  * @brief Adapter plugin to convert cv/gate information to note on and note
+  *        off messages to enable cv/gate control of synthesizer plugins.
+  * @Copyright 2017-2023 Elk Audio AB, Stockholm
+  */
 
 #ifndef SUSHI_CV_TO_CONTROL_PLUGIN_H
 #define SUSHI_CV_TO_CONTROL_PLUGIN_H
@@ -25,12 +25,12 @@
 #include <array>
 #include <vector>
 
+#include "sushi/constants.h"
+
 #include "library/internal_plugin.h"
-#include "library/constants.h"
 #include "library/rt_event_fifo.h"
 
-namespace sushi {
-namespace cv_to_control_plugin {
+namespace sushi::internal::cv_to_control_plugin {
 
 constexpr int MAX_CV_VOICES = MAX_ENGINE_CV_IO_PORTS;
 
@@ -79,6 +79,6 @@ private:
 
 std::pair<int, float> cv_to_pitch(float value);
 
-}// namespace cv_to_control_plugin
-}// namespace sushi
-#endif //SUSHI_CV_TO_CONTROL_PLUGIN_H
+} // end namespace sushi::internal::cv_to_control_plugin
+
+#endif // SUSHI_CV_TO_CONTROL_PLUGIN_H

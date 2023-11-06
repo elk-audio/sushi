@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -26,8 +26,7 @@
 #include "library/internal_plugin.h"
 #include "plugins/sample_player_voice.h"
 
-namespace sushi {
-namespace sample_player_plugin {
+namespace sushi::internal::sample_player_plugin {
 
 constexpr size_t TOTAL_POLYPHONY = 8;
 
@@ -73,8 +72,6 @@ private:
     std::array<sample_player_voice::Voice, TOTAL_POLYPHONY> _voices;
 };
 
+} // end namespace sushi::internal::sample_player_plugin
 
-}// namespace sample_player_plugin
-}// namespace sushi
-
-#endif //SUSHI_SAMPLER_PLUGIN_H
+#endif // SUSHI_SAMPLER_PLUGIN_H

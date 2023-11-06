@@ -7,25 +7,24 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
-* @brief OSCPACK OSC library wrapper
-* @Copyright 2017-2023 Elk Audio AB, Stockholm
-*/
+ * @brief OSCPACK OSC library wrapper
+ * @Copyright 2017-2023 Elk Audio AB, Stockholm
+ */
+
 #ifndef SUSHI_OSCPACK_OSC_MESSENGER_H
 #define SUSHI_OSCPACK_OSC_MESSENGER_H
 
 #include <sstream>
 #include <iostream>
 
-#include "osc_frontend.h"
-#include "logging.h"
-#include "osc_utils.h"
+#include "elklog/static_logger.h"
 
 #include "third-party/oscpack/osc/OscReceivedElements.h"
 #include "third-party/oscpack/osc/OscOutboundPacketStream.h"
@@ -35,9 +34,12 @@
 #include "third-party/oscpack/ip/UdpSocket.h"
 #endif
 
+#include "osc_frontend.h"
+#include "osc_utils.h"
+
 namespace oscpack = ::osc;
 
-namespace sushi::osc
+namespace sushi::internal::osc
 {
 
 struct LightKey
@@ -134,6 +136,6 @@ private:
     char _output_buffer[OSC_OUTPUT_BUFFER_SIZE];
 };
 
-} // namespace osc
+} // end namespace osc
 
-#endif //SUSHI_OSCPACK_OSC_MESSENGER_H
+#endif // SUSHI_OSCPACK_OSC_MESSENGER_H

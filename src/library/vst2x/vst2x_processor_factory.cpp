@@ -7,7 +7,7 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
  * SUSHI. If not, see http://www.gnu.org/licenses/
@@ -18,19 +18,19 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
+#include "elklog/static_logger.h"
+
 #include "vst2x_processor_factory.h"
-#include "logging.h"
 
 #ifdef SUSHI_BUILD_WITH_VST2
 #include "library/vst2x/vst2x_wrapper.h"
 #endif
 
-namespace sushi {
-namespace vst2 {
+namespace sushi::internal::vst2 {
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-const-variable"
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("Vst2");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("Vst2");
 #pragma GCC diagnostic pop
 
 #ifdef SUSHI_BUILD_WITH_VST2
@@ -51,11 +51,10 @@ std::pair<ProcessorReturnCode, std::shared_ptr<Processor>> Vst2xProcessorFactory
                                                                                                [[maybe_unused]] float sample_rate)
 
 {
-    SUSHI_LOG_ERROR("Sushi was not built with support for VST2 plugins");
+    ELKLOG_LOG_ERROR("Sushi was not built with support for VST2 plugins");
     return {ProcessorReturnCode::UNSUPPORTED_OPERATION, nullptr};
 }
 
 #endif // SUSHI_BUILD_WITH_VST2
 
-} // end namespace vst2
-} // end namespace sushi
+} // end namespace sushi::internal::vst2

@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -23,8 +23,7 @@
 #include "return_plugin.h"
 #include "send_plugin.h"
 
-namespace sushi {
-namespace return_plugin {
+namespace sushi::internal::return_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.testing.return";
 constexpr auto DEFAULT_LABEL = "Return";
@@ -171,7 +170,7 @@ bool ReturnPlugin::bypassed() const
 
 void ReturnPlugin::set_bypassed(bool bypassed)
 {
-    _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
+    _host_control.post_event(std::make_unique<SetProcessorBypassEvent>(this->id(), bypassed, IMMEDIATE_PROCESS));
 }
 
 std::string_view ReturnPlugin::static_uid()
@@ -204,5 +203,4 @@ void ReturnPlugin::_channel_config(int channels)
     }
 }
 
-}// namespace return_plugin
-}// namespace sushi
+} // end namespace sushi::internal::return_plugin

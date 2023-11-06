@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -21,16 +21,15 @@
 #ifndef SUSHI_OSC_CONTROLLER_H
 #define SUSHI_OSC_CONTROLLER_H
 
+#include "sushi/control_interface.h"
+
 #include "control_frontends/osc_frontend.h"
-#include "control_interface.h"
 #include "engine/base_engine.h"
 #include "engine/base_processor_container.h"
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
-class OscController : public ext::OscController
+class OscController : public control::OscController
 {
 public:
     explicit OscController(BaseEngine* engine);
@@ -47,13 +46,13 @@ public:
 
     std::vector<std::string> get_enabled_parameter_outputs() const override;
 
-    ext::ControlStatus enable_output_for_parameter(int processor_id, int parameter_id) override;
+    control::ControlStatus enable_output_for_parameter(int processor_id, int parameter_id) override;
 
-    ext::ControlStatus disable_output_for_parameter(int processor_id, int parameter_id) override;
+    control::ControlStatus disable_output_for_parameter(int processor_id, int parameter_id) override;
 
-    ext::ControlStatus enable_all_output() override;
+    control::ControlStatus enable_all_output() override;
 
-    ext::ControlStatus disable_all_output() override;
+    control::ControlStatus disable_all_output() override;
 
 private:
     dispatcher::BaseEventDispatcher* _event_dispatcher;
@@ -61,8 +60,6 @@ private:
     const engine::BaseProcessorContainer* _processors;
 };
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl
 
-#endif //SUSHI_OSC_CONTROLLER_H
+#endif // SUSHI_OSC_CONTROLLER_H

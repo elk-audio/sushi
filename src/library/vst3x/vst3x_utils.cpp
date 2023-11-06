@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -20,8 +20,7 @@
 
 #include "vst3x_utils.h"
 
-namespace sushi {
-namespace vst3{
+namespace sushi::internal::vst3 {
 
 void SushiProcessData::assign_buffers(const ChunkSampleBuffer& input, ChunkSampleBuffer& output,
                                       int in_channels, int out_channels)
@@ -129,5 +128,4 @@ Steinberg::Vst::IParamValueQueue* Vst3xRtState::addParameterData(const Steinberg
     return nullptr;
 }
 
-} // end namespace vst3
-} // end namespace sushi
+} // end namespace sushi::internal::vst3

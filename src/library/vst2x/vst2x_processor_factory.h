@@ -7,7 +7,7 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
  * SUSHI. If not, see http://www.gnu.org/licenses/
@@ -23,8 +23,7 @@
 
 #include "library/base_processor_factory.h"
 
-namespace sushi {
-namespace vst2 {
+namespace sushi::internal::vst2 {
 
 class Vst2xProcessorFactory : public BaseProcessorFactory
 {
@@ -34,7 +33,6 @@ public:
                                                                             float sample_rate) override;
 };
 
-} // end namespace vst2
-} // end namespace sushi
+} // end namespace sushi::internal::vst2
 
-#endif //SUSHI_VST2X_PROCESSOR_FACTORY_H
+#endif // SUSHI_VST2X_PROCESSOR_FACTORY_H

@@ -12,6 +12,7 @@
 #include "test_utils/host_control_mockup.h"
 
 using namespace sushi;
+using namespace sushi::internal;
 
 constexpr float TEST_SAMPLE_RATE = 44100;
 
@@ -36,17 +37,18 @@ public:
 class TestProcessor : public ::testing::Test
 {
 protected:
-    TestProcessor()
-    {
-    }
-    void SetUp()
+    TestProcessor() = default;
+
+    void SetUp() override
     {
         _module_under_test = new ProcessorTest(_host_control.make_host_control_mockup());
     }
-    void TearDown()
+
+    void TearDown() override
     {
         delete(_module_under_test);
     }
+    
     HostControlMockup _host_control;
     RtEventFifo<10> _event_queue;
     Processor* _module_under_test;
@@ -168,11 +170,10 @@ TEST_F(TestProcessor, TestGateOutput)
     EXPECT_TRUE(event.gate_event()->value());
 }
 
-
 class TestBypassManager : public ::testing::Test
 {
 protected:
-    TestBypassManager() {}
+    TestBypassManager() = default;
 
     BypassManager _module_under_test{false, std::chrono::milliseconds(TEST_BYPASS_TIME_MS)};
 };
@@ -279,7 +280,7 @@ TEST_F(TestBypassManager, TestCrossfade)
     for (int i = 0; i < chunks_in_ramp - 1; ++i)
     {
         test_utils::fill_sample_buffer(buffer, 2.0f);
-        _module_under_test.crossfade_output(bypass_buffer, buffer, 2, 2)    ;
+        _module_under_test.crossfade_output(bypass_buffer, buffer, 2, 2);
     }
 
     // We should now have ramped down to 1 (value of bypass buffer)

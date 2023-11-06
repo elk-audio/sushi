@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -37,13 +37,13 @@
 #include "aeffectx.h"
 #pragma GCC diagnostic pop
 
-#include "library/constants.h"
+#include "sushi/constants.h"
+
 #include "library/rt_event.h"
 #include "library/midi_decoder.h"
 #include "library/midi_encoder.h"
 
-namespace sushi {
-namespace vst2 {
+namespace sushi::internal::vst2 {
 
 template<int capacity>
 class Vst2xMidiEventFIFO
@@ -200,7 +200,6 @@ private:
     VstEventsExtended* _vst_events;
 };
 
-} // namespace vst2
-} // namespace sushi
+} // end namespace sushi::internal::vst2
 
-#endif //SUSHI_VST2X_MIDI_EVENT_FIFO_H
+#endif // SUSHI_VST2X_MIDI_EVENT_FIFO_H

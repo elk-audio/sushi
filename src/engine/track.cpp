@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -21,10 +21,8 @@
 #include <cassert>
 
 #include "track.h"
-#include "library/constants.h"
 
-namespace sushi {
-namespace engine {
+namespace sushi::internal::engine {
 
 constexpr int TRACK_MAX_PROCESSORS = 32;
 constexpr float PAN_GAIN_3_DB = 1.412537f;
@@ -459,5 +457,4 @@ void Track::_apply_gain(ChunkSampleBuffer& buffer, bool muted)
     }
 }
 
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine

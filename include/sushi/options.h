@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -31,9 +31,10 @@
 // Options Defaults
 ////////////////////////////////////////////////////////////////////////////////
 
-#define SUSHI_LOG_LEVEL_DEFAULT "info"
-#define SUSHI_LOG_FILENAME_DEFAULT "/tmp/sushi.log"
+#define ELKLOG_LOG_LEVEL_DEFAULT "info"
+#define ELKLOG_LOG_FILE_DEFAULT "/tmp/sushi.log"
 #define SUSHI_JSON_FILENAME_DEFAULT "config.json"
+#define SUSHI_JSON_STRING_DEFAULT "{}"
 #define SUSHI_SAMPLE_RATE_DEFAULT 48000
 #define SUSHI_JACK_CLIENT_NAME_DEFAULT "sushi"
 #define SUSHI_OSC_SERVER_PORT_DEFAULT 24024
@@ -49,13 +50,14 @@
     #define SUSHI_SENTRY_DSN_DEFAULT ""
 #endif
 
+namespace sushi {
+
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers for optionparse
 ////////////////////////////////////////////////////////////////////////////////
 
 struct SushiArg : public optionparser::Arg
 {
-
     static void print_error(const char* msg1, const optionparser::Option& opt, const char* msg2)
     {
         fprintf(stderr, "%s", msg1);
@@ -102,7 +104,6 @@ struct SushiArg : public optionparser::Arg
         }
         return optionparser::ARG_ILLEGAL;
     }
-
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -193,7 +194,7 @@ const optionparser::Descriptor usage[] =
         "l",
         "log-level",
         SushiArg::NonEmpty,
-        "\t\t-l <level>, --log-level=<level> \tSpecify minimum logging level, from ('debug', 'info', 'warning', 'error') [default=" SUSHI_LOG_LEVEL_DEFAULT "]."
+        "\t\t-l <level>, --log-level=<level> \tSpecify minimum logging level, from ('debug', 'info', 'warning', 'error') [default=" ELKLOG_LOG_LEVEL_DEFAULT "]."
     },
     {
         OPT_IDX_LOG_FILE,
@@ -201,7 +202,8 @@ const optionparser::Descriptor usage[] =
         "L",
         "log-file",
         SushiArg::NonEmpty,
-        "\t\t-L <filename>, --log-file=<filename> \tSpecify logging file destination [default=" SUSHI_LOG_FILENAME_DEFAULT "]."
+        "\t\t-L <filename>, --log-file=<filename> \tSpecify logging file destination [default=" ELKLOG_LOG_FILE_DEFAULT
+      "]."
     },
     {
         OPT_IDX_LOG_FLUSH_INTERVAL,
@@ -468,10 +470,12 @@ const optionparser::Descriptor usage[] =
         "",
         "sentry-dsn",
         SushiArg::NonEmpty,
-        "\t\t--sentry-dsn=<dsn.address> \tSet the DSN that sentry should upload crashlogs to [default address=" SUSHI_STRINGIZE(SUSHI_SENTRY_DSN_DEFAULT) "]."
+        "\t\t--sentry-dsn=<dsn.address> \tSet the DSN that sentry should upload crash logs to [default address=" SUSHI_STRINGIZE(SUSHI_SENTRY_DSN_DEFAULT) "]."
     },
-    // Don't touch this one (set default values for optionparse library)
+    // Don't touch this one (sets default values for optionparser library)
     { 0, 0, 0, 0, 0, 0}
 };
 
-#endif //SUSHI_OPTIONS_H
+} // end namespace sushi
+
+#endif // SUSHI_OPTIONS_H

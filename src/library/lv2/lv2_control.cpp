@@ -7,20 +7,19 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
+
+#include "elklog/static_logger.h"
 
 #include "lv2_control.h"
 
-#include "logging.h"
+namespace sushi::internal::lv2 {
 
-namespace sushi {
-namespace lv2 {
-
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 ControlID ControlID::new_port_control(Port* port, Model* model, uint32_t index)
 {
@@ -141,11 +140,10 @@ ControlID ControlID::new_property_control(Model* model, const LilvNode* property
 
     if (id.value_type == false)
     {
-        SUSHI_LOG_ERROR("Unknown value type for property {}", lilv_node_as_string(property));
+        ELKLOG_LOG_ERROR("Unknown value type for property {}", lilv_node_as_string(property));
     }
 
     return id;
 }
 
-}
-}
+} // end namespace sushi::internal::lv2

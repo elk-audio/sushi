@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -18,8 +18,9 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include <control_notifications.h>
-#include "control_interface.h"
+#include "sushi/control_notifications.h"
+#include "sushi/control_interface.h"
+
 #include "engine/base_event_dispatcher.h"
 #include "engine/transport.h"
 #include "library/base_performance_timer.h"
@@ -42,7 +43,7 @@
 #ifndef SUSHI_CONTROLLER_H
 #define SUSHI_CONTROLLER_H
 
-namespace sushi {
+namespace sushi::internal {
 
 namespace midi_dispatcher {
 class MidiDispatcher;
@@ -60,7 +61,7 @@ namespace engine {
 
 class BaseEngine;
 
-class Controller : public ext::SushiControl, EventPoster
+class Controller : public control::SushiControl, EventPoster
 {
 public:
     Controller(engine::BaseEngine* engine,
@@ -69,19 +70,17 @@ public:
 
     ~Controller() override;
 
-    ext::ControlStatus subscribe_to_notifications(ext::NotificationType type, ext::ControlListener* listener) override;
+    control::ControlStatus subscribe_to_notifications(control::NotificationType type,
+                                                      control::ControlListener* listener) override;
 
     /* Inherited from EventPoster */
     int process(Event* event) override;
-
-    int poster_id() override { return EventPosterId::CONTROLLER; }
 
     static void completion_callback(void* arg, Event* event, int status);
 
     void set_osc_frontend(control_frontend::OSCFrontend* osc_frontend);
 
 private:
-
     void _completion_callback(Event* event, int status);
 
     void _handle_engine_notifications(const EngineNotificationEvent* event);
@@ -89,25 +88,25 @@ private:
     void _handle_audio_graph_notifications(const AudioGraphNotificationEvent* event);
 
     void _notify_processor_listeners(const AudioGraphNotificationEvent* typed_event,
-                                     ext::ProcessorAction action) const;
+                                     control::ProcessorAction action) const;
 
     void _notify_track_listeners(const AudioGraphNotificationEvent* typed_event,
-                                 ext::TrackAction action) const;
+                                 control::TrackAction action) const;
 
-    void _notify_transport_listeners(const ext::TransportNotification& notification) const;
+    void _notify_transport_listeners(const control::TransportNotification& notification) const;
 
-    void _notify_parameter_listeners(Event* event) const;
+    void _notify_parameter_listeners(const Event* event) const;
 
-    void _notify_property_listeners(Event* event) const;
+    void _notify_property_listeners(const Event* event) const;
 
     void _notify_timing_listeners(const EngineTimingNotificationEvent* event) const;
 
-    std::vector<ext::ControlListener*>      _parameter_change_listeners;
-    std::vector<ext::ControlListener*>      _property_change_listeners;
-    std::vector<ext::ControlListener*>      _processor_update_listeners;
-    std::vector<ext::ControlListener*>      _track_update_listeners;
-    std::vector<ext::ControlListener*>      _transport_update_listeners;
-    std::vector<ext::ControlListener*>      _cpu_timing_update_listeners;
+    std::vector<control::ControlListener*>      _parameter_change_listeners;
+    std::vector<control::ControlListener*>      _property_change_listeners;
+    std::vector<control::ControlListener*>      _processor_update_listeners;
+    std::vector<control::ControlListener*>      _track_update_listeners;
+    std::vector<control::ControlListener*>      _transport_update_listeners;
+    std::vector<control::ControlListener*>      _cpu_timing_update_listeners;
 
     const engine::BaseProcessorContainer*   _processors;
 
@@ -127,6 +126,7 @@ private:
     dispatcher::BaseEventDispatcher*        _event_dispatcher;
 };
 
-} //namespace engine
-} //namespace sushi
-#endif //SUSHI_CONTROLLER_H
+} // end namespace engine
+} // end namespace sushi::internal
+
+#endif // SUSHI_CONTROLLER_H

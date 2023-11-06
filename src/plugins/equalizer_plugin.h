@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -24,8 +24,7 @@
 #include "library/internal_plugin.h"
 #include "dsp_library/biquad_filter.h"
 
-namespace sushi {
-namespace equalizer_plugin {
+namespace sushi::internal::equalizer_plugin {
 
 constexpr int MAX_CHANNELS_SUPPORTED = 2;
 
@@ -57,6 +56,6 @@ private:
     FloatParameterValue* _q;
 };
 
-}// namespace equalizer_plugin
-}// namespace sushi
+} // end namespace sushi::internal::equalizer_plugin
+
 #endif // EQUALIZER_PLUGIN_H

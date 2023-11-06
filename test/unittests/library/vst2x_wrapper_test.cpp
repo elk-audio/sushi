@@ -10,7 +10,8 @@
 #include "library/vst2x/vst2x_wrapper.cpp"
 
 using namespace sushi;
-using namespace sushi::vst2;
+using namespace sushi::internal;
+using namespace sushi::internal::vst2;
 
 // Reference output signal from TestPlugin
 // in response to NoteON C4 (60), vel=127, default parameters
@@ -336,8 +337,7 @@ TEST_F(TestVst2xWrapper, TestStateHandling)
     auto rt_event = _host_control._event_output.pop();
     auto delete_event = Event::from_rt_event(rt_event, IMMEDIATE_PROCESS);
     ASSERT_TRUE(delete_event);
-    static_cast<AsynchronousDeleteEvent*>(delete_event)->execute();
-    delete delete_event;
+    static_cast<AsynchronousDeleteEvent*>(delete_event.get())->execute();
 }
 
 TEST_F(TestVst2xWrapper, TestStateSaving)

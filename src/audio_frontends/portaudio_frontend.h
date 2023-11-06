@@ -7,16 +7,16 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
  /**
- * @brief Realtime audio frontend for PortAudio
- * @Copyright 2017-2023 Elk Audio AB, Stockholm
- */
+  * @brief Realtime audio frontend for PortAudio
+  * @Copyright 2017-2023 Elk Audio AB, Stockholm
+  */
 
 #ifndef SUSHI_PORTAUDIO_FRONTEND_H
 #define SUSHI_PORTAUDIO_FRONTEND_H
@@ -36,8 +36,7 @@
 
 #include "base_audio_frontend.h"
 
-namespace sushi {
-namespace audio_frontend {
+namespace sushi::internal::audio_frontend {
 
 
 #ifdef SUSHI_BUILD_WITH_PORTAUDIO
@@ -219,8 +218,8 @@ private:
     const PaDeviceInfo* _input_device_info;
     const PaDeviceInfo* _output_device_info;
 
-    ChunkSampleBuffer _in_buffer{MAX_FRONTEND_CHANNELS};
-    ChunkSampleBuffer _out_buffer{MAX_FRONTEND_CHANNELS};
+    ChunkSampleBuffer _in_buffer;
+    ChunkSampleBuffer _out_buffer;
 
     Time _start_time;
     PaTime _time_offset;
@@ -230,10 +229,9 @@ private:
     engine::ControlBuffer _out_controls;
 };
 
-} // end namespace audio_frontend
-} // end namespace sushi
+} // end namespace sushi::internal::audio_frontend
 
-#endif //SUSHI_BUILD_WITH_PORTAUDIO
+#endif // SUSHI_BUILD_WITH_PORTAUDIO
 
 #ifndef SUSHI_BUILD_WITH_PORTAUDIO
 /* If PortAudio is disabled in the build config, the PortAudio frontend is replaced with
@@ -241,8 +239,8 @@ private:
 #include <string>
 #include "base_audio_frontend.h"
 #include "engine/midi_dispatcher.h"
-namespace sushi {
-namespace audio_frontend {
+
+namespace sushi::internal::audio_frontend {
 
 struct PortAudioFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
@@ -269,9 +267,10 @@ public:
     std::optional<int> default_input_device() { return 0; }
     std::optional<int> default_output_device() { return 0; }
 };
-}; // end namespace audio_frontend
-}; // end namespace sushi
+
+} // end namespace sushi::internal::audio_frontend
+
 #endif
 
-#endif //SUSHI_PORTAUDIO_FRONTEND_H
+#endif // SUSHI_PORTAUDIO_FRONTEND_H
 

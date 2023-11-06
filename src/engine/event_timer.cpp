@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -22,11 +22,11 @@
 #include <cmath>
 #include <cassert>
 
-#include "event_timer.h"
-#include "library/constants.h"
+#include "sushi/constants.h"
 
-namespace sushi {
-namespace event_timer {
+#include "event_timer.h"
+
+namespace sushi::internal::event_timer {
 
 using namespace std::chrono_literals;
 constexpr float MICROSECONDS = std::chrono::microseconds(1s).count();
@@ -42,7 +42,7 @@ EventTimer::EventTimer(float default_sample_rate) : _sample_rate{default_sample_
     assert(EventTimer::_incoming_chunk_time.is_lock_free());
 }
 
-std::pair<bool, int> EventTimer::sample_offset_from_realtime(Time timestamp)
+std::pair<bool, int> EventTimer::sample_offset_from_realtime(Time timestamp) const
 {
     auto diff = timestamp - _incoming_chunk_time.load();
     if (diff < _chunk_time)
@@ -56,7 +56,7 @@ std::pair<bool, int> EventTimer::sample_offset_from_realtime(Time timestamp)
     }
 }
 
-Time EventTimer::real_time_from_sample_offset(int offset)
+Time EventTimer::real_time_from_sample_offset(int offset) const
 {
     return _outgoing_chunk_time + offset * _chunk_time / AUDIO_CHUNK_SIZE;
 }
@@ -67,5 +67,4 @@ void EventTimer::set_sample_rate(float sample_rate)
     _chunk_time = calc_chunk_time(sample_rate);
 }
 
-} // end event_timer
-} // end sushi
+} // end sushi::internal::event_timer

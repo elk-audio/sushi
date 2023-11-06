@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -24,9 +24,7 @@
 #include "library/midi_decoder.h"
 #include "library/midi_encoder.h"
 
-namespace sushi {
-namespace transposer_plugin {
-
+namespace sushi::internal::transposer_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.testing.transposer";
 constexpr auto DEFAULT_LABEL = "Transposer";
@@ -134,5 +132,4 @@ std::string_view TransposerPlugin::static_uid()
     return PLUGIN_UID;
 }
 
-}// namespace transposer_plugin
-}// namespace sushi
+} // end namespace sushi::internal::transposer_plugin

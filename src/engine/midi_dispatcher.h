@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -27,15 +27,17 @@
 #include <vector>
 #include <mutex>
 
-#include "library/constants.h"
-#include "library/types.h"
+#include "sushi/constants.h"
+#include "sushi/types.h"
+
 #include "library/midi_decoder.h"
 #include "library/event.h"
 #include "library/processor.h"
 #include "control_frontends/base_midi_frontend.h"
 #include "library/event_interface.h"
 
-namespace sushi {
+namespace sushi::internal {
+
 namespace engine {
 class BaseProcessorContainer;
 }
@@ -45,8 +47,8 @@ namespace midi_dispatcher {
 struct InputConnection
 {
     // TODO: This can be track_id, if the InputConnection is member of KbdInputConnection.
-    // It can also be processor_id, if the InputConnection is member of CCInputConnection.
-    // Disambiguating would be safer.
+    //   It can also be processor_id, if the InputConnection is member of CCInputConnection.
+    //   Disambiguating would be safer (AUD-565).
     ObjectId target;
     ObjectId parameter;
     float min_range;
@@ -357,12 +359,6 @@ public:
     /* Inherited from EventPoster */
     int process(Event* /*event*/) override;
 
-    /**
-     * @brief The unique id of this poster.
-     * @return
-     */
-    int poster_id() override {return EventPosterId::MIDI_DISPATCHER;}
-
 private:
 
     bool _handle_engine_notification(const EngineNotificationEvent* event);
@@ -394,6 +390,6 @@ private:
 };
 
 } // end namespace midi_dispatcher
-} // end namespace sushi
+} // end namespace sushi::internal
 
-#endif //SUSHI_MIDI_DISPATCHER_H
+#endif // SUSHI_MIDI_DISPATCHER_H

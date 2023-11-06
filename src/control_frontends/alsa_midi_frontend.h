@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
  /**
@@ -27,13 +27,13 @@
 #include <vector>
 #include <map>
 
+#include "sushi/sushi_time.h"
+
 #include <alsa/asoundlib.h>
 
 #include "base_midi_frontend.h"
-#include "library/time.h"
 
-namespace sushi {
-namespace midi_frontend {
+namespace sushi::internal::midi_frontend {
 
 constexpr int ALSA_EVENT_MAX_SIZE = 12;
 
@@ -74,8 +74,8 @@ private:
     Time                        _time_offset{0};
 };
 
-} // end namespace midi_frontend
-} // end namespace sushi
-#endif //SUSHI_BUILD_WITH_ALSA_MIDI
+} // end namespace sushi::internal::midi_frontend
 
-#endif //SUSHI_ALSA_MIDI_FRONTEND_H_H
+#endif // SUSHI_BUILD_WITH_ALSA_MIDI
+
+#endif // SUSHI_ALSA_MIDI_FRONTEND_H_H

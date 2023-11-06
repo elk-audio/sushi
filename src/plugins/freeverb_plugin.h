@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -21,19 +21,18 @@
 #ifndef FREEVERB_PLUGIN_H
 #define FREEVERB_PLUGIN_H
 
-#include <revmodel.hpp>
-
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace freeverb_plugin {
+class revmodel;
+
+namespace sushi::internal::freeverb_plugin {
 
 class FreeverbPlugin : public InternalPlugin, public UidHelper<FreeverbPlugin>
 {
 public:
     explicit FreeverbPlugin(HostControl hostControl);
 
-    ~FreeverbPlugin() override = default;
+    ~FreeverbPlugin() override;
 
     ProcessorReturnCode init(float sample_rate) override;
 
@@ -63,6 +62,6 @@ private:
     std::unique_ptr<revmodel> _reverb_model;
 };
 
-}// namespace freeverb_plugin
-}// namespace sushi
+} // namespace sushi::internal::freeverb_plugin
+
 #endif // FREEVERB_PLUGIN_H

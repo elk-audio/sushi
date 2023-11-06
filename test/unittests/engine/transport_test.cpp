@@ -1,25 +1,22 @@
 #include "gtest/gtest.h"
 
 #include "engine/transport.cpp"
+
+#define private public
+
 #include "library/rt_event_fifo.h"
 
 using namespace sushi;
-using namespace sushi::engine;
+using namespace sushi::internal;
+using namespace sushi::internal::engine;
 
 constexpr float TEST_SAMPLERATE = 48000;
 
 class TestTransport : public ::testing::Test
 {
 protected:
-    TestTransport()
-    {
-    }
+    TestTransport() = default;
 
-    void SetUp()
-    {}
-
-    void TearDown()
-    { }
     RtEventFifo<10> _rt_event_output;
     Transport _module_under_test{TEST_SAMPLERATE, &_rt_event_output};
 };
@@ -58,6 +55,12 @@ TEST_F(TestTransport, TestBasicQuerying)
     _module_under_test.set_time_signature({1, 0}, false);
     EXPECT_EQ(5, _module_under_test.time_signature().numerator);
     EXPECT_EQ(8, _module_under_test.time_signature().denominator);
+
+    _module_under_test.set_position_source(PositionSource::EXTERNAL);
+    EXPECT_EQ(PositionSource::EXTERNAL, _module_under_test.position_source());
+
+    _module_under_test.set_current_beats(1.5);
+    EXPECT_DOUBLE_EQ(1.5, _module_under_test.current_beats());
 }
 
 TEST_F(TestTransport, TestTimeline44Time)
@@ -94,6 +97,30 @@ TEST_F(TestTransport, TestTimeline44Time)
     _module_under_test.set_time(std::chrono::milliseconds(2500), 5 * TEST_SAMPLERATE_X2 / 2);
     EXPECT_DOUBLE_EQ(1.0, _module_under_test.current_bar_beats());
     EXPECT_DOUBLE_EQ(5.0, _module_under_test.current_beats());
+    EXPECT_DOUBLE_EQ(4.0, _module_under_test.current_bar_start_beats());
+}
+
+TEST_F(TestTransport, TestTimeline44TimeWithExternalPositionSource)
+{
+    constexpr int TEST_SAMPLERATE_X2 = 32768;
+    /* Odd samplerate, but it's a convenient factor of 2 which makes testing easier,
+     * since bar boundaries end up on a power of 2 sample count if AUDIO_CHUNK_SIZE is
+     * a power of 2*/
+    _module_under_test.set_sample_rate(TEST_SAMPLERATE_X2);
+    _module_under_test.set_time_signature({4, 4}, false);
+    _module_under_test.set_tempo(120, false);
+    _module_under_test.set_playing_mode(PlayingMode::PLAYING, false);
+    _module_under_test.set_time(std::chrono::seconds(0), 0);
+
+    /* Test skipping internal beat_count_calculation */
+    _module_under_test.set_position_source(PositionSource::EXTERNAL);
+    _module_under_test.set_current_beats(5.1);
+    _module_under_test.set_current_bar_beats(1.1);
+    
+    _module_under_test.set_time(std::chrono::milliseconds(2500), 5 * TEST_SAMPLERATE_X2 / 2);
+
+    EXPECT_DOUBLE_EQ(1.1, _module_under_test.current_bar_beats());
+    EXPECT_DOUBLE_EQ(5.1, _module_under_test.current_beats());
     EXPECT_DOUBLE_EQ(4.0, _module_under_test.current_bar_start_beats());
 }
 

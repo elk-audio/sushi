@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -22,8 +22,7 @@
 
 #include "tremolo_plugin.h"
 
-namespace sushi {
-namespace tremolo_plugin {
+namespace sushi::internal::tremolo_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.brickworks.tremolo";
 constexpr auto DEFAULT_LABEL = "Tremolo";
@@ -74,7 +73,7 @@ void TremoloPlugin::set_enabled(bool enabled)
 
 void TremoloPlugin::set_bypassed(bool bypassed)
 {
-    _host_control.post_event(new SetProcessorBypassEvent(this->id(), bypassed, IMMEDIATE_PROCESS));
+    _host_control.post_event(std::make_unique<SetProcessorBypassEvent>(this->id(), bypassed, IMMEDIATE_PROCESS));
 }
 
 void TremoloPlugin::process_event(const RtEvent& event)
@@ -140,6 +139,4 @@ std::string_view TremoloPlugin::static_uid()
 }
 
 
-}// namespace tremolo_plugin
-}// namespace sushi
-
+} // namespace sushi::internal::tremolo_plugin

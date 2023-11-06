@@ -7,25 +7,28 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
- * @brief Utility functions around rapidjson library
+ * @brief Utility functions for dumping Portaudio devices info
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#ifndef SUSHI_JSON_UTILS_H
-#define SUSHI_JSON_UTILS_H
-
-#include <iostream>
-
 #include "rapidjson/document.h"
 
-std::ostream& operator<<(std::ostream& out, const rapidjson::Document& document);
+namespace sushi {
 
-#endif // SUSHI_JSON_UTILS_H
+/**
+ * @brief Retrieve Portaudio's registered devices information.
+ *        Can be queried before instantiating an actual PortaudioFrontend
+ *
+ * @return Device information list in JSON format
+ */
+rapidjson::Document generate_portaudio_devices_info_document();
+
+} // end namespace sushi
 

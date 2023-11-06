@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -20,8 +20,7 @@
 
 #include "sample_delay_plugin.h"
 
-namespace sushi {
-namespace sample_delay_plugin {
+namespace sushi::internal::sample_delay_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.testing.sample_delay";
 constexpr auto DEFAULT_LABEL = "Sample delay";
@@ -124,6 +123,4 @@ void SampleDelayPlugin::_reset()
     _write_idx = 0;
 }
 
-
-} // namespace sample_delay_plugin
-} // namespace sushi
+} // end namespace sushi::internal::sample_delay_plugin

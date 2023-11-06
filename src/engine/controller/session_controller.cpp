@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -22,33 +22,33 @@
 
 #include "spdlog/fmt/bundled/chrono.h"
 
-#include "library/constants.h"
-#include "compile_time_settings.h"
+#include "elklog/static_logger.h"
+
+#include "sushi/constants.h"
+#include "sushi/compile_time_settings.h"
+
 #include "session_controller.h"
 #include "controller_common.h"
 
-#include "logging.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("controller");
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
-inline ext::TrackAudioConnectionState to_external(const ::sushi::AudioConnection& con,
-                                                  const std::string& track_name)
+inline control::TrackAudioConnectionState to_external(const AudioConnection& con,
+                                                      const std::string& track_name)
 {
-    ext::TrackAudioConnectionState ext_con;
+    control::TrackAudioConnectionState ext_con;
     ext_con.track = track_name;
     ext_con.track_channel = con.track_channel;
     ext_con.engine_channel = con.engine_channel;
     return ext_con;
 }
 
-inline ext::MidiKbdConnectionState to_external(const ::sushi::midi_dispatcher::KbdInputConnection& con,
-                                               const std::string& track_name)
+inline control::MidiKbdConnectionState to_external(const midi_dispatcher::KbdInputConnection& con,
+                                                   const std::string& track_name)
 {
-    ext::MidiKbdConnectionState ext_con;
+    control::MidiKbdConnectionState ext_con;
     ext_con.track = track_name;
     ext_con.channel = to_external_midi_channel(con.channel);
     ext_con.port = con.port;
@@ -56,10 +56,10 @@ inline ext::MidiKbdConnectionState to_external(const ::sushi::midi_dispatcher::K
     return ext_con;
 }
 
-inline ext::MidiKbdConnectionState to_external(const ::sushi::midi_dispatcher::KbdOutputConnection& con,
-                                               const std::string& track_name)
+inline control::MidiKbdConnectionState to_external(const midi_dispatcher::KbdOutputConnection& con,
+                                                   const std::string& track_name)
 {
-    ext::MidiKbdConnectionState ext_con;
+    control::MidiKbdConnectionState ext_con;
     ext_con.track = track_name;
     ext_con.channel = to_external_midi_channel(con.channel);
     ext_con.port = con.port;
@@ -67,10 +67,10 @@ inline ext::MidiKbdConnectionState to_external(const ::sushi::midi_dispatcher::K
     return ext_con;
 }
 
-inline ext::MidiCCConnectionState to_external(const ::sushi::midi_dispatcher::CCInputConnection& con,
-                                              const std::string& track_name)
+inline control::MidiCCConnectionState to_external(const midi_dispatcher::CCInputConnection& con,
+                                                  const std::string& track_name)
 {
-    ext::MidiCCConnectionState ext_con;
+    control::MidiCCConnectionState ext_con;
     ext_con.processor = track_name;
     ext_con.channel = to_external_midi_channel(con.channel);
     ext_con.port = con.port;
@@ -82,17 +82,17 @@ inline ext::MidiCCConnectionState to_external(const ::sushi::midi_dispatcher::CC
     return ext_con;
 }
 
-inline ext::MidiPCConnectionState to_external(const ::sushi::midi_dispatcher::PCInputConnection& con,
-                                              const std::string& track_name)
+inline control::MidiPCConnectionState to_external(const midi_dispatcher::PCInputConnection& con,
+                                                  const std::string& track_name)
 {
-    ext::MidiPCConnectionState ext_con;
+    control::MidiPCConnectionState ext_con;
     ext_con.processor = track_name;
     ext_con.channel = to_external_midi_channel(con.channel);
     ext_con.port = con.port;
     return ext_con;
 }
 
-inline void to_internal(sushi::control_frontend::OscState& dest, const ext::OscState& src)
+inline void to_internal(control_frontend::OscState& dest, const control::OscState& src)
 {
     dest.set_auto_enable_outputs(src.enable_all_processor_outputs);
     for (const auto& output : src.enabled_processor_outputs)
@@ -101,7 +101,7 @@ inline void to_internal(sushi::control_frontend::OscState& dest, const ext::OscS
     }
 }
 
-inline void to_external(ext::OscState& dest, const sushi::control_frontend::OscState& src)
+inline void to_external(control::OscState& dest, const control_frontend::OscState& src)
 {
     dest.enable_all_processor_outputs = src.auto_enable_outputs();
     for (const auto& output : src.enabled_outputs())
@@ -125,11 +125,11 @@ void SessionController::set_osc_frontend(control_frontend::OSCFrontend* osc_fron
     _osc_frontend = osc_frontend;
 }
 
-ext::SessionState SessionController::save_session() const
+control::SessionState SessionController::save_session() const
 {
-    SUSHI_LOG_DEBUG("save_session called");
+    ELKLOG_LOG_DEBUG("save_session called");
 
-    ext::SessionState session;
+    control::SessionState session;
     auto date = time(nullptr);
     session.save_date = fmt::format("{:%Y-%m-%d %H:%M}", fmt::localtime(date));
     session.sushi_info = _save_build_info();
@@ -141,21 +141,21 @@ ext::SessionState SessionController::save_session() const
     return session;
 }
 
-ext::ControlStatus SessionController::restore_session(const ext::SessionState& state)
+control::ControlStatus SessionController::restore_session(const control::SessionState& state)
 {
-    SUSHI_LOG_DEBUG("restore_session called");
+    ELKLOG_LOG_DEBUG("restore_session called");
     if (_check_state(state) == false)
     {
-        return ext::ControlStatus::INVALID_ARGUMENTS;
+        return control::ControlStatus::INVALID_ARGUMENTS;
     }
-    auto new_session = std::make_unique<ext::SessionState>(state);
+    auto new_session = std::make_unique<control::SessionState>(state);
 
     auto lambda = [&, state = std::move(new_session)] () -> int
     {
         bool realtime = _engine->realtime();
         if (realtime)
         {
-            SUSHI_LOG_DEBUG("Pausing engine");
+            ELKLOG_LOG_DEBUG("Pausing engine");
             _audio_frontend->pause(true);
         }
         _clear_all_tracks();
@@ -167,21 +167,22 @@ ext::ControlStatus SessionController::restore_session(const ext::SessionState& s
 
         if (realtime)
         {
-            SUSHI_LOG_DEBUG("Un-Pausing engine");
+            ELKLOG_LOG_DEBUG("Un-Pausing engine");
             _audio_frontend->pause(false);
         }
         return EventStatus::HANDLED_OK;
     };
 
-    auto event = new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    std::unique_ptr<Event> event(new LambdaEvent(std::move(lambda), IMMEDIATE_PROCESS));
+    _event_dispatcher->post_event(std::move(event));
+
+    return control::ControlStatus::OK;
 }
 
-ext::SushiBuildInfo SessionController::_save_build_info() const
+control::SushiBuildInfo SessionController::_save_build_info() const
 {
-    ext::SushiBuildInfo info;
-    for(auto& option : ::CompileTimeSettings::enabled_build_options)
+    control::SushiBuildInfo info;
+    for(auto& option : sushi::CompileTimeSettings::enabled_build_options)
     {
         info.build_options.emplace_back(option);
     }
@@ -193,9 +194,9 @@ ext::SushiBuildInfo SessionController::_save_build_info() const
     return info;
 }
 
-ext::OscState SessionController::_save_osc_state() const
+control::OscState SessionController::_save_osc_state() const
 {
-    ext::OscState ext_state;
+    control::OscState ext_state;
     if (_osc_frontend)
     {
         auto state = _osc_frontend->save_state();
@@ -204,9 +205,9 @@ ext::OscState SessionController::_save_osc_state() const
     return ext_state;
 }
 
-ext::MidiState SessionController::_save_midi_state() const
+control::MidiState SessionController::_save_midi_state() const
 {
-    ext::MidiState state;
+    control::MidiState state;
 
     state.inputs = _midi_dispatcher->get_midi_inputs();
     state.outputs = _midi_dispatcher->get_midi_outputs();
@@ -253,9 +254,9 @@ ext::MidiState SessionController::_save_midi_state() const
     return state;
 }
 
-ext::EngineState SessionController::_save_engine_state() const
+control::EngineState SessionController::_save_engine_state() const
 {
-    ext::EngineState state;
+    control::EngineState state;
     auto transport = _engine->transport();
 
     state.sample_rate = _engine->sample_rate();
@@ -297,12 +298,12 @@ ext::EngineState SessionController::_save_engine_state() const
     return state;
 }
 
-std::vector<ext::TrackState> SessionController::_save_tracks() const
+std::vector<control::TrackState> SessionController::_save_tracks() const
 {
-    std::vector<ext::TrackState> tracks;
+    std::vector<control::TrackState> tracks;
     for (const auto& track : _processors->all_tracks())
     {
-        ext::TrackState state;
+        control::TrackState state;
         auto track_state = track->save_state();
         to_external(&state.track_state, &track_state);
         state.name = track->name();
@@ -321,9 +322,9 @@ std::vector<ext::TrackState> SessionController::_save_tracks() const
     return tracks;
 }
 
-ext::PluginClass SessionController::_save_plugin(const sushi::Processor* plugin) const
+control::PluginClass SessionController::_save_plugin(const Processor* plugin) const
 {
-    ext::PluginClass plugin_class;
+    control::PluginClass plugin_class;
 
     auto info = plugin->info();
     plugin_class.name = plugin->name();
@@ -338,25 +339,25 @@ ext::PluginClass SessionController::_save_plugin(const sushi::Processor* plugin)
     return plugin_class;
 }
 
-bool SessionController::_check_state(const ext::SessionState& state) const
+bool SessionController::_check_state(const control::SessionState& state) const
 {
     // Todo: check if state was saved with a newer/older version of sushi.
     if (state.engine_state.used_audio_inputs > _engine->audio_input_channels() ||
         state.engine_state.used_audio_outputs > _engine->audio_output_channels())
     {
-        SUSHI_LOG_ERROR("Audio engine doesn't have enough audio channels to restore saved session");
+        ELKLOG_LOG_ERROR("Audio engine doesn't have enough audio channels to restore saved session");
         return false;
     }
     if (state.midi_state.inputs > _midi_dispatcher->get_midi_inputs() ||
         state.midi_state.outputs > _midi_dispatcher->get_midi_outputs())
     {
-        SUSHI_LOG_ERROR("Not enough midi inputs or outputs to restore saved session");
+        ELKLOG_LOG_ERROR("Not enough midi inputs or outputs to restore saved session");
         return false;
     }
     return true;
 }
 
-void SessionController::_restore_tracks(std::vector<ext::TrackState> tracks)
+void SessionController::_restore_tracks(std::vector<control::TrackState> tracks)
 {
     for (auto& track : tracks)
     {
@@ -365,15 +366,15 @@ void SessionController::_restore_tracks(std::vector<ext::TrackState> tracks)
 
         switch (track.type)
         {
-            case ext::TrackType::PRE:
+            case control::TrackType::PRE:
                 std::tie(status, track_id) = _engine->create_pre_track(track.name);
                 break;
 
-            case ext::TrackType::POST:
+            case control::TrackType::POST:
                 std::tie(status, track_id) = _engine->create_post_track(track.name);
                 break;
 
-            case ext::TrackType::REGULAR:
+            case control::TrackType::REGULAR:
                 if (track.buses > 1)
                 {
                     std::tie(status, track_id) = _engine->create_multibus_track(track.name, track.buses);
@@ -393,7 +394,7 @@ void SessionController::_restore_tracks(std::vector<ext::TrackState> tracks)
 
         if (status != EngineReturnStatus::OK || !track_instance)
         {
-            SUSHI_LOG_ERROR("Failed to restore track {} with error {}", track.name, static_cast<int>(status));
+            ELKLOG_LOG_ERROR("Failed to restore track {} with error {}", track.name, static_cast<int>(status));
             continue;
         }
 
@@ -404,23 +405,23 @@ void SessionController::_restore_tracks(std::vector<ext::TrackState> tracks)
     }
 }
 
-void SessionController::_restore_plugin_states(std::vector<ext::TrackState> tracks)
+void SessionController::_restore_plugin_states(std::vector<control::TrackState> tracks)
 {
     for (auto& track : tracks)
     {
         auto track_instance = _processors->mutable_track(track.name);
         if (!track_instance)
         {
-            SUSHI_LOG_ERROR("Track {} not found", track.name);
+            ELKLOG_LOG_ERROR("Track {} not found", track.name);
             continue;
         }
 
-        sushi::ProcessorState state;
+        ProcessorState state;
         to_internal(&state, &track.track_state);
         auto status = track_instance->set_state(&state, false);
         if (status != ProcessorReturnCode::OK)
         {
-            SUSHI_LOG_ERROR("Failed to restore state to track {} with status {}", track.name, status);
+            ELKLOG_LOG_ERROR("Failed to restore state to track {} with status {}", track.name, status);
         }
 
         for (auto& plugin : track.processors)
@@ -428,20 +429,20 @@ void SessionController::_restore_plugin_states(std::vector<ext::TrackState> trac
             auto instance = _processors->mutable_processor(plugin.name);
             if (!instance)
             {
-                SUSHI_LOG_ERROR("Plugin {} not found", plugin.name);
+                ELKLOG_LOG_ERROR("Plugin {} not found", plugin.name);
                 continue;
             }
             to_internal(&state, &plugin.state);
             status = instance->set_state(&state, false);
             if (status != ProcessorReturnCode::OK)
             {
-                SUSHI_LOG_ERROR("Failed to restore state to track {} with status {}", track.name, status);
+                ELKLOG_LOG_ERROR("Failed to restore state to track {} with status {}", track.name, status);
             }
         }
     }
 }
 
-void SessionController::_restore_plugin(ext::PluginClass plugin, sushi::engine::Track* track)
+void SessionController::_restore_plugin(control::PluginClass plugin, Track* track)
 {
     PluginInfo info {.uid = plugin.uid,
                      .path = plugin.path,
@@ -456,15 +457,15 @@ void SessionController::_restore_plugin(ext::PluginClass plugin, sushi::engine::
     }
     else
     {
-        SUSHI_LOG_ERROR("Failed to restore plugin {} on track {}", plugin.name, track->name());
+        ELKLOG_LOG_ERROR("Failed to restore plugin {} on track {}", plugin.name, track->name());
     }
 }
 
-void SessionController::_restore_engine(ext::EngineState& state)
+void SessionController::_restore_engine(control::EngineState& state)
 {
     if (_engine->sample_rate() != state.sample_rate)
     {
-        SUSHI_LOG_WARNING("Saved session samplerate mismatch({}Hz vs {}Hz", _engine->sample_rate(), state.sample_rate);
+        ELKLOG_LOG_WARNING("Saved session samplerate mismatch({}Hz vs {}Hz", _engine->sample_rate(), state.sample_rate);
     }
     _engine->set_tempo(state.tempo);
     _engine->set_tempo_sync_mode(to_internal(state.sync_mode));
@@ -482,7 +483,7 @@ void SessionController::_restore_engine(ext::EngineState& state)
         if (track)
         {
             status = _engine->connect_audio_input_channel(con.engine_channel, con.track_channel, track->id());
-            SUSHI_LOG_ERROR_IF(status != EngineReturnStatus::OK, "Failed to connect channel {} of track {} to engine channel {}",
+            ELKLOG_LOG_ERROR_IF(status != EngineReturnStatus::OK, "Failed to connect channel {} of track {} to engine channel {}",
                                con.track_channel, con.engine_channel, con.track);
         }
     }
@@ -493,13 +494,13 @@ void SessionController::_restore_engine(ext::EngineState& state)
         if (track)
         {
             status = _engine->connect_audio_output_channel(con.engine_channel, con.track_channel, track->id());
-            SUSHI_LOG_ERROR_IF(status != EngineReturnStatus::OK, "Failed to connect engine channel {} from channel {} of track",
+            ELKLOG_LOG_ERROR_IF(status != EngineReturnStatus::OK, "Failed to connect engine channel {} from channel {} of track",
                                con.engine_channel, con.track_channel, con.track);
         }
     }
 }
 
-void SessionController::_restore_midi(ext::MidiState& state)
+void SessionController::_restore_midi(control::MidiState& state)
 {
     [[maybe_unused]] midi_dispatcher::MidiDispatcherStatus status;
     for (const auto& con : state.kbd_input_connections)
@@ -515,7 +516,7 @@ void SessionController::_restore_midi(ext::MidiState& state)
             {
                 status = _midi_dispatcher->connect_kb_to_track(con.port, track->id(), int_from_ext_midi_channel(con.channel));
             }
-            SUSHI_LOG_ERROR_IF(status != midi_dispatcher::MidiDispatcherStatus::OK,
+            ELKLOG_LOG_ERROR_IF(status != midi_dispatcher::MidiDispatcherStatus::OK,
                                "Failed to connect midi kbd to track {}", track->name());
         }
     }
@@ -526,7 +527,7 @@ void SessionController::_restore_midi(ext::MidiState& state)
         if (track)
         {
             status = _midi_dispatcher->connect_track_to_output(con.port, track->id(), int_from_ext_midi_channel(con.channel));
-            SUSHI_LOG_ERROR_IF(status != midi_dispatcher::MidiDispatcherStatus::OK,
+            ELKLOG_LOG_ERROR_IF(status != midi_dispatcher::MidiDispatcherStatus::OK,
                                "Failed to connect midi kbd from track {} to output", track->name());
         }
     }
@@ -539,7 +540,7 @@ void SessionController::_restore_midi(ext::MidiState& state)
             status = _midi_dispatcher->connect_cc_to_parameter(con.port, processor->id(), con.parameter_id,
                                                                con.cc_number, con.min_range, con.max_range,
                                                                con.relative_mode, int_from_ext_midi_channel(con.channel));
-            SUSHI_LOG_ERROR_IF(status != midi_dispatcher::MidiDispatcherStatus::OK,
+            ELKLOG_LOG_ERROR_IF(status != midi_dispatcher::MidiDispatcherStatus::OK,
                                "Failed to connect midi cc to parameter {} of processor {}", con.parameter_id, processor->id());
         }
     }
@@ -550,7 +551,7 @@ void SessionController::_restore_midi(ext::MidiState& state)
         if (processor)
         {
             status = _midi_dispatcher->connect_pc_to_processor(con.port, processor->id(), int_from_ext_midi_channel(con.channel));
-            SUSHI_LOG_ERROR_IF(status != midi_dispatcher::MidiDispatcherStatus::OK,
+            ELKLOG_LOG_ERROR_IF(status != midi_dispatcher::MidiDispatcherStatus::OK,
                                "Failed to connect mid program change to processor {}", processor->name());
         }
     }
@@ -565,11 +566,11 @@ void SessionController::_restore_midi(ext::MidiState& state)
     }
 }
 
-void SessionController::_restore_osc(ext::OscState& state)
+void SessionController::_restore_osc(control::OscState& state)
 {
     if (_osc_frontend)
     {
-        sushi::control_frontend::OscState internal_state;
+        control_frontend::OscState internal_state;
         to_internal(internal_state, state);
         _osc_frontend->set_state(internal_state);
     }
@@ -590,6 +591,4 @@ void SessionController::_clear_all_tracks()
     }
 }
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::engine::controller_impl

@@ -7,14 +7,15 @@
 #define private public
 #define protected public
 
-#include "exit_control.cpp"
 #include "engine/audio_graph.cpp"
 #include "test_utils/host_control_mockup.h"
 
 constexpr float SAMPLE_RATE = 44000;
 constexpr int TEST_MAX_TRACKS = 2;
+
 using namespace sushi;
-using namespace sushi::engine;
+using namespace sushi::internal;
+using namespace sushi::internal::engine;
 
 
 class TestAudioGraph : public ::testing::Test

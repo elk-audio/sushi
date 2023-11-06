@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -23,7 +23,7 @@
 
 #include "id_generator.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 /**
  * @brief Data for routing Audio to and from tracks
@@ -78,5 +78,7 @@ bool inline operator==(const GateConnection& lhs, const GateConnection& rhs)
            lhs.channel      == rhs.channel;
 }
 
-} // namespace sushi
-#endif //SUSHI_CONNECTION_TYPES_H
+} // end namespace sushi::internal
+
+#endif // SUSHI_CONNECTION_TYPES_H
+

@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -19,15 +19,15 @@
  */
 
 #include "twine/twine.h"
+#include "elklog/static_logger.h"
 
 #include "vst2x_host_callback.h"
+
 #include "vst2x_wrapper.h"
-#include "logging.h"
 
-namespace sushi {
-namespace vst2 {
+namespace sushi::internal::vst2 {
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("vst2");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("vst2");
 
 VstIntPtr VSTCALLBACK host_callback(AEffect* effect, VstInt32 opcode, VstInt32 index,
                                     [[maybe_unused]] VstIntPtr value,
@@ -35,7 +35,7 @@ VstIntPtr VSTCALLBACK host_callback(AEffect* effect, VstInt32 opcode, VstInt32 i
 {
     VstIntPtr result = 0;
 
-    SUSHI_LOG_DEBUG("PLUG> HostCallback (opcode {})\n index = {}, value = {}, ptr = {}, opt = {}\n", opcode, index, FromVstPtr<void> (value), ptr, opt);
+    ELKLOG_LOG_DEBUG("PLUG> HostCallback (opcode {})\n index = {}, value = {}, ptr = {}, opt = {}\n", opcode, index, FromVstPtr<void> (value), ptr, opt);
 
     switch (opcode)
     {
@@ -53,7 +53,7 @@ VstIntPtr VSTCALLBACK host_callback(AEffect* effect, VstInt32 opcode, VstInt32 i
             else
             {
                 wrapper_instance->notify_parameter_change(index, opt);
-                SUSHI_LOG_DEBUG("Plugin {} sending parameter change notification: param: {}, value: {}",
+                ELKLOG_LOG_DEBUG("Plugin {} sending parameter change notification: param: {}, value: {}",
                                 wrapper_instance->name(), index, opt);
             }
             break;
@@ -100,5 +100,4 @@ VstIntPtr VSTCALLBACK host_callback(AEffect* effect, VstInt32 opcode, VstInt32 i
 
 }
 
-} // namespace vst2
-} // namespace sushi
+} // end namespace sushi::internal::vst2

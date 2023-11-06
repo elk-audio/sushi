@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -26,16 +26,16 @@
 #include <array>
 #include <vector>
 
-#include "library/sample_buffer.h"
+#include "sushi/constants.h"
+#include "sushi/sample_buffer.h"
+
 #include "library/internal_plugin.h"
-#include "library/rt_event_fifo.h"
-#include "library/constants.h"
 #include "library/performance_timer.h"
+#include "library/rt_event_fifo.h"
 
 #include "dsp_library/value_smoother.h"
 
-namespace sushi {
-namespace engine {
+namespace sushi::internal::engine {
 
 /* No real technical limit, just something arbitrarily high enough */
 constexpr int MAX_TRACK_BUSES = MAX_TRACK_CHANNELS / 2;
@@ -211,9 +211,6 @@ private:
     RtEventFifo<KEYBOARD_EVENT_QUEUE_SIZE> _kb_event_buffer;
 };
 
-} // namespace engine
-} // namespace sushi
-
-
+} // end namespace sushi::internal::engine
 
 #endif // SUSHI_TRACK_H

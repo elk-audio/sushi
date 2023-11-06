@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -21,11 +21,12 @@
 #ifndef SUSHI_SAMPLE_VOICE_H
 #define SUSHI_SAMPLE_VOICE_H
 
-#include "library/sample_buffer.h"
-#include "dsp_library/sample_wrapper.h"
-#include "dsp_library/envelopes.h"
+#include "sushi/sample_buffer.h"
 
-namespace sample_player_voice {
+#include "dsp_library/envelopes.h"
+#include "dsp_library/sample_wrapper.h"
+
+namespace sushi::internal::sample_player_voice {
 
 // TODO eventually make this configurable
 constexpr float SAMPLE_FILE_RATE = 44100.0f;
@@ -38,13 +39,11 @@ enum class SamplePlayMode
     STOPPING
 };
 
-
-
 class Voice
 {
     SUSHI_DECLARE_NON_COPYABLE(Voice);
 public:
-    Voice() {};
+    Voice() = default;
 
     Voice(float samplerate, dsp::Sample* sample) : _samplerate(samplerate), _sample(sample) {}
 
@@ -118,7 +117,6 @@ public:
     void render(sushi::SampleBuffer<AUDIO_CHUNK_SIZE>& output_buffer);
 
 private:
-
     float _samplerate{44100};
     dsp::Sample* _sample;
     SamplePlayMode _state{SamplePlayMode::STOPPED};
@@ -131,5 +129,6 @@ private:
     int _stop_offset{0};
 };
 
-} // end namespace sample_player_voice
-#endif //SUSHI_SAMPLE_VOICE_H
+} // end namespace sushi::internal::sample_player_voice
+
+#endif // SUSHI_SAMPLE_VOICE_H

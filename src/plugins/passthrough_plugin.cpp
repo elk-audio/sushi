@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -20,8 +20,7 @@
 
 #include "passthrough_plugin.h"
 
-namespace sushi {
-namespace passthrough_plugin {
+namespace sushi::internal::passthrough_plugin {
 
 constexpr auto PLUGIN_UID = "sushi.testing.passthrough";
 constexpr auto DEFAULT_LABEL = "Passthrough";
@@ -44,6 +43,4 @@ std::string_view PassthroughPlugin::static_uid()
     return PLUGIN_UID;
 }
 
-
-}// namespace passthrough_plugin
-}// namespace sushi
+} // end namespace sushi::internal::passthrough_plugin

@@ -7,13 +7,13 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
- /**
+/**
  * @brief OSC runtime control frontend
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  *
@@ -28,10 +28,11 @@
 #include <vector>
 #include <map>
 
-#include "control_interface.h"
+#include "sushi/control_interface.h"
+
 #include "base_control_frontend.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 namespace osc
 {
@@ -68,7 +69,7 @@ struct OscConnection
     ObjectId           processor;
     ObjectId           parameter;
     OSCFrontend*       instance;
-    ext::SushiControl* controller;
+    control::SushiControl* controller;
 
     void* callback;
 };
@@ -77,9 +78,10 @@ class OSCFrontend : public BaseControlFrontend
 {
 public:
     OSCFrontend(engine::BaseEngine* engine,
-                ext::SushiControl* controller, osc::BaseOscMessenger* osc_interface);
+                control::SushiControl* controller,
+                osc::BaseOscMessenger* osc_interface);
 
-    ~OSCFrontend();
+    ~OSCFrontend() override;
 
     ControlFrontendStatus init() override;
 
@@ -133,8 +135,6 @@ public:
 
     /* Inherited from EventPoster */
     int process(Event* event) override;
-
-    int poster_id() override {return EventPosterId::OSC_FRONTEND;}
 
     std::string send_ip() const;
 
@@ -237,9 +237,9 @@ private:
 
     std::atomic_bool _running {false};
 
-    sushi::ext::SushiControl* _controller {nullptr};
-    sushi::ext::AudioGraphController* _graph_controller {nullptr};
-    sushi::ext::ParameterController*  _param_controller {nullptr};
+    sushi::control::SushiControl* _controller {nullptr};
+    sushi::control::AudioGraphController* _graph_controller {nullptr};
+    sushi::control::ParameterController*  _param_controller {nullptr};
 
     const engine::BaseProcessorContainer* _processor_container;
 
@@ -260,7 +260,7 @@ private:
     void* _reset_timing_statistics_ss_cb {nullptr};
 };
 
-} // namespace control_frontend
-} // namespace sushi
+} // end namespace control_frontend
+} // end namespace sushi::internal
 
-#endif //SUSHI_OSC_FRONTEND_H_H
+#endif // SUSHI_OSC_FRONTEND_H_H

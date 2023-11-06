@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -25,8 +25,7 @@
 #include "dsp_library/value_smoother.h"
 
 
-namespace sushi {
-namespace stereo_mixer_plugin {
+namespace sushi::internal::stereo_mixer_plugin {
 
 class StereoMixerPlugin : public InternalPlugin, public UidHelper<StereoMixerPlugin>
 {
@@ -55,8 +54,6 @@ private:
     ValueSmootherFilter<float> _ch2_right_gain_smoother;
 };
 
-} // namespace stereo_mixer_plugin
-} // namespace sushi
-
+} // end namespace sushi::internal::stereo_mixer_plugin
 
 #endif // SUSHI_STEREO_MIXER_PLUGIN_H

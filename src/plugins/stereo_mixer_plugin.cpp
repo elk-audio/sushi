@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -19,10 +19,10 @@
  */
 
 #include "stereo_mixer_plugin.h"
-#include "library/constants.h"
 
-namespace sushi {
-namespace stereo_mixer_plugin {
+#include "sushi/constants.h"
+
+namespace sushi::internal::stereo_mixer_plugin {
 
 constexpr char PLUGIN_UID[] = "sushi.testing.stereo_mixer";
 constexpr char DEFAULT_LABEL[] = "Stereo Mixer";
@@ -173,6 +173,5 @@ std::string_view StereoMixerPlugin::static_uid()
     return PLUGIN_UID;
 }
 
-} // namespace stereo_mixer_plugin
-} // namespace sushi
+} // end namespace sushi::internal::stereo_mixer_plugin
 

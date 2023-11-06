@@ -5,19 +5,20 @@
 #include "dsp_library/envelopes.h"
 
 
-using namespace dsp;
+using namespace sushi::dsp;
 
 /* Test the envelope class */
 class TestADSREnvelope : public ::testing::Test
 {
 protected:
-    TestADSREnvelope() {}
+    TestADSREnvelope() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         _module_under_test.set_samplerate(100);
         _module_under_test.set_parameters(1, 1, 0.5, 1);
     }
+
     AdsrEnvelope _module_under_test;
 };
 

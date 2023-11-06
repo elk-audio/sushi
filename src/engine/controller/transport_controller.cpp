@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -18,81 +18,77 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
+#include "elklog/static_logger.h"
+
 #include "transport_controller.h"
+
 #include "controller_common.h"
-#include "logging.h"
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("controller");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("controller");
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+namespace sushi::internal::engine::controller_impl {
 
-TransportController::TransportController(sushi::engine::BaseEngine* engine) : _engine(engine),
-                                                                              _transport(engine->transport()),
-                                                                              _event_dispatcher(engine->event_dispatcher())
+TransportController::TransportController(engine::BaseEngine* engine) : _engine(engine),
+                                                                       _transport(engine->transport()),
+                                                                       _event_dispatcher(engine->event_dispatcher())
 {}
 
 float TransportController::get_samplerate() const
 {
-    SUSHI_LOG_DEBUG("get_samplerate called");
+    ELKLOG_LOG_DEBUG("get_samplerate called");
     return _engine->sample_rate();
 }
 
-ext::PlayingMode TransportController::get_playing_mode() const
+control::PlayingMode TransportController::get_playing_mode() const
 {
-    SUSHI_LOG_DEBUG("get_playing_mode called");
+    ELKLOG_LOG_DEBUG("get_playing_mode called");
     return to_external(_transport->playing_mode());
 }
 
-void TransportController::set_playing_mode(ext::PlayingMode playing_mode)
+void TransportController::set_playing_mode(control::PlayingMode playing_mode)
 {
-    SUSHI_LOG_DEBUG("set_playing_mode called");
-    auto event = new SetEnginePlayingModeStateEvent(to_internal(playing_mode), IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    ELKLOG_LOG_DEBUG("set_playing_mode called");
+    _event_dispatcher->post_event(std::make_unique<SetEnginePlayingModeStateEvent>(to_internal(playing_mode),
+                                                                                   IMMEDIATE_PROCESS));
 }
 
-ext::SyncMode TransportController::get_sync_mode() const
+control::SyncMode TransportController::get_sync_mode() const
 {
-    SUSHI_LOG_DEBUG("get_sync_mode called");
+    ELKLOG_LOG_DEBUG("get_sync_mode called");
     return to_external(_transport->sync_mode());
 }
 
-void TransportController::set_sync_mode(ext::SyncMode sync_mode)
+void TransportController::set_sync_mode(control::SyncMode sync_mode)
 {
-    SUSHI_LOG_DEBUG("set_sync_mode called");
-    auto event = new SetEngineSyncModeEvent(to_internal(sync_mode), IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
+    ELKLOG_LOG_DEBUG("set_sync_mode called");
+    _event_dispatcher->post_event(std::make_unique<SetEngineSyncModeEvent>(to_internal(sync_mode),
+                                                                           IMMEDIATE_PROCESS));
 }
 
 float TransportController::get_tempo() const
 {
-    SUSHI_LOG_DEBUG("get_tempo called");
+    ELKLOG_LOG_DEBUG("get_tempo called");
     return _transport->current_tempo();
 }
 
-ext::ControlStatus TransportController::set_tempo(float tempo)
+control::ControlStatus TransportController::set_tempo(float tempo)
 {
-    SUSHI_LOG_DEBUG("set_tempo called with tempo {}", tempo);
-    auto event = new SetEngineTempoEvent(tempo, IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    ELKLOG_LOG_DEBUG("set_tempo called with tempo {}", tempo);
+    _event_dispatcher->post_event(std::make_unique<SetEngineTempoEvent>(tempo, IMMEDIATE_PROCESS));
+    return control::ControlStatus::OK;
 }
 
-ext::TimeSignature TransportController::get_time_signature() const
+control::TimeSignature TransportController::get_time_signature() const
 {
-    SUSHI_LOG_DEBUG("get_time_signature called");
+    ELKLOG_LOG_DEBUG("get_time_signature called");
     return to_external(_transport->time_signature());
 }
 
-ext::ControlStatus TransportController::set_time_signature(ext::TimeSignature signature)
+control::ControlStatus TransportController::set_time_signature(control::TimeSignature signature)
 {
-    SUSHI_LOG_DEBUG("set_time_signature called with signature {}/{}", signature.numerator, signature.denominator);
-    auto event = new SetEngineTimeSignatureEvent(to_internal(signature), IMMEDIATE_PROCESS);
-    _event_dispatcher->post_event(event);
-    return ext::ControlStatus::OK;
+    ELKLOG_LOG_DEBUG("set_time_signature called with signature {}/{}", signature.numerator, signature.denominator);
+    _event_dispatcher->post_event(std::make_unique<SetEngineTimeSignatureEvent>(to_internal(signature), IMMEDIATE_PROCESS));
+    return control::ControlStatus::OK;
 }
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl

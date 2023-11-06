@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -18,17 +18,17 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include "logging.h"
+#include "elklog/static_logger.h"
 
 #include "send_return_factory.h"
 #include "send_plugin.h"
 #include "return_plugin.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 SendReturnFactory::SendReturnFactory() = default;
 
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("send_ret_factory");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("send_ret_factory");
 
 send_plugin::SendPlugin* SendReturnFactory::get_send()
 {
@@ -47,7 +47,7 @@ return_plugin::ReturnPlugin* SendReturnFactory::lookup_return_plugin(const std::
             break;
         }
     }
-    SUSHI_LOG_INFO("Looked up return plugin {}, {}", name, instance? "found" : "not found");
+    ELKLOG_LOG_INFO("Looked up return plugin {}, {}", name, instance? "found" : "not found");
     return instance;
 }
 
@@ -81,4 +81,5 @@ SendReturnFactory::new_instance(const PluginInfo& plugin_info, HostControl& host
     }
     return {ProcessorReturnCode::ERROR, processor};
 }
-}// namespace sushi
+
+} // end namespace sushi::internal

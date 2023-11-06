@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -22,14 +22,13 @@
 
 #include <twine/twine.h>
 
+#include "elklog/static_logger.h"
+
 #include "lv2_features.h"
 
-#include "logging.h"
+namespace sushi::internal::lv2 {
 
-namespace sushi {
-namespace lv2 {
-
-SUSHI_GET_LOGGER_WITH_MODULE_NAME("lv2");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("lv2");
 
 Port* port_by_symbol(Model* model, const char* sym)
 {
@@ -61,31 +60,31 @@ int lv2_log(LV2_Log_Handle handle,
     {
         if (type == urids.log_Trace && TRACE_OPTION)
         {
-            SUSHI_LOG_DEBUG("LV2 Trace: {}", msg_buffer.data());
+            ELKLOG_LOG_DEBUG("LV2 Trace: {}", msg_buffer.data());
         }
         else if (type == urids.log_Error)
         {
-            SUSHI_LOG_DEBUG("LV2 Error: {}", msg_buffer.data());
+            ELKLOG_LOG_DEBUG("LV2 Error: {}", msg_buffer.data());
         }
         else if (type == urids.log_Warning)
         {
-            SUSHI_LOG_DEBUG("LV2 Warning: {}", msg_buffer.data());
+            ELKLOG_LOG_DEBUG("LV2 Warning: {}", msg_buffer.data());
         }
         else if (type == urids.log_Entry)
         {
-            SUSHI_LOG_DEBUG("LV2 Entry: {}", msg_buffer.data());
+            ELKLOG_LOG_DEBUG("LV2 Entry: {}", msg_buffer.data());
         }
         else if (type == urids.log_Note)
         {
-            SUSHI_LOG_DEBUG("LV2 Note: {}", msg_buffer.data());
+            ELKLOG_LOG_DEBUG("LV2 Note: {}", msg_buffer.data());
         }
         else if (type == urids.log_log)
         {
-            SUSHI_LOG_DEBUG("LV2 Log: {}", msg_buffer.data());
+            ELKLOG_LOG_DEBUG("LV2 Log: {}", msg_buffer.data());
         }
         else
         {
-            SUSHI_LOG_DEBUG("LV2 unknown error: {}", msg_buffer.data());
+            ELKLOG_LOG_DEBUG("LV2 unknown error: {}", msg_buffer.data());
         }
     }
 
@@ -165,7 +164,6 @@ void init_feature(LV2_Feature* const dest, const char* const URI, void* data)
     dest->data = data;
 }
 
-}
-}
+} // end namespace sushi::internal::lv2
 
-#endif //SUSHI_BUILD_WITH_LV2
+#endif // SUSHI_BUILD_WITH_LV2

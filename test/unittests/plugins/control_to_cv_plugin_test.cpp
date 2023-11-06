@@ -7,7 +7,8 @@
 #include <iostream>
 
 using namespace sushi;
-using namespace sushi::control_to_cv_plugin;
+using namespace sushi::internal;
+using namespace sushi::internal::control_to_cv_plugin;
 
 constexpr float TEST_SAMPLE_RATE = 44100;
 
@@ -22,7 +23,7 @@ class ControlToCvPluginTest : public ::testing::Test
 protected:
     ControlToCvPluginTest() = default;
 
-    void SetUp()
+    void SetUp() override
     {
         _module_under_test.init(TEST_SAMPLE_RATE);
         _module_under_test.set_event_output(&_event_output);

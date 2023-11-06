@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -18,12 +18,11 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include <library/constants.h>
 #include "system_controller.h"
 
-namespace sushi {
-namespace engine {
-namespace controller_impl {
+#include "sushi/constants.h"
+
+namespace sushi::internal::engine::controller_impl {
 
 SystemController::SystemController(int inputs, int outputs) : _audio_inputs{inputs}, _audio_outputs{outputs}
 {
@@ -44,7 +43,7 @@ std::string SystemController::get_sushi_version() const
     return {CompileTimeSettings::sushi_version};
 }
 
-ext::SushiBuildInfo SystemController::get_sushi_build_info() const
+control::SushiBuildInfo SystemController::get_sushi_build_info() const
 {
     return _build_info;
 }
@@ -59,6 +58,4 @@ int SystemController::get_output_audio_channel_count() const
     return _audio_outputs;
 }
 
-} // namespace controller_impl
-} // namespace engine
-} // namespace sushi
+} // end namespace sushi::internal::engine::controller_impl

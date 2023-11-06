@@ -1,6 +1,11 @@
 # SUSHI
 Headless plugin host for ELK Audio OS.
 
+## Sushi as Library
+Sushi can be used as a standalone terminal application, and can now also be used as a library.
+
+For more information on the latter, refer to the [LIBRARY.md] (docs/LIBRARY.md) file in this repository.
+
 ## Usage
 See `sushi -h` for a complete list of options.
 Common use cases are:
@@ -119,6 +124,7 @@ SUSHI_WITH_RT_MIDI                    | on / off | Build Sushi with RtMidi suppo
 SUSHI_WITH_LINK                       | on / off | Build Sushi with Ableton Link support.
 SUSHI_WITH_VST2                       | on / off | Include support for loading Vst 2.x plugins in Sushi.
 SUSHI_WITH_VST3                       | on / off | Include support for loading Vst 3.x plugins in Sushi.
+SUSHI_LINK_VST3                       | on / off | Link Vst3 SDK (statically) if Vst3 is included. Turn this off if Sushi is linked statically as a library, into an application which already links Vst3's SDK.
 SUSHI_WITH_LV2                        | on / off | Include support for loading LV2 plugins in Sushi.
 SUSHI_WITH_RPC_INTERFACE              | on / off | Build gRPC external control interface, requires gRPC development files.
 SUSHI_BUILD_TWINE                     | on / off | Build and link with the included version of [TWINE](https://github.com/elk-audio/twine), otherwise tries to link with system wide if the option is disabled.
@@ -129,6 +135,7 @@ SUSHI_VST2_SDK_PATH                   | path     | Path to external Vst 2.4 SDK.
 SUSHI_WITH_SENTRY                     | on / off | Build Sushi with Sentry error logging support.
 SUSHI_SENTRY_DSN                      | url      | URL to the default value for the Sushi Sentry logging DSN. This can still be passed as a runtime terminal argument.
 SUSHI_DISABLE_MULTICORE_UNIT_TESTS    | on / off | Disable unit-tests dependent on multi-core processing.
+SUSHI_BUILD_STANDALONE_APP            | on / off | Build standalone Sushi executable.
 The default values for the options are platform-specific (native Linux, Yocto/OE, macOS).
 
 _Note_:
@@ -140,6 +147,10 @@ Some Sushi's unit tests depend on test data, which is found through the environm
 You will need to define this if you want to run the unit test explicitly, e.g. while debugging:
 
 `$ export SUSHI_TEST_DATA_DIR=/path/to/sushi/repo/test/data`
+
+Moreover, the battery of tests for VST3 plugin support, build and use the example plugins of the VST3 SDK.
+While the automated tests running as part of the build find these plugins automatically, when running the `unit_tests` binary manually, you may need to set the working directory to: `/path/to/sushi/build_folder_name/test`,
+for the path to resolve correctly.
 
 ## License
 Sushi is licensed under Affero General Public License (“AGPLv3”). See [LICENSE](LICENSE.md) document for the full details of the license. For contributing code to Sushi, see [CONTRIBUTING.md](CONTRIBUTING.md).

@@ -1,0 +1,34 @@
+{
+    "host_config" : {
+        "samplerate" : 48000
+    },
+    "tracks" : [
+        {
+            "name" : "main",
+            "channels" : 2,
+            "inputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "outputs" : [
+                {
+                    "engine_bus" : 0,
+                    "track_bus" : 0
+                }
+            ],
+            "plugins" : [
+                {
+                    "uid" : "sushi.testing.passthrough",
+                    "name" : "passthrough",
+                    "type" : "internal"
+                }
+            ]
+        }
+    ],
+    "midi" : {
+        "cc_mappings" : [
+        ]
+    }
+}

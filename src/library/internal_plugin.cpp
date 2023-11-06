@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -26,7 +26,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
+namespace sushi::internal {
 
 InternalPlugin::InternalPlugin(HostControl host_control) : Processor(host_control)
 {
@@ -308,7 +308,10 @@ ProcessorReturnCode InternalPlugin::set_property_value(ObjectId property_id, con
         return ProcessorReturnCode::PARAMETER_NOT_FOUND;
     }
     node->second = value;
-    _host_control.post_event(new PropertyChangeNotificationEvent(this->id(), property_id, value, IMMEDIATE_PROCESS));
+    _host_control.post_event(std::make_unique<PropertyChangeNotificationEvent>(this->id(),
+                                                                               property_id,
+                                                                               value,
+                                                                               IMMEDIATE_PROCESS));
     return ProcessorReturnCode::OK;
 }
 
@@ -322,8 +325,7 @@ ProcessorReturnCode InternalPlugin::set_state(ProcessorState* state, bool realti
     if (realtime_running)
     {
         auto rt_state = std::make_unique<RtState>(*state);
-        auto event = new RtStateEvent(this->id(), std::move(rt_state), IMMEDIATE_PROCESS);
-        _host_control.post_event(event);
+        _host_control.post_event(std::make_unique<RtStateEvent>(this->id(), std::move(rt_state), IMMEDIATE_PROCESS));
     }
     else
     {
@@ -336,8 +338,8 @@ ProcessorReturnCode InternalPlugin::set_state(ProcessorState* state, bool realti
             auto event = RtEvent::make_parameter_change_event(this->id(), 0, parameter.first, parameter.second);
             this->process_event(event);
         }
-        _host_control.post_event(new AudioGraphNotificationEvent(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
-                                                                 this->id(), 0, IMMEDIATE_PROCESS));
+        _host_control.post_event(std::make_unique<AudioGraphNotificationEvent>(AudioGraphNotificationEvent::Action::PROCESSOR_UPDATED,
+                                                                               this->id(), 0, IMMEDIATE_PROCESS));
     }
     return ProcessorReturnCode::OK;
 }
@@ -385,15 +387,13 @@ PluginInfo InternalPlugin::info() const
 void InternalPlugin::send_data_to_realtime(BlobData data, int id)
 {
     assert(twine::is_current_thread_realtime() == false);
-    auto event = new DataPropertyEvent(this->id(), id, data, IMMEDIATE_PROCESS);
-    _host_control.post_event(event);
+    _host_control.post_event(std::make_unique<DataPropertyEvent>(this->id(), id, data, IMMEDIATE_PROCESS));
 }
 
 void InternalPlugin::send_property_to_realtime(ObjectId property_id, const std::string& value)
 {
     assert(twine::is_current_thread_realtime() == false);
-    auto event = new StringPropertyEvent(this->id(), property_id, value, IMMEDIATE_PROCESS);
-    _host_control.post_event(event);
+    _host_control.post_event(std::make_unique<StringPropertyEvent>(this->id(), property_id, value, IMMEDIATE_PROCESS));
 }
 
 void InternalPlugin::_set_rt_state(const RtState* state)
@@ -451,4 +451,4 @@ void InternalPlugin::_handle_parameter_event(const ParameterChangeRtEvent* event
     }
 }
 
-} // end namespace sushi
+} // end namespace sushi::internal

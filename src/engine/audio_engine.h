@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -27,28 +27,31 @@
 
 #include "twine/twine.h"
 
+#include "sushi/sushi_time.h"
+#include "sushi/types.h"
+#include "sushi/sample_buffer.h"
+
 #include "dsp_library/master_limiter.h"
-#include "engine/event_dispatcher.h"
+
+#include "engine/audio_graph.h"
 #include "engine/base_engine.h"
-#include "engine/track.h"
-#include "engine/processor_container.h"
-#include "engine/receiver.h"
-#include "engine/transport.h"
+#include "engine/connection_storage.h"
+#include "engine/controller/controller.h"
+#include "engine/event_dispatcher.h"
 #include "engine/host_control.h"
 #include "engine/plugin_library.h"
-#include "engine/controller/controller.h"
-#include "engine/audio_graph.h"
-#include "engine/connection_storage.h"
-#include "library/time.h"
-#include "library/sample_buffer.h"
+#include "engine/processor_container.h"
+#include "engine/receiver.h"
+#include "engine/track.h"
+#include "engine/transport.h"
+
 #include "library/internal_plugin.h"
 #include "library/midi_decoder.h"
-#include "library/rt_event_fifo.h"
-#include "library/types.h"
 #include "library/performance_timer.h"
 #include "library/plugin_registry.h"
+#include "library/rt_event_fifo.h"
 
-namespace sushi::engine {
+namespace sushi::internal::engine {
 
 class ClipDetector
 {
@@ -58,7 +61,7 @@ public:
         this->set_sample_rate(sample_rate);
     }
 
-    void set_sample_rate(float samplerate);
+    void set_sample_rate(float sample_rate);
 
     void set_input_channels(int channels);
 
@@ -82,7 +85,7 @@ constexpr int MAX_RT_PROCESSOR_ID = 100000;
 class AudioEngine : public BaseEngine
 {
 public:
-    SUSHI_DECLARE_NON_COPYABLE(AudioEngine);
+    SUSHI_DECLARE_NON_COPYABLE(AudioEngine)
 
     /**
      * @brief Construct a new AudioEngine
@@ -314,13 +317,13 @@ public:
     }
 
     /**
-     * @brief Set the tempo of the engine. Intended to be called from a non-thread.
+     * @brief Set the tempo of the engine. Intended to be called from a non-realtime thread.
      * @param tempo The new tempo in beats (quarter notes) per minute
      */
     void set_tempo(float tempo) override;
 
     /**
-     * @brief Set the time signature of the engine. Intended to be called from a non-thread.
+     * @brief Set the time signature of the engine. Intended to be called from a non-realtime thread.
      * @param signature A TimeSignature object describing the new time signature to use
      */
     void set_time_signature(TimeSignature signature) override;
@@ -328,7 +331,7 @@ public:
     /**
      * @brief Set the current transport mode, i.e stopped, playing, recording. This will be
      *        passed on to processors. Note stopped here means that audio is still running
-     *        but sequencers and similiar should be in a stopped state.
+     *        but sequencers and similar should be in a stopped state.
      *        Currently only STOPPED and PLAYING are implemented and default is PLAYING
      * @param mode A TransportMode mode with the current state
      */
@@ -352,12 +355,12 @@ public:
     }
 
     /**
-     * @brief Send an RtEvent directly to the realtime thread, should normally only be used
-     *        from an rt thread or in a context where the engine is not running in realtime mode
+     * @brief Send an RtEvent to a processor directly to the realtime thread. Should normally only be used
+     *        from an rt thread or in a context where the engine is not running in realtime mode.
      * @param event The event to process
      * @return EngineReturnStatus::OK if the event was properly processed, error code otherwise
      */
-    EngineReturnStatus send_rt_event(const RtEvent& event) override;
+    EngineReturnStatus send_rt_event_to_processor(const RtEvent& event) override;
 
     /**
      * @brief Create an empty track
@@ -479,12 +482,12 @@ public:
         return _master_limiter_enabled;
     }
 
-    sushi::dispatcher::BaseEventDispatcher* event_dispatcher() override
+    dispatcher::BaseEventDispatcher* event_dispatcher() override
     {
         return _event_dispatcher.get();
     }
 
-    sushi::engine::Transport* transport() override
+    engine::Transport* transport() override
     {
         return &_transport;
     }
@@ -500,7 +503,7 @@ public:
     }
 
     /**
-     * @brief Print the current processor timings (in enabled) in the log
+     * @brief Print the current processor timings (if enabled) in the log
      */
     void update_timings() override;
 
@@ -610,8 +613,8 @@ private:
 
     // Processors in the realtime part indexed by their unique 32 bit id
     // Only to be accessed from the process callback in rt mode.
-    std::vector<Processor*>    _realtime_processors{MAX_RT_PROCESSOR_ID, nullptr};
-    AudioGraph                 _audio_graph;
+    std::vector<Processor*> _realtime_processors{MAX_RT_PROCESSOR_ID, nullptr};
+    AudioGraph              _audio_graph;
 
     Track* _pre_track{nullptr};
     Track* _post_track{nullptr};
@@ -648,7 +651,7 @@ private:
     ClipDetector _clip_detector;
 
     bool _master_limiter_enabled{false};
-    std::vector<dsp::MasterLimiter<AUDIO_CHUNK_SIZE>> _master_limiters;
+    std::vector<sushi::dsp::MasterLimiter<AUDIO_CHUNK_SIZE>> _master_limiters;
 };
 
 /**
@@ -658,6 +661,5 @@ private:
  */
 RealtimeState update_state(RealtimeState current_state);
 
-} // namespace sushi::engine
-
-#endif //SUSHI_ENGINE_H
+} // end namespace sushi::internal::engine
+#endif // SUSHI_ENGINE_H

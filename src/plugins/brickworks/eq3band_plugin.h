@@ -7,10 +7,10 @@
  *
  * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU Affero General Public License for more details.
+ * PURPOSE. See the GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI.  If not, see http://www.gnu.org/licenses/
+ * SUSHI. If not, see http://www.gnu.org/licenses/
  */
 
 /**
@@ -27,8 +27,7 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi {
-namespace eq3band_plugin {
+namespace sushi::internal::eq3band_plugin {
 
 class Eq3bandPlugin : public InternalPlugin, public UidHelper<Eq3bandPlugin>
 {
@@ -74,6 +73,6 @@ private:
     std::array<bw_hs2_state, MAX_TRACK_CHANNELS> _hs2_states;
 };
 
-}// namespace eq3band_plugin
-}// namespace sushi
+} // namespace sushi::internal::eq3band_plugin
+
 #endif // EQ3BAND_PLUGIN_H
