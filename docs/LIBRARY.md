@@ -15,9 +15,9 @@ For the Reactive use-case, we have developed new frontends for audio and MIDI in
 
 For the Active use-case, there are no such limitations - the full Sushi functionality is available. 
 
-## The main limitations for the Reactive use-case are:
+## The main limitations for the Reactive use-case are currently that:
 * Sushi can only work with stereo audio I/O.
-* Sushi's audio buffer size is set at compile time, usign the CMake argument SUSHI_AUDIO_BUFFER_SIZE. But an audio host may have a dynamic buffer-size setting. If the buffer size doesn't match, the host needs to handle that, ensuring Sushi is only ever given audio buffers of the size defined at build-time.
+* Sushi's audio buffer size is set at compile time, using the CMake argument SUSHI_AUDIO_BUFFER_SIZE. But an audio host may have a dynamic buffer-size setting. If the buffer size doesn't match, the host needs to handle that, ensuring Sushi is only ever given audio buffers of the size defined at build-time.
 * MIDI I/O to Sushi from a containing host application is not currently real-time, but asynchronous, meaning MIDI and audio synchronisation is not sample-accurate.
 * For any control commands to be processes by Sushi, it needs to be receiving audio buffers regularly. When no audio callbacks are received, Sushi will also not process and control commands (e.g. those received over gRPC and OSC).
 

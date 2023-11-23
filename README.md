@@ -7,6 +7,9 @@ Sushi can be used as a standalone terminal application, and can now also be used
 For more information on the latter, refer to the [LIBRARY.md] (docs/LIBRARY.md) file in this repository.
 
 ## Usage
+
+The Sushi standalone project, and consequently the produced binary, reside in the `./apps/` sub-folder of this repository.
+
 See `sushi -h` for a complete list of options.
 Common use cases are:
 
@@ -14,7 +17,7 @@ Test in offline mode with I/O from audio file:
 
     $ sushi -o -i input_file.wav -c config_file.json
 
-Use Coreaudio on macOS for realtime audio, with the default devices:
+Use Core Audio on macOS for realtime audio, with the default devices:
 
     $ sushi --coreaudio -c config_file.json
 
@@ -27,14 +30,13 @@ With JACK, Sushi creates 8 virtual input and output ports that you can connect t
 ## Sushi macOS
 Since version 1.0, Sushi can be built natively for macOS as a native binary with all the dependencies statically linked to it.
 
-There is a new Coreaudio frontend (selectable with the `--coreaudio` command-line option) to interface directly with Coreaudio. As an alternative, a Portaudio frontend is also available (with the `--portaudio` flag).
+There is a new Core Audio frontend (selectable with the `--coreaudio` command-line option) to interface directly with Core Audio. As an alternative, a Portaudio frontend is also available (with the `--portaudio` flag).
 
-With Coreaudio, you can select other devices than the default with the `--audio-input-device-uid` and `--audio-output-device-uid` options. To find out the right number there, you can launch Sushi with the `--dump-portaudio-devs` to get a list in JSON format printed to stdout.
+With Core Audio, you can select other devices than the default with the `--audio-input-device-uid` and `--audio-output-device-uid` options. To find out the right number there, you can launch Sushi with the `--dump-portaudio-devs` to get a list in JSON format printed to stdout.
 
 MIDI support is provided through RtMidi and can access directly CoreMidi devices.
 
 LV2 support is currently not available for macOS.
-
 
 ## Example Sushi configuration files in repository
 Under `misc/config_files` in this repository, we have a large variety of example Sushi configuration files.
@@ -45,7 +47,7 @@ $ ./sushi --coreaudio -c config_files/play_brickworks_synth.json
 ```
 (on Linux with JACK, replace `--coreaudio` with `--jack`).
 
-Many of the examples use the mda-vst3 plugins which are built when building Sushi. If you are running one of the prebuilt packages (available on the releases sections on Github), you have everything inside the `sushi` folder there. For example, on macOS you should be able to get a simple working synthesizer with:
+Many of the examples use the mda-vst3 plugins which are built when building Sushi. If you are running one of the prebuilt packages (available on the releases sections on GitHub), you have everything inside the `sushi` folder there. For example, on macOS you should be able to get a simple working synthesizer with:
 
 Otherwise, if you are building from source, the plugins used by the examples can be found under:
 
@@ -116,9 +118,10 @@ Follow the instructions in those repositories to set up a cross-compiling SDK an
 Option                                | Value    | Notes
 --------------------------------------|----------|------------------------------------------------------------------------------------------------------
 SUSHI_AUDIO_BUFFER_SIZE               | 8 - 512  | The buffer size used in the audio processing. Needs to be a power of 2 (8, 16, 32, 64, 128...).
-SUSHI_WITH_XENOMAI                    | on / off | Build Sushi with Xenomai RT-kernel support, only for ElkPowered hardware.
+SUSHI_WITH_RASPA                      | on / off | Build Sushi with Xenomai RT-kernel support, only for ElkPowered hardware.
 SUSHI_WITH_JACK                       | on / off | Build Sushi with Jack Audio support, only for standard Linux distributions and macOS.
 SUSHI_WITH_PORTAUDIO                  | on / off | Build Sushi with Portaudio support.
+SUSHI_WITH_APPLE_COREAUDIO            | on / off | Build Sushi with Apple Core Audio support.
 SUSHI_WITH_ALSA_MIDI                  | on / off | Build Sushi with Alsa sequencer support for MIDI (Linux only).
 SUSHI_WITH_RT_MIDI                    | on / off | Build Sushi with RtMidi support for MIDI. Cannot be selected if SUSHI_WITH_ALSA_MIDI is set.
 SUSHI_WITH_LINK                       | on / off | Build Sushi with Ableton Link support.
@@ -136,11 +139,12 @@ SUSHI_WITH_SENTRY                     | on / off | Build Sushi with Sentry error
 SUSHI_SENTRY_DSN                      | url      | URL to the default value for the Sushi Sentry logging DSN. This can still be passed as a runtime terminal argument.
 SUSHI_DISABLE_MULTICORE_UNIT_TESTS    | on / off | Disable unit-tests dependent on multi-core processing.
 SUSHI_BUILD_STANDALONE_APP            | on / off | Build standalone Sushi executable.
-The default values for the options are platform-specific (native Linux, Yocto/OE, macOS).
+SUSHI_BUILD_WITH_SANITIZERS           | on / off | Build Sushi with google address sanitizer on. Default is off.
+The default values for many of the options are platform-specific (native Linux, Yocto/OE, macOS).
 
 _Note_:
 
-before version 1.0, the Cmake options didn't have the `SUSHI_` prefix. The old names (e.g. `WITH_JACK`) are not supported anymore and should be changed to the new format.
+before version 1.0, the CMake options didn't have the `SUSHI_` prefix. The old names (e.g. `WITH_JACK`) are not supported anymore and should be changed to the new format.
 
 ## Running Unit tests separately
 Some Sushi's unit tests depend on test data, which is found through the environment variable `SUSHI_TEST_DATA_DIR`.
