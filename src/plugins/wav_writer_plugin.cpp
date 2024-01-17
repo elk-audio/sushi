@@ -18,6 +18,8 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
+#include <cstring>
+
 #include "elklog/static_logger.h"
 
 #include "plugins/wav_writer_plugin.h"
