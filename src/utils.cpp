@@ -30,10 +30,11 @@
 #pragma GCC diagnostic pop
 
 #include "elklog/static_logger.h"
+#include "sushi/sushi.h"
 
 namespace sushi {
 
-ELKLOG_GET_LOGGER_WITH_MODULE_NAME("file_reading");
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("utils");
 
 std::ostream& operator<<(std::ostream& out, const rapidjson::Document& document)
 {
@@ -56,6 +57,29 @@ std::optional<std::string> read_file(const std::string& path)
     std::string config_file_contents((std::istreambuf_iterator<char>(config_file)), std::istreambuf_iterator<char>());
 
     return config_file_contents;
+}
+
+void init_logger([[maybe_unused]] const SushiOptions& options)
+{
+    auto ret_code = elklog::StaticLogger::init_logger(options.log_file,
+                                                      "Logger",
+                                                      options.log_level,
+                                                      options.enable_flush_interval? options.log_flush_interval : std::chrono::seconds(0));
+
+    if (ret_code != elklog::Status::OK)
+    {
+        std::cerr << "Log failure " << ret_code << ", using default." << std::endl;
+    }
+
+    if (options.enable_flush_interval)
+    {
+        ELKLOG_LOG_INFO("Logger flush interval enabled, at {} seconds.",
+                        options.log_flush_interval.count());
+    }
+    else
+    {
+        ELKLOG_LOG_INFO("Logger flush interval disabled.");
+    }
 }
 
 }
