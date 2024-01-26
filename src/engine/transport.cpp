@@ -118,6 +118,9 @@ void Transport::set_time(Time timestamp, int64_t samples)
     _sample_count = samples;
     _state_change = PlayStateChange::UNCHANGED;
 
+    int64_t sample_delta = samples - prev_samples;
+    ELKLOG_LOG_WARNING_IF(sample_delta != AUDIO_CHUNK_SIZE, "Unexpected sample delta: {}. Possibly due to over or under runs", sample_delta);
+
     _update_internals();
 
     switch (_syncmode)
@@ -126,7 +129,7 @@ void Transport::set_time(Time timestamp, int64_t samples)
         case SyncMode::GATE_INPUT:
         case SyncMode::INTERNAL:
         {
-            _update_internal_sync(samples - prev_samples);
+            _update_internal_sync(sample_delta);
             break;
         }
 
