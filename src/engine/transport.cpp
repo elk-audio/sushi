@@ -119,7 +119,7 @@ void Transport::set_time(Time timestamp, int64_t samples)
     _state_change = PlayStateChange::UNCHANGED;
 
     int64_t sample_delta = samples - prev_samples;
-    ELKLOG_LOG_WARNING_IF(sample_delta != AUDIO_CHUNK_SIZE, "Unexpected sample delta: {}. Possibly due to over or under runs", sample_delta);
+    ELKLOG_LOG_WARNING_IF(sample_delta != AUDIO_CHUNK_SIZE && sample_delta != 0, "Unexpected sample delta: {}. Possibly due to over or under runs", sample_delta);
 
     _update_internals();
 
