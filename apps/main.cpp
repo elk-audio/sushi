@@ -117,6 +117,8 @@ int main(int argc, char* argv[])
         return 0;
     }
 
+    init_logger(options);
+
     if (options.enable_audio_devices_dump)
     {
         if (options.frontend_type == FrontendType::PORTAUDIO)

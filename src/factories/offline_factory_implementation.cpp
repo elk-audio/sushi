@@ -44,8 +44,6 @@ OfflineFactoryImplementation::~OfflineFactoryImplementation() = default;
 
 std::pair<std::unique_ptr<Sushi>, Status> OfflineFactoryImplementation::new_instance(SushiOptions& options)
 {
-    init_logger(options);
-
     // For the offline frontend, OSC control is not supported.
     // So, the SushiOptions flag is overridden.
     options.use_osc = false;

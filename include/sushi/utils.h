@@ -25,8 +25,12 @@
 #include <optional>
 
 #include "rapidjson/document.h"
+#include "sushi/utils.h"
 
 namespace sushi {
+
+struct SushiOptions;
+
 std::ostream& operator<<(std::ostream& out, const rapidjson::Document& document);
 
 /**
@@ -37,6 +41,12 @@ std::ostream& operator<<(std::ostream& out, const rapidjson::Document& document)
  * @return file content on success - nullopt on failure
  */
 std::optional<std::string> read_file(const std::string& path);
+
+/**
+ * This should be called only once in the lifetime of the embedding binary - or it will fail.
+ * @param options
+ */
+void init_logger([[maybe_unused]] const SushiOptions& options);
 
 }
 

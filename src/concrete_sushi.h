@@ -35,12 +35,6 @@ class GrpcServer;
 
 namespace sushi {
 
-/**
- * This should be called only once in the lifetime of the embedding binary - or it will fail.
- * @param options
- */
-void init_logger([[maybe_unused]] const SushiOptions& options);
-
 namespace internal {
 
 class BaseFactory;

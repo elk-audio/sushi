@@ -20,6 +20,7 @@
  */
 
 #include "elklog/static_logger.h"
+#include "sushi/utils.h"
 
 #include "reactive_factory_implementation.h"
 

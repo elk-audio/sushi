@@ -18,8 +18,6 @@
  * @copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include <iostream>
-
 #include "elklog/static_logger.h"
 
 #include "factories/reactive_factory_implementation.h"
@@ -124,30 +122,6 @@ std::string to_string(Status status)
 }
 
 ELKLOG_GET_LOGGER_WITH_MODULE_NAME("concrete_sushi");
-
-void init_logger([[maybe_unused]] const SushiOptions& options)
-{
-
-    auto ret_code = elklog::StaticLogger::init_logger(options.log_file,
-                                            "Logger",
-                                            options.log_level,
-                                            options.enable_flush_interval? options.log_flush_interval : std::chrono::seconds(0));
-
-    if (ret_code != elklog::Status::OK)
-    {
-        std::cerr << "Log failure " << ret_code << ", using default." << std::endl;
-    }
-
-    if (options.enable_flush_interval)
-    {
-        ELKLOG_LOG_INFO("Logger flush interval enabled, at {} seconds.",
-                        options.log_flush_interval.count());
-    }
-    else
-    {
-        ELKLOG_LOG_INFO("Logger flush interval disabled.");
-    }
-}
 
 namespace internal {
 
