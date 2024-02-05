@@ -20,6 +20,8 @@
 
 #ifdef SUSHI_BUILD_WITH_PORTAUDIO
 
+#include <cstring>
+
 #include "elklog/static_logger.h"
 
 #include "portaudio_frontend.h"
@@ -114,7 +116,7 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
 
     // Setup device parameters
     PaStreamParameters input_parameters;
-    bzero(&input_parameters, sizeof(input_parameters));
+    memset(&input_parameters, 0, sizeof(input_parameters));
     input_parameters.device = input_device_id;
     input_parameters.channelCount = _audio_input_channels + _cv_input_channels;
     input_parameters.sampleFormat = paFloat32;
@@ -122,7 +124,7 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
     input_parameters.hostApiSpecificStreamInfo = nullptr;
 
     PaStreamParameters output_parameters;
-    bzero(&output_parameters, sizeof(output_parameters));
+    memset(&output_parameters, 0, sizeof(output_parameters));
     output_parameters.device = output_device_id;
     output_parameters.channelCount = _audio_output_channels + _cv_output_channels;
     output_parameters.sampleFormat = paFloat32;
