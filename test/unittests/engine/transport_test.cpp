@@ -2,7 +2,12 @@
 
 #include "engine/transport.cpp"
 
+#include "sushi/warning_suppressor.h"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_WARNING (WARN_KEYWORD_MACRO)
 #define private public
+ELK_POP_WARNING
 
 #include "library/rt_event_fifo.h"
 

@@ -63,31 +63,31 @@ private:
 
     void _change_active_note(int notenum);
 
-    ChunkSampleBuffer _render_buffer{1};
-    ChunkSampleBuffer _aux_buffer{1};
+    ChunkSampleBuffer _render_buffer {1};
+    ChunkSampleBuffer _aux_buffer {1};
 
-    FloatParameterValue* _volume;
-    FloatParameterValue* _portamento;
-    FloatParameterValue* _pulse_width;
-    FloatParameterValue* _filter_cutoff;
-    FloatParameterValue* _filter_Q;
-    FloatParameterValue* _attack;
-    FloatParameterValue* _decay;
-    FloatParameterValue* _sustain;
-    FloatParameterValue* _release;
+    FloatParameterValue* _volume {nullptr};
+    FloatParameterValue* _portamento {nullptr};
+    FloatParameterValue* _pulse_width {nullptr};
+    FloatParameterValue* _filter_cutoff {nullptr};
+    FloatParameterValue* _filter_Q {nullptr};
+    FloatParameterValue* _attack {nullptr};
+    FloatParameterValue* _decay {nullptr};
+    FloatParameterValue* _sustain {nullptr};
+    FloatParameterValue* _release {nullptr};
 
-    bw_phase_gen_coeffs _phase_gen_coeffs;
-    bw_phase_gen_state  _phase_gen_state;
-    bw_osc_pulse_coeffs _osc_pulse_coeffs;
-    bw_osc_filt_state   _osc_filt_state;
-    bw_svf_coeffs       _svf_coeffs;
-    bw_svf_state        _svf_state;
-    bw_env_gen_coeffs   _env_gen_coeffs;
-    bw_env_gen_state    _env_gen_state;
+    bw_phase_gen_coeffs _phase_gen_coeffs {};
+    bw_phase_gen_state  _phase_gen_state {};
+    bw_osc_pulse_coeffs _osc_pulse_coeffs {};
+    bw_osc_filt_state   _osc_filt_state {};
+    bw_svf_coeffs       _svf_coeffs {};
+    bw_svf_state        _svf_state {};
+    bw_env_gen_coeffs   _env_gen_coeffs {};
+    bw_env_gen_state    _env_gen_state {};
 
     RtSafeRtEventFifo _event_fifo;
-    std::array<bool, MAX_MIDI_NOTE> _held_notes{false};
-    int _highest_held_note{-1};
+    std::array<bool, MAX_MIDI_NOTE> _held_notes {false};
+    int _highest_held_note {-1};
 };
 
 } // namespace sushi::internal::simple_synth_plugin

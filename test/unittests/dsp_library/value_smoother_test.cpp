@@ -1,6 +1,11 @@
 #include "gtest/gtest.h"
 
+#include "sushi/warning_suppressor.h"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_WARNING (WARN_KEYWORD_MACRO)
 #define private public
+ELK_POP_WARNING
 
 #include "dsp_library/value_smoother.h"
 

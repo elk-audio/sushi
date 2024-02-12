@@ -132,7 +132,7 @@ public:
      * @param sample_count
      * @param timestamp
      */
-    virtual void increment_samples_since_start(uint64_t sample_count, Time timestamp) = 0;
+    virtual void increment_samples_since_start(int64_t sample_count, Time timestamp) = 0;
 };
 
 } // end namespace sushi

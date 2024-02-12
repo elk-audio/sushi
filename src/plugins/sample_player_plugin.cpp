@@ -86,7 +86,6 @@ void SamplePlayerPlugin::configure(float sample_rate)
     {
         voice.set_samplerate(sample_rate);
     }
-    return;
 }
 
 void SamplePlayerPlugin::set_enabled(bool enabled)
@@ -100,7 +99,7 @@ void SamplePlayerPlugin::set_enabled(bool enabled)
 
 void SamplePlayerPlugin::set_bypassed(bool bypassed)
 {
-    // Kill all voices in bypass so we dont have any hanging notes when turning back on
+    // Kill all voices when bypassed, so we don't have any hanging notes when turning back on
     if (bypassed)
     {
         _all_notes_off();
@@ -190,7 +189,7 @@ void SamplePlayerPlugin::process_event(const RtEvent& event)
             auto new_sample = typed_event->value();
             float* old_sample = _sample_buffer;
             _sample_buffer = reinterpret_cast<float*>(new_sample.data);
-            _sample.set_sample(_sample_buffer, new_sample.size / sizeof(float));
+            _sample.set_sample(_sample_buffer, static_cast<int>(new_sample.size / sizeof(float)));
 
             // Delete the old sample data outside the rt thread
             BlobData data{0, reinterpret_cast<uint8_t*>(old_sample)};
@@ -263,7 +262,7 @@ BlobData SamplePlayerPlugin::_load_sample_file(const std::string& file_name)
         return {0, nullptr};
     }
 
-    int samples = 0;
+    sf_count_t samples = 0;
     float* sample_buffer = new float[soundfile_info.frames];
     if (soundfile_info.channels == 1)
     {

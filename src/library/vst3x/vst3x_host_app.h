@@ -32,10 +32,13 @@
 #include "pluginterfaces/vst/ivstcomponent.h"
 #include "public.sdk/source/vst/hosting/module.h"
 #include "base/source/fobject.h"
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wextra"
+
+#include "sushi/warning_suppressor.h"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_WARNING (WARN_EXTRA)
 #include "public.sdk/source/vst/hosting/hostclasses.h"
-#pragma GCC diagnostic pop
+ELK_POP_WARNING
 
 namespace sushi::internal {
 

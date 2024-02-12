@@ -33,10 +33,6 @@ RealTimeController::RealTimeController(audio_frontend::ReactiveFrontend* audio_f
 {
 }
 
-RealTimeController::~RealTimeController()
-{
-}
-
 void RealTimeController::set_tempo(float tempo)
 {
     if (_tempo != tempo)
@@ -126,12 +122,12 @@ void RealTimeController::set_midi_callback(ReactiveMidiCallback&& callback)
 
 sushi::Time RealTimeController::calculate_timestamp_from_start(float sample_rate) const
 {
-    uint64_t micros = _samples_since_start * 1'000'000.0 / sample_rate;
+    uint64_t micros = static_cast<uint64_t>(_samples_since_start * 1'000'000.0f / sample_rate);
     auto timestamp = std::chrono::microseconds(micros);
     return timestamp;
 }
 
-void RealTimeController::increment_samples_since_start(uint64_t sample_count, Time)
+void RealTimeController::increment_samples_since_start(int64_t sample_count, Time)
 {
     _samples_since_start += sample_count;
 }

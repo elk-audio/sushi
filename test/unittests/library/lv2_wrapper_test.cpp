@@ -9,8 +9,12 @@
 #include "spdlog/fmt/bundled/core.h"
 #include "spdlog/fmt/bundled/format.h"
 
-// Needed for unit tests to access private utility methods in lv2_wrapper.
+#include "warning_suppressor.h"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_WARNING (WARN_KEYWORD_MACRO)
 #define private public
+ELK_POP_WARNING
 
 #include "library/lv2/lv2_wrapper.cpp"
 

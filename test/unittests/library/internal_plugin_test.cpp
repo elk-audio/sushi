@@ -4,11 +4,18 @@
 
 #include "engine/transport.h"
 
+#include "sushi/warning_suppressor.h"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_WARNING (WARN_KEYWORD_MACRO)
 #define private public
 #define protected public
+
 #include "library/internal_plugin.cpp"
 #undef private
 #undef protected
+
+ELK_POP_WARNING
 
 #include "test_utils/host_control_mockup.h"
 #include "test_utils/test_utils.h"

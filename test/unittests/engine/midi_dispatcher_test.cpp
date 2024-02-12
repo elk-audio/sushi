@@ -3,7 +3,13 @@
 #include "test_utils/engine_mockup.h"
 #include "test_utils/mock_midi_frontend.h"
 
+#include "sushi/warning_suppressor.h"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_WARNING (WARN_KEYWORD_MACRO)
 #define private public
+ELK_POP_WARNING
+
 #include "engine/midi_dispatcher.cpp"
 
 using ::testing::NiceMock;

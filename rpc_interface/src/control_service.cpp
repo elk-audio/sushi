@@ -321,7 +321,7 @@ inline void to_grpc(sushi_rpc::ProcessorState& dest, sushi::control::ProcessorSt
         dest.mutable_bypassed()->set_has_value(true);
     }
 
-    dest.mutable_properties()->Reserve(src.properties.size());
+    dest.mutable_properties()->Reserve(static_cast<int>(src.properties.size()));
     for (auto& p : src.properties)
     {
         auto target = dest.mutable_properties()->Add();
@@ -329,7 +329,7 @@ inline void to_grpc(sushi_rpc::ProcessorState& dest, sushi::control::ProcessorSt
         target->set_value(std::move(p.second));
     }
 
-    dest.mutable_parameters()->Reserve(src.parameters.size());
+    dest.mutable_parameters()->Reserve(static_cast<int>(src.parameters.size()));
     for (const auto& p : src.parameters)
     {
         auto target = dest.mutable_parameters()->Add();
@@ -402,7 +402,7 @@ inline void to_sushi_ext(sushi::control::SushiBuildInfo& dest, const sushi_rpc::
 inline void to_grpc(sushi_rpc::OscParameterState& dest, sushi::control::OscParameterState& src)
 {
     dest.set_processor(std::move(src.processor));
-    dest.mutable_parameter_ids()->Reserve(src.parameter_ids.size());
+    dest.mutable_parameter_ids()->Reserve(static_cast<int>(src.parameter_ids.size()));
     for (const auto& id : src.parameter_ids)
     {
         dest.mutable_parameter_ids()->Add(id);
@@ -420,7 +420,7 @@ inline sushi::control::OscParameterState to_sushi_ext(const sushi_rpc::OscParame
 inline void to_grpc(sushi_rpc::OscState& dest, sushi::control::OscState& src)
 {
     dest.set_enable_all_processor_outputs(src.enable_all_processor_outputs);
-    dest.mutable_enabled_processor_outputs()->Reserve(src.enabled_processor_outputs.size());
+    dest.mutable_enabled_processor_outputs()->Reserve(static_cast<int>(src.enabled_processor_outputs.size()));
     for (auto& state : src.enabled_processor_outputs)
     {
         auto grpc_state = dest.mutable_enabled_processor_outputs()->Add();
@@ -502,35 +502,35 @@ inline void to_grpc(sushi_rpc::MidiState& dest, sushi::control::MidiState& src)
     dest.set_inputs(src.inputs);
     dest.set_outputs(src.outputs);
 
-    dest.mutable_kbd_input_connections()->Reserve(src.kbd_input_connections.size());
+    dest.mutable_kbd_input_connections()->Reserve(static_cast<int>(src.kbd_input_connections.size()));
     for (auto& con : src.kbd_input_connections)
     {
         auto grpc_con = dest.mutable_kbd_input_connections()->Add();
         to_grpc(*grpc_con, con);
     }
 
-    dest.mutable_kbd_output_connections()->Reserve(src.kbd_output_connections.size());
+    dest.mutable_kbd_output_connections()->Reserve(static_cast<int>(src.kbd_output_connections.size()));
     for (auto& con : src.kbd_output_connections)
     {
         auto grpc_con = dest.mutable_kbd_output_connections()->Add();
         to_grpc(*grpc_con, con);
     }
 
-    dest.mutable_cc_connections()->Reserve(src.cc_connections.size());
+    dest.mutable_cc_connections()->Reserve(static_cast<int>(src.cc_connections.size()));
     for (auto& con : src.cc_connections)
     {
         auto grpc_con = dest.mutable_cc_connections()->Add();
         to_grpc(*grpc_con, con);
     }
 
-    dest.mutable_pc_connections()->Reserve(src.pc_connections.size());
+    dest.mutable_pc_connections()->Reserve(static_cast<int>(src.pc_connections.size()));
     for (auto& con : src.pc_connections)
     {
         auto grpc_con = dest.mutable_pc_connections()->Add();
         to_grpc(*grpc_con, con);
     }
 
-    dest.mutable_enabled_clock_outputs()->Reserve(src.enabled_clock_outputs.size());
+    dest.mutable_enabled_clock_outputs()->Reserve(static_cast<int>(src.enabled_clock_outputs.size()));
     for (auto port : src.enabled_clock_outputs)
     {
         dest.mutable_enabled_clock_outputs()->Add(port);
@@ -597,14 +597,14 @@ inline void to_grpc(sushi_rpc::EngineState& dest, sushi::control::EngineState& s
     dest.set_used_audio_inputs(src.used_audio_inputs);
     dest.set_used_audio_outputs(src.used_audio_outputs);
 
-    dest.mutable_input_connections()->Reserve(src.input_connections.size());
+    dest.mutable_input_connections()->Reserve(static_cast<int>(src.input_connections.size()));
     for (auto& con : src.input_connections)
     {
         auto grpc_con = dest.mutable_input_connections()->Add();
         to_grpc(*grpc_con, con);
     }
 
-    dest.mutable_output_connections()->Reserve(src.output_connections.size());
+    dest.mutable_output_connections()->Reserve(static_cast<int>(src.output_connections.size()));
     for (auto& con : src.output_connections)
     {
         auto grpc_con = dest.mutable_output_connections()->Add();
@@ -669,7 +669,7 @@ inline void to_grpc(sushi_rpc::TrackState& dest, sushi::control::TrackState& src
     dest.mutable_type()->set_type(to_grpc(src.type));
     to_grpc(*dest.mutable_track_state(), src.track_state);
 
-    dest.mutable_processors()->Reserve(src.processors.size());
+    dest.mutable_processors()->Reserve(static_cast<int>(src.processors.size()));
     for (auto& proc : src.processors)
     {
         auto grpc_proc = dest.mutable_processors()->Add();
@@ -703,7 +703,7 @@ inline void to_grpc(sushi_rpc::SessionState& dest, sushi::control::SessionState&
     to_grpc(*dest.mutable_midi_state(), src.midi_state);
     to_grpc(*dest.mutable_engine_state(), src.engine_state);
 
-    dest.mutable_tracks()->Reserve(src.tracks.size());
+    dest.mutable_tracks()->Reserve(static_cast<int>(src.tracks.size()));
     for (auto& track : src.tracks)
     {
         auto grpc_track = dest.mutable_tracks()->Add();

@@ -318,7 +318,7 @@ std::vector<UInt32> apple_coreaudio::AudioDevice::_stream_ids(bool for_input) co
                                        kAudioObjectPropertyElementMain});
 }
 
-UInt32 apple_coreaudio::AudioDevice::stream_latency(UInt32 stream_index, bool for_input) const
+UInt32 apple_coreaudio::AudioDevice::stream_latency(size_t stream_index, bool for_input) const
 {
     if (!is_valid())
     {

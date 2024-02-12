@@ -103,8 +103,6 @@ void SimpleSynthPlugin::configure(float sample_rate)
     bw_osc_pulse_set_sample_rate(&_osc_pulse_coeffs, sample_rate);
     bw_svf_set_sample_rate(&_svf_coeffs, sample_rate);
     bw_env_gen_set_sample_rate(&_env_gen_coeffs, sample_rate);
-
-    return;
 }
 
 void SimpleSynthPlugin::set_enabled(bool enabled)
@@ -246,7 +244,7 @@ void SimpleSynthPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */, 
 void SimpleSynthPlugin::_change_active_note(int notenum)
 {
     // the Brickworks example also had a master tuning parameter to change the 440.0Hz, skipped here
-    float note_freq = A4_FREQUENCY * bw_pow2f_3(NOTE2FREQ_SCALE * (notenum - A4_NOTENUM));
+    float note_freq = A4_FREQUENCY * bw_pow2f_3(NOTE2FREQ_SCALE * static_cast<float>(notenum - A4_NOTENUM));
     bw_phase_gen_set_frequency(&_phase_gen_coeffs, note_freq);
 }
 

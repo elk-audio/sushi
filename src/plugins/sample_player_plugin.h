@@ -56,7 +56,7 @@ public:
 private:
     void _all_notes_off();
 
-    BlobData _load_sample_file(const std::string& file_name);
+    static BlobData _load_sample_file(const std::string& file_name);
 
     float*  _sample_buffer{nullptr};
     float   _dummy_sample{0.0f};

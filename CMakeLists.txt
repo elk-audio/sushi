@@ -385,7 +385,7 @@ if (${SUSHI_WITH_VST3})
             "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/pluginterfacesupport.cpp"
             "${VST3_SDK_PATH}/public.sdk/source/common/memorystream.cpp")
 
-    set(VST3_COMPILE_FLAGS "-Wno-unused-parameter -Wno-extra -Wno-deprecated -Wno-cpp -Wno-pointer-bool-conversion -Wno-suggest-override")
+    set(VST3_COMPILE_FLAGS "-Wno-unused-parameter -Wno-extra -Wno-deprecated -Wno-cpp -Wno-pointer-bool-conversion -Wno-suggest-override -Wno-deprecated-declarations -Wno-unqualified-std-cast-call")
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         set(VST3_HOST_SOURCES ${VST3_HOST_SOURCES} "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_linux.cpp")
@@ -428,7 +428,7 @@ if (${SUSHI_WITH_VST3})
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_VST3)
 
 
-    # In yocto env / cross compiling scenrarios, this is not needed as mda-vst3 plugins are
+    # In yocto env / cross compiling scenarios, this is not needed as mda-vst3 plugins are
     # built already. Also, this causes an "exec-format" error since the plugins need a specific
     # method of compilation during cross compilation process.
     if (NOT CMAKE_CROSSCOMPILING)
@@ -676,6 +676,8 @@ set(COMMON_LIBRARIES
     freeverb
     ${TWINE_LIB}
 )
+
+set_target_properties(oscpack PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     set(COMMON_LIBRARIES ${COMMON_LIBRARIES} atomic)

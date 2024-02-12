@@ -60,7 +60,6 @@ ProcessorReturnCode ClipPlugin::init(float sample_rate)
 void ClipPlugin::configure(float sample_rate)
 {
     bw_clip_set_sample_rate(&_clip_coeffs, 2.0f * sample_rate);
-    return;
 }
 
 void ClipPlugin::set_enabled(bool enabled)

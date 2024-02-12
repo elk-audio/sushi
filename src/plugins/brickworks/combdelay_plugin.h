@@ -23,7 +23,10 @@
 #ifndef COMBDELAY_PLUGIN_H
 #define COMBDELAY_PLUGIN_H
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshorten-64-to-32"
 #include <bw_comb.h>
+#pragma clang diagnostic pop
 
 #include "library/internal_plugin.h"
 

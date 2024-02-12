@@ -2,9 +2,15 @@
 #include "gmock/gmock.h"
 #include "gmock/gmock-actions.h"
 
+#include "sushi/warning_suppressor.h"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_WARNING (WARN_KEYWORD_MACRO)
 #define private public
 #include "engine/parameter_manager.cpp"
 #undef private
+ELK_POP_WARNING
+
 #include "plugins/gain_plugin.h"
 
 #include "test_utils/mock_event_dispatcher.h"

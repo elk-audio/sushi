@@ -52,7 +52,7 @@ public:
      */
     explicit SampleBuffer(int channel_count) : _channel_count(channel_count),
                                                _own_buffer(true),
-                                               _buffer(new float[size * channel_count])
+                                               _buffer(new float[static_cast<unsigned long>(size * channel_count)])
     {
         clear();
     }

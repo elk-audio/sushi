@@ -45,8 +45,13 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration*)
 }
 #endif
 
+#include "sushi/warning_suppressor.h"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_WARNING (WARN_KEYWORD_MACRO)
 #define private public
 #define protected public
+ELK_POP_WARNING
 
 #ifndef OSCPACK_UNIT_TESTS
 #include "third-party/oscpack/osc/OscPacketListener.h"

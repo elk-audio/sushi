@@ -1,8 +1,15 @@
 #include "gtest/gtest.h"
 
+#include "sushi/warning_suppressor.h"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_WARNING (WARN_KEYWORD_MACRO)
 #define private public
+
 #include "engine/controller/session_controller.cpp"
+
 #undef private
+ELK_POP_WARNING
 
 #include "engine/audio_engine.h"
 #include "control_frontends/base_control_frontend.h"

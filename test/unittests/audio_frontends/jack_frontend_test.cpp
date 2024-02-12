@@ -7,7 +7,14 @@
 #endif
 #include "engine/midi_dispatcher.h"
 
+#include "warning_suppressor.h"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_WARNING (WARN_KEYWORD_MACRO)
 #define private public
+ELK_POP_WARNING
+
+
 #include "audio_frontends/jack_frontend.cpp"
 
 using ::testing::internal::posix::GetEnv;

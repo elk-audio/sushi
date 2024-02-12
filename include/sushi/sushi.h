@@ -98,7 +98,9 @@ enum class Status : int
     FRONTEND_IS_INCOMPATIBLE_WITH_STANDALONE = 17,
     
     SUSHI_ALREADY_STARTED = 18,
-    SUSHI_THREW_EXCEPTION = 19
+    SUSHI_THREW_EXCEPTION = 19,
+
+    UNINITIALIZED = 20
 };
 
 std::string to_string(Status status);

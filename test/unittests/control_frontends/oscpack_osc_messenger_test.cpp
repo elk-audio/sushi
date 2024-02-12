@@ -18,8 +18,13 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock-actions.h>
 
+#include "sushi/warning_suppressor.h"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_WARNING (WARN_KEYWORD_MACRO)
 #define private public
 #define protected public
+ELK_POP_WARNING
 
 // This causes the real oscpack .h files for packet listener and socket,
 // to be excluded in oscpack_osc_messenger.h

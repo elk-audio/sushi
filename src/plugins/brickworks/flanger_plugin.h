@@ -23,7 +23,10 @@
 
 #include <vector>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshorten-64-to-32"
 #include <bw_chorus.h>
+#pragma clang diagnostic pop
 
 #include "library/internal_plugin.h"
 

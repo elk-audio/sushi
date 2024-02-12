@@ -3,7 +3,12 @@
 #include "library/rt_event_fifo.h"
 #include "test_utils/host_control_mockup.h"
 
+#include "sushi/warning_suppressor.h"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_WARNING (WARN_KEYWORD_MACRO)
 #define private public
+ELK_POP_WARNING
 
 #include "plugins/arpeggiator_plugin.cpp"
 

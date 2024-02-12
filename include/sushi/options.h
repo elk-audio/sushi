@@ -22,7 +22,15 @@
 #define SUSHI_OPTIONS_H
 
 #include <cstdio>
+
+#include "warning_suppressor.h"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_WARNING (WARN_ZERO_AS_NULL_POINTER_CONSTANT)
+ELK_DISABLE_WARNING (WARN_SIGN_CONVERSION)
+ELK_DISABLE_WARNING (WARN_CONDITIONAL_UNINITIALIZED)
 #include "optionparser.h"
+ELK_POP_WARNING
 
 #define _SUSHI_STRINGIZE(X) #X
 #define SUSHI_STRINGIZE(X) _SUSHI_STRINGIZE(X)
@@ -76,7 +84,7 @@ struct SushiArg : public optionparser::Arg
 
     static optionparser::ArgStatus NonEmpty(const optionparser::Option& option, bool msg)
     {
-        if (option.arg != 0 && option.arg[0] != 0)
+        if (option.arg != nullptr && option.arg[0] != 0)
         {
             return optionparser::ARG_OK;
         }
@@ -90,8 +98,8 @@ struct SushiArg : public optionparser::Arg
 
     static optionparser::ArgStatus Numeric(const optionparser::Option& option, bool msg)
     {
-        char* endptr = 0;
-        if (option.arg != 0 && strtol(option.arg, &endptr, 10))
+        char* endptr = nullptr;
+        if (option.arg != nullptr && strtol(option.arg, &endptr, 10))
         {}
 
         if (endptr != option.arg && *endptr == 0)
@@ -473,7 +481,7 @@ const optionparser::Descriptor usage[] =
         "\t\t--sentry-dsn=<dsn.address> \tSet the DSN that sentry should upload crash logs to [default address=" SUSHI_STRINGIZE(SUSHI_SENTRY_DSN_DEFAULT) "]."
     },
     // Don't touch this one (sets default values for optionparser library)
-    { 0, 0, 0, 0, 0, 0}
+    { 0, 0, nullptr, nullptr, nullptr, nullptr}
 };
 
 } // end namespace sushi

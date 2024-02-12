@@ -35,13 +35,13 @@ enum class ParseStatus
     EXIT
 };
 
-void print_sushi_headline()
+static void print_sushi_headline()
 {
     std::cout << "SUSHI - Copyright 2017-2023 Elk Audio AB, Stockholm" << std::endl;
     std::cout << "SUSHI is licensed under the Affero GPL 3.0. Source code is available at github.com/elk-audio" << std::endl;
 }
 
-void print_version_and_build_info()
+static void print_version_and_build_info()
 {
     std::cout << "\nVersion " << CompileTimeSettings::sushi_version << std::endl;
 
@@ -64,7 +64,7 @@ void print_version_and_build_info()
     std::cout << "Built on: " << CompileTimeSettings::build_timestamp << std::endl;
 }
 
-ParseStatus parse_options(int argc, char* argv[], sushi::SushiOptions& options)
+static ParseStatus parse_options(int argc, char* argv[], sushi::SushiOptions& options)
 {
     optionparser::Stats cl_stats(usage, argc, argv);
     std::vector<optionparser::Option> cl_options(cl_stats.options_max);
@@ -84,7 +84,7 @@ ParseStatus parse_options(int argc, char* argv[], sushi::SushiOptions& options)
 
     for (int i = 0; i < cl_parser.optionsCount(); i++)
     {
-        optionparser::Option& opt = cl_buffer[i];
+        optionparser::Option& opt = cl_buffer[static_cast<size_t>(i)];
 
         switch(opt.index())
         {
@@ -147,11 +147,11 @@ ParseStatus parse_options(int argc, char* argv[], sushi::SushiOptions& options)
                 break;
 
             case OPT_IDX_AUDIO_INPUT_DEVICE:
-                options.portaudio_input_device_id = atoi(opt.arg);
+                options.portaudio_input_device_id = std::stoi(opt.arg);
                 break;
 
             case OPT_IDX_AUDIO_OUTPUT_DEVICE:
-                options.portaudio_output_device_id = atoi(opt.arg);
+                options.portaudio_output_device_id = std::stoi(opt.arg);
                 break;
 
             case OPT_IDX_AUDIO_INPUT_DEVICE_UID:
@@ -163,11 +163,11 @@ ParseStatus parse_options(int argc, char* argv[], sushi::SushiOptions& options)
                 break;
 
             case OPT_IDX_PA_SUGGESTED_INPUT_LATENCY:
-                options.suggested_input_latency = atof(opt.arg);
+                options.suggested_input_latency = static_cast<float>(std::atof(opt.arg));
                 break;
 
             case OPT_IDX_PA_SUGGESTED_OUTPUT_LATENCY:
-                options.suggested_input_latency = atof(opt.arg);
+                options.suggested_output_latency = static_cast<float>(std::atof(opt.arg));
                 break;
 
             case OPT_IDX_DUMP_DEVICES:
@@ -199,7 +199,7 @@ ParseStatus parse_options(int argc, char* argv[], sushi::SushiOptions& options)
                 break;
 
             case OPT_IDX_MULTICORE_PROCESSING:
-                options.rt_cpu_cores = atoi(opt.arg);
+                options.rt_cpu_cores = std::stoi(opt.arg);
                 break;
 
             case OPT_IDX_TIMINGS_STATISTICS:
@@ -207,11 +207,11 @@ ParseStatus parse_options(int argc, char* argv[], sushi::SushiOptions& options)
                 break;
 
             case OPT_IDX_OSC_RECEIVE_PORT:
-                options.osc_server_port = atoi(opt.arg);
+                options.osc_server_port = std::stoi(opt.arg);
                 break;
 
             case OPT_IDX_OSC_SEND_PORT:
-                options.osc_send_port = atoi(opt.arg);
+                options.osc_send_port = std::stoi(opt.arg);
                 break;
 
             case OPT_IDX_OSC_SEND_IP:

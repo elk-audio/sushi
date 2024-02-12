@@ -57,8 +57,8 @@ std::pair<std::unique_ptr<Sushi>, Status> ReactiveFactoryImplementation::new_ins
     _instantiate_subsystems(options);
 
     _real_time_controller = std::make_unique<RealTimeController>(
-        static_cast<audio_frontend::ReactiveFrontend*>(_audio_frontend.get()),
-        static_cast<midi_frontend::ReactiveMidiFrontend*>(_midi_frontend.get()),
+        static_cast<audio_frontend::ReactiveFrontend*>(_audio_frontend.get()), // because -frtti is not used
+        static_cast<midi_frontend::ReactiveMidiFrontend*>(_midi_frontend.get()), // because -frtti is not used0
         _engine->transport());
 
     return {_make_sushi(), _status};

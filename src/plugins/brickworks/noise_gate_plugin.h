@@ -50,15 +50,15 @@ public:
 
 private:
     BypassManager _bypass_manager;
-    float _sample_rate{0};
+    float _sample_rate {0};
 
-    FloatParameterValue* _threshold;
-    FloatParameterValue* _ratio;
-    FloatParameterValue* _attack;
-    FloatParameterValue* _release;
+    FloatParameterValue* _threshold {nullptr};
+    FloatParameterValue* _ratio {nullptr};
+    FloatParameterValue* _attack {nullptr};
+    FloatParameterValue* _release {nullptr};
 
-    bw_noise_gate_coeffs _noise_gate_coeffs;
-    std::array<bw_noise_gate_state, MAX_TRACK_CHANNELS> _noise_gate_states;
+    bw_noise_gate_coeffs _noise_gate_coeffs {};
+    std::array<bw_noise_gate_state, MAX_TRACK_CHANNELS> _noise_gate_states {};
 };
 
 } // namespace sushi::internal::noise_gate_plugin

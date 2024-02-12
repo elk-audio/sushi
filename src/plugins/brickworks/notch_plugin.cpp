@@ -58,7 +58,6 @@ ProcessorReturnCode NotchPlugin::init(float sample_rate)
 void NotchPlugin::configure(float sample_rate)
 {
     bw_notch_set_sample_rate(&_notch_coeffs, sample_rate);
-    return;
 }
 
 void NotchPlugin::set_enabled(bool enabled)

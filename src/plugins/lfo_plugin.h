@@ -41,10 +41,10 @@ public:
     static std::string_view static_uid();
 
 private:
-    float _phase{0};
-    float _buffers_per_second{0};
-    FloatParameterValue* _freq_parameter;
-    FloatParameterValue* _out_parameter;
+    float _phase {0};
+    float _buffers_per_second {0};
+    FloatParameterValue* _freq_parameter {nullptr};
+    FloatParameterValue* _out_parameter {nullptr};
 };
 
 } // end namespace sushi::internal::lfo_plugin
