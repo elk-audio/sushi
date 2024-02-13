@@ -3,7 +3,7 @@
 #include "sushi/warning_suppressor.h"
 
 ELK_PUSH_WARNING
-ELK_DISABLE_WARNING (WARN_KEYWORD_MACRO)
+ELK_DISABLE_KEYWORD_MACRO
 #define private public
 
 #include "engine/controller/session_controller.cpp"

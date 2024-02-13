@@ -36,7 +36,7 @@
 #include "sushi/warning_suppressor.h"
 
 ELK_PUSH_WARNING
-ELK_DISABLE_WARNING (WARN_EXTRA)
+ELK_DISABLE_EXTRA
 #include "public.sdk/source/vst/hosting/hostclasses.h"
 ELK_POP_WARNING
 

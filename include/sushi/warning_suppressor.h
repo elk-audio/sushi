@@ -28,14 +28,8 @@
  * #include "warning_suppressor.h"
  *
  * ELK_PUSH_WARNING
- * ELK_DISABLE_WARNING (WARN_SHADOW_FIELD)
- * ELK_DISABLE_WARNING (WARN_EXTRA_SEMI)
- * ELK_DISABLE_WARNING (WARN_ZERO_AS_NULL_POINTER_CONSTANT)
- * ELK_DISABLE_WARNING (WARN_SIGN_CONVERSION)
+ * ELK_DISABLE_SHADOW_FIELD
  * #include <JuceHeader.h>
- *
- * #include "anyrpc/anyrpc.h"
- * #include "anyrpc/value.h"
  * ELK_POP_WARNING
  */
 
@@ -56,6 +50,7 @@
  * And this:
  * https://gcc.gnu.org/onlinedocs/gcc/Diagnostic-Pragmas.html
  */
+
 #if defined(__clang__)
 #define ELK_PUSH_WARNING DO_PRAGMA(clang diagnostic push)
 #elif defined(__GNUC__) || defined(__GNUG__)
@@ -72,43 +67,161 @@
 #define ELK_POP_WARNING DO_PRAGMA(warnings(pop))
 #endif
 
-#if defined(__clang__)
-#define ELK_DISABLE_WARNING(WARNING_NAME) DO_PRAGMA(clang diagnostic ignored WARNING_NAME##_CLANG)
-#elif defined(__GNUC__) || defined(__GNUG__)
-#define ELK_DISABLE_WARNING(WARNING_NAME) DO_PRAGMA(GCC diagnostic ignored WARNING_NAME##_GCC)
-#elif defined(_MSC_VER)
-#define ELK_DISABLE_WARNING(WARNING_NAME) DO_PRAGMA(warnings(disable :  WARNING_NAME##_MSC)
-#endif
+// #if __has_warning(WARNING_NAME##_GCC)?
 
+// TODO: Where was this used?
 #define WARN_UNINITIALIZED_CLANG "-Wuninitialized"
 #define WARN_UNINITIALIZED_GCC "-Wuninitialized"
 
-#define WARN_UNUSED_FUNCTION_CLANG "-Wunused-function"
-#define WARN_UNUSED_FUNCTION_GCC "-Wunused-function"
+// -Woverloaded-virtual
+#if defined(__clang__)
+#define ELK_DISABLE_OVERLOADED_VIRTUAL DO_PRAGMA(clang diagnostic ignored "-Woverloaded-virtual")
+#elif defined(__GNUC__) || defined(__GNUG__)
+#define ELK_DISABLE_OVERLOADED_VIRTUAL DO_PRAGMA(GCC diagnostic ignored "-Woverloaded-virtual")
+#elif defined(_MSC_VER)
+#define ELK_DISABLE_EXTRA DO_PRAGMA(warnings(disable : "-Woverloaded-virtual")
+#endif
 
-#define WARN_SHADOW_FIELD_CLANG "-Wshadow-field"
-#define WARN_SHADOW_FIELD_GCC "-Wshadow-field"
+// "-Wextra"
+#if defined(__clang__)
+#define ELK_DISABLE_EXTRA DO_PRAGMA(clang diagnostic ignored "-Wextra")
+#elif defined(__GNUC__) || defined(__GNUG__)
+#define ELK_DISABLE_EXTRA DO_PRAGMA(GCC diagnostic ignored "-Wextra")
+#elif defined(_MSC_VER)
+#define ELK_DISABLE_EXTRA DO_PRAGMA(warnings(disable : "-Wextra")
+#endif
 
-#define WARN_EXTRA_SEMI_CLANG "-Wextra-semi"
-#define WARN_EXTRA_SEMI_GCC "-Wextra-semi"
+//  "-Wunused-parameter"
+#if defined(__clang__)
+#define ELK_DISABLE_UNUSED_PARAMETER DO_PRAGMA(clang diagnostic ignored "-Wunused-parameter")
+#elif defined(__GNUC__) || defined(__GNUG__)
+#define ELK_DISABLE_UNUSED_PARAMETER DO_PRAGMA(GCC diagnostic ignored "-Wunused-parameter")
+#elif defined(_MSC_VER)
+#define ELK_DISABLE_UNUSED_PARAMETER DO_PRAGMA(warnings(disable : "-Wunused-parameter")
+#endif
 
-#define WARN_EXTRA_CLANG "-Wextra"
-#define WARN_EXTRA_GCC "-Wextra"
+// "-Wkeyword-macro"
+#if defined(__clang__)
+#define ELK_DISABLE_UKEYWORD_MACRO DO_PRAGMA(clang diagnostic ignored "-Wkeyword-macro")
+#elif defined(__GNUC__) || defined(__GNUG__)
+#define ELK_DISABLE_KEYWORD_MACRO // Doesn't exist
+#elif defined(_MSC_VER)
+#define ELK_DISABLE_KEYWORD_MACRO DO_PRAGMA(warnings(disable : "-Wkeyword-macro")
+#endif
 
-#define WARN_ZERO_AS_NULL_POINTER_CONSTANT_CLANG "-Wzero-as-null-pointer-constant"
-#define WARN_ZERO_AS_NULL_POINTER_CONSTANT_GCC "-Wzero-as-null-pointer-constant"
+// "-Wunused-function"
+#if defined(__clang__)
+#define ELK_DISABLE_UNUSED_FUNCTION DO_PRAGMA(clang diagnostic ignored "-Wunused-function")
+#elif defined(__GNUC__) || defined(__GNUG__)
+#define ELK_DISABLE_UNUSED_FUNCTION DO_PRAGMA(GCC diagnostic ignored "-Wunused-function")
+#elif defined(_MSC_VER)
+#define ELK_DISABLE_UNUSED_FUNCTION DO_PRAGMA(warnings(disable : "-Wunused-function")
+#endif
 
-#define WARN_SIGN_CONVERSION_CLANG "-Wsign-conversion"
-#define WARN_SIGN_CONVERSION_GCC "-Wsign-conversion"
+// "-Wextra-semi"
+#if defined(__clang__)
+#define ELK_DISABLE_EXTRA_SEMI DO_PRAGMA(clang diagnostic ignored "-Wextra-semi")
+#elif defined(__GNUC__) || defined(__GNUG__)
+#define ELK_DISABLE_EXTRA_SEMI DO_PRAGMA(GCC diagnostic ignored "-Wextra-semi")
+#elif defined(_MSC_VER)
+#define ELK_DISABLE_EXTRA_SEMI DO_PRAGMA(warnings(disable : "-Wextra-semi")
+#endif
 
-#define WARN_CONDITIONAL_UNINITIALIZED_CLANG "-Wconditional-uninitialized"
-#define WARN_CONDITIONAL_UNINITIALIZED_GCC "-Wconditional-uninitialized"
+// "-Wtype-limits"
+#if defined(__clang__)
+#define ELK_DISABLE_TYPE_LIMITS DO_PRAGMA(clang diagnostic ignored "-Wtype-limits")
+#elif defined(__GNUC__) || defined(__GNUG__)
+#define ELK_DISABLE_TYPE_LIMITS DO_PRAGMA(GCC diagnostic ignored "-Wtype-limits")
+#elif defined(_MSC_VER)
+#define ELK_DISABLE_TYPE_LIMITS DO_PRAGMA(warnings(disable : "-Wtype-limits")
+#endif
 
-#define WARN_KEYWORD_MACRO_CLANG "-Wkeyword-macro"
-#define WARN_KEYWORD_MACRO_GCC "-Wkeyword-macro"
+// "-Wsign-conversion"
+#if defined(__clang__)
+#define ELK_DISABLE_SIGN_CONVERSION DO_PRAGMA(clang diagnostic ignored "-Wsign-conversion")
+#elif defined(__GNUC__) || defined(__GNUG__)
+#define ELK_DISABLE_SIGN_CONVERSION DO_PRAGMA(GCC diagnostic ignored "-Wsign-conversion")
+#elif defined(_MSC_VER)
+#define ELK_DISABLE_SIGN_CONVERSION DO_PRAGMA(warnings(disable : "-Wsign-conversion")
+#endif
 
-#define WARN_UNUSED_PARAMETER_CLANG "-Wunused-parameter"
-#define WARN_UNUSED_PARAMETER_GCC "-Wunused-parameter"
+// "-Wzero-as-null-pointer-constant"
+#if defined(__clang__)
+#define ELK_DISABLE_ZERO_AS_NULL_POINTER_CONSTANT DO_PRAGMA(clang diagnostic ignored "-Wzero-as-null-pointer-constant")
+#elif defined(__GNUC__) || defined(__GNUG__)
+#define ELK_DISABLE_ZERO_AS_NULL_POINTER_CONSTANT DO_PRAGMA(GCC diagnostic ignored "-Wzero-as-null-pointer-constant")
+#elif defined(_MSC_VER)
+#define ELK_DISABLE_ZERO_AS_NULL_POINTER_CONSTANT DO_PRAGMA(warnings(disable : "-Wzero-as-null-pointer-constant")
+#endif
 
-#define WARN_TYPE_LIMITS_CLANG "-Wtype-limits"
-#define WARN_TYPE_LIMITS_GCC "-Wtype-limits"
+// "-Wconditional-uninitialized"
+#if defined(__clang__)
+#define ELK_DISABLE_CONDITIONAL_UNINITIALIZED DO_PRAGMA(clang diagnostic ignored "-Wconditional-uninitialized")
+#elif defined(__GNUC__) || defined(__GNUG__)
+#define ELK_DISABLE_CONDITIONAL_UNINITIALIZED // Doesn't exist
+#elif defined(_MSC_VER)
+#define ELK_DISABLE_CONDITIONAL_UNINITIALIZED DO_PRAGMA(warnings(disable : "-Wconditional-uninitialized")
+#endif
+
+// "-Wshorten-64-to-32"
+#if defined(__clang__)
+#define ELK_DISABLE_SHORTEN_64_TO_32 DO_PRAGMA(clang diagnostic ignored "-Wshorten-64-to-32")
+#elif defined(__GNUC__) || defined(__GNUG__)
+#define ELK_DISABLE_SHORTEN_64_TO_32 // Doesn't exist
+#elif defined(_MSC_VER)
+#define ELK_DISABLE_SHORTEN_64_TO_32 DO_PRAGMA(warnings(disable : "-Wshorten-64-to-32")
+#endif
+
+// "-Wshadow-field"
+#if defined(__clang__)
+#define ELK_DISABLE_SHADOW_FIELD DO_PRAGMA(clang diagnostic ignored "-Wshadow-field")
+#elif defined(__GNUC__) || defined(__GNUG__)
+#define ELK_DISABLE_SHADOW_FIELD  // Doesn't exist
+#elif defined(_MSC_VER)
+#define ELK_DISABLE_SHADOW_FIELD DO_PRAGMA(warnings(disable : "-Wshadow-field")
+#endif
+
+// "-Wpedantic"
+#if defined(__clang__)
+#define ELK_DISABLE_PEDANTIC DO_PRAGMA(clang diagnostic ignored "-Wpedantic")
+#elif defined(__GNUC__) || defined(__GNUG__)
+#define ELK_DISABLE_PEDANTIC DO_PRAGMA(GCC diagnostic ignored "-Wpedantic")
+#elif defined(_MSC_VER)
+#define ELK_DISABLE_PEDANTIC DO_PRAGMA(warnings(disable : "-Wpedantic")
+#endif
+
+// "-Wdeprecated-declarations"
+#if defined(__clang__)
+#define ELK_DISABLE_DEPRECATED_DECLARATIONS DO_PRAGMA(clang diagnostic ignored "-Wdeprecated-declarations")
+#elif defined(__GNUC__) || defined(__GNUG__)
+#define ELK_DISABLE_DEPRECATED_DECLARATIONS DO_PRAGMA(GCC diagnostic ignored "-Wdeprecated-declarations")
+#elif defined(_MSC_VER)
+#define ELK_DISABLE_DEPRECATED_DECLARATIONS DO_PRAGMA(warnings(disable : "-Wdeprecated-declarations")
+#endif
+
+// "-Wreturn-type"
+#if defined(__clang__)
+#define ELK_DISABLE_RETURN_TYPE DO_PRAGMA(clang diagnostic ignored "-Wreturn-type")
+#elif defined(__GNUC__) || defined(__GNUG__)
+#define ELK_DISABLE_RETURN_TYPE DO_PRAGMA(GCC diagnostic ignored "-Wreturn-type")
+#elif defined(_MSC_VER)
+#define ELK_DISABLE_RETURN_TYPE DO_PRAGMA(warnings(disable : "-Wreturn-type")
+#endif
+
+// "-Wunused-const-variable"
+#if defined(__clang__)
+#define ELK_DISABLE_UNUSED_CONST_VARIABLE DO_PRAGMA(clang diagnostic ignored "-Wunused-const-variable")
+#elif defined(__GNUC__) || defined(__GNUG__)
+#define ELK_DISABLE_UNUSED_CONST_VARIABLE DO_PRAGMA(GCC diagnostic ignored "-Wunused-const-variable")
+#elif defined(_MSC_VER)
+#define ELK_DISABLE_UNUSED_CONST_VARIABLE DO_PRAGMA(warnings(disable : "-Wunused-const-variable")
+#endif
+
+// "-Wreorder"
+#if defined(__clang__)
+#define ELK_DISABLE_REORDER DO_PRAGMA(clang diagnostic ignored "-Wreorder")
+#elif defined(__GNUC__) || defined(__GNUG__)
+#define ELK_DISABLE_REORDER DO_PRAGMA(GCC diagnostic ignored "-Wreorder")
+#elif defined(_MSC_VER)
+#define ELK_DISABLE_REORDER DO_PRAGMA(warnings(disable : "-Wreorder")
+#endif

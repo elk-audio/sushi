@@ -28,8 +28,10 @@
 #include "engine/base_engine.h"
 
 /* GCC does not seem to get when a switch case handles all cases */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wreturn-type"
+#include "sushi/warning_suppressor.h"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_RETURN_TYPE
 
 namespace sushi {
 
@@ -344,7 +346,7 @@ int SetEngineSyncModeEvent::execute(engine::BaseEngine* engine) const
     return 0;
 }
 
-#pragma GCC diagnostic pop
+ELK_POP_WARNING
 
 } // end namespace internal
 

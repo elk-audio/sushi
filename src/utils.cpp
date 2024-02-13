@@ -22,12 +22,14 @@
 #include <iostream>
 #include <fstream>
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wtype-limits"
+#include "sushi/warning_suppressor.h"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_TYPE_LIMITS
 #include "rapidjson/ostreamwrapper.h"
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/document.h"
-#pragma GCC diagnostic pop
+ELK_POP_WARNING
 
 #include "elklog/static_logger.h"
 #include "sushi/sushi.h"

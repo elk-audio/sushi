@@ -31,11 +31,13 @@
 
 #include <cmath>
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
+#include "sushi/warning_suppressor.h"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_UNUSED_PARAMETER
 #define VST_FORCE_DEPRECATED 0
 #include "aeffectx.h"
-#pragma GCC diagnostic pop
+ELK_POP_WARNING
 
 #include "sushi/constants.h"
 

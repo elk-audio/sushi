@@ -23,10 +23,11 @@
 
 #include <vector>
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wshorten-64-to-32"
+#include "sushi/warning_suppressor.h"
+ELK_PUSH_WARNING
+ELK_DISABLE_SHORTEN_64_TO_32
 #include <bw_chorus.h>
-#pragma clang diagnostic pop
+ELK_POP_WARNING
 
 #include "library/internal_plugin.h"
 

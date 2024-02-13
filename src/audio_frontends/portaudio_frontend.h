@@ -29,10 +29,13 @@
 
 // TODO: Keep an eye on these deprecated declarations and update when they are fixed.
 // There is an open issue on github at the time of writing about C11 which would fix this.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
+#include "sushi/warning_suppressor.h"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_DEPRECATED_DECLARATIONS
 #include <portaudio.h>
-#pragma GCC diagnostic pop
+ELK_POP_WARNING
 
 #include "base_audio_frontend.h"
 

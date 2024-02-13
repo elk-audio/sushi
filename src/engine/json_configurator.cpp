@@ -21,16 +21,11 @@
 #include "sushi/warning_suppressor.h"
 
 ELK_PUSH_WARNING
-ELK_DISABLE_WARNING (WARN_TYPE_LIMITS)
+ELK_DISABLE_TYPE_LIMITS
 #include "rapidjson/error/en.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/schema.h"
 ELK_POP_WARNING
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wtype-limits"
-
-#pragma GCC diagnostic pop
 
 #include "elklog/static_logger.h"
 
