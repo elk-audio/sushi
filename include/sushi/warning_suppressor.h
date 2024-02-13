@@ -102,7 +102,7 @@
 
 // "-Wkeyword-macro"
 #if defined(__clang__)
-#define ELK_DISABLE_UKEYWORD_MACRO DO_PRAGMA(clang diagnostic ignored "-Wkeyword-macro")
+#define ELK_DISABLE_KEYWORD_MACRO DO_PRAGMA(clang diagnostic ignored "-Wkeyword-macro")
 #elif defined(__GNUC__) || defined(__GNUG__)
 #define ELK_DISABLE_KEYWORD_MACRO // Doesn't exist
 #elif defined(_MSC_VER)
