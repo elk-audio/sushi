@@ -67,12 +67,6 @@
 #define ELK_POP_WARNING DO_PRAGMA(warnings(pop))
 #endif
 
-// #if __has_warning(WARNING_NAME##_GCC)?
-
-// TODO: Where was this used?
-#define WARN_UNINITIALIZED_CLANG "-Wuninitialized"
-#define WARN_UNINITIALIZED_GCC "-Wuninitialized"
-
 // -Woverloaded-virtual
 #if defined(__clang__)
 #define ELK_DISABLE_OVERLOADED_VIRTUAL DO_PRAGMA(clang diagnostic ignored "-Woverloaded-virtual")

@@ -7,7 +7,7 @@
 #endif
 #include "engine/midi_dispatcher.h"
 
-#include "warning_suppressor.h"
+#include "sushi/warning_suppressor.h"
 
 ELK_PUSH_WARNING
 ELK_DISABLE_KEYWORD_MACRO
