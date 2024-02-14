@@ -31,7 +31,7 @@
 
 #include <cmath>
 
-#include "sushi/warning_suppressor.h"
+#include <elk-warning-suppressor/warning_suppressor.hpp>
 
 ELK_PUSH_WARNING
 ELK_DISABLE_UNUSED_PARAMETER

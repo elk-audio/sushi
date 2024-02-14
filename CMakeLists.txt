@@ -194,7 +194,6 @@ add_subdirectory(third-party EXCLUDE_FROM_ALL)
 ###############
 
 if (${SUSHI_WITH_RASPA})
-
     find_library(RASPA_LIB
             NAMES raspa
             PATHS /usr/lib /usr/local/lib
@@ -288,7 +287,6 @@ if (APPLE)
 
         set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} "-framework CoreAudio -framework Foundation")
     endif()
-
 endif()
 
 ###################
@@ -401,7 +399,7 @@ if (${SUSHI_WITH_VST3})
     endif()
 
     add_library(vst3_host STATIC ${VST3_HOST_SOURCES})
-    target_link_libraries(vst3_host PRIVATE ${AUDIOHOST_PLATFORM_LIBS})
+    target_link_libraries(vst3_host PRIVATE ${AUDIOHOST_PLATFORM_LIBS} elk::warningSuppressor)
     set_target_properties(vst3_host PROPERTIES EXCLUDE_FROM_ALL true)
     if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
         set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS "-DRELEASE ${VST3_COMPILE_FLAGS}")
@@ -435,7 +433,6 @@ if (${SUSHI_WITH_VST3})
         # Triggering mda-vst3 build - used by sample sushi json configurations under misc/config_files.
         set_target_properties(mda-vst3 PROPERTIES EXCLUDE_FROM_ALL False)
     endif()
-
 endif()
 
 #############
@@ -692,7 +689,7 @@ target_include_directories(${PROJECT_NAME}
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
-target_link_libraries(${PROJECT_NAME} PUBLIC ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES} elk::warningSuppressor)
 
 ####################################
 #  Compiler Flags and definitions  #

@@ -18,7 +18,7 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#include "sushi/warning_suppressor.h"
+#include <elk-warning-suppressor/warning_suppressor.hpp>
 
 ELK_PUSH_WARNING
 ELK_DISABLE_TYPE_LIMITS

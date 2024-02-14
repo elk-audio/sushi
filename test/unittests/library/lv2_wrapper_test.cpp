@@ -9,7 +9,7 @@
 #include "spdlog/fmt/bundled/core.h"
 #include "spdlog/fmt/bundled/format.h"
 
-#include "warning_suppressor.h"
+#include <elk-warning-suppressor/warning_suppressor.hpp>
 
 ELK_PUSH_WARNING
 ELK_DISABLE_KEYWORD_MACRO

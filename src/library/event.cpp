@@ -27,10 +27,11 @@
 #include "library/event.h"
 #include "engine/base_engine.h"
 
-/* GCC does not seem to get when a switch case handles all cases */
-#include "sushi/warning_suppressor.h"
+#include <elk-warning-suppressor/warning_suppressor.hpp>
 
 ELK_PUSH_WARNING
+
+/* GCC does not seem to get when a switch case handles all cases */
 ELK_DISABLE_RETURN_TYPE
 
 namespace sushi {

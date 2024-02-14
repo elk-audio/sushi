@@ -33,7 +33,7 @@
 #include "public.sdk/source/vst/hosting/module.h"
 #include "base/source/fobject.h"
 
-#include "sushi/warning_suppressor.h"
+#include <elk-warning-suppressor/warning_suppressor.hpp>
 
 ELK_PUSH_WARNING
 ELK_DISABLE_EXTRA
