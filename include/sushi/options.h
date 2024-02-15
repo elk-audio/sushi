@@ -436,7 +436,7 @@ const optionparser::Descriptor usage[] =
         OPT_IDX_NO_OSC,
         OPT_TYPE_DISABLED,
         "",
-        "disable-osc",
+        "no-osc",
         SushiArg::Optional,
         "\t\t--no-osc \tDisable Open Sound Control completely"
     },
@@ -444,7 +444,7 @@ const optionparser::Descriptor usage[] =
         OPT_IDX_NO_GRPC,
         OPT_TYPE_DISABLED,
         "",
-        "disable-grpc",
+        "no-grpc",
         SushiArg::Optional,
         "\t\t--no-grpc \tDisable gRPC Control completely"
     },
