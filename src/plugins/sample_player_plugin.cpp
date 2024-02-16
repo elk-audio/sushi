@@ -33,6 +33,43 @@ constexpr auto PLUGIN_UID = "sushi.testing.sampleplayer";
 constexpr auto DEFAULT_LABEL = "Sample player";
 constexpr int SAMPLE_PROPERTY_ID = 0;
 
+BlobData load_sample_file(const std::string& file_name)
+{
+    SNDFILE* sample_file;
+    SF_INFO  soundfile_info = {};
+    if (! (sample_file = sf_open(file_name.c_str(), SFM_READ, &soundfile_info)))
+    {
+        ELKLOG_LOG_ERROR("Failed to open sample file: {}", file_name);
+        return {0, nullptr};
+    }
+
+    sf_count_t samples = 0;
+    float* sample_buffer = new float[soundfile_info.frames];
+    if (soundfile_info.channels == 1)
+    {
+        samples = sf_readf_float(sample_file, sample_buffer, soundfile_info.frames);
+    }
+    else // Decode interleaved stereo
+    {
+        float buffer[2];
+        for (int i = 0; i < soundfile_info.frames; ++i)
+        {
+            samples += sf_readf_float(sample_file, buffer, 1);
+            sample_buffer[i] = buffer[0];
+        }
+    }
+
+    sf_close(sample_file);
+
+    if (samples <= 0)
+    {
+        delete[] sample_buffer;
+        return {0, nullptr};
+    }
+
+    return BlobData{static_cast<int>(soundfile_info.frames * sizeof(float)), reinterpret_cast<uint8_t*>(sample_buffer)};
+}
+
 SamplePlayerPlugin::SamplePlayerPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
     Processor::set_name(PLUGIN_UID);
@@ -230,7 +267,7 @@ ProcessorReturnCode SamplePlayerPlugin::set_property_value(ObjectId property_id,
 {
     if (property_id == SAMPLE_PROPERTY_ID)
     {
-        auto sample_data = _load_sample_file(value);
+        auto sample_data = load_sample_file(value);
         if (sample_data.size > 0)
         {
             send_data_to_realtime(sample_data, 0);
@@ -250,44 +287,6 @@ void SamplePlayerPlugin::_all_notes_off()
     {
         voice.note_off(1.0f, 0);
     }
-}
-
-BlobData SamplePlayerPlugin::_load_sample_file(const std::string& file_name)
-{
-    SNDFILE* sample_file;
-    SF_INFO  soundfile_info = {};
-    if (! (sample_file = sf_open(file_name.c_str(), SFM_READ, &soundfile_info)))
-    {
-        ELKLOG_LOG_ERROR("Failed to open sample file: {}", file_name);
-        return {0, nullptr};
-    }
-
-    sf_count_t samples = 0;
-    float* sample_buffer = new float[soundfile_info.frames];
-    if (soundfile_info.channels == 1)
-    {
-        samples = sf_readf_float(sample_file, sample_buffer, soundfile_info.frames);
-    }
-    else // Decode interleaved stereo
-    {
-        float buffer[2];
-        for (int i = 0; i < soundfile_info.frames; ++i)
-        {
-            samples += sf_readf_float(sample_file, buffer, 1);
-            sample_buffer[i] = buffer[0];
-        }
-    }
-
-    sf_close(sample_file);
-
-    if (samples <= 0)
-    {
-        delete[] sample_buffer;
-        return {0, nullptr};
-    }
-
-    return BlobData{static_cast<int>(soundfile_info.frames * sizeof(float)), reinterpret_cast<uint8_t*>(sample_buffer)};
-
 }
 
 } // end namespace sushi::internal::sample_player_plugin
