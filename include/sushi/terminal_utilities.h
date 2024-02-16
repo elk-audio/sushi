@@ -86,169 +86,189 @@ static ParseStatus parse_options(int argc, char* argv[], sushi::SushiOptions& op
     {
         optionparser::Option& opt = cl_buffer[static_cast<size_t>(i)];
 
-        switch(opt.index())
+        try
         {
-            case OPT_IDX_HELP:
-            case OPT_IDX_UNKNOWN:
-                // should be handled before arriving here
-                assert(false);
-                break;
+            switch(opt.index())
+            {
+                case OPT_IDX_HELP:
+                case OPT_IDX_UNKNOWN:
+                    // should be handled before arriving here
+                    assert(false);
+                    break;
 
-            case OPT_IDX_VERSION:
-                {
-                    print_version_and_build_info();
-                    return ParseStatus::EXIT;
-                }
-                break;
+                case OPT_IDX_VERSION:
+                    {
+                        print_version_and_build_info();
+                        return ParseStatus::EXIT;
+                    }
+                    break;
 
-            case OPT_IDX_LOG_LEVEL:
-                options.log_level.assign(opt.arg);
-                break;
+                case OPT_IDX_LOG_LEVEL:
+                    options.log_level.assign(opt.arg);
+                    break;
 
-            case OPT_IDX_LOG_FILE:
-                options.log_file.assign(opt.arg);
-                break;
+                case OPT_IDX_LOG_FILE:
+                    options.log_file.assign(opt.arg);
+                    break;
 
-            case OPT_IDX_LOG_FLUSH_INTERVAL:
-                options.log_flush_interval = std::chrono::seconds(std::strtol(opt.arg, nullptr, 0));
-                options.enable_flush_interval = true;
-                break;
+                case OPT_IDX_LOG_FLUSH_INTERVAL:
+                    options.log_flush_interval = std::chrono::seconds(std::strtol(opt.arg, nullptr, 0));
+                    options.enable_flush_interval = true;
+                    break;
 
-            case OPT_IDX_DUMP_PARAMETERS:
-                options.enable_parameter_dump = true;
-                break;
+                case OPT_IDX_DUMP_PARAMETERS:
+                    options.enable_parameter_dump = true;
+                    break;
 
-            case OPT_IDX_CONFIG_FILE:
-                options.config_filename.assign(opt.arg);
-                break;
+                case OPT_IDX_CONFIG_FILE:
+                    options.config_filename.assign(opt.arg);
+                    break;
 
-            case OPT_IDX_USE_OFFLINE:
-                options.frontend_type = FrontendType::OFFLINE;
-                break;
+                case OPT_IDX_USE_OFFLINE:
+                    options.frontend_type = FrontendType::OFFLINE;
+                    break;
 
-            case OPT_IDX_INPUT_FILE:
-                options.input_filename.assign(opt.arg);
-                break;
+                case OPT_IDX_INPUT_FILE:
+                    options.input_filename.assign(opt.arg);
+                    break;
 
-            case OPT_IDX_OUTPUT_FILE:
-                options.output_filename.assign(opt.arg);
-                break;
+                case OPT_IDX_OUTPUT_FILE:
+                    options.output_filename.assign(opt.arg);
+                    break;
 
-            case OPT_IDX_USE_DUMMY:
-                options.frontend_type = FrontendType::DUMMY;
-                break;
+                case OPT_IDX_USE_DUMMY:
+                    options.frontend_type = FrontendType::DUMMY;
+                    break;
 
-            case OPT_IDX_USE_PORTAUDIO:
-                options.frontend_type = FrontendType::PORTAUDIO;
-                break;
+                case OPT_IDX_USE_PORTAUDIO:
+                    options.frontend_type = FrontendType::PORTAUDIO;
+                    break;
 
-            case OPT_IDX_USE_APPLE_COREAUDIO:
-                options.frontend_type = FrontendType::APPLE_COREAUDIO;
-                break;
+                case OPT_IDX_USE_APPLE_COREAUDIO:
+                    options.frontend_type = FrontendType::APPLE_COREAUDIO;
+                    break;
 
-            case OPT_IDX_AUDIO_INPUT_DEVICE:
-                options.portaudio_input_device_id = std::stoi(opt.arg);
-                break;
+                case OPT_IDX_AUDIO_INPUT_DEVICE:
+                    options.portaudio_input_device_id = std::stoi(opt.arg);
+                    break;
 
-            case OPT_IDX_AUDIO_OUTPUT_DEVICE:
-                options.portaudio_output_device_id = std::stoi(opt.arg);
-                break;
+                case OPT_IDX_AUDIO_OUTPUT_DEVICE:
+                    options.portaudio_output_device_id = std::stoi(opt.arg);
+                    break;
 
-            case OPT_IDX_AUDIO_INPUT_DEVICE_UID:
-                options.apple_coreaudio_input_device_uid = opt.arg;
-                break;
+                case OPT_IDX_AUDIO_INPUT_DEVICE_UID:
+                    options.apple_coreaudio_input_device_uid = opt.arg;
+                    break;
 
-            case OPT_IDX_AUDIO_OUTPUT_DEVICE_UID:
-                options.apple_coreaudio_output_device_uid = opt.arg;
-                break;
+                case OPT_IDX_AUDIO_OUTPUT_DEVICE_UID:
+                    options.apple_coreaudio_output_device_uid = opt.arg;
+                    break;
 
-            case OPT_IDX_PA_SUGGESTED_INPUT_LATENCY:
-                options.suggested_input_latency = static_cast<float>(std::atof(opt.arg));
-                break;
+                case OPT_IDX_PA_SUGGESTED_INPUT_LATENCY:
+                    options.suggested_input_latency = static_cast<float>(std::atof(opt.arg));
+                    break;
 
-            case OPT_IDX_PA_SUGGESTED_OUTPUT_LATENCY:
-                options.suggested_output_latency = static_cast<float>(std::atof(opt.arg));
-                break;
+                case OPT_IDX_PA_SUGGESTED_OUTPUT_LATENCY:
+                    options.suggested_output_latency = static_cast<float>(std::atof(opt.arg));
+                    break;
 
-            case OPT_IDX_DUMP_DEVICES:
-                options.enable_audio_devices_dump = true;
-                break;
+                case OPT_IDX_DUMP_DEVICES:
+                    options.enable_audio_devices_dump = true;
+                    break;
 
-            case OPT_IDX_USE_JACK:
-                options.frontend_type = FrontendType::JACK;
-                break;
+                case OPT_IDX_USE_JACK:
+                    options.frontend_type = FrontendType::JACK;
+                    break;
 
-            case OPT_IDX_CONNECT_PORTS:
-                options.connect_ports = true;
-                break;
+                case OPT_IDX_CONNECT_PORTS:
+                    options.connect_ports = true;
+                    break;
 
-            case OPT_IDX_JACK_CLIENT:
-                options.jack_client_name.assign(opt.arg);
-                break;
+                case OPT_IDX_JACK_CLIENT:
+                    options.jack_client_name.assign(opt.arg);
+                    break;
 
-            case OPT_IDX_JACK_SERVER:
-                options.jack_server_name.assign(opt.arg);
-                break;
+                case OPT_IDX_JACK_SERVER:
+                    options.jack_server_name.assign(opt.arg);
+                    break;
 
-            case OPT_IDX_USE_XENOMAI_RASPA:
-                options.frontend_type = FrontendType::XENOMAI_RASPA;
-                break;
+                case OPT_IDX_USE_XENOMAI_RASPA:
+                    options.frontend_type = FrontendType::XENOMAI_RASPA;
+                    break;
 
-            case OPT_IDX_XENOMAI_DEBUG_MODE_SW:
-                options.debug_mode_switches = true;
-                break;
+                case OPT_IDX_XENOMAI_DEBUG_MODE_SW:
+                    options.debug_mode_switches = true;
+                    break;
 
-            case OPT_IDX_MULTICORE_PROCESSING:
-                options.rt_cpu_cores = std::stoi(opt.arg);
-                break;
+                case OPT_IDX_MULTICORE_PROCESSING:
+                    options.rt_cpu_cores = std::stoi(opt.arg);
+                    break;
 
-            case OPT_IDX_TIMINGS_STATISTICS:
-                options.enable_timings = true;
-                break;
+                case OPT_IDX_TIMINGS_STATISTICS:
+                    options.enable_timings = true;
+                    break;
 
-            case OPT_IDX_OSC_RECEIVE_PORT:
-                options.osc_server_port = std::stoi(opt.arg);
-                break;
+                case OPT_IDX_OSC_RECEIVE_PORT:
+                    options.osc_server_port = std::stoi(opt.arg);
+                    break;
 
-            case OPT_IDX_OSC_SEND_PORT:
-                options.osc_send_port = std::stoi(opt.arg);
-                break;
+                case OPT_IDX_OSC_SEND_PORT:
+                    options.osc_send_port = std::stoi(opt.arg);
+                    break;
 
-            case OPT_IDX_OSC_SEND_IP:
-                options.osc_send_ip = opt.arg;
-                break;
+                case OPT_IDX_OSC_SEND_IP:
+                    options.osc_send_ip = opt.arg;
+                    break;
 
-            case OPT_IDX_GRPC_LISTEN_ADDRESS:
-                options.grpc_listening_address = opt.arg;
-                break;
+                case OPT_IDX_GRPC_LISTEN_ADDRESS:
+                    options.grpc_listening_address = opt.arg;
+                    break;
 
-            case OPT_IDX_NO_OSC:
-                options.use_osc = false;
-                break;
+                case OPT_IDX_NO_OSC:
+                    options.use_osc = false;
+                    break;
 
-            case OPT_IDX_NO_GRPC:
-                options.use_grpc = false;
-                break;
+                case OPT_IDX_NO_GRPC:
+                    options.use_grpc = false;
+                    break;
 
-            case OPT_IDX_BASE_PLUGIN_PATH:
-                options.base_plugin_path = std::string(opt.arg);
-                break;
+                case OPT_IDX_BASE_PLUGIN_PATH:
+                    options.base_plugin_path = std::string(opt.arg);
+                    break;
 
-            case OPT_IDX_SENTRY_CRASH_HANDLER:
-                options.sentry_crash_handler_path = opt.arg;
-                break;
+                case OPT_IDX_SENTRY_CRASH_HANDLER:
+                    options.sentry_crash_handler_path = opt.arg;
+                    break;
 
-            case OPT_IDX_SENTRY_DSN:
-                options.sentry_dsn = opt.arg;
-                break;
+                case OPT_IDX_SENTRY_DSN:
+                    options.sentry_dsn = opt.arg;
+                    break;
 
-            default:
-                SushiArg::print_error("Unhandled option '", opt, "' \n");
-                break;
+                default:
+                    SushiArg::print_error("Unhandled option '", opt, "' \n");
+                    break;
+            }
+        }
+        // Standard exceptions for stoi
+        catch (const std::invalid_argument& e)
+        {
+            std::cout << "Malformed terminal argument: " << e.what() << "\n";
+            return ParseStatus::ERROR;
+        }
+        catch (const std::out_of_range& e)
+        {
+            std::cout << "Malformed terminal argument: " << e.what() << "\n";
+            return ParseStatus::ERROR;
+        }
+        // And a catch-all just in case
+        catch (const std::exception& e)
+        {
+            std::cout << "Malformed terminal argument: " << e.what() << "\n";
+            return ParseStatus::ERROR;
         }
     }
 
-    if (options.enable_parameter_dump == true)
+    if (options.enable_parameter_dump)
     {
         options.frontend_type = FrontendType::DUMMY;
     }
