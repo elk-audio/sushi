@@ -84,7 +84,7 @@ struct SushiArg : public optionparser::Arg
 
     static optionparser::ArgStatus NonEmpty(const optionparser::Option& option, bool msg)
     {
-        if (option.arg != nullptr && option.arg[0] != 0)
+        if (option.arg && option.arg[0])
         {
             return optionparser::ARG_OK;
         }

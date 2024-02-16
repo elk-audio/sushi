@@ -66,15 +66,15 @@ private:
     ChunkSampleBuffer _render_buffer {1};
     ChunkSampleBuffer _aux_buffer {1};
 
-    FloatParameterValue* _volume {nullptr};
-    FloatParameterValue* _portamento {nullptr};
-    FloatParameterValue* _pulse_width {nullptr};
-    FloatParameterValue* _filter_cutoff {nullptr};
-    FloatParameterValue* _filter_Q {nullptr};
-    FloatParameterValue* _attack {nullptr};
-    FloatParameterValue* _decay {nullptr};
-    FloatParameterValue* _sustain {nullptr};
-    FloatParameterValue* _release {nullptr};
+    FloatParameterValue* _volume;
+    FloatParameterValue* _portamento;
+    FloatParameterValue* _pulse_width;
+    FloatParameterValue* _filter_cutoff;
+    FloatParameterValue* _filter_Q;
+    FloatParameterValue* _attack;
+    FloatParameterValue* _decay;
+    FloatParameterValue* _sustain;
+    FloatParameterValue* _release;
 
     bw_phase_gen_coeffs _phase_gen_coeffs {};
     bw_phase_gen_state  _phase_gen_state {};
