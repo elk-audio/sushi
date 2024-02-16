@@ -20,7 +20,7 @@
 
 #include "cv_gate_controller.h"
 
-#include <elk-warning-suppressor/warning_suppressor.hpp>
+#include "elk-warning-suppressor/warning_suppressor.hpp"
 
 namespace sushi::internal::engine::controller_impl {
 

@@ -23,7 +23,7 @@
 
 #include <vector>
 
-#include <elk-warning-suppressor/warning_suppressor.hpp>
+#include "elk-warning-suppressor/warning_suppressor.hpp"
 
 ELK_PUSH_WARNING
 ELK_DISABLE_SHORTEN_64_TO_32

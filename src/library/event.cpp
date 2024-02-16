@@ -27,7 +27,7 @@
 #include "library/event.h"
 #include "engine/base_engine.h"
 
-#include <elk-warning-suppressor/warning_suppressor.hpp>
+#include "elk-warning-suppressor/warning_suppressor.hpp"
 
 ELK_PUSH_WARNING
 

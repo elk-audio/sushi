@@ -23,7 +23,7 @@
 #ifndef COMBDELAY_PLUGIN_H
 #define COMBDELAY_PLUGIN_H
 
-#include <elk-warning-suppressor/warning_suppressor.hpp>
+#include "elk-warning-suppressor/warning_suppressor.hpp"
 
 ELK_PUSH_WARNING
 ELK_DISABLE_SHORTEN_64_TO_32

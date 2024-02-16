@@ -399,7 +399,7 @@ if (${SUSHI_WITH_VST3})
     endif()
 
     add_library(vst3_host STATIC ${VST3_HOST_SOURCES})
-    target_link_libraries(vst3_host PRIVATE ${AUDIOHOST_PLATFORM_LIBS} elk::warningSuppressor)
+    target_link_libraries(vst3_host PRIVATE ${AUDIOHOST_PLATFORM_LIBS})
     set_target_properties(vst3_host PROPERTIES EXCLUDE_FROM_ALL true)
     if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
         set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS "-DRELEASE ${VST3_COMPILE_FLAGS}")
