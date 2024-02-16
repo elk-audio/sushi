@@ -149,7 +149,7 @@ TEST_F(TestSamplePlayerPlugin, TestEventProcessing)
 {
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(1);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(1);
-    BlobData data = _module_under_test->_load_sample_file(test_utils::get_data_dir_path().append(SAMPLE_FILE));
+    BlobData data = load_sample_file(test_utils::get_data_dir_path().append(SAMPLE_FILE));
     ASSERT_NE(0, data.size);
     _module_under_test->_sample.set_sample(reinterpret_cast<float*>(data.data), data.size * sizeof(float));
     out_buffer.clear();
