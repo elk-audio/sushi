@@ -383,7 +383,14 @@ if (${SUSHI_WITH_VST3})
             "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/pluginterfacesupport.cpp"
             "${VST3_SDK_PATH}/public.sdk/source/common/memorystream.cpp")
 
-    set(VST3_COMPILE_FLAGS "-Wno-unused-parameter -Wno-extra -Wno-deprecated -Wno-cpp -Wno-pointer-bool-conversion -Wno-suggest-override -Wno-deprecated-declarations -Wno-unqualified-std-cast-call")
+    set(VST3_COMPILE_FLAGS "-Wno-unused-parameter \
+                            -Wno-extra \
+                            -Wno-deprecated \
+                            -Wno-cpp \
+                            -Wno-pointer-bool-conversion \
+                            -Wno-suggest-override \
+                            -Wno-deprecated-declarations \
+                            -Wformat=0")
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         set(VST3_HOST_SOURCES ${VST3_HOST_SOURCES} "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_linux.cpp")
@@ -395,7 +402,7 @@ if (${SUSHI_WITH_VST3})
             ${VST3_HOST_SOURCES}
             "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_mac.mm")
         set(AUDIOHOST_PLATFORM_LIBS "-framework Cocoa")
-        set(VST3_COMPILE_FLAGS "${VST3_COMPILE_FLAGS} -fobjc-arc")
+        set(VST3_COMPILE_FLAGS "${VST3_COMPILE_FLAGS} -fobjc-arc -Wno-unqualified-std-cast-call")
     endif()
 
     add_library(vst3_host STATIC ${VST3_HOST_SOURCES})
