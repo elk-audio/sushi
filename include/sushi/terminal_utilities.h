@@ -249,18 +249,8 @@ static ParseStatus parse_options(int argc, char* argv[], sushi::SushiOptions& op
                     break;
             }
         }
-        // Standard exceptions for stoi
-        catch (const std::invalid_argument& e)
-        {
-            std::cout << "Malformed terminal argument: " << e.what() << "\n";
-            return ParseStatus::ERROR;
-        }
-        catch (const std::out_of_range& e)
-        {
-            std::cout << "Malformed terminal argument: " << e.what() << "\n";
-            return ParseStatus::ERROR;
-        }
-        // And a catch-all just in case
+        // Standard exceptions for stoi are invalid_argument and out_of_range.
+        // But I use a catch-all just in case.
         catch (const std::exception& e)
         {
             std::cout << "Malformed terminal argument: " << e.what() << "\n";
