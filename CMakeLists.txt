@@ -390,6 +390,7 @@ if (${SUSHI_WITH_VST3})
                             -Wno-pointer-bool-conversion \
                             -Wno-suggest-override \
                             -Wno-deprecated-declarations \
+                            -Wno-shorten-64-to-32 \
                             -Wformat=0")
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")

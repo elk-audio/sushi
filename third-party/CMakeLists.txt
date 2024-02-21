@@ -69,6 +69,7 @@ if (${SUSHI_WITH_VST3})
                             -Wno-suggest-override \
                             -Wno-deprecated-declarations \
                             -Wno-unqualified-std-cast-call \
+                            -Wno-shorten-64-to-32 \
                             -Wformat=0")
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
