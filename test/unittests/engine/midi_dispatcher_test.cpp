@@ -121,7 +121,7 @@ protected:
     }
 
     EventDispatcherMockup _test_dispatcher;
-    EngineMockup          _test_engine {TEST_SAMPLE_RATE, &_test_dispatcher};
+    EngineMockup          _test_engine {TEST_SAMPLE_RATE};
     ::testing::NiceMock<MockMidiFrontend> _mock_frontend{nullptr};
     MidiDispatcher _module_under_test{&_test_dispatcher};
 };

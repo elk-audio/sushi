@@ -109,8 +109,7 @@ protected:
     ::testing::NiceMock<MockProcessorContainer> _mock_processor_container;
     MockOscInterface* _mock_osc_interface {nullptr};
 
-    EventDispatcherMockup         _event_dispatcher;
-    EngineMockup                  _mock_engine {TEST_SAMPLE_RATE, &_event_dispatcher};
+    EngineMockup                  _mock_engine {TEST_SAMPLE_RATE};
     sushi::control::ControlMockup _mock_controller;
 
     std::unique_ptr<OSCFrontend> _module_under_test;

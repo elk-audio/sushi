@@ -37,8 +37,7 @@ protected:
         delete _module_under_test;
     }
 
-    EventDispatcherMockup _event_dispatcher;
-    EngineMockup          _engine {SAMPLE_RATE, &_event_dispatcher};
+    EngineMockup _engine {SAMPLE_RATE};
 
     JackFrontend* _module_under_test;
 };

@@ -47,8 +47,7 @@ protected:
         mockPortAudio.reset();
     }
 
-    EventDispatcherMockup _event_dispatcher;
-    EngineMockup          _test_engine {SAMPLE_RATE, &_event_dispatcher};
+    EngineMockup _test_engine {SAMPLE_RATE};
     std::unique_ptr<PortAudioFrontend> _module_under_test;
 };
 

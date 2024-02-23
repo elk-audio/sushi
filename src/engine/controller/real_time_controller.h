@@ -48,8 +48,7 @@ class RealTimeController : public RtController
 public:
     RealTimeController(audio_frontend::ReactiveFrontend* audio_frontend,
                        midi_frontend::ReactiveMidiFrontend* midi_frontend,
-                       engine::Transport* transport,
-                       dispatcher::BaseEventDispatcher* dispatcher);
+                       engine::Transport* transport);
 
     ~RealTimeController() override = default;
 
@@ -92,8 +91,6 @@ private:
     audio_frontend::ReactiveFrontend* _audio_frontend {nullptr};
     midi_frontend::ReactiveMidiFrontend* _midi_frontend {nullptr};
     engine::Transport* _transport {nullptr};
-    dispatcher::BaseEventDispatcher* _event_dispatcher {nullptr};
-
     uint64_t _samples_since_start {0};
 
     float _tempo {0};

@@ -1222,13 +1222,14 @@ void AudioEngine::notify_interrupted_audio(Time interrupt_time)
 {
     if (interrupt_time > RT_EVENT_TIMEOUT / 2 )
     {
-        /* If audio was paused for long enough, pending RtEvents (add/remove processor etc)
+        /* If audio was paused for long enough, pending RtEvents (add/remove processor, etc)
          * May have timed out should not be processed */
         RtEvent event;
         while (_control_queue_in.pop(event))
         {
             ELKLOG_LOG_DEBUG("Deleted control event of type: {}", event.type());
         }
+        //TODO - Should also _main_in_queue, which contains events to processors, like parameter changes and midi notes be cleared?
     }
 }
 

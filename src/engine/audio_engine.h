@@ -510,9 +510,9 @@ public:
     /**
      * @brief Notify sushi that audio processing was interrupted. Possibly due to to
      *        audio over/underruns, audio was paused or similar issues
-     * @param interrupt_time An estimation of how long the interrupt lasted
+     * @param duration An estimation of how long the interrupt lasted
      */
-    void notify_interrupted_audio(Time interrupt_time) override;
+    void notify_interrupted_audio(Time duration) override;
 
 private:
     enum class Direction : bool

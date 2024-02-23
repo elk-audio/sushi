@@ -130,6 +130,7 @@ void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* outpu
     }
 
     out_buffer.clear();
+    _handle_resume(timestamp, AUDIO_CHUNK_SIZE);
 
     if (_pause_manager.should_process())
     {
@@ -147,11 +148,7 @@ void XenomaiRaspaFrontend::_internal_process_callback(float* input, float* outpu
         }
     }
 
-    if (_pause_notified == false && _pause_manager.should_process() == false)
-    {
-        _pause_notify->notify();
-        _pause_notified = true;
-    }
+    _handle_pause(timestamp);
 }
 
 AudioFrontendStatus XenomaiRaspaFrontend::config_audio_channels(const XenomaiRaspaFrontendConfiguration* config)

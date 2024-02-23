@@ -32,7 +32,6 @@ namespace sushi {
  */
 typedef std::chrono::microseconds Time;
 
-
 /**
  * @brief Convenience shorthand for setting timestamp to 0, i.e. process event without delay.
  */

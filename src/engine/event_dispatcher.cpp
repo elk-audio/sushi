@@ -36,8 +36,7 @@ ELKLOG_GET_LOGGER_WITH_MODULE_NAME("event dispatcher");
 
 EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
                                  RtSafeRtEventFifo* in_rt_queue,
-                                 RtSafeRtEventFifo* out_rt_queue) : _engine(engine),
-                                                                    _running{false},
+                                 RtSafeRtEventFifo* out_rt_queue) : _running{false},
                                                                     _in_rt_queue{in_rt_queue},
                                                                     _out_rt_queue{out_rt_queue},
                                                                     _worker{engine, this},

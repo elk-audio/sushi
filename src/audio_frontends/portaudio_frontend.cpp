@@ -411,6 +411,8 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
     Time timestamp = _start_time + std::chrono::duration_cast<std::chrono::microseconds>(pa_time_elapsed);
 
     _out_buffer.clear();
+    _handle_resume(timestamp, frame_count);
+
     if (_pause_manager.should_process())
     {
         _copy_interleaved_audio(static_cast<const float*>(input));
@@ -420,15 +422,8 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
             _pause_manager.ramp_output(_out_buffer);
         }
     }
-    else
-    {
-        if (_pause_notified == false)
-        {
-            _pause_notify->notify();
-            _pause_notified = true;
-            _engine->enable_realtime(false);
-        }
-    }
+
+    _handle_pause(timestamp);
 
     _output_interleaved_audio(static_cast<float*>(output));
 

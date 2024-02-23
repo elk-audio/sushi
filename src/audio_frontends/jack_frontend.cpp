@@ -287,7 +287,7 @@ int JackFrontend::internal_process_callback(jack_nframes_t framecount)
         _start_frame = current_frames;
     }
 
-    _handle_resume(start_time, frame_count);
+    _handle_resume(start_time, framecount);
 
     /* Process in chunks of AUDIO_CHUNK_SIZE */
     for (jack_nframes_t frame = 0; frame < framecount; frame += AUDIO_CHUNK_SIZE)

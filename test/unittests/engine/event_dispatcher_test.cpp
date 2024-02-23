@@ -40,6 +40,29 @@ int dummy_processor_callback(void* /*arg*/, EventId /*id*/)
     return EventStatus::HANDLED_OK;
 }
 
+class DummyPoster : public EventPoster
+{
+public:
+    int process(Event* /*event*/) override
+    {
+        _received = true;
+        return EventStatus::HANDLED_OK;
+    }
+
+    bool event_received()
+    {
+        if (_received)
+        {
+            _received = false;
+            return true;
+        }
+        return false;
+    }
+
+private:
+    bool _received {false};
+};
+
 class TestEventDispatcher : public ::testing::Test
 {
 public:
@@ -65,12 +88,11 @@ protected:
         delete _module_under_test;
     }
 
-    EventDispatcher*      _module_under_test = nullptr;
-    EventDispatcherMockup _event_dispatcher;
-    EngineMockup          _test_engine {TEST_SAMPLE_RATE, &_event_dispatcher};
-    RtSafeRtEventFifo     _in_rt_queue;
-    RtSafeRtEventFifo     _out_rt_queue;
-    DummyPoster           _poster;
+    EventDispatcher*    _module_under_test = nullptr;
+    EngineMockup        _test_engine{TEST_SAMPLE_RATE};
+    RtSafeRtEventFifo   _in_rt_queue;
+    RtSafeRtEventFifo   _out_rt_queue;
+    DummyPoster         _poster;
 };
 
 TEST_F(TestEventDispatcher, TestInstantiation)
@@ -232,9 +254,8 @@ protected:
         _module_under_test.stop();
     }
 
-    EventDispatcherMockup _event_dispatcher;
-    EngineMockup          _test_engine {TEST_SAMPLE_RATE, &_event_dispatcher};
-    Worker                _module_under_test {&_test_engine, _test_engine.event_dispatcher()};
+    EngineMockup _test_engine{TEST_SAMPLE_RATE};
+    Worker       _module_under_test {&_test_engine, _test_engine.event_dispatcher()};
 };
 
 TEST_F(TestWorker, TestEventQueueingAndProcessing)

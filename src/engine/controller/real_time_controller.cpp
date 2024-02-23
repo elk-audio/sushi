@@ -27,11 +27,9 @@ namespace sushi::internal
 
 RealTimeController::RealTimeController(audio_frontend::ReactiveFrontend* audio_frontend,
                                        midi_frontend::ReactiveMidiFrontend* midi_frontend,
-                                       engine::Transport* transport,
-                                       dispatcher::BaseEventDispatcher* dispatcher) : _audio_frontend(audio_frontend),
-                                                                                      _midi_frontend(midi_frontend),
-                                                                                      _transport(transport),
-                                                                                      _event_dispatcher(dispatcher)
+                                       engine::Transport* transport) : _audio_frontend(audio_frontend),
+                                                                       _midi_frontend(midi_frontend),
+                                                                       _transport(transport)
 {
 }
 

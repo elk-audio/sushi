@@ -122,31 +122,6 @@ private:
     std::deque<std::unique_ptr<Event>> _queue;
 };
 
-
-class DummyPoster : public EventPoster
-{
-public:
-    int process(Event* /*event*/) override
-    {
-        _received = true;
-        return EventStatus::HANDLED_OK;
-    }
-
-    bool event_received()
-    {
-        if (_received)
-        {
-            _received = false;
-            return true;
-        }
-        return false;
-    }
-
-private:
-    bool _received {false};
-};
-
-
 class ProcessorContainerMockup : public BaseProcessorContainer
 {
 public:
@@ -199,18 +174,12 @@ private:
 class EngineMockup : public BaseEngine
 {
 public:
-    explicit EngineMockup(float sample_rate,
-                          dispatcher::BaseEventDispatcher* dispatcher) : BaseEngine(sample_rate),
-                                                                         _event_dispatcher(dispatcher),
-                                                                         _transport(sample_rate, &_rt_event_output)
+    EngineMockup(float sample_rate) : BaseEngine(sample_rate),
+                                      _transport(sample_rate, &_rt_event_output)
     {}
 
-    ~EngineMockup() override = default;
-
-    void set_dispatcher(dispatcher::BaseEventDispatcher* dispatcher)
-    {
-        _event_dispatcher = dispatcher;
-    }
+    ~EngineMockup() override
+    {}
 
     void
     process_chunk(SampleBuffer<AUDIO_CHUNK_SIZE>* in_buffer,
@@ -241,7 +210,7 @@ public:
 
     dispatcher::BaseEventDispatcher* event_dispatcher() override
     {
-        return _event_dispatcher;
+        return &_event_dispatcher;
     }
 
     const BaseProcessorContainer* processor_container() override
@@ -259,7 +228,7 @@ public:
     }
 
 private:
-    dispatcher::BaseEventDispatcher* _event_dispatcher;
+    EventDispatcherMockup _event_dispatcher;
     ProcessorContainerMockup _processor_container;
 
     Transport _transport;
@@ -273,7 +242,7 @@ class DummyMidiFrontend : public sushi::internal::midi_frontend::BaseMidiFronten
 public:
     DummyMidiFrontend() : BaseMidiFrontend(nullptr) {}
 
-    ~DummyMidiFrontend() override = default;
+    ~DummyMidiFrontend() override {}
 
     bool init() override {return true;}
     void run()  override {}
@@ -296,8 +265,8 @@ public:
     }
 
 private:
-    bool _sent {false};
-    int  _input {};
+    bool _sent{false};
+    int  _input;
 };
 
 #endif //SUSHI_ENGINE_MOCKUP_H

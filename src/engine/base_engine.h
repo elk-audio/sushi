@@ -347,7 +347,7 @@ public:
 
     virtual void update_timings() {}
 
-    virtual void notify_interrupted_audio(Time duration) {}
+    virtual void notify_interrupted_audio(Time /*duration*/) {}
 
 protected:
     float _sample_rate;
