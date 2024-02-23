@@ -72,28 +72,18 @@ void ReactiveFrontend::run()
 
 void ReactiveFrontend::pause(bool paused)
 {
+    // TODO -  Decice if this needs to be kept. It is meant to be called from a non-rt thread while audio is running
     bool running = !_pause_manager.bypassed();
     _pause_manager.set_bypass(paused, _engine->sample_rate());
 
     if (paused && running)
     {
         _pause_notified = false;
-
         _engine->enable_realtime(false);
-
-        _engine->clear_rt_queues();
     }
     else
     {
         _engine->enable_realtime(true);
-    }
-}
-
-void ReactiveFrontend::notify_of_pause()
-{
-    if (_pause_notified == false && _pause_manager.should_process() == false)
-    {
-        _pause_notified = true;
     }
 }
 
@@ -127,10 +117,11 @@ void ReactiveFrontend::process_audio(ChunkSampleBuffer& in_buffer,
             _pause_manager.ramp_output(out_buffer);
         }
     }
-    else
-    {
-       notify_of_pause();
-    }
+}
+
+void ReactiveFrontend::notify_interrupted_audio(Time duration)
+{
+    _engine->notify_interrupted_audio(duration);
 }
 
 } // end namespace sushi::internal::audio_frontend

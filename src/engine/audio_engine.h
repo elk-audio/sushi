@@ -349,7 +349,7 @@ public:
      *
      * @param path Absolute path of the base plugin folder
      */
-    virtual void set_base_plugin_path(const std::string& path) override
+    void set_base_plugin_path(const std::string& path) override
     {
         _plugin_library.set_base_plugin_path(path);
     }
@@ -508,13 +508,11 @@ public:
     void update_timings() override;
 
     /**
-     * @brief Clears the queues which contain RtEvents intended for consumption in the audio callback.
-     * Its intended only to be used when the calls to the audio callback are temporarily suspended,
-     * to avoid overflowing the event queues.
-     * So do not invoke this if the audio callback is regularly called:
-     *  - system and plugin state will be discarded.
+     * @brief Notify sushi that audio processing was interrupted. Possibly due to to
+     *        audio over/underruns, audio was paused or similar issues
+     * @param interrupt_time An estimation of how long the interrupt lasted
      */
-    void clear_rt_queues() override;
+    void notify_interrupted_audio(Time interrupt_time) override;
 
 private:
     enum class Direction : bool

@@ -315,27 +315,23 @@ bool AppleCoreAudioFrontend::stop_io()
 void AppleCoreAudioFrontend::audio_callback(const float* input_data, int num_input_channels, float* output_data, int num_output_channels, int num_samples, uint64_t host_input_time)
 {
     _out_buffer.clear();
+    // TODO - Are we sure we always get the exact number of samples we request?
+    assert(num_samples == AUDIO_CHUNK_SIZE);
+    std::chrono::microseconds current_time(_time_conversions.host_time_to_nanos(host_input_time) / 1000);
+    _handle_resume(current_time, num_samples);
 
     if (_pause_manager.should_process())
     {
         _copy_interleaved_audio_to_input_buffer(input_data, num_input_channels);
-
-        std::chrono::microseconds host_input_time_us(_time_conversions.host_time_to_nanos(host_input_time) / 1000);
-        _engine->process_chunk(&_in_buffer, &_out_buffer, &_in_controls, &_out_controls, host_input_time_us, _processed_sample_count);
+        _engine->process_chunk(&_in_buffer, &_out_buffer, &_in_controls, &_out_controls, current_time, _processed_sample_count);
 
         if (_pause_manager.should_ramp())
-            _pause_manager.ramp_output(_out_buffer);
-    }
-    else
-    {
-        if (_pause_notified == false)
         {
-            _pause_notify->notify();
-            _pause_notified = true;
-            _engine->enable_realtime(false);
+            _pause_manager.ramp_output(_out_buffer);
         }
     }
 
+    _handle_pause(current_time);
     _copy_output_buffer_to_interleaved_buffer(output_data, num_output_channels);
 
     _processed_sample_count += num_samples;

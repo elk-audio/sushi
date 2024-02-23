@@ -37,9 +37,9 @@ RealTimeController::RealTimeController(audio_frontend::ReactiveFrontend* audio_f
 
 void RealTimeController::pause(bool paused)
 {
-    _event_dispatcher->pause_rt_processing(paused);
-    _audio_frontend->pause(paused);
-    _audio_frontend->notify_of_pause();
+    //_event_dispatcher->pause_rt_processing(paused);
+    //_audio_frontend->pause(paused);
+    //_audio_frontend->notify_of_pause();
 }
 
 void RealTimeController::set_tempo(float tempo)
@@ -117,6 +117,11 @@ void RealTimeController::process_audio(ChunkSampleBuffer& in_buffer,
                                    out_buffer,
                                    _samples_since_start,
                                    timestamp);
+}
+
+void RealTimeController::notify_interrupted_audio(Time duration)
+{
+    _audio_frontend->notify_interrupted_audio(duration);
 }
 
 void RealTimeController::receive_midi(int input, MidiDataByte data, Time timestamp)

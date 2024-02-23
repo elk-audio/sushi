@@ -77,6 +77,8 @@ public:
                        ChunkSampleBuffer& out_buffer,
                        Time timestamp) override;
 
+    void notify_interrupted_audio(sushi::Time duration) override;
+
     /// For MIDI:
     /////////////////////////////////////////////////////////////
 

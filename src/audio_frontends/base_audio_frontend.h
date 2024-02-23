@@ -94,12 +94,33 @@ public:
      virtual void pause(bool paused);
 
 protected:
+    /**
+     * @brief Call before calling engine->process_chunk for default handling of resume and xrun detection
+     * @param current_time Audio timestamp of the current audio callback
+     * @param current_sample Number of samples in the current audio callback
+     */
+    void _handle_resume(Time current_time, int current_samples);
+
+    /**
+     * @brief Call after calling engine->process_chunk for default handling of externally triggered pause
+     * @param current_time Audio timestamp of the current audio callback
+     */
+    void _handle_pause(Time current_time);
+
+    std::pair<bool, Time> _test_for_xruns(Time current_time, int current_samples);
+
     BaseAudioFrontendConfiguration* _config {nullptr};
     engine::BaseEngine* _engine {nullptr};
 
     BypassManager _pause_manager;
     std::unique_ptr<twine::RtConditionVariable> _pause_notify;
     std::atomic_bool _pause_notified {false};
+    std::atomic_bool _resume_notified {true};
+    Time _pause_start;
+
+    Time _last_process_time;
+    Time _process_time_limit;
+    float _inv_samplerate;
 };
 
 } // end namespace sushi::internal

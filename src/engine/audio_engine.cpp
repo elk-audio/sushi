@@ -740,7 +740,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
         if (added == false)
         {
             ELKLOG_LOG_ERROR("Failed to add processor {} to track {}", plugin->name(), track->name());
-            return EngineReturnStatus::INVALID_PROCESSOR;
+            return EngineReturnStatus::ERROR;
         }
     }
     else
@@ -782,8 +782,11 @@ EngineReturnStatus AudioEngine::remove_plugin_from_track(ObjectId plugin_id, Obj
         // Send events to handle this in the rt domain
         auto remove_event = RtEvent::make_remove_processor_from_track_event(plugin_id, track_id);
         _send_control_event(remove_event);
-        [[maybe_unused]] bool remove_ok = _event_receiver.wait_for_response(remove_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
-        ELKLOG_LOG_ERROR_IF(remove_ok == false, "Failed to remove/delete processor {} from processing part", plugin_id)
+        if (!_event_receiver.wait_for_response(remove_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT))
+        {
+            ELKLOG_LOG_ERROR("Failed to remove/delete processor {} in rt from track {}", plugin_id, track_id);
+            return EngineReturnStatus::ERROR;
+        }
     }
     else
     {
@@ -1215,17 +1218,17 @@ void AudioEngine::update_timings()
     }
 }
 
-void AudioEngine::clear_rt_queues()
+void AudioEngine::notify_interrupted_audio(Time interrupt_time)
 {
-    RtEvent event;
-    while (_control_queue_in.pop(event))
+    if (interrupt_time > RT_EVENT_TIMEOUT / 2 )
     {
-        ELKLOG_LOG_DEBUG("Deleted control event of type: {}", event.type());
-    }
-
-    while (_main_in_queue.pop(event))
-    {
-        ELKLOG_LOG_DEBUG("Deleted rt event of type: {}", event.type());
+        /* If audio was paused for long enough, pending RtEvents (add/remove processor etc)
+         * May have timed out should not be processed */
+        RtEvent event;
+        while (_control_queue_in.pop(event))
+        {
+            ELKLOG_LOG_DEBUG("Deleted control event of type: {}", event.type());
+        }
     }
 }
 
