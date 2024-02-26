@@ -71,7 +71,7 @@ void BaseAudioFrontend::pause(bool paused)
 
 std::pair<bool, Time> BaseAudioFrontend::_test_for_xruns(Time current_time, int current_samples)
 {
-    auto delta_time = _last_process_time - current_time;
+    auto delta_time = current_time - _last_process_time;
     auto limit = Time(static_cast<int>(current_samples * _inv_samplerate * XRUN_LIMIT_FACTOR * Time(std::chrono::seconds(1)).count()));
 
     if (delta_time != Time(0) && std::abs(delta_time.count()) > limit.count())
