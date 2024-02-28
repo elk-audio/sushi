@@ -46,6 +46,7 @@
  */
 
 #include <filesystem>
+#include <cassert>
 
 #ifdef __APPLE__
 #include <Corefoundation/Corefoundation.h>
@@ -184,7 +185,7 @@ void PluginLoader::close_library_handle(LibraryHandle library_handle)
     // Not sure if we should really need to unload the executable manually.
     // Apples docs say that as long you match the number of "CFBundleCreate..." with
     // "CFRelease" we should be fine. Also, it apparently only loads bundle once.
-    CFRelease(library_handle);
+    assert (library_handle);
     if (CFGetRetainCount(library_handle) == 1)
     {
         CFBundleUnloadExecutable((CFBundleRef)library_handle);
@@ -193,11 +194,11 @@ void PluginLoader::close_library_handle(LibraryHandle library_handle)
             ELKLOG_LOG_WARNING("Could not safely close plugin, possible resource leak");
         }
     }
+
     if (CFGetRetainCount(library_handle) > 0)
     {
-        library_handle = 0;
+        CFRelease(library_handle);
     }
-
 }
 #endif
 
