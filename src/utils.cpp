@@ -31,6 +31,7 @@
 
 #include "elklog/static_logger.h"
 #include "sushi/sushi.h"
+#include "sushi/elk_sentry_log_sink.h"
 
 namespace sushi {
 
@@ -80,6 +81,9 @@ void init_logger([[maybe_unused]] const SushiOptions& options)
     {
         ELKLOG_LOG_INFO("Logger flush interval disabled.");
     }
+
+    auto sentry_sink = std::make_shared<elk::sentry_sink_mt>();
+    ELKLOG_ADD_SINK(sentry_sink);
 }
 
 }

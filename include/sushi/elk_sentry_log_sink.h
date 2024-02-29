@@ -1,25 +1,10 @@
-/*
- * Copyright 2017-2023 Elk Audio AB
- *
- * SUSHI is free software: you can redistribute it and/or modify it under the terms of
- * the GNU Affero General Public License as published by the Free Software Foundation,
- * either version 3 of the License, or (at your option) any later version.
- *
- * SUSHI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE. See the GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License along with
- * SUSHI. If not, see http://www.gnu.org/licenses/
- */
-
 /**
  * @brief An spdlog sink which wraps the Sentry logging functionality
- * @Copyright 2017-2023 Elk Audio AB, Stockholm
+ * @Copyright 2017-2024 Elk Audio AB, Stockholm
  */
 
-#ifndef SUSHI_SENTRY_LOG_SINK_H
-#define SUSHI_SENTRY_LOG_SINK_H
+#ifndef ELK_SENTRY_LOG_SINK_H
+#define ELK_SENTRY_LOG_SINK_H
 
 #include <iostream>
 #include <mutex>
@@ -28,40 +13,18 @@
 #include "spdlog/sinks/base_sink.h"
 #include "sentry.h"
 
-ELKLOG_GET_LOGGER_WITH_MODULE_NAME("sentry");
-
 namespace elk {
 
 template<typename Mutex>
 class SentrySink : public spdlog::sinks::base_sink<Mutex>
 {
 public:
-    SentrySink(const std::string& sentry_crash_handler_path,
-               const std::string& sentry_dsn) : spdlog::sinks::base_sink<Mutex>()
+    SentrySink() : spdlog::sinks::base_sink<Mutex>()
     {
-        sentry_options_t* options = sentry_options_new();
-
-        int status = -1;
-
-        if (options != nullptr)
-        {
-            sentry_options_set_handler_path(options, sentry_crash_handler_path.c_str());
-            sentry_options_set_dsn(options, sentry_dsn.c_str());
-            sentry_options_set_database_path(options, "/tmp/.sentry-native-elk-sushi");
-            status = sentry_init(options);
-        }
-
-        if (status != 0)
-        {
-            ELKLOG_LOG_DEBUG("sentry initialization failed. "
-                            "This is usually either because it lacks write access in the database path, "
-                            "or because it hasn't received a valid path to the crashpad_handler executable.");
-        }
     }
 
     ~SentrySink()
     {
-        sentry_close();
     }
 
 protected:
