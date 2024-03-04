@@ -123,6 +123,7 @@ if (${SUSHI_WITH_VST2})
     )
 
     add_library(vst2_test_plugin MODULE ${VST2_TEST_PLUGIN_SOURCES})
+
     # Suppress VST SDK warnings
     set(VST2_COMPILE_FLAS -Wall -Wno-write-strings -Wno-narrowing)
     if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -221,7 +222,7 @@ target_include_directories(unit_tests
             ${INCLUDE_DIRS}
             ${PUBLIC_INCLUDE_DIRS})
 
-target_link_libraries(unit_tests "${TEST_LINK_LIBRARIES}")
+target_link_libraries(unit_tests "${TEST_LINK_LIBRARIES}" elk::warningSuppressor)
 if (TEST_DEPENDENCIES)
     add_dependencies(unit_tests ${TEST_DEPENDENCIES})
 endif()

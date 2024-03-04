@@ -5,8 +5,13 @@
 #include "test_utils/test_utils.h"
 #include "test_utils/host_control_mockup.h"
 
+#include "elk-warning-suppressor/warning_suppressor.hpp"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_KEYWORD_MACRO
 #define private public
 #define protected public
+ELK_POP_WARNING
 
 #include "engine/processor_container.cpp"
 

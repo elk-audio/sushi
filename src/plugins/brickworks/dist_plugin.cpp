@@ -65,7 +65,6 @@ ProcessorReturnCode DistPlugin::init(float sample_rate)
 void DistPlugin::configure(float sample_rate)
 {
     bw_dist_set_sample_rate(&_dist_coeffs, 2.0f * sample_rate);
-    return;
 }
 
 void DistPlugin::set_enabled(bool enabled)

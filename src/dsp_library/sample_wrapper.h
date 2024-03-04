@@ -32,7 +32,7 @@ class Sample
 {
     SUSHI_DECLARE_NON_COPYABLE(Sample);
 public:
-    Sample() {}
+    Sample() = default;
 
     Sample(const float* sample, int length) : _data(sample), _length(length) {}
 
@@ -50,15 +50,15 @@ public:
     /**
      * @brief Return the value at sample position. Does linear interpolation
      * @param position The position in the sample buffer.
-     * @return A linearily interpolated sample value.
+     * @return A linearly interpolated sample value.
      */
-    float at(double position) const
+    [[nodiscard]] float at(double position) const
     {
         assert(position >= 0);
         assert(_data);
 
         int sample_pos = static_cast<int>(position);
-        float weight = position - std::floor(position);
+        auto weight = static_cast<float>(position - std::floor(position));
         float sample_low = (sample_pos < _length) ? _data[sample_pos] : 0.0f;
         float sample_high = (sample_pos + 1 < _length) ? _data[sample_pos + 1] : 0.0f;
 

@@ -68,7 +68,6 @@ ProcessorReturnCode NoiseGatePlugin::init(float sample_rate)
 void NoiseGatePlugin::configure(float sample_rate)
 {
     bw_noise_gate_set_sample_rate(&_noise_gate_coeffs, sample_rate);
-    return;
 }
 
 void NoiseGatePlugin::set_enabled(bool enabled)

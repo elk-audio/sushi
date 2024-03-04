@@ -1,5 +1,11 @@
 #include "gtest/gtest.h"
+
+#include "elk-warning-suppressor/warning_suppressor.hpp"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_KEYWORD_MACRO
 #define private public
+ELK_POP_WARNING
 
 #include "library/midi_decoder.cpp"
 

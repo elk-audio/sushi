@@ -88,7 +88,7 @@ struct CCInputConnection
 
 struct PCInputConnection
 {
-    int processor_id;
+    ObjectId processor_id;
     int channel;
     int port;
 };

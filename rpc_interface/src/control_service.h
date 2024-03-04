@@ -24,10 +24,12 @@
 #include <atomic>
 #include <grpcpp/grpcpp.h>
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
+#include "elk-warning-suppressor/warning_suppressor.hpp"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_UNUSED_PARAMETER
 #include "sushi_rpc.grpc.pb.h"
-#pragma GCC diagnostic pop
+ELK_POP_WARNING
 
 #include "sushi/control_interface.h"
 

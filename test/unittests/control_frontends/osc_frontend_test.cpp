@@ -6,10 +6,15 @@
 
 #include "control_frontends/base_control_frontend.cpp"
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
+#include "elk-warning-suppressor/warning_suppressor.hpp"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_UNUSED_PARAMETER
+
+ELK_PUSH_WARNING
+ELK_DISABLE_KEYWORD_MACRO
 #define private public
+ELK_POP_WARNING
 
 #include "test_utils/mock_osc_interface.h"
 #include "test_utils/engine_mockup.h"
@@ -20,7 +25,7 @@
 #include "control_frontends/osc_frontend.cpp"
 
 #undef private
-#pragma GCC diagnostic pop
+ELK_POP_WARNING
 
 using ::testing::Return;
 using ::testing::StrEq;

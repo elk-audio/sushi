@@ -27,10 +27,12 @@
 #include "library/vst3x/vst3x_wrapper.h"
 #endif
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-const-variable"
+#include "elk-warning-suppressor/warning_suppressor.hpp"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_UNUSED_CONST_VARIABLE
 ELKLOG_GET_LOGGER_WITH_MODULE_NAME("Vst3");
-#pragma GCC diagnostic pop
+ELK_POP_WARNING
 
 namespace sushi::internal::vst3 {
 

@@ -33,11 +33,11 @@ constexpr size_t TOTAL_POLYPHONY = 8;
 class SamplePlayerPlugin : public InternalPlugin, public UidHelper<SamplePlayerPlugin>
 {
 public:
-    SamplePlayerPlugin(HostControl host_control);
+    explicit SamplePlayerPlugin(HostControl host_control);
 
-    ~SamplePlayerPlugin();
+    ~SamplePlayerPlugin() override;
 
-    virtual ProcessorReturnCode init(float sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
 
     void configure(float sample_rate) override;
 
@@ -55,8 +55,6 @@ public:
 
 private:
     void _all_notes_off();
-
-    BlobData _load_sample_file(const std::string& file_name);
 
     float*  _sample_buffer{nullptr};
     float   _dummy_sample{0.0f};

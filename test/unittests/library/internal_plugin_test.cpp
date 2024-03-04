@@ -4,11 +4,18 @@
 
 #include "engine/transport.h"
 
+#include "elk-warning-suppressor/warning_suppressor.hpp"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_KEYWORD_MACRO
 #define private public
 #define protected public
+
 #include "library/internal_plugin.cpp"
 #undef private
 #undef protected
+
+ELK_POP_WARNING
 
 #include "test_utils/host_control_mockup.h"
 #include "test_utils/test_utils.h"

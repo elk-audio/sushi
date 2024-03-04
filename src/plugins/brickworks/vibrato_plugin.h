@@ -23,7 +23,12 @@
 
 #include <vector>
 
+#include "elk-warning-suppressor/warning_suppressor.hpp"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_SHORTEN_64_TO_32
 #include <bw_chorus.h>
+ELK_POP_WARNING
 
 #include "library/internal_plugin.h"
 

@@ -1,8 +1,15 @@
 #include "gtest/gtest.h"
 
+#include "elk-warning-suppressor/warning_suppressor.hpp"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_KEYWORD_MACRO
 #define private public
+
 #include "engine/controller/session_controller.cpp"
+
 #undef private
+ELK_POP_WARNING
 
 #include "engine/audio_engine.h"
 #include "control_frontends/base_control_frontend.h"

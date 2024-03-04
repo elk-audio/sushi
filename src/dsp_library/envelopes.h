@@ -53,8 +53,7 @@ class AdsrEnvelope
     };
 
 public:
-    AdsrEnvelope()
-    {};
+    AdsrEnvelope() = default;
 
     /**
      * @brief Set the envelope parameters.
@@ -96,7 +95,7 @@ public:
                 break;
 
             case EnvelopeState::ATTACK:
-                _current_level += samples * _attack_factor;
+                _current_level += static_cast<float>(samples) * _attack_factor;
                 if (_current_level >= 1)
                 {
                     _state = EnvelopeState::DECAY;
@@ -105,7 +104,7 @@ public:
                 break;
 
             case EnvelopeState::DECAY:
-                _current_level -= samples * _decay_factor;
+                _current_level -= static_cast<float>(samples) * _decay_factor;
                 if (_current_level <= _sustain_level)
                 {
                     _state = EnvelopeState::SUSTAIN;
@@ -118,7 +117,7 @@ public:
                 break;
 
             case EnvelopeState::RELEASE:
-                _current_level -= samples * _release_factor;
+                _current_level -= static_cast<float>(samples) * _release_factor;
                 if (_current_level < 0.0f)
                 {
                     _state = EnvelopeState::OFF;
@@ -133,8 +132,10 @@ public:
      * @brief Get the envelopes current level without advancing it.
      * @return The current envelope level.
      */
-    float level() const
-    { return _current_level; }
+    [[nodiscard]] float level() const
+    {
+        return _current_level;
+    }
 
     /**
      * @brief Analogous to the gate signal on an analog envelope. Setting gate
