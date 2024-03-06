@@ -119,7 +119,6 @@ protected:
     Time _pause_start;
 
     Time _last_process_time;
-    Time _process_time_limit;
     float _inv_samplerate;
 };
 
