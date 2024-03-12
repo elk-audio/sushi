@@ -68,18 +68,18 @@ if (${SUSHI_WITH_VST3})
         set(VST3_COMPILE_FLAGS " /W0")
     else()
         set(VST3_COMPILE_FLAGS "-Wno-unused-parameter \
-                            -Wno-extra -Wno-deprecated \
-                            -Wno-cpp \
-                            -Wno-pointer-bool-conversion \
-                            -Wno-suggest-override \
-                            -Wno-deprecated-declarations \
-                            -Wno-unqualified-std-cast-call \
-                            -Wno-shorten-64-to-32 \
-                            -Wformat=0")
+                                -Wno-extra -Wno-deprecated \
+                                -Wno-cpp \
+                                -Wno-pointer-bool-conversion \
+                                -Wno-suggest-override \
+                                -Wno-deprecated-declarations \
+                                -Wno-unqualified-std-cast-call \
+                                -Wno-shorten-64-to-32 \
+                                -Wformat=0")
 
-    if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-        set(VST3_COMPILE_FLAGS "${VST3_COMPILE_FLAGS} -fobjc-arc -Wno-unqualified-std-cast-call")
-    endif()
+        if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+            set(VST3_COMPILE_FLAGS "${VST3_COMPILE_FLAGS} -fobjc-arc -Wno-unqualified-std-cast-call")
+        endif()
     endif()
 
     if (SMTG_ADD_VST3_PLUGINS_SAMPLES)

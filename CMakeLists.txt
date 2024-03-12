@@ -413,14 +413,14 @@ if (${SUSHI_WITH_VST3})
 
     if(NOT MSVC)
         set(VST3_COMPILE_FLAGS "-Wno-unused-parameter \
-                            -Wno-extra \
-                            -Wno-deprecated \
-                            -Wno-cpp \
-                            -Wno-pointer-bool-conversion \
-                            -Wno-suggest-override \
-                            -Wno-deprecated-declarations \
-                            -Wno-shorten-64-to-32 \
-                            -Wformat=0")
+                                -Wno-extra \
+                                -Wno-deprecated \
+                                -Wno-cpp \
+                                -Wno-pointer-bool-conversion \
+                                -Wno-suggest-override \
+                                -Wno-deprecated-declarations \
+                                -Wno-shorten-64-to-32 \
+                                -Wformat=0")
     endif()
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
@@ -713,9 +713,9 @@ set(COMMON_LIBRARIES
 
 if(NOT MSVC)
     set(COMMON_LIBRARIES ${COMMON_LIBRARIES} pthread dl)
-endif()
 
-set_target_properties(oscpack PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
+    set_target_properties(oscpack PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
+endif()
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     set(COMMON_LIBRARIES ${COMMON_LIBRARIES} atomic)
