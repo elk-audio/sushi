@@ -543,6 +543,7 @@ message("Configured audio buffer size: " ${SUSHI_AUDIO_BUFFER_SIZE} " samples")
 
 if (${SUSHI_WITH_SENTRY})
     find_package(Threads)
+    find_package(ZLIB)
     find_package(sentry CONFIG REQUIRED)
 
     message("Building with sentry.io support.")
