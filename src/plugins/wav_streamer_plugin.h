@@ -29,6 +29,9 @@
 #include "dsp_library/value_smoother.h"
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::wav_streamer_plugin {
 
 enum class StreamingMode
@@ -176,5 +179,7 @@ private:
 };
 
 } // namespace sushi::internal::wav_player_plugin
+
+ELK_POP_WARNING
 
 #endif //SUSHI_WAV_STREAMER_PLUGIN_H

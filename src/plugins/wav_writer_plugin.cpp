@@ -59,7 +59,7 @@ WavWriterPlugin::~WavWriterPlugin()
 ProcessorReturnCode WavWriterPlugin::init(float sample_rate)
 {
     memset(&_soundfile_info, 0, sizeof(_soundfile_info));
-    _soundfile_info.samplerate = sample_rate;
+    _soundfile_info.samplerate = static_cast<int>(sample_rate);
     _soundfile_info.channels = N_AUDIO_CHANNELS;
     _soundfile_info.format = (SF_FORMAT_WAV | SF_FORMAT_PCM_24);
     _write_speed = _write_speed_parameter->domain_value();
@@ -69,7 +69,7 @@ ProcessorReturnCode WavWriterPlugin::init(float sample_rate)
 
 void WavWriterPlugin::configure(float sample_rate)
 {
-    _soundfile_info.samplerate = sample_rate;
+    _soundfile_info.samplerate = static_cast<int>(sample_rate);
 }
 
 void WavWriterPlugin::set_bypassed(bool bypassed)

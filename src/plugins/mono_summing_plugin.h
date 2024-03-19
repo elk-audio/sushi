@@ -24,6 +24,9 @@
 #include "library/internal_plugin.h"
 #include "library/rt_event_fifo.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::mono_summing_plugin {
 
 class MonoSummingPlugin : public InternalPlugin, public UidHelper<MonoSummingPlugin>
@@ -44,5 +47,7 @@ public:
 };
 
 } // end namespace sushi::internal::mono_summing_plugin
+
+ELK_POP_WARNING
 
 #endif // SUSHI_MONO_SUMMING_PLUGIN_H

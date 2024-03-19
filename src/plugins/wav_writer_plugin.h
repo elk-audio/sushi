@@ -27,6 +27,9 @@
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::wav_writer_plugin {
 
 constexpr int N_AUDIO_CHANNELS = 2;
@@ -92,5 +95,7 @@ private:
 };
 
 } // end namespace sushi::internal::wav_writer_plugin
+
+ELK_POP_WARNING
 
 #endif // SUSHI_WAVE_WRITER_PLUGIN_H

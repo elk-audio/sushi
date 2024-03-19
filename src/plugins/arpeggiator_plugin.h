@@ -68,6 +68,8 @@ private:
     bool             _hold{true};
 };
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
 
 class ArpeggiatorPlugin : public InternalPlugin, public UidHelper<ArpeggiatorPlugin>
 {
@@ -98,5 +100,7 @@ private:
 };
 
 } // end namespace sushi::internal::sample_player_plugin
+
+ELK_POP_WARNING
 
 #endif // SUSHI_ARPEGGIATOR_PLUGIN_H

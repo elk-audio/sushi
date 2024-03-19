@@ -142,7 +142,7 @@ public:
         else
         {
             assert(_spec.coeff != 0);
-            return _current_value = (1.0 - _spec.coeff) * _target_value + _spec.coeff * _current_value;
+            return _current_value = (static_cast<T>(1.0) - _spec.coeff) * _target_value + _spec.coeff * _current_value;
         }
     }
 
@@ -192,7 +192,7 @@ private:
     {
         if constexpr (mode == Mode::FILTER)
         {
-            _spec.coeff = std::exp(-1.0 * TIMECONSTANTS_RISE_TIME / (lag_time.count() * sample_rate));
+            _spec.coeff = std::exp(static_cast<T>(-1.0 * TIMECONSTANTS_RISE_TIME) / (lag_time.count() * sample_rate));
         }
         else
         {

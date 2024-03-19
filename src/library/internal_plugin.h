@@ -25,6 +25,7 @@
 #include <unordered_map>
 #include <mutex>
 
+#include "elk-warning-suppressor/warning_suppressor.hpp"
 #include "library/processor.h"
 #include "library/plugin_parameters.h"
 

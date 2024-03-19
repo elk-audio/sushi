@@ -244,8 +244,8 @@ inline void to_grpc(sushi_rpc::MidiCCConnection& dest, const sushi::control::Mid
     dest.mutable_channel()->set_channel(to_grpc(src.channel));
     dest.set_port(src.port);
     dest.set_cc_number(src.cc_number);
-    dest.set_min_range(src.min_range);
-    dest.set_max_range(src.max_range);
+    dest.set_min_range(static_cast<float>(src.min_range));
+    dest.set_max_range(static_cast<float>(src.max_range));
     dest.set_relative_mode(src.relative_mode);
 }
 

@@ -26,6 +26,9 @@
 #include "library/internal_plugin.h"
 #include "plugins/sample_player_voice.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::sample_player_plugin {
 
 constexpr size_t TOTAL_POLYPHONY = 8;
@@ -71,5 +74,7 @@ private:
 };
 
 } // end namespace sushi::internal::sample_player_plugin
+
+ELK_POP_WARNING
 
 #endif // SUSHI_SAMPLER_PLUGIN_H

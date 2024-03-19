@@ -199,7 +199,7 @@ void InternalPlugin::set_parameter_and_notify(FloatParameterValue* storage, floa
 
 void InternalPlugin::set_parameter_and_notify(IntParameterValue* storage, int new_value)
 {
-    storage->set(new_value);
+    storage->set(static_cast<float>(new_value));
     auto e = RtEvent::make_parameter_change_event(this->id(), 0, storage->descriptor()->id(), storage->normalized_value());
     output_event(e);
 }
@@ -253,14 +253,14 @@ std::pair<ProcessorReturnCode, float> InternalPlugin::parameter_value_in_domain(
     }
     else if (value_storage.type() == ParameterType::INT)
     {
-        return {ProcessorReturnCode::OK, value_storage.int_parameter_value()->domain_value()};
+        return {ProcessorReturnCode::OK, static_cast<float>(value_storage.int_parameter_value()->domain_value())};
     }
     else if (value_storage.type() == ParameterType::BOOL)
     {
         return {ProcessorReturnCode::OK, value_storage.bool_parameter_value()->domain_value() ? 1.0f : 0.0f};
     }
 
-    return {ProcessorReturnCode::PARAMETER_ERROR, 0};
+    return {ProcessorReturnCode::PARAMETER_ERROR, 0.0f};
 }
 
 std::pair<ProcessorReturnCode, std::string> InternalPlugin::parameter_value_formatted(ObjectId parameter_id) const

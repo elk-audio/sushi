@@ -182,8 +182,10 @@ std::unique_ptr<Event> Event::from_rt_event(const RtEvent& rt_event, Time timest
         }
         default:
             return nullptr;
-
     }
+
+    assert(false);
+    return nullptr;
 }
 
 RtEvent KeyboardEvent::to_rt_event(int sample_offset) const
@@ -211,6 +213,9 @@ RtEvent KeyboardEvent::to_rt_event(int sample_offset) const
         case KeyboardEvent::Subtype::WRAPPED_MIDI:
             return RtEvent::make_wrapped_midi_event(_processor_id, sample_offset, _midi_data);
     }
+
+    assert(false);
+    return RtEvent {};
 }
 
 RtEvent ParameterChangeEvent::to_rt_event(int sample_offset) const
@@ -218,18 +223,26 @@ RtEvent ParameterChangeEvent::to_rt_event(int sample_offset) const
     switch (_subtype)
     {
         case ParameterChangeEvent::Subtype::INT_PARAMETER_CHANGE:
-            return RtEvent::make_parameter_change_event(_processor_id, sample_offset, _parameter_id, this->int_value());
+            return RtEvent::make_parameter_change_event(_processor_id,
+                                                        sample_offset,
+                                                        _parameter_id,
+                                                        static_cast<float>(this->int_value()));
 
         case ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE:
-            return RtEvent::make_parameter_change_event(_processor_id, sample_offset, _parameter_id, this->float_value());
+            return RtEvent::make_parameter_change_event(_processor_id,
+                                                        sample_offset,
+                                                        _parameter_id,
+                                                        this->float_value());
 
         case ParameterChangeEvent::Subtype::BOOL_PARAMETER_CHANGE:
-            return RtEvent::make_parameter_change_event(_processor_id, sample_offset, _parameter_id, this->bool_value());
-
-       default:
-            /* Only to stop the compiler from complaining */
-            return {};
+            return RtEvent::make_parameter_change_event(_processor_id,
+                                                        sample_offset,
+                                                        _parameter_id,
+                                                        static_cast<float>(this->bool_value()));
     }
+
+    /* Only to stop the compiler from complaining */
+    return {};
 }
 
 RtEvent SetProcessorBypassEvent::to_rt_event(int /*sample_offset*/) const

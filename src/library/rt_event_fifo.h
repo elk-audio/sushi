@@ -21,6 +21,11 @@
 #ifndef SUSHI_REALTIME_FIFO_H
 #define SUSHI_REALTIME_FIFO_H
 
+#include "elk-warning-suppressor/warning_suppressor.hpp"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_ALIGNMENT_PADDING
+
 #include "fifo/circularfifo_memory_relaxed_aquire_release.h"
 #include "library/simple_fifo.h"
 #include "library/rt_event.h"
@@ -76,5 +81,7 @@ public:
 };
 
 } //end namespace sushi::internal
+
+ELK_POP_WARNING
 
 #endif // SUSHI_REALTIME_FIFO_H

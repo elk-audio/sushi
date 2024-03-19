@@ -26,6 +26,9 @@
 
 #include "engine/track.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::peak_meter_plugin {
 
 constexpr int MAX_METERED_CHANNELS = MAX_TRACK_CHANNELS;
@@ -78,5 +81,7 @@ private:
 };
 
 } // end namespace sushi::internal::peak_meter_plugin
+
+ELK_POP_WARNING
 
 #endif // SUSHI_PEAK_METER_PLUGIN_H

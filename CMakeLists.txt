@@ -736,7 +736,9 @@ target_link_libraries(${PROJECT_NAME} PUBLIC ${EXTRA_BUILD_LIBRARIES} ${COMMON_L
 #  Compiler Flags and definitions  #
 ####################################
 
-if(NOT MSVC)
+if(MSVC)
+    target_compile_options(${PROJECT_NAME} PRIVATE "/wd4996") #C4996: Deprecated warning. This was flooding the terminal, I might remove the suppression from here eventually, and out into the code again.
+else ()
     target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Wextra -Wno-psabi -fPIC -ffast-math)
 
     target_compile_options(${PROJECT_NAME}  PRIVATE -fno-rtti)

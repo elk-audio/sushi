@@ -77,7 +77,10 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
     {
         // Open audio file and check channels / sample rate
         memset(&_soundfile_info, 0, sizeof(_soundfile_info));
-        if (!(_input_file = sf_open(off_config->input_filename.c_str(), SFM_READ, &_soundfile_info)))
+
+        _input_file = sf_open(off_config->input_filename.c_str(), SFM_READ, &_soundfile_info);
+
+        if (!_input_file)
         {
             cleanup();
             ELKLOG_LOG_ERROR("Unable to open input file {}", off_config->input_filename);
@@ -93,7 +96,10 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
         }
 
         // Open output file with same format as input file
-        if (!(_output_file = sf_open(off_config->output_filename.c_str(), SFM_WRITE, &_soundfile_info)))
+
+        _output_file = sf_open(off_config->output_filename.c_str(), SFM_WRITE, &_soundfile_info);
+
+        if (!_output_file)
         {
             cleanup();
             ELKLOG_LOG_ERROR("Unable to open output file {}", off_config->output_filename);
@@ -220,15 +226,24 @@ void OfflineFrontend::_process_dummy()
 void OfflineFrontend::_run_blocking()
 {
     set_flush_denormals_to_zero();
-    int readcount;
     int samplecount = 0;
     double usec_time = 0.0f;
     Time start_time = std::chrono::microseconds(0);
 
     float file_buffer[OFFLINE_FRONTEND_CHANNELS * AUDIO_CHUNK_SIZE];
-    while ( (readcount = static_cast<int>(sf_readf_float(_input_file,
+
+//    ELK_PUSH_WARNING
+    //_Pragma("warning(push)")
+    #pragma warning(push)
+
+//    ELK_DISABLE_ASSIGNMENT_WITHIN_CONDITIONAL
+    // _Pragma("warning(disable:4706)")
+    // VERY weirdly this is ignored???
+    #pragma warning(disable:4706)
+
+    while (int readcount = static_cast<int>(sf_readf_float(_input_file,
                                                          file_buffer,
-                                                         static_cast<sf_count_t>(AUDIO_CHUNK_SIZE)))) )
+                                                         static_cast<sf_count_t>(AUDIO_CHUNK_SIZE))))
     {
         auto process_time = start_time + std::chrono::microseconds(static_cast<uint64_t>(usec_time));
 
@@ -267,6 +282,10 @@ void OfflineFrontend::_run_blocking()
         // Not done in libsndfile's example
         sf_writef_float(_output_file, file_buffer, static_cast<sf_count_t>(readcount));
     }
+
+    // _Pragma("warning(pop)")
+    #pragma warning(pop)
+    // ELK_POP_WARNING
 }
 
 void OfflineFrontend::pause(bool /*enabled*/)

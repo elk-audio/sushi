@@ -25,6 +25,9 @@
 
 namespace sushi::internal::gain_plugin {
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 class GainPlugin : public InternalPlugin, public UidHelper<GainPlugin>
 {
 public:
@@ -41,5 +44,7 @@ private:
 };
 
 } // end namespace sushi::internal::gain_plugin
+
+ELK_POP_WARNING
 
 #endif // GAIN_PLUGIN_H

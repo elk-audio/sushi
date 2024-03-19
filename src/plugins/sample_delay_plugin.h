@@ -27,6 +27,9 @@
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::sample_delay_plugin {
 
 constexpr int MAX_DELAY = 48000;
@@ -63,5 +66,7 @@ private:
 };
 
 } // end namespace sushi::internal::sample_delay_plugin
+
+ELK_POP_WARNING
 
 #endif // !SUSHI_SAMPLE_DELAY_PLUGIN_H

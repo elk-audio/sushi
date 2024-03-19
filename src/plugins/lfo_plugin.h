@@ -23,6 +23,9 @@
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::lfo_plugin {
 
 class LfoPlugin : public InternalPlugin, public UidHelper<LfoPlugin>
@@ -48,5 +51,7 @@ private:
 };
 
 } // end namespace sushi::internal::lfo_plugin
+
+ELK_POP_WARNING
 
 #endif // LFO_PLUGIN_H

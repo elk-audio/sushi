@@ -142,7 +142,7 @@ public:
 
     virtual T to_domain(float value_normalized)
     {
-        return _max_domain_value + (_min_domain_value - _max_domain_value) / (_min_normalized - _max_normalized) * (value_normalized - _max_normalized);
+        return static_cast<T>(_max_domain_value + static_cast<float>(_min_domain_value - _max_domain_value) / (_min_normalized - _max_normalized) * (static_cast<T>(value_normalized) - _max_normalized));
     }
 
     virtual float to_normalized(T value)

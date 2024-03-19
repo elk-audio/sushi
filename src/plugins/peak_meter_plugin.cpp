@@ -48,7 +48,7 @@ inline float to_normalised_dB(float gain)
 
 PeakMeterPlugin::PeakMeterPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
-    _clip_hold_count.fill(0.0);
+    _clip_hold_count.fill(0);
     _clipped.fill(false);
     _max_input_channels = MAX_METERED_CHANNELS;
     _max_output_channels = MAX_METERED_CHANNELS;
@@ -127,7 +127,7 @@ void PeakMeterPlugin::process_event(const RtEvent& event)
 void PeakMeterPlugin::_update_refresh_interval(float rate, float sample_rate)
 {
     _refresh_interval = static_cast<int>(std::round(sample_rate / rate));
-    _clip_hold_samples = sample_rate * CLIP_HOLD_TIME.count();
+    _clip_hold_samples = static_cast<uint64_t>(sample_rate * CLIP_HOLD_TIME.count());
     for (auto& i :  _smoothers)
     {
         i.set_lag_time(REFRESH_TIME, sample_rate / AUDIO_CHUNK_SIZE);

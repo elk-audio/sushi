@@ -85,6 +85,12 @@ void pipe_signal_handler([[maybe_unused]] int sig)
     ELKLOG_LOG_INFO("Pipe signal received and ignored: {}", sig);
 }
 
+static void print_sushi_headline()
+{
+    std::cout << "SUSHI - Copyright 2017-2023 Elk Audio AB, Stockholm" << std::endl;
+    std::cout << "SUSHI is licensed under the Affero GPL 3.0. Source code is available at github.com/elk-audio" << std::endl;
+}
+
 int main(int argc, char* argv[])
 {
     signal(SIGINT, exit_on_signal);

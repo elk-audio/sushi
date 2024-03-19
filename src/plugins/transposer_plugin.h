@@ -24,6 +24,8 @@
 #include "library/rt_event_fifo.h"
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
 
 namespace sushi::internal::transposer_plugin {
 
@@ -51,5 +53,7 @@ private:
 };
 
 } // end namespace sushi::internal::transposer_plugin
+
+ELK_POP_WARNING
 
 #endif // SUSHI_TRANSPOSER_PLUGIN_H

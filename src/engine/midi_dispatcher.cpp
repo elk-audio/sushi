@@ -592,26 +592,26 @@ bool MidiDispatcher::midi_clock_enabled(int midi_output)
 void MidiDispatcher::send_midi(int port, MidiDataByte data, Time timestamp)
 {
     const int channel = midi::decode_channel(data);
-    const int size = data.size();
+    const int size = static_cast<int>(data.size());
     /* Dispatch raw midi messages */
     {
         std::scoped_lock lock(_raw_routes_in_lock);
 
-        const auto& cons = _raw_routes_in.find(port);
-        if (cons != _raw_routes_in.end())
+        const auto& raw_cons_in = _raw_routes_in.find(port);
+        if (raw_cons_in != _raw_routes_in.end())
         {
-            for (auto c : cons->second[midi::MidiChannel::OMNI])
+            for (auto c : raw_cons_in->second[midi::MidiChannel::OMNI])
             {
                 _event_dispatcher->post_event(make_wrapped_midi_event(c, data.data(), size, timestamp));
             }
-            for (auto c : cons->second[channel])
+            for (auto c : raw_cons_in->second[channel])
             {
                 _event_dispatcher->post_event(make_wrapped_midi_event(c, data.data(), size, timestamp));
             }
         }
     }
 
-    std::scoped_lock lock(_kb_routes_in_lock);
+    std::scoped_lock kb_lock(_kb_routes_in_lock);
 
     /* Dispatch decoded midi messages */
     midi::MessageType type = midi::decode_message_type(data);
@@ -621,16 +621,16 @@ void MidiDispatcher::send_midi(int port, MidiDataByte data, Time timestamp)
         {
             midi::ControlChangeMessage decoded_msg = midi::decode_control_change(data);
 
-            std::scoped_lock lock(_cc_routes_lock);
+            std::scoped_lock cc_lock(_cc_routes_lock);
 
-            const auto& cons = _cc_routes.find(port);
-            if (cons != _cc_routes.end())
+            const auto& cc_cons = _cc_routes.find(port);
+            if (cc_cons != _cc_routes.end())
             {
-                for (auto& c : cons->second[decoded_msg.controller][midi::MidiChannel::OMNI])
+                for (auto& c : cc_cons->second[decoded_msg.controller][midi::MidiChannel::OMNI])
                 {
                     _event_dispatcher->post_event(make_param_change_event(c, decoded_msg, timestamp));
                 }
-                for (auto& c : cons->second[decoded_msg.controller][decoded_msg.channel])
+                for (auto& c : cc_cons->second[decoded_msg.controller][decoded_msg.channel])
                 {
                     _event_dispatcher->post_event(make_param_change_event(c, decoded_msg, timestamp));
                 }

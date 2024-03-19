@@ -11,8 +11,10 @@ set(OSC_LIB_ONLY ON)
 
 add_subdirectory(oscpack)
 
-# oscpack sets the -Wall flag, which is negated below, to suppress warnings.
-if(NOT MSVC)
+if (MSVC)
+    target_compile_options(oscpack PRIVATE "/W0")
+else()
+    # oscpack sets the -Wall flag, which is negated below, to suppress warnings.
     target_compile_options(oscpack PRIVATE "-Wno-all")
 endif()
 

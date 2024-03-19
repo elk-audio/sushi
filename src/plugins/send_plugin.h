@@ -28,6 +28,9 @@
 #include "send_return_factory.h"
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal {
 
 class SendReturnFactory;
@@ -85,5 +88,7 @@ private:
 
 } // end namespace sushi::internal
 } // end namespace send_plugin
+
+ELK_POP_WARNING
 
 #endif // SUSHI_SEND_PLUGIN_H

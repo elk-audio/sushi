@@ -20,7 +20,10 @@
 
 #include "biquad_filter.h"
 
+#if ! defined(_MSC_VER)
 #define _USE_MATH_DEFINES
+#endif
+
 #include <cmath>
 #include <algorithm>
 
@@ -53,7 +56,7 @@ void calc_biquad_peak(Coefficients& filter, float samplerate, float frequency, f
 
 void calc_biquad_lowpass(Coefficients&  filter, float samplerate, float frequency)
 {
-    float w0 = 2 * M_PI * frequency / samplerate;
+    float w0 = 2.0f * static_cast<float>(M_PI) * frequency / samplerate;
     float w0_cos = std::cos(w0);
     float w0_sin = std::sin(w0);
     float alpha = w0_sin;
@@ -82,7 +85,7 @@ void BiquadFilter::reset()
      * put the filter in a default state */
     _delay_registers = {0.0, 0.0};
     _coefficients = _coefficient_targets;
-    std::fill(_smoothing_registers, _smoothing_registers + NUMBER_OF_BIQUAD_COEF, 0.0);
+    std::fill(_smoothing_registers, _smoothing_registers + NUMBER_OF_BIQUAD_COEF, 0.0f);
 }
 
 void BiquadFilter::set_smoothing(int buffer_size)
@@ -93,7 +96,7 @@ void BiquadFilter::set_smoothing(int buffer_size)
      * we can get by without a bilinear transformation and simply
      * calculate a time constant from an analogue prototype filter instead. */
 
-    _smoothing_coefficients.b0 = std::exp(-2 * M_PI * (1.0f / buffer_size) * TIME_CONSTANTS_IN_SMOOTHING_FILTER);
+    _smoothing_coefficients.b0 = std::exp(-2.0f * static_cast<float>(M_PI) * (1.0f / static_cast<float>(buffer_size)) * TIME_CONSTANTS_IN_SMOOTHING_FILTER);
     _smoothing_coefficients.a0 = 1 - _smoothing_coefficients.b0;
 }
 

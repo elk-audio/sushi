@@ -45,7 +45,7 @@ void PerformanceTimer::set_timing_period(TimePoint timing_period)
 
 void PerformanceTimer::set_timing_period(float samplerate, int buffer_size)
 {
-    _period = static_cast<double>(buffer_size) / samplerate * SEC_TO_NANOSEC;
+    _period = static_cast<float>(static_cast<double>(buffer_size) / samplerate * SEC_TO_NANOSEC);
 }
 
 std::optional<ProcessTimings> PerformanceTimer::timings_for_node(int id)

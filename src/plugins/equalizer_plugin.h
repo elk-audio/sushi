@@ -24,6 +24,9 @@
 #include "library/internal_plugin.h"
 #include "dsp_library/biquad_filter.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::equalizer_plugin {
 
 constexpr int MAX_CHANNELS_SUPPORTED = 2;
@@ -57,5 +60,7 @@ private:
 };
 
 } // end namespace sushi::internal::equalizer_plugin
+
+ELK_POP_WARNING
 
 #endif // EQUALIZER_PLUGIN_H

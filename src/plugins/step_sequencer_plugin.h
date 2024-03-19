@@ -26,6 +26,9 @@
 #include "library/internal_plugin.h"
 #include "library/rt_event_fifo.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::step_sequencer_plugin {
 
 constexpr int SEQUENCER_STEPS = 8;
@@ -70,5 +73,7 @@ float samples_per_qn(float tempo, float samplerate);
 int snap_to_scale(int note, const std::array<int, 12>& scale);
 
 } // end namespace sushi::internal::step_sequencer_plugin
+
+ELK_POP_WARNING
 
 #endif // SUSHI_STEP_SEQUENCER_PLUGIN_H

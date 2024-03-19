@@ -24,6 +24,8 @@
 #include "library/internal_plugin.h"
 #include "dsp_library/value_smoother.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
 
 namespace sushi::internal::stereo_mixer_plugin {
 
@@ -55,5 +57,7 @@ private:
 };
 
 } // end namespace sushi::internal::stereo_mixer_plugin
+
+ELK_POP_WARNING
 
 #endif // SUSHI_STEREO_MIXER_PLUGIN_H

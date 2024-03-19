@@ -22,6 +22,8 @@
 
 ELK_PUSH_WARNING
 ELK_DISABLE_TYPE_LIMITS
+ELK_DISABLE_CONDITIONAL_EXPRESSION_IS_CONSTANT
+ELK_COMPARISON_CALLS_NAME_RECURSIVELY
 #include "rapidjson/error/en.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/schema.h"
@@ -283,11 +285,12 @@ JsonConfigReturnStatus JsonConfigurator::load_tracks()
 
 JsonConfigReturnStatus JsonConfigurator::load_midi()
 {
-    auto [status, midi] = _parse_section(JsonSection::MIDI);
-    if (status != JsonConfigReturnStatus::OK)
+    auto [midi_section_status, midi] = _parse_section(JsonSection::MIDI);
+    if (midi_section_status != JsonConfigReturnStatus::OK)
     {
-        return status;
+        return midi_section_status;
     }
+
     if (midi.HasMember("track_connections"))
     {
         for (const auto& con : midi["track_connections"].GetArray())
@@ -452,8 +455,8 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
     {
         for (const auto& port : midi["clock_output"]["enabled_ports"].GetArray())
         {
-            auto status = _midi_dispatcher->enable_midi_clock(true, port.GetInt());
-            if (status != midi_dispatcher::MidiDispatcherStatus::OK)
+            auto midi_clock_status = _midi_dispatcher->enable_midi_clock(true, port.GetInt());
+            if (midi_clock_status != midi_dispatcher::MidiDispatcherStatus::OK)
             {
                 ELKLOG_LOG_ERROR("Failed to enable midi clock output on port {}", port.GetInt());
                 return JsonConfigReturnStatus::INVALID_MIDI_PORT;
@@ -749,26 +752,32 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value& tra
 {
     auto name = track_def["name"].GetString();
     EngineReturnStatus status = EngineReturnStatus::ERROR;
-    ObjectId track_id;
+    ObjectId track_id {0};
 
-    if (type == TrackType::REGULAR)
+    switch (type)
     {
-        if (track_def.HasMember("multibus") && track_def["multibus"].GetBool())
+        case TrackType::REGULAR:
         {
-            std::tie(status, track_id) = _engine->create_multibus_track(name, track_def["buses"].GetInt());
+            if (track_def.HasMember("multibus") && track_def["multibus"].GetBool())
+            {
+                std::tie(status, track_id) = _engine->create_multibus_track(name, track_def["buses"].GetInt());
+            }
+            else if (track_def.HasMember("channels"))
+            {
+                std::tie(status, track_id) = _engine->create_track(name, track_def["channels"].GetInt());
+            }
+            break;
         }
-        else if (track_def.HasMember("channels"))
+        case TrackType::PRE:
         {
-            std::tie(status, track_id) = _engine->create_track(name, track_def["channels"].GetInt());
+            std::tie(status, track_id) = _engine->create_pre_track(name);
+            break;
         }
-    }
-    else if (type == TrackType::PRE)
-    {
-        std::tie(status, track_id) = _engine->create_pre_track(name);
-    }
-    else if (type == TrackType::POST)
-    {
-        std::tie(status, track_id) = _engine->create_post_track(name);
+        case TrackType::POST:
+        {
+            std::tie(status, track_id) = _engine->create_post_track(name);
+            break;
+        }
     }
 
     if (status == EngineReturnStatus::INVALID_PLUGIN || status == EngineReturnStatus::INVALID_PROCESSOR)
