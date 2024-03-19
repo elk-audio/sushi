@@ -232,14 +232,8 @@ void OfflineFrontend::_run_blocking()
 
     float file_buffer[OFFLINE_FRONTEND_CHANNELS * AUDIO_CHUNK_SIZE];
 
-//    ELK_PUSH_WARNING
-    //_Pragma("warning(push)")
-    #pragma warning(push)
-
-//    ELK_DISABLE_ASSIGNMENT_WITHIN_CONDITIONAL
-    // _Pragma("warning(disable:4706)")
-    // VERY weirdly this is ignored???
-    #pragma warning(disable:4706)
+    ELK_PUSH_WARNING
+    ELK_DISABLE_ASSIGNMENT_WITHIN_CONDITIONAL
 
     while (int readcount = static_cast<int>(sf_readf_float(_input_file,
                                                          file_buffer,
@@ -283,9 +277,7 @@ void OfflineFrontend::_run_blocking()
         sf_writef_float(_output_file, file_buffer, static_cast<sf_count_t>(readcount));
     }
 
-    // _Pragma("warning(pop)")
-    #pragma warning(pop)
-    // ELK_POP_WARNING
+    ELK_POP_WARNING
 }
 
 void OfflineFrontend::pause(bool /*enabled*/)
