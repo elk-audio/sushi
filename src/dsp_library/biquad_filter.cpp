@@ -26,6 +26,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <numbers>
 
 namespace sushi::dsp::biquad {
 
@@ -40,7 +41,7 @@ inline float process_one_pole(const OnePoleCoefficients coefficients, const floa
 void calc_biquad_peak(Coefficients& filter, float samplerate, float frequency, float q, float gain)
 {
     double A = std::sqrt(gain); // Note that the dB to linear gain conversion is done in the parameters preprocessor
-    double w0 = 2 * M_PI * frequency / samplerate;
+    double w0 = 2.0 * std::numbers::pi * frequency / samplerate;
     double w0_cos = std::cos(w0);
     double w0_sin = std::sin(w0);
     double alpha = 0.5 * w0_sin / q;
@@ -56,7 +57,7 @@ void calc_biquad_peak(Coefficients& filter, float samplerate, float frequency, f
 
 void calc_biquad_lowpass(Coefficients&  filter, float samplerate, float frequency)
 {
-    float w0 = 2.0f * static_cast<float>(M_PI) * frequency / samplerate;
+    float w0 = 2.0f * std::numbers::pi_v<float> * frequency / samplerate;
     float w0_cos = std::cos(w0);
     float w0_sin = std::sin(w0);
     float alpha = w0_sin;
@@ -96,7 +97,7 @@ void BiquadFilter::set_smoothing(int buffer_size)
      * we can get by without a bilinear transformation and simply
      * calculate a time constant from an analogue prototype filter instead. */
 
-    _smoothing_coefficients.b0 = std::exp(-2.0f * static_cast<float>(M_PI) * (1.0f / static_cast<float>(buffer_size)) * TIME_CONSTANTS_IN_SMOOTHING_FILTER);
+    _smoothing_coefficients.b0 = std::exp(-2.0f * std::numbers::pi_v<float> * (1.0f / static_cast<float>(buffer_size)) * TIME_CONSTANTS_IN_SMOOTHING_FILTER);
     _smoothing_coefficients.a0 = 1 - _smoothing_coefficients.b0;
 }
 

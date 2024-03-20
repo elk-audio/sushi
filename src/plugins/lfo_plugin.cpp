@@ -19,6 +19,7 @@
  */
 
 #include <cassert>
+#include <numbers>
 
 #include "lfo_plugin.h"
 
@@ -56,7 +57,7 @@ void LfoPlugin::configure(float sample_rate)
 void LfoPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
 {
     bypass_process(in_buffer, out_buffer);
-    _phase += static_cast<float>(_freq_parameter->processed_value() * M_PI / _buffers_per_second);
+    _phase += static_cast<float>(_freq_parameter->processed_value() * std::numbers::pi_v<float> / _buffers_per_second);
     this->set_parameter_and_notify(_out_parameter, (std::sin(_phase) + 1) * 0.5f);
 }
 

@@ -1,5 +1,6 @@
 #include <cmath>
 #include <cstdint>
+#include <numbers>
 
 #include "vst2_test_plugin.h"
 
@@ -140,7 +141,7 @@ void Vst2TestPlugin::processReplacing(float**inputs, float**outputs, VstInt32 sa
         out2[i] = in2[i] * _parameters[Parameters::GAIN];
         if (_playing)
         {
-            out1[i] += std::cos(_phase * M_PI);
+            out1[i] += std::cos(_phase * std::numbers::pi_v<float>);
             out2[i] += std::signbit(_phase - 0.5f)? 0.5f : -0.5f;
         }
         _phase = std::fmod(_phase + _frequency, 1.0f);
