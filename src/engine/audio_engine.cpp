@@ -723,7 +723,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
 
     if (plugin->active_rt_processing())
     {
-        ELKLOG_LOG_ERROR("Plugin {} is already active on a track");
+        ELKLOG_LOG_ERROR("Plugin {} is already active on a track", plugin_id);
         return EngineReturnStatus::ERROR;
     }
 

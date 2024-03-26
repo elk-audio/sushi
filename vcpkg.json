@@ -14,10 +14,6 @@
       "name": "libsndfile",
       "default-features": false
     },
-    {
-      "name": "pthreads",
-      "platform": "windows"
-    },
     "portaudio",
     "rtmidi",
     "sentry-native"

@@ -50,6 +50,7 @@
 #ifdef __APPLE__
 #include <Corefoundation/Corefoundation.h>
 #elif defined(_MSC_VER)
+#define NOMINMAX 1
 #include <Windows.h>
 #endif
 
