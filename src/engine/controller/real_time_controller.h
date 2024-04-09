@@ -51,7 +51,7 @@ public:
                        engine::Transport* transport);
 
     ~RealTimeController() override = default;
-    
+
     /// For Transport:
     /////////////////////////////////////////////////////////////
 
