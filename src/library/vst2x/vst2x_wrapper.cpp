@@ -271,6 +271,7 @@ void Vst2xWrapper::_cleanup()
     if (_library_handle != nullptr)
     {
         PluginLoader::close_library_handle(_library_handle);
+        _library_handle = nullptr;
     }
 }
 
