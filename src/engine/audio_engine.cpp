@@ -1223,8 +1223,8 @@ void AudioEngine::notify_interrupted_audio(Time interrupt_time)
     if (interrupt_time > RT_EVENT_TIMEOUT / 2 )
     {
         /* If audio was paused for long enough, pending RtEvents (add/remove processor, etc)
-         * May have timed out should not be processed. Also assume that midi notes and parameter
-         * changes should not take effect */
+         * May have timed out and should not be processed. Also assume that midi notes and
+         * parameter changes should not take effect */
         ELKLOG_LOG_INFO("Rt thread timed out for too long, clearing queues");
         RtEvent event;
         while (_control_queue_in.pop(event))

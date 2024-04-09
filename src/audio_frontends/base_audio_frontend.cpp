@@ -73,7 +73,7 @@ std::pair<bool, Time> BaseAudioFrontend::_test_for_xruns(Time current_time, int 
 {
     auto delta_time = current_time - _last_process_time;
     bool first = _last_process_time == Time::zero();
-    auto limit = Time(static_cast<int>(current_samples * _inv_samplerate * XRUN_LIMIT_FACTOR * Time(std::chrono::seconds(1)).count()));
+    auto limit = Time(static_cast<int>(current_samples * _inv_sample_rate * XRUN_LIMIT_FACTOR * Time(std::chrono::seconds(1)).count()));
     _last_process_time = current_time;
 
     if (!first && (delta_time != Time::zero()) && (std::abs(delta_time.count()) > limit.count()))
@@ -108,6 +108,16 @@ void BaseAudioFrontend::_handle_pause(Time current_time)
         _pause_notified = true;
         _pause_start = current_time;
     }
+}
+
+void BaseAudioFrontend::_set_engine_sample_rate(float sample_rate)
+{
+    if (_engine->sample_rate() != sample_rate)
+    {
+        _engine->set_sample_rate(sample_rate);
+    }
+    _sample_rate = sample_rate;
+    _inv_sample_rate = 1.0f / sample_rate;
 }
 
 } // end namespace sushi::internal::audio_frontend

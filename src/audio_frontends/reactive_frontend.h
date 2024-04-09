@@ -84,8 +84,6 @@ public:
      */
     void pause(bool paused) override;
 
-    void notify_of_pause();
-
     /**
      * @brief Method to invoke from the host's audio callback.
      * @param in_buffer Input sample buffer
@@ -109,7 +107,6 @@ public:
 private:
     engine::ControlBuffer _in_controls;
     engine::ControlBuffer _out_controls;
-    Time _start_time {};
 };
 
 } // end namespace sushi::internal::audio_frontend

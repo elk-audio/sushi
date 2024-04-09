@@ -159,49 +159,6 @@ TEST_F(ReactiveControllerTestFrontend, TestRtControllerTransportCalls)
     EXPECT_DOUBLE_EQ(new_beat_count, _real_time_controller->_transport->_beat_count);
 }
 
-TEST_F(ReactiveControllerTestFrontend, TestRtControllerPauseResume)
-{
-    /*// Send event.
-    auto param_ch_event = std::make_unique<ParameterChangeEvent>(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE, 6, 50, 1.0f, IMMEDIATE_PROCESS);
-    EXPECT_TRUE(param_ch_event->maps_to_rt_event());
-
-    _event_dispatcher->post_event(std::move(param_ch_event));
-
-    // The event should be processed if process_audio is called.
-    ASSERT_FALSE(_mock_engine->process_called);
-
-    ChunkSampleBuffer in_buffer;
-    ChunkSampleBuffer out_buffer;
-
-    test_utils::fill_sample_buffer(in_buffer, 1.0f);
-
-    _real_time_controller->process_audio(in_buffer, out_buffer, 1s);
-
-    test_utils::assert_buffer_value(1.0f, out_buffer);
-
-    ASSERT_TRUE(_mock_engine->process_called);
-
-    crank_event_loop_once();
-
-    ASSERT_FALSE(_out_rt_queue.empty());
-
-    RtEvent rt_event;
-    _out_rt_queue.pop(rt_event);
-
-    ASSERT_TRUE(_out_rt_queue.empty());
-
-    _real_time_controller->pause(true);
-
-    // Send another event.
-    auto param_ch_event_2 = std::make_unique<ParameterChangeEvent>(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE, 6, 50, 0.5f, IMMEDIATE_PROCESS);
-    EXPECT_TRUE(param_ch_event_2->maps_to_rt_event());
-
-    crank_event_loop_once();
-
-    // The event should be dropped now that we have paused.
-    ASSERT_TRUE(_out_rt_queue.empty());*/
-}
-
 TEST_F(ReactiveControllerTestFrontend, TestRtControllerMidiCalls)
 {
     // TODO: Currently the Passive Controller MIDI handling over the Passive MIDI frontend, is unfinished,

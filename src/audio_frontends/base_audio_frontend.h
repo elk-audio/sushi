@@ -107,6 +107,12 @@ protected:
      */
     void _handle_pause(Time current_time);
 
+    /**
+     * @brief Set the samplerate used for internal calculations and set the engine samplerate
+     * @param sample_rate The new sample rate in Hz
+     */
+    virtual void _set_engine_sample_rate(float sample_rate);
+
     std::pair<bool, Time> _test_for_xruns(Time current_time, int current_samples);
 
     BaseAudioFrontendConfiguration* _config {nullptr};
@@ -119,7 +125,8 @@ protected:
     Time _pause_start;
 
     Time _last_process_time;
-    float _inv_samplerate;
+    float _sample_rate;
+    float _inv_sample_rate;
 };
 
 } // end namespace sushi::internal

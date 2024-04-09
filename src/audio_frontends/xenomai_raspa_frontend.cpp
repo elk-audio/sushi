@@ -78,12 +78,11 @@ AudioFrontendStatus XenomaiRaspaFrontend::init(BaseAudioFrontendConfiguration* c
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
-    if (_engine->sample_rate() != raspa_sample_rate)
-    {
-        ELKLOG_LOG_WARNING("Sample rate mismatch between engine ({}) and Raspa ({}), setting to {}",
+    ELKLOG_LOG_WARNING_IF(_engine->sample_rate() != raspa_sample_rate,
+                          "Sample rate mismatch between engine ({}) and Raspa ({}), setting to {}",
                           _engine->sample_rate(), raspa_sample_rate, raspa_sample_rate);
-        _engine->set_sample_rate(raspa_sample_rate);
-    }
+
+    _set_engine_sample_rate(raspa_sample_rate);
     _engine->set_output_latency(std::chrono::microseconds(raspa_get_output_latency()));
 
     return AudioFrontendStatus::OK;

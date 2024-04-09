@@ -135,13 +135,12 @@ AudioFrontendStatus JackFrontend::setup_client(const std::string& client_name,
 
 AudioFrontendStatus JackFrontend::setup_sample_rate()
 {
-    _sample_rate = jack_get_sample_rate(_client);
-    if (std::lround(_sample_rate) != _engine->sample_rate())
-    {
-        ELKLOG_LOG_WARNING("Sample rate mismatch between engine ({}) and jack ({}), setting to {}",
-                          _engine->sample_rate(), _sample_rate, _sample_rate);
-        _engine->set_sample_rate(_sample_rate);
-    }
+    auto sample_rate = jack_get_sample_rate(_client);
+    ELKLOG_LOG_WARNING_IF(sample_rate != _engine->sample_rate(),
+                          "Sample rate mismatch between engine ({}) and jack ({}), setting to {}",
+                          _engine->sample_rate(), sample_rate, sample_rate);
+
+    _set_engine_sample_rate(sample_rate);
     auto status = jack_set_sample_rate_callback(_client, samplerate_callback, this);
     if (status != 0)
     {
@@ -263,6 +262,11 @@ AudioFrontendStatus JackFrontend::connect_ports()
     return AudioFrontendStatus::OK;
 }
 
+void JackFrontend::_set_engine_sample_rate(float sample_rate)
+{
+    BaseAudioFrontend(sample_rate);
+    _int_samplerate = std::lround(samplerate);
+}
 
 int JackFrontend::internal_process_callback(jack_nframes_t framecount)
 {
@@ -292,7 +296,7 @@ int JackFrontend::internal_process_callback(jack_nframes_t framecount)
     /* Process in chunks of AUDIO_CHUNK_SIZE */
     for (jack_nframes_t frame = 0; frame < framecount; frame += AUDIO_CHUNK_SIZE)
     {
-        Time delta_time = std::chrono::microseconds((frame * 1'000'000) / _sample_rate);
+        Time delta_time = std::chrono::microseconds((frame * 1'000'000) / _int_sample_rate);
         process_audio(frame, AUDIO_CHUNK_SIZE, start_time + delta_time, current_frames + frame - _start_frame);
     }
 
@@ -306,12 +310,9 @@ int JackFrontend::internal_samplerate_callback(jack_nframes_t sample_rate)
      * change without restarting the Jack server. Thought is's hinted that
      * this could be called with a different sample rated than the one
      * requested if the interface doesn't support it. */
-    if (_sample_rate != sample_rate)
-    {
-        ELKLOG_LOG_DEBUG("Received a sample rate change from Jack ({})", sample_rate);
-        _engine->set_sample_rate(sample_rate);
-        _sample_rate = sample_rate;
-    }
+
+    ELKLOG_LOG_INFO("Received a sample rate change from Jack ({})", sample_rate);
+    _set_engine_sample_rate(sample_rate);
     return 0;
 }
 
@@ -330,7 +331,7 @@ void JackFrontend::internal_latency_callback(jack_latency_callback_mode_t mode)
             jack_port_get_latency_range(port, JackPlaybackLatency, &range);
             sample_latency = std::max(sample_latency, static_cast<int>(range.max));
         }
-        Time latency = std::chrono::microseconds((sample_latency * 1'000'000) / _sample_rate);
+        Time latency = std::chrono::microseconds((sample_latency * 1'000'000) / _int_sample_rate);
         _engine->set_output_latency(latency);
         ELKLOG_LOG_INFO("Updated output latency: {} samples, {} ms", sample_latency, latency.count() / 1000.0f);
     }

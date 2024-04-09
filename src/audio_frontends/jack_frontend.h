@@ -108,6 +108,8 @@ public:
     void run() override;
 
 private:
+    void _set_engine_sample_rate(float sample_rate) override;
+
     /* Set up the jack client and associated ports */
     AudioFrontendStatus setup_client(const std::string& client_name, const std::string& server_name);
     AudioFrontendStatus setup_sample_rate();
@@ -132,7 +134,7 @@ private:
     int _no_cv_output_ports;
 
     jack_client_t* _client{nullptr};
-    jack_nframes_t _sample_rate;
+    jack_nframes_t _int_sample_rate;
     jack_nframes_t _start_frame{0};
     bool _autoconnect_ports{false};
 

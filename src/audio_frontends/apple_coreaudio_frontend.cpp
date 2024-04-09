@@ -186,6 +186,7 @@ AudioFrontendStatus AppleCoreAudioFrontend::init(BaseAudioFrontendConfiguration*
         ELKLOG_LOG_ERROR("Failed to set sample rate to {} for output device \"{}\"", sample_rate, _audio_device->name());
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
+    _set_engine_sample_rate(static_cast<float>(sample_rate));
 
     UInt32 input_latency = _audio_device->device_latency(true) + _audio_device->selected_stream_latency(true);
     UInt32 output_latency = _audio_device->device_latency(false) + _audio_device->selected_stream_latency(false);
