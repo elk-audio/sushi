@@ -1,6 +1,8 @@
 ## Next
 
 New Features:
+  * C++20 support
+  * Updated Elklog
 
 Fixes:
   * Improved handling of audio pause / resume
