@@ -29,8 +29,6 @@ ELKLOG_GET_LOGGER_WITH_MODULE_NAME("audio graph");
 
 constexpr bool DISABLE_DENORMALS = true;
 
-constexpr int SUSHI_EXIT_SIGNAL = 32;
-
 /**
  * Real-time worker thread callback method.
  */

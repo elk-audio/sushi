@@ -20,12 +20,13 @@
 
 #include "cv_gate_controller.h"
 
+#include "elk-warning-suppressor/warning_suppressor.hpp"
 
 namespace sushi::internal::engine::controller_impl {
 
-// TODO - Remove when stubs have been properly implemented
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
+ELK_PUSH_WARNING
+ELK_DISABLE_TYPE_LIMITS
+ELK_DISABLE_UNUSED_PARAMETER
 
 int CvGateController::get_cv_input_ports() const
 {
@@ -141,6 +142,6 @@ control::ControlStatus CvGateController::disconnect_all_gate_outputs_from_proces
     return control::ControlStatus::UNSUPPORTED_OPERATION;
 }
 
-#pragma GCC diagnostic pop
+ELK_POP_WARNING
 
 } // end namespace sushi::internal::engine::controller_impl

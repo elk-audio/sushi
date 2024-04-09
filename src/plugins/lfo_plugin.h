@@ -41,8 +41,8 @@ public:
     static std::string_view static_uid();
 
 private:
-    float _phase{0};
-    float _buffers_per_second{0};
+    float _phase {0};
+    float _buffers_per_second {0};
     FloatParameterValue* _freq_parameter;
     FloatParameterValue* _out_parameter;
 };

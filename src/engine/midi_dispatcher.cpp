@@ -403,10 +403,10 @@ std::vector<KbdInputConnection> MidiDispatcher::get_all_kb_input_connections()
         {
             for(auto connection = channels[channel_i].begin(); connection != channels[channel_i].end(); ++connection)
             {
-                KbdInputConnection conn;
+                KbdInputConnection conn {};
                 conn.input_connection = *connection.base();
                 conn.port = inputs_i->first;
-                conn.channel = channel_i;
+                conn.channel = static_cast<int>(channel_i);
                 conn.raw_midi = false;
                 returns.emplace_back(conn);
             }
@@ -423,10 +423,10 @@ std::vector<KbdInputConnection> MidiDispatcher::get_all_kb_input_connections()
         {
             for(auto connection = channels[channel_i].begin(); connection != channels[channel_i].end(); ++connection)
             {
-                KbdInputConnection conn;
+                KbdInputConnection conn {};
                 conn.input_connection = *connection.base();
                 conn.port = inputs_i->first;
-                conn.channel = channel_i;
+                conn.channel = static_cast<int>(channel_i);
                 conn.raw_midi = true;
                 returns.emplace_back(conn);
             }
@@ -838,11 +838,11 @@ std::vector<CCInputConnection> MidiDispatcher::_get_cc_input_connections(std::op
                     if (!processor_id_filter.has_value() ||
                         processor_id_filter == connection->target)
                     {
-                        CCInputConnection conn;
+                        CCInputConnection conn {};
                         conn.input_connection = *(connection.base());
-                        conn.channel = channel_i;
+                        conn.channel = static_cast<int>(channel_i);
                         conn.port = input_i->first;
-                        conn.cc = cc_i;
+                        conn.cc = static_cast<int>(cc_i);
                         returns.emplace_back(conn);
                     }
                 }
@@ -869,9 +869,9 @@ std::vector<PCInputConnection> MidiDispatcher::_get_pc_input_connections(std::op
                 if (!processor_id_filter.has_value() ||
                     processor_id_filter == connection->target)
                 {
-                    PCInputConnection conn;
+                    PCInputConnection conn {};
                     conn.processor_id = connection->target;
-                    conn.channel = channel_i;
+                    conn.channel = static_cast<int>(channel_i);
                     conn.port = inputs_i->first;
                     returns.emplace_back(conn);
                 }

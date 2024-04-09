@@ -18,12 +18,14 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wtype-limits"
+#include "elk-warning-suppressor/warning_suppressor.hpp"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_TYPE_LIMITS
 #include "rapidjson/error/en.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/schema.h"
-#pragma GCC diagnostic pop
+ELK_POP_WARNING
 
 #include "elklog/static_logger.h"
 
@@ -917,7 +919,7 @@ JsonConfigReturnStatus JsonConfigurator::_load_data(const std::string& data)
 
     if (_json_data.HasParseError())
     {
-        [[maybe_unused]] int err_offset = _json_data.GetErrorOffset();
+        [[maybe_unused]] int err_offset = static_cast<int>(_json_data.GetErrorOffset());
         ELKLOG_LOG_ERROR("Error parsing JSON config file: {} @ pos {}: \"{}\"",
                        rapidjson::GetParseError_En(_json_data.GetParseError()),
                        err_offset,

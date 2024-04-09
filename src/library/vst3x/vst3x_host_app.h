@@ -25,6 +25,13 @@
 
 #include "library/id_generator.h"
 
+#include "elk-warning-suppressor/warning_suppressor.hpp"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_EXTRA
+ELK_DISABLE_DEPRECATED_DECLARATIONS
+ELK_DISABLE_SHORTEN_64_TO_32
+
 #include "pluginterfaces/vst/ivsteditcontroller.h"
 #include "pluginterfaces/vst/ivstunits.h"
 #include "pluginterfaces/vst/ivsthostapplication.h"
@@ -32,10 +39,9 @@
 #include "pluginterfaces/vst/ivstcomponent.h"
 #include "public.sdk/source/vst/hosting/module.h"
 #include "base/source/fobject.h"
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wextra"
 #include "public.sdk/source/vst/hosting/hostclasses.h"
-#pragma GCC diagnostic pop
+
+ELK_POP_WARNING
 
 namespace sushi::internal {
 

@@ -175,7 +175,7 @@ public:
      * @param stream_index The index of the stream to get the latency for.
      * @return The latency of the stream for given index in samples, or 0 if the stream for index does not exist.
      */
-    [[nodiscard]] UInt32 stream_latency(UInt32 stream_index, bool for_input) const;
+    [[nodiscard]] UInt32 stream_latency(size_t stream_index, bool for_input) const;
 
     /**
      * @return An UInt32 whose value indicates to which clock domain this device belongs.

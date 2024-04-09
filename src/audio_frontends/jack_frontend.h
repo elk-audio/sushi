@@ -163,7 +163,7 @@ struct JackFrontendConfiguration : public BaseAudioFrontendConfiguration
 class JackFrontend : public BaseAudioFrontend
 {
 public:
-    JackFrontend(engine::BaseEngine* engine);
+    explicit JackFrontend(engine::BaseEngine* engine);
     AudioFrontendStatus init(BaseAudioFrontendConfiguration*) override;
     void cleanup() override {}
     void run() override {}

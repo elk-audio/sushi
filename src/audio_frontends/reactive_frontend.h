@@ -96,7 +96,7 @@ public:
      */
      void process_audio(ChunkSampleBuffer& in_buffer,
                         ChunkSampleBuffer& out_buffer,
-                        int total_sample_count,
+                        int64_t total_sample_count,
                         Time timestamp);
 
      /**
@@ -109,7 +109,6 @@ public:
 private:
     engine::ControlBuffer _in_controls;
     engine::ControlBuffer _out_controls;
-
     Time _start_time {};
 };
 

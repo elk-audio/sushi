@@ -26,12 +26,21 @@
 #include "sushi/constants.h"
 #include "sushi/sample_buffer.h"
 
+#include "elk-warning-suppressor/warning_suppressor.hpp"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_EXTRA
+ELK_DISABLE_DEPRECATED_DECLARATIONS
+ELK_DISABLE_SHORTEN_64_TO_32
+
 #include "pluginterfaces/base/ipluginbase.h"
 #include "pluginterfaces/vst/ivstaudioprocessor.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "pluginterfaces/vst/ivstevents.h"
 #include "public.sdk/source/vst/hosting/eventlist.h"
 #include "public.sdk/source/vst/hosting/parameterchanges.h"
+
+ELK_POP_WARNING
 
 #include "library/rt_event.h"
 #include "library/processor_state.h"

@@ -51,9 +51,7 @@ public:
                        engine::Transport* transport);
 
     ~RealTimeController() override = default;
-
-    void pause(bool paused) override;
-
+    
     /// For Transport:
     /////////////////////////////////////////////////////////////
 
@@ -85,13 +83,13 @@ public:
     void set_midi_callback(ReactiveMidiCallback&& callback) override;
 
     sushi::Time calculate_timestamp_from_start(float sample_rate) const override;
-    void increment_samples_since_start(uint64_t sample_count, Time timestamp) override;
+    void increment_samples_since_start(int64_t sample_count, Time timestamp) override;
 
 private:
     audio_frontend::ReactiveFrontend* _audio_frontend {nullptr};
     midi_frontend::ReactiveMidiFrontend* _midi_frontend {nullptr};
     engine::Transport* _transport {nullptr};
-    uint64_t _samples_since_start {0};
+    int64_t _samples_since_start {0};
 
     float _tempo {0};
     sushi::TimeSignature _time_signature {0, 0};

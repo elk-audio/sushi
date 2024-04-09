@@ -27,10 +27,12 @@
 
 #include <optional>
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wtype-limits"
+#include "elk-warning-suppressor/warning_suppressor.hpp"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_TYPE_LIMITS
 #include "rapidjson/document.h"
-#pragma GCC diagnostic pop
+ELK_POP_WARNING
 
 #include "base_engine.h"
 #include "engine/midi_dispatcher.h"

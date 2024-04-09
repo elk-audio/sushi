@@ -194,7 +194,6 @@ add_subdirectory(third-party EXCLUDE_FROM_ALL)
 ###############
 
 if (${SUSHI_WITH_RASPA})
-
     find_library(RASPA_LIB
             NAMES raspa
             PATHS /usr/lib /usr/local/lib
@@ -288,7 +287,6 @@ if (APPLE)
 
         set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} "-framework CoreAudio -framework Foundation")
     endif()
-
 endif()
 
 ###################
@@ -385,7 +383,15 @@ if (${SUSHI_WITH_VST3})
             "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/pluginterfacesupport.cpp"
             "${VST3_SDK_PATH}/public.sdk/source/common/memorystream.cpp")
 
-    set(VST3_COMPILE_FLAGS "-Wno-unused-parameter -Wno-extra -Wno-deprecated -Wno-cpp -Wno-pointer-bool-conversion -Wno-suggest-override")
+    set(VST3_COMPILE_FLAGS "-Wno-unused-parameter \
+                            -Wno-extra \
+                            -Wno-deprecated \
+                            -Wno-cpp \
+                            -Wno-pointer-bool-conversion \
+                            -Wno-suggest-override \
+                            -Wno-deprecated-declarations \
+                            -Wno-shorten-64-to-32 \
+                            -Wformat=0")
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         set(VST3_HOST_SOURCES ${VST3_HOST_SOURCES} "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_linux.cpp")
@@ -397,7 +403,7 @@ if (${SUSHI_WITH_VST3})
             ${VST3_HOST_SOURCES}
             "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_mac.mm")
         set(AUDIOHOST_PLATFORM_LIBS "-framework Cocoa")
-        set(VST3_COMPILE_FLAGS "${VST3_COMPILE_FLAGS} -fobjc-arc")
+        set(VST3_COMPILE_FLAGS "${VST3_COMPILE_FLAGS} -fobjc-arc -Wno-unqualified-std-cast-call")
     endif()
 
     add_library(vst3_host STATIC ${VST3_HOST_SOURCES})
@@ -428,14 +434,13 @@ if (${SUSHI_WITH_VST3})
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_VST3)
 
 
-    # In yocto env / cross compiling scenrarios, this is not needed as mda-vst3 plugins are
+    # In yocto env / cross compiling scenarios, this is not needed as mda-vst3 plugins are
     # built already. Also, this causes an "exec-format" error since the plugins need a specific
     # method of compilation during cross compilation process.
     if (NOT CMAKE_CROSSCOMPILING)
         # Triggering mda-vst3 build - used by sample sushi json configurations under misc/config_files.
         set_target_properties(mda-vst3 PROPERTIES EXCLUDE_FROM_ALL False)
     endif()
-
 endif()
 
 #############
@@ -677,6 +682,8 @@ set(COMMON_LIBRARIES
     ${TWINE_LIB}
 )
 
+set_target_properties(oscpack PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
+
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     set(COMMON_LIBRARIES ${COMMON_LIBRARIES} atomic)
 endif()
@@ -690,7 +697,7 @@ target_include_directories(${PROJECT_NAME}
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
-target_link_libraries(${PROJECT_NAME} PUBLIC ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES} elk::warningSuppressor)
 
 ####################################
 #  Compiler Flags and definitions  #

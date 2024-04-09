@@ -23,12 +23,21 @@
 #include <dirent.h>
 #include <unistd.h>
 
-#include <pluginterfaces/base/ustring.h>
-#include <pluginterfaces/vst/ivstmidicontrollers.h>
-#include <public.sdk/source/vst/vstpresetfile.h>
-#include <public.sdk/source/common/memorystream.h>
+#include "elk-warning-suppressor/warning_suppressor.hpp"
 
-#include <twine/twine.h>
+ELK_PUSH_WARNING
+ELK_DISABLE_EXTRA
+ELK_DISABLE_DEPRECATED_DECLARATIONS
+ELK_DISABLE_SHORTEN_64_TO_32
+
+#include "pluginterfaces/base/ustring.h"
+#include "pluginterfaces/vst/ivstmidicontrollers.h"
+#include "public.sdk/source/vst/vstpresetfile.h"
+#include "public.sdk/source/common/memorystream.h"
+
+ELK_POP_WARNING
+
+#include "twine/twine.h"
 
 #include "elklog/static_logger.h"
 

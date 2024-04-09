@@ -16,6 +16,8 @@
 #ifndef REAL_TIME_CONTROLLER_H
 #define REAL_TIME_CONTROLLER_H
 
+#include <functional>
+
 #include "control_interface.h"
 #include "sushi_time.h"
 #include "types.h"
@@ -139,20 +141,7 @@ public:
      * @param sample_count
      * @param timestamp
      */
-    virtual void increment_samples_since_start(uint64_t sample_count, Time timestamp) = 0;
-
-    /**
-     * With this, the Sushi instance is set to paused mode:
-     * It no longer expects process_audio to be called,
-     * and will DISCARD and events which would have been consumed in
-     * process_audio.
-     * Ensure, from the enclosing context, that no such events are sent,
-     * or the state of Sushi, with the state of any controller(s),
-     * will be out of sync when resuming.
-     * Optionally, set all state anew, right after resuming, to make sure.
-     * @param paused true to pause, false to resume.
-     */
-    virtual void pause(bool paused) = 0;
+    virtual void increment_samples_since_start(int64_t sample_count, Time timestamp) = 0;
 };
 
 } // end namespace sushi

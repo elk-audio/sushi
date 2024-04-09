@@ -188,7 +188,8 @@ int WavWriterPlugin::_write_to_file()
         _file_buffer.clear();
         _samples_received = 0;
     }
-    return _samples_written;
+
+    return static_cast<int>(_samples_written);
 }
 
 int WavWriterPlugin::_non_rt_callback(EventId /* id */)

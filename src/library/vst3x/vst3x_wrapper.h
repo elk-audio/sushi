@@ -24,9 +24,18 @@
 #include <map>
 #include <utility>
 
+#include "elk-warning-suppressor/warning_suppressor.hpp"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_EXTRA
+ELK_DISABLE_DEPRECATED_DECLARATIONS
+ELK_DISABLE_SHORTEN_64_TO_32
+
 #include "pluginterfaces/base/ipluginbase.h"
 #include "public.sdk/source/vst/hosting/eventlist.h"
 #include "public.sdk/source/vst/hosting/parameterchanges.h"
+
+ELK_POP_WARNING
 
 #include "fifo/circularfifo_memory_relaxed_aquire_release.h"
 
