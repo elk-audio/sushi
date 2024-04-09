@@ -265,7 +265,7 @@ AudioFrontendStatus JackFrontend::connect_ports()
 void JackFrontend::_set_engine_sample_rate(float sample_rate)
 {
     BaseAudioFrontend::_set_engine_sample_rate(sample_rate);
-    _int_samplerate = std::lround(samplerate);
+    _int_sample_rate = std::lround(sample_rate);
 }
 
 int JackFrontend::internal_process_callback(jack_nframes_t framecount)

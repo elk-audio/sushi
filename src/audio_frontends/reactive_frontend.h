@@ -78,13 +78,6 @@ public:
     void run() override;
 
     /**
-     * This overrides the default implementation of pause in BaseAudioFrontend.
-     * Since the process_audio callback is not called.
-     * @param paused
-     */
-    void pause(bool paused) override;
-
-    /**
      * @brief Method to invoke from the host's audio callback.
      * @param in_buffer Input sample buffer
      * @param out_buffer Output sample buffer

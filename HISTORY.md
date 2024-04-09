@@ -1,3 +1,12 @@
+## Next
+
+New Features:
+
+Fixes:
+  * Improved handling of audio pause / resume
+  * Xrun detection in audio frontends
+
+
 ## 1.1.0
 
 New features:

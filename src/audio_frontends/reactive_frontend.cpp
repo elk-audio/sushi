@@ -70,23 +70,6 @@ void ReactiveFrontend::run()
     _engine->enable_realtime(true);
 }
 
-void ReactiveFrontend::pause(bool paused)
-{
-    // TODO -  Decice if this needs to be kept. It is meant to be called from a non-rt thread while audio is running
-    bool running = !_pause_manager.bypassed();
-    _pause_manager.set_bypass(paused, _engine->sample_rate());
-
-    if (paused && running)
-    {
-        _pause_notified = false;
-        _engine->enable_realtime(false);
-    }
-    else
-    {
-        _engine->enable_realtime(true);
-    }
-}
-
 // TODO: While in JUCE plugins channel count can change, in sushi it's set on init.
 //  In JUCE, the buffer size is always the same for in and out, with some unused,
 //  if they differ.
