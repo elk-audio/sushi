@@ -427,7 +427,7 @@ void SessionController::_restore_plugin_states(std::vector<control::TrackState> 
         auto status = track_instance->set_state(&state, false);
         if (status != ProcessorReturnCode::OK)
         {
-            ELKLOG_LOG_ERROR("Failed to restore state to track {} with status {}", track.name, static_cast<int>(status));
+            ELKLOG_LOG_ERROR("Failed to restore state to track {} with status {}", track.name, status);
         }
 
         for (auto& plugin : track.processors)
@@ -442,7 +442,7 @@ void SessionController::_restore_plugin_states(std::vector<control::TrackState> 
             status = instance->set_state(&state, false);
             if (status != ProcessorReturnCode::OK)
             {
-                ELKLOG_LOG_ERROR("Failed to restore state to track {} with status {}", track.name, static_cast<int>(status));
+                ELKLOG_LOG_ERROR("Failed to restore state to track {} with status {}", track.name, status);
             }
         }
     }
