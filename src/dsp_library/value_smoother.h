@@ -142,7 +142,10 @@ public:
         else
         {
             assert(_spec.coeff != 0);
-            return _current_value = (static_cast<T>(1.0) - _spec.coeff) * _target_value + _spec.coeff * _current_value;
+
+            _current_value = (static_cast<T>(1.0) - _spec.coeff) * _target_value + _spec.coeff * _current_value;
+
+            return _current_value;
         }
     }
 
@@ -150,7 +153,7 @@ public:
      * @brief Test whether the smoother has reached the target value.
      * @return true if the value has reached the target value, false otherwise
      */
-    bool stationary() const
+    [[nodiscard]] bool stationary() const
     {
         if constexpr (mode == Mode::RAMP || mode == Mode::EXP_RAMP)
         {

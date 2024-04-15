@@ -11,11 +11,6 @@
 ELK_PUSH_WARNING
 ELK_DISABLE_UNUSED_PARAMETER
 
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-ELK_POP_WARNING
-
 #include "test_utils/mock_osc_interface.h"
 #include "test_utils/engine_mockup.h"
 #include "test_utils/control_mockup.h"
@@ -24,7 +19,6 @@ ELK_POP_WARNING
 
 #include "control_frontends/osc_frontend.cpp"
 
-#undef private
 ELK_POP_WARNING
 
 using ::testing::Return;
@@ -86,8 +80,10 @@ protected:
 
         ASSERT_EQ(ControlFrontendStatus::OK, _module_under_test->init());
 
+        _accessor = std::make_unique<OSCFrontendAccessor>(*_module_under_test);
+
         // Inject the mock container
-        _module_under_test->_processor_container = &_mock_processor_container;
+        _accessor->set_processor_container(&_mock_processor_container);
         _module_under_test->run();
 
         // Set up default returns for mock processor container
@@ -118,6 +114,7 @@ protected:
     sushi::control::ControlMockup _mock_controller;
 
     std::unique_ptr<OSCFrontend> _module_under_test;
+    std::unique_ptr<OSCFrontendAccessor> _accessor;
 
     HostControlMockup _host_control_mockup;
     std::shared_ptr<Processor> _test_processor;
@@ -216,7 +213,7 @@ TEST_F(TestOSCFrontend, TestConnectParameterChange)
     EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/parameter/proc/param_1"), "f",
                                                  OscMethodType::SEND_PARAMETER_CHANGE_EVENT, _)).Times(1);
 
-    auto connection = _module_under_test->_connect_to_parameter("proc", "param 1", 1, 2);
+    auto connection = _accessor->connect_to_parameter("proc", "param 1", 1, 2);
     ASSERT_TRUE(connection != nullptr);
     EXPECT_EQ(1, connection->processor);
     EXPECT_EQ(2, connection->parameter);
@@ -227,7 +224,7 @@ TEST_F(TestOSCFrontend, TestConnectPropertyChange)
     EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/property/sampler/sample_file"), "s",
                                                  OscMethodType::SEND_PROPERTY_CHANGE_EVENT, _)).Times(1);
 
-    auto connection = _module_under_test->_connect_to_property("sampler", "sample_file", 1, 2);
+    auto connection = _accessor->connect_to_property("sampler", "sample_file", 1, 2);
     ASSERT_TRUE(connection != nullptr);
     EXPECT_EQ(1, connection->processor);
     EXPECT_EQ(2, connection->parameter);
@@ -241,7 +238,7 @@ TEST_F(TestOSCFrontend, TestAddKbdToTrack)
     EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/keyboard_event/track"), "sif",
                                                  OscMethodType::SEND_KEYBOARD_MODULATION_EVENT, _)).Times(1);
 
-    auto connection = _module_under_test->_connect_kb_to_track(_test_track.get());
+    auto connection = _accessor->connect_kb_to_track(_test_track.get());
     EXPECT_EQ(_test_track->id(), connection->processor);
 
     ASSERT_TRUE(connection != nullptr);
@@ -252,7 +249,7 @@ TEST_F(TestOSCFrontend, TestConnectProgramChange)
     EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/program/proc"), "i",
                                                  OscMethodType::SEND_PROGRAM_CHANGE_EVENT, _)).Times(1);
 
-    auto connection = _module_under_test->_connect_to_program_change(_test_processor.get());
+    auto connection = _accessor->connect_to_program_change(_test_processor.get());
     ASSERT_TRUE(connection != nullptr);
     EXPECT_EQ(_test_processor->id(), connection->processor);
 }
@@ -262,7 +259,7 @@ TEST_F(TestOSCFrontend, TestSetBypassState)
     EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/bypass/proc"), "i",
                                                  OscMethodType::SEND_BYPASS_STATE_EVENT, _)).Times(1);
 
-    auto connection = _module_under_test->_connect_to_bypass_state(_test_processor.get());
+    auto connection = _accessor->connect_to_bypass_state(_test_processor.get());
 
     ASSERT_TRUE(connection != nullptr);
     EXPECT_EQ(_test_processor->id(), connection->processor);

@@ -4,12 +4,6 @@
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-#define protected public
-ELK_POP_WARNING
-
 #include "engine/event_dispatcher.cpp"
 #include "test_utils/engine_mockup.h"
 
@@ -74,8 +68,8 @@ class TestEventDispatcher : public ::testing::Test
 public:
     void crank_event_loop_once()
     {
-        _module_under_test->_running = false;
-        _module_under_test->_event_loop();
+        _accessor->running() = false;
+        _accessor->event_loop();
     }
 
 protected:
@@ -83,19 +77,22 @@ protected:
 
     void SetUp() override
     {
-        _module_under_test = new EventDispatcher(&_test_engine,
-                                                 &_in_rt_queue,
-                                                 &_out_rt_queue);
+        _module_under_test = std::make_unique<EventDispatcher>(&_test_engine,
+                                                               &_in_rt_queue,
+                                                               &_out_rt_queue);
+
+        _accessor = std::make_unique<sushi::internal::dispatcher::Accessor>(*_module_under_test);
     }
 
     void TearDown() override
     {
         _module_under_test->stop();
-        delete _module_under_test;
     }
 
-    EventDispatcher*    _module_under_test = nullptr;
-    EngineMockup        _test_engine{TEST_SAMPLE_RATE};
+    std::unique_ptr<EventDispatcher> _module_under_test;
+    std::unique_ptr<sushi::internal::dispatcher::Accessor> _accessor;
+
+    EngineMockup        _test_engine {TEST_SAMPLE_RATE};
     RtSafeRtEventFifo   _in_rt_queue;
     RtSafeRtEventFifo   _out_rt_queue;
     DummyPoster         _poster;
@@ -160,7 +157,7 @@ TEST_F(TestEventDispatcher, TestFromRtEventParameterChangeNotification)
     crank_event_loop_once();
 
     // Just test that a parameter change was queued. More thorough testing of ParameterManager is done elsewhere
-    ASSERT_FALSE(_module_under_test->_parameter_manager._parameter_change_queue.empty());
+    ASSERT_FALSE(_accessor->parameter_change_queue_empty());
 }
 
 TEST_F(TestEventDispatcher, TestEngineNotificationForwarding)
@@ -201,11 +198,12 @@ TEST_F(TestEventDispatcher, TestAsyncCallbackFromProcessor)
      * dispatchers process loop a second time and assert that what we ended up with is
      * an RtEvent containing a completion notification */
     crank_event_loop_once();
-    _module_under_test->_worker._worker();
+    _accessor->crank_worker();
     crank_event_loop_once();
 
-    ASSERT_TRUE(_module_under_test->_in_queue.empty());
+    ASSERT_TRUE(_accessor->in_queue().empty());
     ASSERT_FALSE(_out_rt_queue.empty());
+
     _out_rt_queue.pop(rt_event);
     EXPECT_EQ(RtEventType::ASYNC_WORK_NOTIFICATION, rt_event.type());
     auto typed_event = rt_event.async_work_completion_event();
@@ -248,8 +246,8 @@ class TestWorker : public ::testing::Test
 public:
     void crank_event_loop_once()
     {
-        _module_under_test._running = false;
-        _module_under_test._worker();
+        _accessor.running() = false;
+        _accessor.crank_worker();
     }
 
 protected:
@@ -260,8 +258,10 @@ protected:
         _module_under_test.stop();
     }
 
-    EngineMockup _test_engine{TEST_SAMPLE_RATE};
+    EngineMockup _test_engine {TEST_SAMPLE_RATE};
     Worker       _module_under_test {&_test_engine, _test_engine.event_dispatcher()};
+
+    sushi::internal::dispatcher::WorkerAccessor _accessor {_module_under_test};
 };
 
 TEST_F(TestWorker, TestEventQueueingAndProcessing)
@@ -272,7 +272,7 @@ TEST_F(TestWorker, TestEventQueueingAndProcessing)
     event->set_completion_cb(dummy_callback_1, nullptr);
     auto status = _module_under_test.dispatch(std::move(event));
     ASSERT_EQ(EventStatus::QUEUED_HANDLING, status);
-    ASSERT_FALSE(_module_under_test._queue.empty());
+    ASSERT_FALSE(_accessor.queue().empty());
     crank_event_loop_once();
     ASSERT_TRUE(completed_1);
     ASSERT_EQ(EventStatus::HANDLED_OK, completion_status_1);

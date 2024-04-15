@@ -37,8 +37,10 @@ constexpr int VST_WRAPPER_MAX_N_CHANNELS = MAX_TRACK_CHANNELS;
 constexpr int VST_WRAPPER_MIDI_EVENT_QUEUE_SIZE = 256;
 
 /**
- * @brief internal wrapper class for loading VST plugins and make them accesible as Processor to the Engine.
+ * @brief internal wrapper class for loading VST plugins and make them accessible as Processor to the Engine.
  */
+
+class Vst2xWrapperAccessor;
 
 class Vst2xWrapper : public Processor
 {
@@ -115,6 +117,8 @@ public:
     VstTimeInfo* time_info();
 
 private:
+    friend Vst2xWrapperAccessor;
+
     friend VstIntPtr VSTCALLBACK host_callback(AEffect* effect,
                                                VstInt32 opcode, VstInt32 index,
                                                VstIntPtr value, void* ptr, float opt);
@@ -171,15 +175,16 @@ private:
     void _set_state_rt(RtState* state);
 
     float _sample_rate;
+
     /** Wrappers for preparing data to pass to processReplacing */
     float* _process_inputs[VST_WRAPPER_MAX_N_CHANNELS];
     float* _process_outputs[VST_WRAPPER_MAX_N_CHANNELS];
-    ChunkSampleBuffer _dummy_input{1};
-    ChunkSampleBuffer _dummy_output{1};
+    ChunkSampleBuffer _dummy_input {1};
+    ChunkSampleBuffer _dummy_output {1};
     Vst2xMidiEventFIFO<VST_WRAPPER_MIDI_EVENT_QUEUE_SIZE> _vst_midi_events_fifo;
     bool _can_do_soft_bypass;
     bool _has_binary_programs{false};
-    int _number_of_programs{0};
+    int _number_of_programs {0};
 
     BypassManager _bypass_manager{_bypassed};
 
@@ -191,6 +196,40 @@ private:
 };
 
 VstSpeakerArrangementType arrangement_from_channels(int channels);
+
+class Vst2xWrapperAccessor
+{
+public:
+    explicit Vst2xWrapperAccessor(Vst2xWrapper& f) : _friend(f) {}
+
+    bool can_do_soft_bypass()
+    {
+        return _friend._can_do_soft_bypass;
+    }
+
+    AEffect* plugin_handle()
+    {
+        return _friend._plugin_handle;
+    }
+
+    float sample_rate()
+    {
+        return _friend._sample_rate;
+    }
+
+    void notify_parameter_change(VstInt32 parameter_index, float value)
+    {
+        _friend.notify_parameter_change(parameter_index, value);
+    }
+
+    void notify_parameter_change_rt(VstInt32 parameter_index, float value)
+    {
+        _friend.notify_parameter_change_rt(parameter_index, value);
+    }
+
+private:
+    Vst2xWrapper& _friend;
+};
 
 } // end namespace sushi::internal::vst2
 

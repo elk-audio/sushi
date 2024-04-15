@@ -41,6 +41,7 @@ namespace sushi::internal::performance {
 using TimePoint = std::chrono::nanoseconds;
 constexpr int MAX_LOG_ENTRIES = 20000;
 
+class Accessor;
 
 class PerformanceTimer : public BasePerformanceTimer
 {
@@ -141,7 +142,6 @@ public:
     void clear_all_timings() override;
 
 protected:
-
     struct TimingLogPoint
     {
         int id {0};
@@ -162,12 +162,34 @@ protected:
 
     std::thread _process_thread;
     float _period{0};
-    std::atomic_bool _enabled{false};
+    std::atomic_bool _enabled {false};
 
-    std::map<int, TimingNode>  _timings;
+    std::map<int, TimingNode> _timings;
     std::mutex _timing_lock;
     SpinLock _queue_lock;
     alignas(ASSUMED_CACHE_LINE_SIZE) memory_relaxed_aquire_release::CircularFifo<TimingLogPoint, MAX_LOG_ENTRIES> _entry_queue;
+
+private:
+    friend Accessor;
+};
+
+class Accessor
+{
+public:
+    explicit Accessor(PerformanceTimer& f) : _friend(f) {}
+
+    std::atomic_bool& enabled()
+    {
+        return _friend._enabled;
+    }
+
+    void update_timings()
+    {
+        _friend._update_timings();
+    }
+
+private:
+    PerformanceTimer& _friend;
 };
 
 } // end namespace sushi::internal::performance

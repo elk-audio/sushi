@@ -6,15 +6,7 @@
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-#define protected public
-
 #include "library/processor.cpp"
-#undef private
-
-ELK_POP_WARNING
 
 #include "test_utils/host_control_mockup.h"
 
@@ -29,15 +21,18 @@ constexpr int TEST_BYPASS_TIME_MS = 13;
 class ProcessorTest : public Processor
 {
 public:
-    ProcessorTest(HostControl host_control) : Processor(host_control)
+    explicit ProcessorTest(HostControl host_control) : Processor(host_control)
     {
         _max_input_channels = 2;
         _max_output_channels = 2;
     }
-    virtual ~ProcessorTest() {}
-    virtual void process_audio(const ChunkSampleBuffer& /*in_buffer*/,
-                               ChunkSampleBuffer& /*out_buffer*/) override {}
-    virtual void process_event(const RtEvent& /*event*/) override {}
+
+    ~ProcessorTest() override = default;
+
+    void process_audio(const ChunkSampleBuffer& /*in_buffer*/,
+                       ChunkSampleBuffer& /*out_buffer*/) override {}
+
+    void process_event(const RtEvent& /*event*/) override {}
 };
 
 
@@ -49,6 +44,8 @@ protected:
     void SetUp() override
     {
         _module_under_test = new ProcessorTest(_host_control.make_host_control_mockup());
+
+        _accessor = std::make_unique<sushi::internal::ProcessorAccessor>(*_module_under_test);
     }
 
     void TearDown() override
@@ -58,7 +55,11 @@ protected:
     
     HostControlMockup _host_control;
     RtEventFifo<10> _event_queue;
+
+    // TODO: Why is this NAKED?
     Processor* _module_under_test;
+
+    std::unique_ptr<sushi::internal::ProcessorAccessor> _accessor;
 };
 
 TEST_F(TestProcessor, TestBasicProperties)
@@ -78,7 +79,7 @@ TEST_F(TestProcessor, TestParameterHandling)
 {
     /* Register a single parameter and verify accessor functions */
     auto p = new FloatParameterDescriptor("param", "Float", "fl", 0, 1, Direction::AUTOMATABLE, nullptr);
-    _module_under_test->register_parameter(p);
+    _accessor->register_parameter(p);
 
     auto param = _module_under_test->parameter_from_name("not_found");
     EXPECT_FALSE(param);
@@ -97,11 +98,11 @@ TEST_F(TestProcessor, TestParameterHandling)
 
 TEST_F(TestProcessor, TestDuplicateParameterNames)
 {
-    _module_under_test->register_parameter(new FloatParameterDescriptor("param", "Float", "fl",
+    _accessor->register_parameter(new FloatParameterDescriptor("param", "Float", "fl",
                                                                         0, 1, Direction::AUTOMATABLE, nullptr));
     // Test uniqueness by entering an already existing parameter name
-    EXPECT_EQ("param_2", _module_under_test->_make_unique_parameter_name("param"));
-    EXPECT_EQ("parameter", _module_under_test->_make_unique_parameter_name(""));
+    EXPECT_EQ("param_2", _accessor->make_unique_parameter_name("param"));
+    EXPECT_EQ("parameter", _accessor->make_unique_parameter_name(""));
 }
 
 TEST_F(TestProcessor, TestBypassProcessing)
@@ -115,36 +116,36 @@ TEST_F(TestProcessor, TestBypassProcessing)
     _module_under_test->set_input_channels(2);
     _module_under_test->set_output_channels(2);
     // Stereo into stereo
-    _module_under_test->bypass_process(buffer, out_buffer);
+    _accessor->bypass_process(buffer, out_buffer);
     test_utils::assert_buffer_value(1.0f, out_buffer);
 
     // Mono into stereo
     _module_under_test->set_input_channels(1);
-    _module_under_test->bypass_process(mono_buffer, out_buffer);
+    _accessor->bypass_process(mono_buffer, out_buffer);
     test_utils::assert_buffer_value(2.0f, out_buffer);
 
     // No input should clear output
     _module_under_test->set_input_channels(0);
-    _module_under_test->bypass_process(buffer, out_buffer);
+    _accessor->bypass_process(buffer, out_buffer);
     test_utils::assert_buffer_value(0.0f, out_buffer);
 }
 
 TEST_F(TestProcessor, TestCvOutput)
 {
     auto p = new FloatParameterDescriptor("param", "Float", "", 0, 1, Direction::AUTOMATABLE, nullptr);
-    _module_under_test->register_parameter(p);
+    _accessor->register_parameter(p);
     _module_under_test->set_event_output(&_event_queue);
     auto param = _module_under_test->parameter_from_name("param");
     ASSERT_TRUE(param);
 
     // Output parameter update
-    _module_under_test->maybe_output_cv_value(param->id(), 0.5f);
+    _accessor->maybe_output_cv_value(param->id(), 0.5f);
     ASSERT_TRUE(_event_queue.empty());
 
     // Connect parameter to CV output and send update
     auto res = _module_under_test->connect_cv_from_parameter(param->id(), 1);
     ASSERT_EQ(ProcessorReturnCode::OK, res);
-    auto success = _module_under_test->maybe_output_cv_value(param->id(), 0.25f);
+    auto success = _accessor->maybe_output_cv_value(param->id(), 0.25f);
     ASSERT_TRUE(success);
     ASSERT_FALSE(_event_queue.empty());
     auto cv_event = _event_queue.pop();
@@ -158,17 +159,17 @@ TEST_F(TestProcessor, TestGateOutput)
     _module_under_test->set_event_output(&_event_queue);
 
     // Output gate update with no connections
-    auto success = _module_under_test->maybe_output_gate_event(5, 10, true);
+    auto success = _accessor->maybe_output_gate_event(5, 10, true);
     ASSERT_FALSE(success);
 
     // Connect to gate output and send update with another note/channel combo
     auto res = _module_under_test->connect_gate_from_processor(1, 5, 10);
     ASSERT_EQ(ProcessorReturnCode::OK, res);
-    success = _module_under_test->maybe_output_gate_event(4, 9, true);
+    success = _accessor->maybe_output_gate_event(4, 9, true);
     ASSERT_FALSE(success);
 
     // Output gate event
-    success = _module_under_test->maybe_output_gate_event(5, 10, true);
+    success = _accessor->maybe_output_gate_event(5, 10, true);
     ASSERT_TRUE(success);
     ASSERT_FALSE(_event_queue.empty());
     auto event = _event_queue.pop();
@@ -206,7 +207,7 @@ TEST_F(TestBypassManager, TestOperation)
 
 TEST_F(TestBypassManager, TestSetBypassRampTime)
 {
-    int expected_chunks = (TEST_SAMPLE_RATE * TEST_BYPASS_TIME_MS * 0.001) / AUDIO_CHUNK_SIZE;
+    int expected_chunks = static_cast<int>((TEST_SAMPLE_RATE * TEST_BYPASS_TIME_MS * 0.001) / AUDIO_CHUNK_SIZE);
 
     // With some sample rate and buffer size combinations this is false.
     if (expected_chunks <= 0)
@@ -216,7 +217,7 @@ TEST_F(TestBypassManager, TestSetBypassRampTime)
     }
 
     // ... Because chunks_to_rap returns a minimum of 1.
-    int to_ramp = _module_under_test._chunks_to_ramp(TEST_SAMPLE_RATE);
+    int to_ramp = _module_under_test.chunks_to_ramp(TEST_SAMPLE_RATE);
 
     EXPECT_EQ(expected_chunks, to_ramp);
 }

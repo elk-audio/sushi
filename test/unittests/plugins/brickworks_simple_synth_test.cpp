@@ -6,12 +6,6 @@
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-#define protected public
-ELK_POP_WARNING
-
 #include "test_utils/test_utils.h"
 #include "test_utils/host_control_mockup.h"
 
@@ -31,6 +25,9 @@ protected:
     void SetUp() override
     {
         _module_under_test = std::make_unique<SimpleSynthPlugin>(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
+
+        _accessor = std::make_unique<sushi::internal::simple_synth_plugin::Accessor>(*_module_under_test);
+
         ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
         ASSERT_EQ(ProcessorReturnCode::OK, status);
         _module_under_test->set_input_channels(0);
@@ -40,6 +37,8 @@ protected:
 
     HostControlMockup _host_control;
     std::unique_ptr<SimpleSynthPlugin> _module_under_test;
+
+    std::unique_ptr<sushi::internal::simple_synth_plugin::Accessor> _accessor;
 };
 
 TEST_F(TestSimpleSynthPlugin, TestInstantiation)
@@ -63,8 +62,8 @@ TEST_F(TestSimpleSynthPlugin, TestProcessing)
     RtEvent note_off = RtEvent::make_note_off_event(0, 0, 0, 60, 1.0f);
     _module_under_test->process_event(note_off);
     // give some time for release to act
-    float total_release = _module_under_test->_decay->processed_value() + _module_under_test->_release->processed_value();
-    int release_buffers = (total_release * TEST_SAMPLERATE) / AUDIO_CHUNK_SIZE + 1;
+    float total_release = _accessor->decay()->processed_value() + _accessor->release()->processed_value();
+    int release_buffers = static_cast<int>((total_release * TEST_SAMPLERATE) / AUDIO_CHUNK_SIZE) + 1;
     for (int i = 0; i < release_buffers; i++)
     {
         _module_under_test->process_audio(in_buffer, out_buffer);

@@ -9,12 +9,6 @@
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-ELK_POP_WARNING
-
-
 #include "audio_frontends/jack_frontend.cpp"
 
 using ::testing::internal::posix::GetEnv;

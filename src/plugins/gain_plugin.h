@@ -28,6 +28,8 @@ namespace sushi::internal::gain_plugin {
 ELK_PUSH_WARNING
 ELK_DISABLE_DOMINANCE_INHERITANCE
 
+class Accessor;
+
 class GainPlugin : public InternalPlugin, public UidHelper<GainPlugin>
 {
 public:
@@ -40,7 +42,23 @@ public:
     static std::string_view static_uid();
 
 private:
+    friend Accessor;
+
     FloatParameterValue* _gain_parameter;
+};
+
+class Accessor
+{
+public:
+    explicit Accessor(GainPlugin& plugin) : _plugin(plugin) {}
+
+    [[nodiscard]] FloatParameterValue* gain_parameter()
+    {
+        return _plugin._gain_parameter;
+    }
+
+private:
+    GainPlugin& _plugin;
 };
 
 } // end namespace sushi::internal::gain_plugin

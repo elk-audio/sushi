@@ -20,12 +20,6 @@
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-#define protected public
-ELK_POP_WARNING
-
 #include "engine/controller/real_time_controller.cpp"
 
 #include "audio_frontends/reactive_frontend.cpp"
@@ -56,6 +50,8 @@ protected:
         _real_time_controller = std::make_unique<RealTimeController>(&_audio_frontend,
                                                                      &_midi_frontend,
                                                                      &_transport);
+
+        _accessor = std::make_unique<sushi::internal::RtControllerAccessor>(*_real_time_controller);
     }
 
     EngineMockup _mock_engine {TEST_SAMPLE_RATE};
@@ -69,6 +65,8 @@ protected:
     Transport _transport {TEST_SAMPLE_RATE, &_rt_event_output};
 
     std::unique_ptr<RealTimeController> _real_time_controller;
+
+    std::unique_ptr<sushi::internal::RtControllerAccessor> _accessor;
 };
 
 TEST_F(ReactiveControllerTestFrontend, TestRtControllerAudioCalls)
@@ -90,55 +88,55 @@ TEST_F(ReactiveControllerTestFrontend, TestRtControllerAudioCalls)
 TEST_F(ReactiveControllerTestFrontend, TestRtControllerTransportCalls)
 {
     // Tempo:
-    float old_tempo = _real_time_controller->_tempo;
+    float old_tempo = _accessor->tempo();
     float new_tempo = 124.5f;
 
     _real_time_controller->set_tempo(new_tempo);
 
     EXPECT_NE(old_tempo, new_tempo);
-    EXPECT_FLOAT_EQ(_real_time_controller->_tempo, new_tempo);
-    EXPECT_FLOAT_EQ(_real_time_controller->_transport->current_tempo(), new_tempo); // Since we don't gmock Transport.
+    EXPECT_FLOAT_EQ(_accessor->tempo(), new_tempo);
+    EXPECT_FLOAT_EQ(_accessor->transport()->current_tempo(), new_tempo); // Since we don't gmock Transport.
 
     // Time Signature:
-    auto old_time_signature = _real_time_controller->_time_signature;
+    auto old_time_signature = _accessor->time_signature();
     control::TimeSignature new_time_signature {5, 8};
     auto new_internal_time_signature = controller_impl::to_internal(new_time_signature);
 
     _real_time_controller->set_time_signature(new_time_signature);
 
     EXPECT_NE(old_time_signature, new_internal_time_signature);
-    EXPECT_EQ(_real_time_controller->_time_signature, new_internal_time_signature);
-    EXPECT_EQ(_real_time_controller->_transport->time_signature(),
+    EXPECT_EQ(_accessor->time_signature(), new_internal_time_signature);
+    EXPECT_EQ(_accessor->transport()->time_signature(),
               new_internal_time_signature); // Since we don't gmock Transport.
 
     // Playing Mode:
-    auto old_playing_mode = _real_time_controller->_playing_mode;
+    auto old_playing_mode = _accessor->playing_mode();
     control::PlayingMode new_playing_mode = control::PlayingMode::PLAYING;
     auto new_internal_playing_mode = controller_impl::to_internal(new_playing_mode);
 
     _real_time_controller->set_playing_mode(new_playing_mode);
 
     EXPECT_NE(old_playing_mode, new_playing_mode);
-    EXPECT_EQ(_real_time_controller->_playing_mode, new_playing_mode);
+    EXPECT_EQ(_accessor->playing_mode(), new_playing_mode);
 
     // Only on set_time is playing_mode updated in Transport.
-    EXPECT_NE(_real_time_controller->_transport->playing_mode(), new_internal_playing_mode);
-    _real_time_controller->_transport->set_time(std::chrono::seconds(0), 0);
-    EXPECT_EQ(_real_time_controller->_transport->playing_mode(), new_internal_playing_mode);
+    EXPECT_NE(_accessor->transport()->playing_mode(), new_internal_playing_mode);
+    _accessor->transport()->set_time(std::chrono::seconds(0), 0);
+    EXPECT_EQ(_accessor->transport()->playing_mode(), new_internal_playing_mode);
 
     // Beat Count & Position Source (they interact):
-    auto old_beat_count = _real_time_controller->_transport->_beat_count;
+    auto old_beat_count = _accessor->transport()->current_beats();
     double new_beat_count = 14.5;
     _real_time_controller->set_current_beats(new_beat_count);
 
     EXPECT_NE(new_beat_count, old_beat_count);
-    EXPECT_NE(new_beat_count, _real_time_controller->_transport->_beat_count);
+    EXPECT_NE(new_beat_count, _accessor->transport()->current_beats());
 
     _real_time_controller->set_position_source(TransportPositionSource::EXTERNAL);
 
     _real_time_controller->set_current_beats(new_beat_count);
 
-    EXPECT_DOUBLE_EQ(new_beat_count, _real_time_controller->_transport->_beat_count);
+    EXPECT_DOUBLE_EQ(new_beat_count, _accessor->transport()->current_beats());
 }
 
 TEST_F(ReactiveControllerTestFrontend, TestRtControllerMidiCalls)

@@ -74,6 +74,8 @@ struct OscConnection
     void* callback;
 };
 
+class OSCFrontendAccessor;
+
 class OSCFrontend : public BaseControlFrontend
 {
 public:
@@ -142,7 +144,7 @@ public:
 
     int receive_port() const;
 
-    bool get_connect_from_all_parameters() {return _connect_from_all_parameters;}
+    [[nodiscard]] bool get_connect_from_all_parameters() const {return _connect_from_all_parameters;}
 
     void set_connect_from_all_parameters(bool connect) {_connect_from_all_parameters = connect;}
 
@@ -151,6 +153,8 @@ public:
     void set_state(const OscState& state);
 
 private:
+    friend OSCFrontendAccessor;
+
     /**
      * @brief Connect to control all parameters from a given processor.
      * @param processor The name of the processor to connect.
@@ -259,6 +263,52 @@ private:
     void* _reset_timing_statistics_s_cb {nullptr};
     void* _reset_timing_statistics_ss_cb {nullptr};
 };
+
+class OSCFrontendAccessor
+{
+public:
+    explicit OSCFrontendAccessor(OSCFrontend& f) : _friend(f) {}
+
+    void set_processor_container(const engine::BaseProcessorContainer* container)
+    {
+        _friend._processor_container = container;
+    }
+
+    OscConnection* connect_to_parameter(const std::string& processor_name,
+                                        const std::string& parameter_name,
+                                        ObjectId processor_id,
+                                        ObjectId parameter_id)
+    {
+        return _friend._connect_to_parameter(processor_name, parameter_name, processor_id, parameter_id);
+    }
+
+    OscConnection* connect_to_property(const std::string& processor_name,
+                                       const std::string& property_name,
+                                       ObjectId processor_id,
+                                       ObjectId property_id)
+    {
+        return _friend._connect_to_property(processor_name, property_name, processor_id, property_id);
+    }
+
+    OscConnection* connect_kb_to_track(const Processor* processor)
+    {
+        return _friend._connect_kb_to_track(processor);
+    }
+
+    OscConnection* connect_to_program_change(const Processor* processor)
+    {
+        return _friend._connect_to_program_change(processor);
+    }
+
+    OscConnection* connect_to_bypass_state(const Processor* processor)
+    {
+        return _friend._connect_to_bypass_state(processor);
+    }
+
+private:
+    OSCFrontend& _friend;
+};
+
 
 } // end namespace control_frontend
 } // end namespace sushi::internal

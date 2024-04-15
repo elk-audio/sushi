@@ -2,14 +2,7 @@
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-
 #include "engine/controller/session_controller.cpp"
-
-#undef private
-ELK_POP_WARNING
 
 #include "engine/audio_engine.h"
 #include "control_frontends/base_control_frontend.h"
@@ -45,6 +38,8 @@ protected:
         _module_under_test = std::make_unique<SessionController>(_audio_engine.get(), _midi_dispatcher.get(), &_audio_frontend);
         _module_under_test->set_osc_frontend(_osc_frontend.get());
 
+        _accessor = std::make_unique<sushi::internal::engine::controller_impl::Accessor>(*_module_under_test);
+
         _audio_engine->set_audio_input_channels(8);
         _audio_engine->set_audio_output_channels(8);
 
@@ -59,6 +54,8 @@ protected:
     std::unique_ptr<MidiDispatcher>       _midi_dispatcher;
     std::unique_ptr<SessionController>    _module_under_test;
     std::unique_ptr<OSCFrontend>          _osc_frontend;
+
+    std::unique_ptr<sushi::internal::engine::controller_impl::Accessor> _accessor;
 };
 
 TEST_F(SessionControllerTest, TestEmptyEngineState)
@@ -70,7 +67,7 @@ TEST_F(SessionControllerTest, TestEmptyEngineState)
 
 TEST_F(SessionControllerTest, TestSaveSushiInfo)
 {
-    auto info = _module_under_test->_save_build_info();
+    auto info = _accessor->save_build_info();
     EXPECT_NE("", info.build_date);
     EXPECT_NE("", info.version);
     EXPECT_NE("", info.commit_hash);
@@ -109,7 +106,7 @@ TEST_F(SessionControllerTest, TestSaveMidiState)
     ASSERT_EQ(MidiDispatcherStatus::OK, _midi_dispatcher->connect_cc_to_parameter(MIDI_PORT, proc_id, PARAMETER_ID, CC_ID, 0, 1, false, MIDI_CH));
     ASSERT_EQ(MidiDispatcherStatus::OK, _midi_dispatcher->connect_pc_to_processor(MIDI_PORT, proc_id, MIDI_CH));
 
-    auto midi_state = _module_under_test->_save_midi_state();
+    auto midi_state = _accessor->save_midi_state();
 
     // Verify saved state
     EXPECT_EQ(2, midi_state.inputs);
@@ -163,7 +160,7 @@ TEST_F(SessionControllerTest, TestSaveEngineState)
     ASSERT_EQ(EngineReturnStatus::OK, _audio_engine->connect_audio_input_channel(1, 1, track_id));
     ASSERT_EQ(EngineReturnStatus::OK, _audio_engine->connect_audio_output_channel(2, 0, track_id));
 
-    auto engine_state = _module_under_test->_save_engine_state();
+    auto engine_state = _accessor->save_engine_state();
 
     // used_audio_in/outputs should reflect the minimum channels needed to restore the session
     EXPECT_EQ(1, engine_state.used_audio_inputs);
@@ -206,7 +203,7 @@ TEST_F(SessionControllerTest, TestSaveTracks)
     ASSERT_EQ(EngineReturnStatus::OK, status);
     ASSERT_EQ(EngineReturnStatus::OK, _audio_engine->add_plugin_to_track(proc_id, track_id));
 
-    auto tracks = _module_under_test->_save_tracks();
+    auto tracks = _accessor->save_tracks();
 
     ASSERT_EQ(1u, tracks.size());
     auto& track = tracks.front();
@@ -277,7 +274,7 @@ TEST_F(SessionControllerTest, TestSaveAndRestore)
     // Save the state, clear all track and reload the state
     auto session_state = _module_under_test->save_session();
 
-    _module_under_test->_clear_all_tracks();
+    _accessor->clear_all_tracks();
     _midi_dispatcher->disconnect_all_cc_from_processor(proc_id);
     _midi_dispatcher->disconnect_raw_midi_from_track(MIDI_PORT, track_id, MidiChannel::OMNI);
     _midi_dispatcher->disconnect_track_from_output(MIDI_PORT, track_id, MIDI_CH);

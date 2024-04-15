@@ -38,6 +38,8 @@ namespace engine
 class Transport;
 }
 
+class RtControllerAccessor;
+
 /**
  * @brief When a host application embeds Sushi, it should use this class to interface with Sushi in a real-time context.
  *        RealTimeController implements the RtController API.
@@ -79,10 +81,12 @@ public:
     void receive_midi(int input, MidiDataByte data, Time timestamp) override;
     void set_midi_callback(ReactiveMidiCallback&& callback) override;
 
-    sushi::Time calculate_timestamp_from_start(float sample_rate) const override;
+    [[nodiscard]] sushi::Time calculate_timestamp_from_start(float sample_rate) const override;
     void increment_samples_since_start(int64_t sample_count, Time timestamp) override;
 
 private:
+    friend RtControllerAccessor;
+
     audio_frontend::ReactiveFrontend* _audio_frontend {nullptr};
     midi_frontend::ReactiveMidiFrontend* _midi_frontend {nullptr};
     engine::Transport* _transport {nullptr};
@@ -91,6 +95,35 @@ private:
     float _tempo {0};
     sushi::TimeSignature _time_signature {0, 0};
     control::PlayingMode _playing_mode {control::PlayingMode::STOPPED};
+};
+
+class RtControllerAccessor
+{
+public:
+    explicit RtControllerAccessor(RealTimeController& f) : _friend(f) {}
+
+    float tempo()
+    {
+        return _friend._tempo;
+    }
+
+    engine::Transport* transport()
+    {
+        return _friend._transport;
+    }
+
+    sushi::TimeSignature time_signature()
+    {
+        return _friend._time_signature;
+    }
+
+    control::PlayingMode playing_mode()
+    {
+        return _friend._playing_mode;
+    }
+
+private:
+    RealTimeController& _friend;
 };
 
 } // end namespace sushi::internal

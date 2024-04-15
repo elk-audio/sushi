@@ -39,6 +39,8 @@ namespace send_plugin { class SendPlugin; }
 
 namespace return_plugin {
 
+class Accessor;
+
 class ReturnPlugin : public InternalPlugin, public UidHelper<ReturnPlugin>
 {
 public:
@@ -78,6 +80,8 @@ public:
     static std::string_view static_uid();
 
 private:
+    friend Accessor;
+
     void _channel_config(int channels);
 
     void inline _swap_buffers();
@@ -102,6 +106,20 @@ private:
     std::atomic<Time>                     _last_process_time{Time(0)};
 
     static_assert(decltype(_last_process_time)::is_always_lock_free);
+};
+
+class Accessor
+{
+public:
+    explicit Accessor(ReturnPlugin& plugin) : _plugin(plugin) {}
+
+    void swap_buffers()
+    {
+        _plugin._swap_buffers();
+    }
+
+private:
+    ReturnPlugin& _plugin;
 };
 
 } // end namespace return_plugin

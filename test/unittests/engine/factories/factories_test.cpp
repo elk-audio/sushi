@@ -47,12 +47,6 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration*)
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-#define protected public
-ELK_POP_WARNING
-
 #ifndef OSCPACK_UNIT_TESTS
 #include "third-party/oscpack/osc/OscPacketListener.h"
 #include "third-party/oscpack/ip/UdpSocket.h"
@@ -117,13 +111,15 @@ TEST_F(ReactiveFactoryTest, TestReactiveFactoryWithDefaultConfig)
 
     ASSERT_NE(sushi_cast, nullptr);
 
-    EXPECT_NE(sushi_cast->_osc_frontend.get(), nullptr);
-    EXPECT_NE(sushi_cast->_engine.get(), nullptr);
-    EXPECT_NE(sushi_cast->_midi_dispatcher.get(), nullptr);
-    EXPECT_NE(sushi_cast->_midi_frontend.get(), nullptr);
-    EXPECT_NE(sushi_cast->_audio_frontend.get(), nullptr);
-    EXPECT_NE(sushi_cast->_frontend_config.get(), nullptr);
-    EXPECT_NE(sushi_cast->_engine_controller.get(), nullptr);
+    sushi::internal::ConcreteSushiAccessor _accessor(*sushi_cast);
+
+    EXPECT_NE(_accessor.osc_frontend().get(), nullptr);
+    EXPECT_NE(_accessor.engine().get(), nullptr);
+    EXPECT_NE(_accessor.midi_dispatcher().get(), nullptr);
+    EXPECT_NE(_accessor.midi_frontend().get(), nullptr);
+    EXPECT_NE(_accessor.audio_frontend().get(), nullptr);
+    EXPECT_NE(_accessor.frontend_config().get(), nullptr);
+    EXPECT_NE(_accessor.engine_controller().get(), nullptr);
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     EXPECT_NE(sushi_cast->_rpc_server.get(), nullptr);
@@ -151,13 +147,15 @@ TEST_F(ReactiveFactoryTest, TestPassiveFactoryWithConfigFile)
 
     ASSERT_NE(sushi_cast, nullptr);
 
-    EXPECT_NE(sushi_cast->_osc_frontend.get(), nullptr);
-    EXPECT_NE(sushi_cast->_engine.get(), nullptr);
-    EXPECT_NE(sushi_cast->_midi_dispatcher.get(), nullptr);
-    EXPECT_NE(sushi_cast->_midi_frontend.get(), nullptr);
-    EXPECT_NE(sushi_cast->_audio_frontend.get(), nullptr);
-    EXPECT_NE(sushi_cast->_frontend_config.get(), nullptr);
-    EXPECT_NE(sushi_cast->_engine_controller.get(), nullptr);
+    sushi::internal::ConcreteSushiAccessor _accessor(*sushi_cast);
+
+    EXPECT_NE(_accessor.osc_frontend().get(), nullptr);
+    EXPECT_NE(_accessor.engine().get(), nullptr);
+    EXPECT_NE(_accessor.midi_dispatcher().get(), nullptr);
+    EXPECT_NE(_accessor.midi_frontend().get(), nullptr);
+    EXPECT_NE(_accessor.audio_frontend().get(), nullptr);
+    EXPECT_NE(_accessor.frontend_config().get(), nullptr);
+    EXPECT_NE(_accessor.engine_controller().get(), nullptr);
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     EXPECT_NE(sushi_cast->_rpc_server.get(), nullptr);
@@ -205,15 +203,17 @@ TEST_F(OfflineFactoryTest, TestOfflineFactoryWithDefaultConfig)
 
     ASSERT_NE(sushi_cast, nullptr);
 
-    // OSC Frontend instantiation will not be implemented for the offline factory.
-    EXPECT_EQ(sushi_cast->_osc_frontend.get(), nullptr);
+    sushi::internal::ConcreteSushiAccessor _accessor(*sushi_cast);
 
-    EXPECT_NE(sushi_cast->_engine.get(), nullptr);
-    EXPECT_NE(sushi_cast->_midi_dispatcher.get(), nullptr);
-    EXPECT_NE(sushi_cast->_midi_frontend.get(), nullptr);
-    EXPECT_NE(sushi_cast->_audio_frontend.get(), nullptr);
-    EXPECT_NE(sushi_cast->_frontend_config.get(), nullptr);
-    EXPECT_NE(sushi_cast->_engine_controller.get(), nullptr);
+    // OSC Frontend instantiation will not be implemented for the offline factory.
+    EXPECT_EQ(_accessor.osc_frontend().get(), nullptr);
+
+    EXPECT_NE(_accessor.engine().get(), nullptr);
+    EXPECT_NE(_accessor.midi_dispatcher().get(), nullptr);
+    EXPECT_NE(_accessor.midi_frontend().get(), nullptr);
+    EXPECT_NE(_accessor.audio_frontend().get(), nullptr);
+    EXPECT_NE(_accessor.frontend_config().get(), nullptr);
+    EXPECT_NE(_accessor.engine_controller().get(), nullptr);
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     EXPECT_NE(sushi_cast->_rpc_server.get(), nullptr);
@@ -235,15 +235,17 @@ TEST_F(OfflineFactoryTest, TestOfflineFactoryWithConfigFile)
 
     ASSERT_NE(sushi_cast, nullptr);
 
-    // OSC Frontend instantiation will not be implemented for the offline factory.
-    EXPECT_EQ(sushi_cast->_osc_frontend.get(), nullptr);
+    sushi::internal::ConcreteSushiAccessor _accessor(*sushi_cast);
 
-    EXPECT_NE(sushi_cast->_engine.get(), nullptr);
-    EXPECT_NE(sushi_cast->_midi_dispatcher.get(), nullptr);
-    EXPECT_NE(sushi_cast->_midi_frontend.get(), nullptr);
-    EXPECT_NE(sushi_cast->_audio_frontend.get(), nullptr);
-    EXPECT_NE(sushi_cast->_frontend_config.get(), nullptr);
-    EXPECT_NE(sushi_cast->_engine_controller.get(), nullptr);
+    // OSC Frontend instantiation will not be implemented for the offline factory.
+    EXPECT_EQ(_accessor.osc_frontend().get(), nullptr);
+
+    EXPECT_NE(_accessor.engine().get(), nullptr);
+    EXPECT_NE(_accessor.midi_dispatcher().get(), nullptr);
+    EXPECT_NE(_accessor.midi_frontend().get(), nullptr);
+    EXPECT_NE(_accessor.audio_frontend().get(), nullptr);
+    EXPECT_NE(_accessor.frontend_config().get(), nullptr);
+    EXPECT_NE(_accessor.engine_controller().get(), nullptr);
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     EXPECT_NE(sushi_cast->_rpc_server.get(), nullptr);
@@ -326,14 +328,15 @@ TEST_F(StandaloneFactoryTest, TestStandaloneFactoryWithDefaultConfig)
 
     ASSERT_NE(sushi_cast, nullptr);
 
-    EXPECT_NE(sushi_cast->_osc_frontend.get(), nullptr);
+    sushi::internal::ConcreteSushiAccessor _accessor(*sushi_cast);
 
-    EXPECT_NE(sushi_cast->_engine.get(), nullptr);
-    EXPECT_NE(sushi_cast->_midi_dispatcher.get(), nullptr);
-    EXPECT_NE(sushi_cast->_midi_frontend.get(), nullptr);
-    EXPECT_NE(sushi_cast->_audio_frontend.get(), nullptr);
-    EXPECT_NE(sushi_cast->_frontend_config.get(), nullptr);
-    EXPECT_NE(sushi_cast->_engine_controller.get(), nullptr);
+    EXPECT_NE(_accessor.osc_frontend().get(), nullptr);
+    EXPECT_NE(_accessor.engine().get(), nullptr);
+    EXPECT_NE(_accessor.midi_dispatcher().get(), nullptr);
+    EXPECT_NE(_accessor.midi_frontend().get(), nullptr);
+    EXPECT_NE(_accessor.audio_frontend().get(), nullptr);
+    EXPECT_NE(_accessor.frontend_config().get(), nullptr);
+    EXPECT_NE(_accessor.engine_controller().get(), nullptr);
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     EXPECT_NE(sushi_cast->_rpc_server.get(), nullptr);
@@ -373,14 +376,15 @@ TEST_F(StandaloneFactoryTest, TestStandaloneFactoryWithConfigFile)
 
     ASSERT_NE(sushi_cast, nullptr);
 
-    EXPECT_NE(sushi_cast->_osc_frontend.get(), nullptr);
+    sushi::internal::ConcreteSushiAccessor _accessor(*sushi_cast);
 
-    EXPECT_NE(sushi_cast->_engine.get(), nullptr);
-    EXPECT_NE(sushi_cast->_midi_dispatcher.get(), nullptr);
-    EXPECT_NE(sushi_cast->_midi_frontend.get(), nullptr);
-    EXPECT_NE(sushi_cast->_audio_frontend.get(), nullptr);
-    EXPECT_NE(sushi_cast->_frontend_config.get(), nullptr);
-    EXPECT_NE(sushi_cast->_engine_controller.get(), nullptr);
+    EXPECT_NE(_accessor.osc_frontend().get(), nullptr);
+    EXPECT_NE(_accessor.engine().get(), nullptr);
+    EXPECT_NE(_accessor.midi_dispatcher().get(), nullptr);
+    EXPECT_NE(_accessor.midi_frontend().get(), nullptr);
+    EXPECT_NE(_accessor.audio_frontend().get(), nullptr);
+    EXPECT_NE(_accessor.frontend_config().get(), nullptr);
+    EXPECT_NE(_accessor.engine_controller().get(), nullptr);
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     EXPECT_NE(sushi_cast->_rpc_server.get(), nullptr);

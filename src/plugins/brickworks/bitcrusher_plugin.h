@@ -28,6 +28,8 @@
 
 namespace sushi::internal::bitcrusher_plugin {
 
+class Accessor;
+
 class BitcrusherPlugin : public InternalPlugin, public UidHelper<BitcrusherPlugin>
 {
 public:
@@ -53,6 +55,8 @@ public:
     static std::string_view static_uid();
 
 private:
+    friend Accessor;
+
     BypassManager _bypass_manager;
     float _sample_rate{0};
 
@@ -64,6 +68,25 @@ private:
     std::array<bw_sr_reduce_state, MAX_TRACK_CHANNELS> _sr_reduce_states;
 };
 
-} // namespace sshi::internal::bitcrusher_plugin
+class Accessor
+{
+public:
+    explicit Accessor(BitcrusherPlugin& plugin) : _plugin(plugin) {}
+
+    [[nodiscard]] FloatParameterValue* samplerate_ratio()
+    {
+        return _plugin._samplerate_ratio;
+    }
+
+    [[nodiscard]] IntParameterValue* bit_depth()
+    {
+        return _plugin._bit_depth;
+    }
+
+private:
+    BitcrusherPlugin& _plugin;
+};
+
+} // namespace ssh::internal::bitcrusher_plugin
 
 #endif // BITCRUSHER_PLUGIN_H

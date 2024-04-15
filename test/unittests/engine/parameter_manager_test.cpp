@@ -4,12 +4,7 @@
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
 #include "engine/parameter_manager.cpp"
-#undef private
-ELK_POP_WARNING
 
 #include "plugins/gain_plugin.h"
 
@@ -80,7 +75,10 @@ protected:
 
     ::testing::NiceMock<MockEventDispatcher> _mock_dispatcher;
     ::testing::NiceMock<MockProcessorContainer> _mock_processor_container;
-    ParameterManager _module_under_test{TEST_MAX_INTERVAL, &_mock_processor_container};
+
+    ParameterManager _module_under_test {TEST_MAX_INTERVAL, &_mock_processor_container};
+
+    sushi::internal::ParameterManagerAccessor _accessor {_module_under_test};
 
     HostControlMockup _host_control_mockup;
     std::shared_ptr<Processor> _test_processor;
@@ -165,10 +163,12 @@ TEST_F(TestParameterManager, TestErrorHandling)
     _module_under_test.output_parameter_notifications(&_mock_dispatcher, 2 * TEST_MAX_INTERVAL);
 
     // Force a value change for this particular parameter, we still shouldn't output anything
-    if (const auto& value = _module_under_test._parameters[_test_track->id()].find(1234); value != _module_under_test._parameters[_test_track->id()].end())
+    const auto& value = _accessor.parameters()[_test_track->id()].find(1234);
+    if (value != _accessor.parameters()[_test_track->id()].end())
     {
         value->second.value = 0.5;
     }
+
     _module_under_test.mark_parameter_changed(_test_track->id(), 1234, TEST_MAX_INTERVAL);
     _module_under_test.output_parameter_notifications(&_mock_dispatcher, 2 * TEST_MAX_INTERVAL);
 }

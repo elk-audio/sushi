@@ -96,8 +96,12 @@ void WahPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuf
 
     if (_bypass_manager.should_process())
     {
-        const float* in_channel_ptrs[_current_input_channels];
-        float* out_channel_ptrs[_current_input_channels];
+        std::vector<const float *> in_channel_ptrs(_current_input_channels);
+        std::vector<float *> out_channel_ptrs(_current_input_channels);
+
+//        const float* in_channel_ptrs[_current_input_channels];
+//        float* out_channel_ptrs[_current_input_channels];
+
         for (int i = 0; i < _current_input_channels; i++)
         {
             in_channel_ptrs[i] = in_buffer.channel(i);

@@ -69,6 +69,8 @@ using OSC_CALLBACK_HANDLE = uint64_t;
 #error "Environment not 32 or 64-bit."
 #endif
 
+class Accessor;
+
 class OscpackOscMessenger : public BaseOscMessenger,
                             public oscpack::OscPacketListener
 {
@@ -102,6 +104,8 @@ protected:
     void ProcessMessage(const oscpack::ReceivedMessage& m, const IpEndpointName& /*remoteEndpoint*/) override;
 
 private:
+    friend Accessor;
+
     void _osc_receiving_worker();
 
     void _send_parameter_change_event(const oscpack::ReceivedMessage& m, void* user_data) const;
@@ -129,13 +133,44 @@ private:
         OSC_CALLBACK_HANDLE handle {0};
     };
 
-    std::map<std::pair<std::string, std::string>, MessageRegistration, std::less<>> _registered_messages;
+    typedef std::map<std::pair<std::string, std::string>, MessageRegistration, std::less<>> RegisteredMessages;
+
+    RegisteredMessages _registered_messages;
 
     OSC_CALLBACK_HANDLE _last_generated_handle {0};
 
     char _output_buffer[OSC_OUTPUT_BUFFER_SIZE];
 };
 
-} // end namespace osc
+class Accessor
+{
+public:
+    explicit Accessor(OscpackOscMessenger& f) : _friend(f) {}
+
+    OSC_CALLBACK_HANDLE last_generated_handle()
+    {
+        return _friend._last_generated_handle;
+    }
+
+    OscpackOscMessenger::RegisteredMessages& registered_messages()
+    {
+        return _friend._registered_messages;
+    }
+
+    void ProcessMessage(const oscpack::ReceivedMessage& m, const IpEndpointName& remoteEndpoint)
+    {
+        _friend.ProcessMessage(m, remoteEndpoint);
+    }
+
+    std::unique_ptr<UdpTransmitSocket>& transmit_socket()
+    {
+        return _friend._transmit_socket;
+    }
+
+private:
+    OscpackOscMessenger& _friend;
+};
+
+} // end namespace sushi::internal::osc
 
 #endif // SUSHI_OSCPACK_OSC_MESSENGER_H

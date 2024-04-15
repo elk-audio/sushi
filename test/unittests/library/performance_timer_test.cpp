@@ -2,12 +2,6 @@
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-#define protected public
-ELK_POP_WARNING
-
 #include "library/performance_timer.cpp"
 
 using namespace sushi;
@@ -51,17 +45,19 @@ protected:
     {
         _module_under_test.set_timing_period(TEST_PERIOD);
         /* Hack to store records while not using the worker thread */
-        _module_under_test._enabled = true;
+        _accessor.enabled() = true;
     }
 
     PerformanceTimer _module_under_test;
+
+    Accessor _accessor {_module_under_test};
 };
 
 
 TEST_F(TestPerformanceTimer, TestOperation)
 {
     run_test_scenario(_module_under_test);
-    _module_under_test._update_timings();
+    _accessor.update_timings();
 
     auto timings_1 = _module_under_test.timings_for_node(1);
     ASSERT_TRUE(timings_1.has_value());
@@ -87,7 +83,7 @@ TEST_F(TestPerformanceTimer, TestOperation)
 TEST_F(TestPerformanceTimer, TestClearRecords)
 {
     run_test_scenario(_module_under_test);
-    _module_under_test._update_timings();
+    _accessor.update_timings();
 
     ASSERT_TRUE(_module_under_test.clear_timings_for_node(2));
     ASSERT_FALSE(_module_under_test.clear_timings_for_node(467));

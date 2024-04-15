@@ -41,6 +41,8 @@ constexpr int MAX_SEND_CHANNELS = MAX_TRACK_CHANNELS;
 
 namespace send_plugin {
 
+class Accessor;
+
 class SendPlugin : public InternalPlugin, public UidHelper<SendPlugin>
 {
 public:
@@ -68,12 +70,14 @@ public:
     static std::string_view static_uid();
 
 private:
+    friend Accessor;
+
     void _set_destination(return_plugin::ReturnPlugin* destination);
 
     void _change_return_destination(const std::string& dest_name);
 
     float                         _sample_rate;
-    return_plugin::ReturnPlugin*  _destination{nullptr};
+    return_plugin::ReturnPlugin*  _destination {nullptr};
 
     FloatParameterValue*          _gain_parameter;
     ValueSmootherFilter<float>    _gain_smoother;
@@ -84,6 +88,25 @@ private:
 
     SendReturnFactory* _manager;
     BypassManager _bypass_manager;
+};
+
+class Accessor
+{
+public:
+    explicit Accessor(SendPlugin& plugin) : _plugin(plugin) {}
+
+    [[nodiscard]] return_plugin::ReturnPlugin* destination()
+    {
+        return _plugin._destination;
+    }
+
+    void set_destination(return_plugin::ReturnPlugin* destination)
+    {
+        _plugin._set_destination(destination);
+    }
+
+private:
+    SendPlugin& _plugin;
 };
 
 } // end namespace sushi::internal

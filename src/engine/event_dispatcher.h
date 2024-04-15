@@ -41,6 +41,11 @@ namespace sushi::internal::dispatcher {
 
 class BaseEventDispatcher;
 
+class Accessor;
+class WorkerAccessor;
+
+typedef SynchronizedQueue<std::unique_ptr<Event>> EventQueue;
+
 /**
  * @brief Low priority worker for handling possibly time consuming tasks like
  * instantiating plugins or do asynchronous work from processors.
@@ -60,6 +65,9 @@ public:
     int dispatch(std::unique_ptr<Event> event);
 
 private:
+    friend Accessor;
+    friend WorkerAccessor;
+
     engine::BaseEngine*         _engine;
     BaseEventDispatcher*        _dispatcher;
 
@@ -67,7 +75,7 @@ private:
     std::thread                 _worker_thread;
     std::atomic<bool>           _running;
 
-    SynchronizedQueue<std::unique_ptr<Event>> _queue;
+    EventQueue _queue;
 };
 
 class EventDispatcher : public BaseEventDispatcher
@@ -96,6 +104,8 @@ public:
     int dispatch(std::unique_ptr<Event> event) override;
 
 private:
+    friend Accessor;
+
     void _event_loop();
 
     int _process_rt_event(RtEvent& rt_event);
@@ -110,7 +120,7 @@ private:
     std::atomic<bool>           _running;
     std::thread                 _event_thread;
 
-    SynchronizedQueue<std::unique_ptr<Event>> _in_queue;
+    EventQueue _in_queue;
 
     RtSafeRtEventFifo*          _in_rt_queue;
     RtSafeRtEventFifo*          _out_rt_queue;
@@ -130,6 +140,64 @@ private:
     std::mutex _keyboard_listener_lock;
     std::mutex _parameter_listener_lock;
     std::mutex _engine_listener_lock;
+};
+
+class Accessor
+{
+public:
+    explicit Accessor(EventDispatcher& f) : _friend(f) {}
+
+    void event_loop()
+    {
+        _friend._event_loop();
+    }
+
+    std::atomic<bool>& running()
+    {
+        return _friend._running;
+    }
+
+    bool parameter_change_queue_empty()
+    {
+        return _friend._parameter_manager.parameter_change_queue_empty();
+    }
+
+    EventQueue& in_queue()
+    {
+        return _friend._in_queue;
+    }
+
+    void crank_worker()
+    {
+        _friend._worker._worker();
+    }
+
+private:
+    EventDispatcher& _friend;
+};
+
+class WorkerAccessor
+{
+public:
+    explicit WorkerAccessor(Worker& f) : _friend(f) {}
+
+    std::atomic<bool>& running()
+    {
+        return _friend._running;
+    }
+
+    void crank_worker()
+    {
+        _friend._worker();
+    }
+
+    EventQueue& queue()
+    {
+        return _friend._queue;
+    }
+
+private:
+    Worker& _friend;
 };
 
 } // end namespace sushi::internal::dispatcher

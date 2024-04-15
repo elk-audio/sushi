@@ -30,6 +30,8 @@
 
 namespace sushi::internal::engine {
 
+class AudioGraphAccessor;
+
 class AudioGraph
 {
 public:
@@ -96,11 +98,27 @@ public:
     void render();
 
 private:
+    friend AudioGraphAccessor;
+
     std::vector<std::vector<Track*>>   _audio_graph;
     std::unique_ptr<twine::WorkerPool> _worker_pool;
     std::vector<RtEventFifo<>>         _event_outputs;
     int _cores;
     int _current_core;
+};
+
+class AudioGraphAccessor
+{
+public:
+    explicit AudioGraphAccessor(AudioGraph& f) : _friend(f) {}
+
+    [[nodiscard]] std::vector<std::vector<Track*>>& audio_graph()
+    {
+        return _friend._audio_graph;
+    }
+
+private:
+    AudioGraph& _friend;
 };
 
 } // end namespace sushi::internal::engine

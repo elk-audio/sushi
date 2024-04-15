@@ -4,11 +4,6 @@
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-ELK_POP_WARNING
-
 #include "test_utils/test_utils.h"
 #include "test_utils/host_control_mockup.h"
 
@@ -54,9 +49,7 @@ class TestVst2xWrapper : public ::testing::Test
 {
 protected:
     using ::testing::Test::SetUp; // Hide error of hidden overload of virtual function in clang when signatures differ but the name is the same
-    TestVst2xWrapper()
-    {
-    }
+    TestVst2xWrapper() = default;
 
     void SetUp(const std::string& plugin_path)
     {
@@ -64,6 +57,8 @@ protected:
         auto full_plugin_path = std::string(std::filesystem::absolute(full_path).string());
 
         _module_under_test = std::make_unique<Vst2xWrapper>(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE), full_plugin_path);
+
+        _accessor = std::make_unique<Vst2xWrapperAccessor>(*_module_under_test);
 
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
         ASSERT_EQ(ProcessorReturnCode::OK, ret);
@@ -75,6 +70,8 @@ protected:
 
     HostControlMockup _host_control;
     std::unique_ptr<Vst2xWrapper> _module_under_test;
+
+    std::unique_ptr<Vst2xWrapperAccessor> _accessor;
 };
 
 
@@ -110,7 +107,7 @@ TEST_F(TestVst2xWrapper, TestParameterInitialization)
 TEST_F(TestVst2xWrapper, TestPluginCanDos)
 {
     SetUp(VST2_TEST_PLUGIN_PATH);
-    EXPECT_FALSE(_module_under_test->_can_do_soft_bypass);
+    EXPECT_FALSE(_accessor->can_do_soft_bypass());
 }
 
 TEST_F(TestVst2xWrapper, TestParameterSetViaEvent)
@@ -118,7 +115,7 @@ TEST_F(TestVst2xWrapper, TestParameterSetViaEvent)
     SetUp(VST2_TEST_PLUGIN_PATH);
     auto event = RtEvent::make_parameter_change_event(0, 0, 0, 0.123f);
     _module_under_test->process_event(event);
-    auto handle = _module_under_test->_plugin_handle;
+    auto handle = _accessor->plugin_handle();
     EXPECT_EQ(0.123f, handle->getParameter(handle, 0));
 }
 
@@ -253,14 +250,14 @@ TEST_F(TestVst2xWrapper, TestConfigurationChange)
 {
     SetUp(VST2_TEST_PLUGIN_PATH);
     _module_under_test->configure(44100.0f);
-    ASSERT_FLOAT_EQ(44100, _module_under_test->_sample_rate);
+    ASSERT_FLOAT_EQ(44100, _accessor->sample_rate());
 }
 
 TEST_F(TestVst2xWrapper, TestParameterChangeNotifications)
 {
     SetUp(VST2_TEST_PLUGIN_PATH);
     EXPECT_FALSE(_host_control._dummy_dispatcher.got_event());
-    _module_under_test->notify_parameter_change(0, 0.5f);
+    _accessor->notify_parameter_change(0, 0.5f);
     auto event = _host_control._dummy_dispatcher.retrieve_event();
     ASSERT_FALSE(event == nullptr);
     ASSERT_TRUE(event->is_parameter_change_notification());
@@ -272,7 +269,7 @@ TEST_F(TestVst2xWrapper, TestRTParameterChangeNotifications)
     RtSafeRtEventFifo queue;
     _module_under_test->set_event_output(&queue);
     ASSERT_TRUE(queue.empty());
-    _module_under_test->notify_parameter_change_rt(0, 0.5f);
+    _accessor->notify_parameter_change_rt(0, 0.5f);
     RtEvent event;
     auto received = queue.pop(event);
     ASSERT_TRUE(received);

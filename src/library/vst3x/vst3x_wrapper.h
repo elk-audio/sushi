@@ -51,6 +51,8 @@ constexpr int PARAMETER_UPDATE_QUEUE_SIZE = 100;
 // Maximum number of cached state changes, as only 1 can be processes per audio process call
 constexpr int STATE_CHANGE_QUEUE_SIZE = 10;
 
+class Vst3xWrapperAccessor;
+
 /**
  * @brief internal wrapper class for loading VST plugins and make them accessible as Processor to the Engine.
  */
@@ -143,6 +145,8 @@ public:
     }
 
 private:
+    friend Vst3xWrapperAccessor;
+
     /**
      * @brief Tell the plugin that we're done with it and release all resources
      * we allocated during initialization.
@@ -250,6 +254,50 @@ private:
 };
 
 Steinberg::Vst::SpeakerArrangement speaker_arr_from_channels(int channels);
+
+class Vst3xWrapperAccessor
+{
+public:
+    explicit Vst3xWrapperAccessor(Vst3xWrapper& f) : _friend(f) {}
+
+    Vst3xWrapper::SpecialParameter& bypass_parameter()
+    {
+        return _friend._bypass_parameter;
+    }
+
+    SushiProcessData& process_data()
+    {
+        return _friend._process_data;
+    }
+
+    void forward_events(Steinberg::Vst::ProcessData& data)
+    {
+        _friend._forward_events(data);
+    }
+
+    float sample_rate()
+    {
+        return _friend._sample_rate;
+    }
+
+    void fill_processing_context()
+    {
+        return _friend._fill_processing_context();
+    }
+
+    void forward_params(Steinberg::Vst::ProcessData& data)
+    {
+        _friend. _forward_params(data);
+    }
+
+    memory_relaxed_aquire_release::CircularFifo<Vst3xRtState*, STATE_CHANGE_QUEUE_SIZE>& state_change_queue()
+    {
+        return _friend._state_change_queue;
+    }
+
+private:
+    Vst3xWrapper& _friend;
+};
 
 } // end namespace sushi::internal::vst3
 

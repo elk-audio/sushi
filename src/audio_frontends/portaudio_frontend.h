@@ -76,7 +76,7 @@ struct PortAudioFrontendConfiguration : public BaseAudioFrontendConfiguration
             suggested_output_latency(suggested_output_latency)
     {}
 
-    virtual ~PortAudioFrontendConfiguration() = default;
+    ~PortAudioFrontendConfiguration() override = default;
 
     std::optional<int> input_device_id;
     std::optional<int> output_device_id;
@@ -84,12 +84,14 @@ struct PortAudioFrontendConfiguration : public BaseAudioFrontendConfiguration
     float suggested_output_latency{0.0f};
 };
 
+class PortaudioFrontendAccessor;
+
 class PortAudioFrontend : public BaseAudioFrontend
 {
 public:
-    PortAudioFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
+    explicit PortAudioFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
 
-    virtual ~PortAudioFrontend()
+    ~PortAudioFrontend() override
     {
         cleanup();
     }
@@ -114,10 +116,10 @@ public:
                                    void* user_data)
     {
         return static_cast<PortAudioFrontend*>(user_data)->_internal_process_callback(input,
-                                                                                     output,
-                                                                                     frame_count,
-                                                                                     time_info,
-                                                                                     status_flags);
+                                                                                      output,
+                                                                                      frame_count,
+                                                                                      time_info,
+                                                                                      status_flags);
     }
 
     /**
@@ -170,6 +172,8 @@ public:
     std::optional<int> default_output_device();
 
 private:
+    friend PortaudioFrontendAccessor;
+
     /**
      * @brief Initialize PortAudio engine, and cache the result to avoid multiple initializations
      *
@@ -205,16 +209,16 @@ private:
 
     void _output_interleaved_audio(float* output);
 
-    std::array<float, MAX_ENGINE_CV_IO_PORTS> _cv_output_his{0};
-    int _num_total_input_channels{0};
-    int _num_total_output_channels{0};
-    int _audio_input_channels{0};
-    int _audio_output_channels{0};
-    int _cv_input_channels{0};
-    int _cv_output_channels{0};
+    std::array<float, MAX_ENGINE_CV_IO_PORTS> _cv_output_his {0};
+    int _num_total_input_channels {0};
+    int _num_total_output_channels {0};
+    int _audio_input_channels {0};
+    int _audio_output_channels {0};
+    int _cv_input_channels {0};
+    int _cv_output_channels {0};
 
-    bool _pa_initialized{false};
-    PaStream* _stream{nullptr};
+    bool _pa_initialized {false};
+    PaStream* _stream {nullptr};
 
     // This is convenient mostly for mock testing, where checking for nullptr will not work
     bool _stream_initialized {false};
@@ -226,10 +230,29 @@ private:
 
     Time _start_time;
     PaTime _time_offset;
-    int64_t _processed_sample_count{0};
+    int64_t _processed_sample_count {0};
 
     engine::ControlBuffer _in_controls;
     engine::ControlBuffer _out_controls;
+};
+
+class PortaudioFrontendAccessor
+{
+public:
+    explicit PortaudioFrontendAccessor(PortAudioFrontend& f) : _friend(f) {}
+
+    bool stream_initialized()
+    {
+        return _friend._stream_initialized;
+    }
+
+    PaStream* stream()
+    {
+        return _friend._stream;
+    };
+
+private:
+    PortAudioFrontend& _friend;
 };
 
 } // end namespace sushi::internal::audio_frontend

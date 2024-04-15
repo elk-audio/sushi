@@ -29,10 +29,12 @@ ELK_DISABLE_DOMINANCE_INHERITANCE
 
 namespace sushi::internal::stereo_mixer_plugin {
 
+class Accessor;
+
 class StereoMixerPlugin : public InternalPlugin, public UidHelper<StereoMixerPlugin>
 {
 public:
-    StereoMixerPlugin(HostControl host_control);
+    explicit StereoMixerPlugin(HostControl host_control);
 
     ProcessorReturnCode init(float sample_rate) override;
 
@@ -43,6 +45,8 @@ public:
     static std::string_view static_uid();
 
 private:
+    friend Accessor;
+
     FloatParameterValue* _ch1_pan;
     FloatParameterValue* _ch1_gain;
     FloatParameterValue* _ch1_invert_phase;
@@ -54,6 +58,65 @@ private:
     FloatParameterValue* _ch2_invert_phase;
     ValueSmootherFilter<float> _ch2_left_gain_smoother;
     ValueSmootherFilter<float> _ch2_right_gain_smoother;
+};
+
+class Accessor
+{
+public:
+    explicit Accessor(StereoMixerPlugin& plugin) : _plugin(plugin) {}
+
+    [[nodiscard]] ValueSmootherFilter<float>& ch1_left_gain_smoother()
+    {
+        return _plugin._ch1_left_gain_smoother;
+    }
+
+    [[nodiscard]] ValueSmootherFilter<float>& ch1_right_gain_smoother()
+    {
+        return _plugin._ch1_right_gain_smoother;
+    }
+
+    [[nodiscard]] ValueSmootherFilter<float>& ch2_left_gain_smoother()
+    {
+        return _plugin._ch2_left_gain_smoother;
+    }
+
+    [[nodiscard]] ValueSmootherFilter<float>& ch2_right_gain_smoother()
+    {
+        return _plugin._ch2_right_gain_smoother;
+    }
+
+    [[nodiscard]] FloatParameterValue* ch1_pan()
+    {
+        return _plugin._ch1_pan;
+    }
+
+    [[nodiscard]] FloatParameterValue* ch1_gain()
+    {
+        return _plugin._ch1_gain;
+    }
+
+    [[nodiscard]] FloatParameterValue* ch1_invert_phase()
+    {
+        return _plugin._ch1_invert_phase;
+    }
+
+    [[nodiscard]] FloatParameterValue* ch2_pan()
+    {
+        return _plugin._ch2_pan;
+    }
+
+    [[nodiscard]] FloatParameterValue* ch2_gain()
+    {
+        return _plugin._ch2_gain;
+    }
+
+    [[nodiscard]] FloatParameterValue* ch2_invert_phase()
+    {
+        return _plugin._ch2_invert_phase;
+    }
+
+private:
+    StereoMixerPlugin& _plugin;
 };
 
 } // end namespace sushi::internal::stereo_mixer_plugin

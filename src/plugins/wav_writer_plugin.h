@@ -46,12 +46,14 @@ enum WavWriterStatus : int
     FAILURE
 };
 
+class Accessor;
+
 class WavWriterPlugin : public InternalPlugin, public UidHelper<WavWriterPlugin>
 {
 public:
     explicit WavWriterPlugin(HostControl host_control);
 
-    ~WavWriterPlugin();
+    ~WavWriterPlugin() override;
 
     ProcessorReturnCode init(float sample_rate) override;
 
@@ -69,6 +71,8 @@ public:
     static std::string_view static_uid();
 
 private:
+    friend Accessor;
+
     WavWriterStatus _start_recording();
     WavWriterStatus _stop_recording();
     void _post_write_event();
@@ -92,6 +96,36 @@ private:
     unsigned int _samples_received{0};
     sf_count_t _samples_written{0};
     sf_count_t _total_samples_written{0};
+};
+
+
+class Accessor
+{
+public:
+    explicit Accessor(WavWriterPlugin& plugin) : _plugin(plugin) {}
+
+    [[nodiscard]] BoolParameterValue* recording_parameter()
+    {
+        return _plugin._recording_parameter;
+    }
+
+    WavWriterStatus start_recording()
+    {
+        return _plugin._start_recording();
+    }
+
+    WavWriterStatus stop_recording()
+    {
+        return _plugin._stop_recording();
+    }
+
+    int write_to_file()
+    {
+        return _plugin._write_to_file();
+    }
+
+private:
+    WavWriterPlugin& _plugin;
 };
 
 } // end namespace sushi::internal::wav_writer_plugin

@@ -9,11 +9,6 @@
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-ELK_POP_WARNING
-
 #include "library/vst3x/vst3x_wrapper.cpp"
 #include "library/vst3x/vst3x_host_app.cpp"
 
@@ -100,7 +95,7 @@ class TestVst3xWrapper : public ::testing::Test
 {
 protected:
     using ::testing::Test::SetUp; // Hide error of hidden overload of virtual function in clang when signatures differ but the name is the same
-    TestVst3xWrapper() {}
+    TestVst3xWrapper() = default;
 
     void SetUp(const char* plugin_file, const char* plugin_name)
     {
@@ -111,6 +106,8 @@ protected:
                                                             full_plugin_path,
                                                             plugin_name,
                                                             &_host_app);
+
+        _accessor = std::make_unique<Vst3xWrapperAccessor>(*_module_under_test);
 
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
         ASSERT_EQ(ProcessorReturnCode::OK, ret);
@@ -123,6 +120,9 @@ protected:
     SushiHostApplication _host_app;
     HostControlMockup _host_control;
     std::unique_ptr<Vst3xWrapper> _module_under_test;
+
+    std::unique_ptr<Vst3xWrapperAccessor> _accessor;
+
     RtSafeRtEventFifo _event_queue;
 };
 
@@ -136,8 +136,8 @@ TEST_F(TestVst3xWrapper, TestLoadAndInitPlugin)
     EXPECT_EQ(1u, parameters.size());
     EXPECT_EQ("Delay", parameters[0]->name());
     EXPECT_EQ(DELAY_PARAM_ID, parameters[0]->id());
-    EXPECT_TRUE(_module_under_test->_bypass_parameter.supported);
-    EXPECT_EQ(BYPASS_PARAM_ID, static_cast<unsigned int>(_module_under_test->_bypass_parameter.id));
+    EXPECT_TRUE(_accessor->bypass_parameter().supported);
+    EXPECT_EQ(BYPASS_PARAM_ID, static_cast<unsigned int>(_accessor->bypass_parameter().id));
 
     auto descriptor = _module_under_test->parameter_from_name("Delay");
     ASSERT_TRUE(descriptor);
@@ -178,8 +178,8 @@ TEST_F(TestVst3xWrapper, TestBypassProcessing)
     ChunkSampleBuffer out_buffer(2);
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
     // The adelay example supports soft bypass.
-    EXPECT_TRUE(_module_under_test->_bypass_parameter.supported);
-    EXPECT_EQ(BYPASS_PARAM_ID, _module_under_test->_bypass_parameter.id);
+    EXPECT_TRUE(_accessor->bypass_parameter().supported);
+    EXPECT_EQ(BYPASS_PARAM_ID, _accessor->bypass_parameter().id);
 
     // Set bypass and manually feed the generated RtEvent back to the
     // wrapper processor as event dispatcher is not running
@@ -216,9 +216,9 @@ TEST_F(TestVst3xWrapper, TestEventForwarding)
     note_off_event.noteOff.channel = 2;
     note_off_event.noteOff.pitch = 48;
 
-    _module_under_test->_process_data.outputEvents->addEvent(note_on_event);
-    _module_under_test->_process_data.outputEvents->addEvent(note_off_event);
-    _module_under_test->_forward_events(_module_under_test->_process_data);
+    _accessor->process_data().outputEvents->addEvent(note_on_event);
+    _accessor->process_data().outputEvents->addEvent(note_off_event);
+    _accessor->forward_events(_accessor->process_data());
 
     ASSERT_FALSE(_event_queue.empty());
     RtEvent event;
@@ -241,7 +241,7 @@ TEST_F(TestVst3xWrapper, TestConfigurationChange)
 {
     SetUp(PLUGIN_FILE, PLUGIN_NAME);
     _module_under_test->configure(44100.0f);
-    ASSERT_FLOAT_EQ(44100, _module_under_test->_sample_rate);
+    ASSERT_FLOAT_EQ(44100, _accessor->sample_rate());
 }
 
 TEST_F(TestVst3xWrapper, TestTimeInfo)
@@ -253,8 +253,8 @@ TEST_F(TestVst3xWrapper, TestTimeInfo)
     _host_control._transport.set_time(Time(0), 0);
     _host_control._transport.set_time(std::chrono::seconds(2), static_cast<int64_t>(TEST_SAMPLE_RATE) * 2);
 
-    _module_under_test->_fill_processing_context();
-    auto context = _module_under_test->_process_data.processContext;
+    _accessor->fill_processing_context();
+    auto context = _accessor->process_data().processContext;
     /* For these numbers to match exactly, we need to choose a time interval which
      * is an integer multiple of AUDIO_CHUNK_SIZE, hence 2 seconds at 48000, which
      * is good up to AUDIO_CHUNK_SIZE = 256 */
@@ -308,8 +308,8 @@ TEST_F(TestVst3xWrapper, TestGateOutput)
     note_on_event.noteOn.channel = 0;
     note_on_event.noteOn.pitch = 46;
 
-    _module_under_test->_process_data.outputEvents->addEvent(note_on_event);
-    _module_under_test->_forward_events(_module_under_test->_process_data);
+    _accessor->process_data().outputEvents->addEvent(note_on_event);
+    _accessor->forward_events(_accessor->process_data());
 
     ASSERT_FALSE(_event_queue.empty());
     RtEvent event;
@@ -330,11 +330,11 @@ TEST_F(TestVst3xWrapper, TestCVOutput)
     ASSERT_EQ(ProcessorReturnCode::OK, status);
 
     int index_unused;
-    auto param_queue = _module_under_test->_process_data.outputParameterChanges->addParameterData(DELAY_PARAM_ID, index_unused);
+    auto param_queue = _accessor->process_data().outputParameterChanges->addParameterData(DELAY_PARAM_ID, index_unused);
     ASSERT_TRUE(param_queue);
     param_queue->addPoint(5, 0.75, index_unused);
 
-    _module_under_test->_forward_params(_module_under_test->_process_data);
+    _accessor->forward_params(_accessor->process_data());
 
     ASSERT_FALSE(_event_queue.empty());
     RtEvent event;
@@ -432,7 +432,7 @@ TEST_F(TestVst3xWrapper, TestMultipleStates)
     status = _module_under_test->set_state(&state, true);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
 
-    EXPECT_FALSE(_module_under_test->_state_change_queue.wasEmpty());
+    EXPECT_FALSE(_accessor->state_change_queue().wasEmpty());
 
     event = _host_control._dummy_dispatcher.retrieve_event();
     _module_under_test->process_event(event->to_rt_event(0));

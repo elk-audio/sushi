@@ -56,6 +56,7 @@ std::optional<ProcessTimings> PerformanceTimer::timings_for_node(int id)
     {
         return node->second.timings;
     }
+
     return std::nullopt;
 }
 
@@ -97,10 +98,12 @@ void PerformanceTimer::_update_timings()
 {
     std::map<int, std::vector<TimingLogPoint>> sorted_data;
     TimingLogPoint log_point;
+
     while (_entry_queue.pop(log_point))
     {
         sorted_data[log_point.id].push_back(log_point);
     }
+
     for (const auto& node : sorted_data)
     {
         int id = node.first;
@@ -116,6 +119,7 @@ ProcessTimings PerformanceTimer::_calculate_timings(const std::vector<TimingLogP
     float min_value{100};
     float max_value{0};
     float sum{0.0f};
+
     for (const auto& entry : entries)
     {
         float process_time = static_cast<float>(entry.delta_time.count()) / _period;
@@ -123,6 +127,7 @@ ProcessTimings PerformanceTimer::_calculate_timings(const std::vector<TimingLogP
         min_value = std::min(min_value, process_time);
         max_value = std::max(max_value, process_time);
     }
+
     return {sum / entries.size(), min_value, max_value};
 }
 
@@ -136,8 +141,10 @@ ProcessTimings PerformanceTimer::_merge_timings(ProcessTimings prev_timings, Pro
     {
         prev_timings.avg_case = (1.0f - AVERAGING_FACTOR) * prev_timings.avg_case + AVERAGING_FACTOR * new_timings.avg_case;
     }
+
     prev_timings.min_case = std::min(prev_timings.min_case, new_timings.min_case);
     prev_timings.max_case = std::max(prev_timings.max_case, new_timings.max_case);
+
     return prev_timings;
 }
 
@@ -150,6 +157,7 @@ bool PerformanceTimer::clear_timings_for_node(int id)
         new (&node->second.timings) (ProcessTimings);
         return true;
     }
+
     return false;
 }
 

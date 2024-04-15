@@ -31,14 +31,16 @@ namespace sushi::internal::equalizer_plugin {
 
 constexpr int MAX_CHANNELS_SUPPORTED = 2;
 
+class Accessor;
+
 class EqualizerPlugin : public InternalPlugin, public UidHelper<EqualizerPlugin>
 {
 public:
-    EqualizerPlugin(HostControl hostControl);
+    explicit EqualizerPlugin(HostControl hostControl);
 
-    ~EqualizerPlugin() = default;
+    ~EqualizerPlugin() override = default;
 
-    virtual ProcessorReturnCode init(float sample_rate) override;
+    ProcessorReturnCode init(float sample_rate) override;
 
     void configure(float sample_rate) override;
 
@@ -49,6 +51,8 @@ public:
     static std::string_view static_uid();
 
 private:
+    friend Accessor;
+
     void _reset_filters();
 
     float _sample_rate;
@@ -57,6 +61,38 @@ private:
     FloatParameterValue* _frequency;
     FloatParameterValue* _gain;
     FloatParameterValue* _q;
+};
+
+class Accessor
+{
+public:
+    explicit Accessor(const EqualizerPlugin* plugin) : _const_plugin(plugin) {}
+
+    explicit Accessor(EqualizerPlugin* plugin) : _plugin(plugin) {}
+
+    [[nodiscard]] FloatParameterValue* frequency()
+    {
+        return _plugin->_frequency;
+    }
+
+    [[nodiscard]] FloatParameterValue* gain()
+    {
+        return _plugin->_gain;
+    }
+
+    [[nodiscard]] FloatParameterValue* q()
+    {
+        return _plugin->_q;
+    }
+
+    float const_sample_rate()
+    {
+        return _const_plugin->_sample_rate;
+    }
+
+private:
+    EqualizerPlugin* _plugin {nullptr};
+    const EqualizerPlugin* _const_plugin {nullptr};
 };
 
 } // end namespace sushi::internal::equalizer_plugin

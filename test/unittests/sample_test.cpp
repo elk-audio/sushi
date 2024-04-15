@@ -1,12 +1,5 @@
 #include "gtest/gtest.h"
 
-#include "elk-warning-suppressor/warning_suppressor.hpp"
-
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-ELK_POP_WARNING
-
 // A simple test case
 TEST (SampleTest, SimpleTestCase) {
     ASSERT_TRUE (1);
@@ -17,16 +10,11 @@ TEST (SampleTest, SimpleTestCase) {
 class SampleTestCase : public ::testing::Test
 {
     protected:
-    SampleTestCase()
-    {
-    }
-    void SetUp()
-    {
-    }
+    SampleTestCase() = default;
 
-    void TearDown()
-    {
-    }
+    void SetUp() override {}
+
+    void TearDown() override {}
 };
 
 TEST_F(SampleTestCase, SampleTest)

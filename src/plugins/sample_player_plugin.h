@@ -33,6 +33,8 @@ namespace sushi::internal::sample_player_plugin {
 
 constexpr size_t TOTAL_POLYPHONY = 8;
 
+class Accessor;
+
 class SamplePlayerPlugin : public InternalPlugin, public UidHelper<SamplePlayerPlugin>
 {
 public:
@@ -57,13 +59,15 @@ public:
     static std::string_view static_uid();
 
 private:
+    friend Accessor;
+
     void _all_notes_off();
 
-    float*  _sample_buffer{nullptr};
-    float   _dummy_sample{0.0f};
+    float*  _sample_buffer {nullptr};
+    float   _dummy_sample {0.0f};
     dsp::Sample _sample;
 
-    SampleBuffer<AUDIO_CHUNK_SIZE> _buffer{1};
+    SampleBuffer<AUDIO_CHUNK_SIZE> _buffer {1};
     FloatParameterValue* _volume_parameter;
     FloatParameterValue* _attack_parameter;
     FloatParameterValue* _decay_parameter;
@@ -71,6 +75,25 @@ private:
     FloatParameterValue* _release_parameter;
 
     std::array<sample_player_voice::Voice, TOTAL_POLYPHONY> _voices;
+};
+
+class Accessor
+{
+public:
+    explicit Accessor(SamplePlayerPlugin& plugin) : _plugin(plugin) {}
+
+    [[nodiscard]] float*  sample_buffer()
+    {
+        return _plugin._sample_buffer;
+    }
+
+    [[nodiscard]] dsp::Sample& sample()
+    {
+        return _plugin._sample;
+    }
+
+private:
+    SamplePlayerPlugin& _plugin;
 };
 
 } // end namespace sushi::internal::sample_player_plugin

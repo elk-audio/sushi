@@ -38,6 +38,7 @@ namespace sushi::internal::simple_synth_plugin {
 
 constexpr int MAX_MIDI_NOTE = 128;
 
+class Accessor;
 
 class SimpleSynthPlugin : public InternalPlugin, public UidHelper<SimpleSynthPlugin>
 {
@@ -59,6 +60,8 @@ public:
     static std::string_view static_uid();
 
 private:
+    friend Accessor;
+
     void _render_loop(int offset, int n);
 
     void _change_active_note(int notenum);
@@ -88,6 +91,25 @@ private:
     RtSafeRtEventFifo _event_fifo;
     std::array<bool, MAX_MIDI_NOTE> _held_notes {false};
     int _highest_held_note {-1};
+};
+
+class Accessor
+{
+public:
+    explicit Accessor(SimpleSynthPlugin& plugin) : _plugin(plugin) {}
+
+    [[nodiscard]] FloatParameterValue* decay()
+    {
+        return _plugin._decay;
+    }
+
+    [[nodiscard]] FloatParameterValue* release()
+    {
+        return _plugin._release;
+    }
+
+private:
+    SimpleSynthPlugin& _plugin;
 };
 
 } // namespace sushi::internal::simple_synth_plugin

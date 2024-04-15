@@ -183,7 +183,7 @@ void SimpleSynthPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */, 
         if (next_offset < previous_offset)
         {
             ELKLOG_LOG_DEBUG("Dropping unordered event of type {} with sample offset {}",
-                             event.type(), event.sample_offset());
+                             static_cast<int>(event.type()), event.sample_offset());
             continue;
         }
         _render_loop(previous_offset, next_offset);
@@ -226,7 +226,7 @@ void SimpleSynthPlugin::process_audio(const ChunkSampleBuffer& /* in_buffer */, 
         }
 
         default:
-            ELKLOG_LOG_DEBUG("Unexpected event type passed to process(): {}", key_event->type());
+            ELKLOG_LOG_DEBUG("Unexpected event type passed to process(): {}", static_cast<int>(key_event->type()));
 
         }
         previous_offset = next_offset;

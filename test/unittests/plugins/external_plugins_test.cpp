@@ -7,12 +7,6 @@
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-#define protected public
-ELK_POP_WARNING
-
 #include "test_utils/test_utils.h"
 #include "test_utils/host_control_mockup.h"
 #include "library/internal_plugin.h"
@@ -162,7 +156,6 @@ void test_fx_plugin_buffers_not_overflow(const std::string& uid)
     }
 }
 
-
 /**
  * @brief Run a series of test on a given plugin class:
  *              - instantiation w. label & UID check
@@ -171,7 +164,7 @@ void test_fx_plugin_buffers_not_overflow(const std::string& uid)
  *              - white noise input does not produce NaNs, while randomly setting parameters
  */
 void test_fx_plugin_instantiation(const std::string& uid,
-                                   const std::string& label)
+                                  const std::string& label)
 {
 
     auto [processor_status, init_status, plugin] = instantiate_plugin(uid);
@@ -258,6 +251,9 @@ protected:
     void SetUp() override
     {
         _module_under_test = std::make_unique<bitcrusher_plugin::BitcrusherPlugin>(_host_control.make_host_control_mockup());
+
+        _accessor = std::make_unique<sushi::internal::bitcrusher_plugin::Accessor>(*_module_under_test);
+
         ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
         _module_under_test->set_enabled(true);
         _module_under_test->set_input_channels(TEST_CHANNEL_COUNT);
@@ -267,12 +263,14 @@ protected:
 
     void SetRandomParameters()
     {
-        _module_under_test->_samplerate_ratio->set_processed(_sr_dist(_rand_gen));
-        _module_under_test->_bit_depth->set_processed(_bd_dist(_rand_gen));
+        _accessor->samplerate_ratio()->set_processed(_sr_dist(_rand_gen));
+        _accessor->bit_depth()->set_processed(_bd_dist(_rand_gen));
     }
 
     HostControlMockup _host_control;
     std::unique_ptr<bitcrusher_plugin::BitcrusherPlugin> _module_under_test;
+
+    std::unique_ptr<sushi::internal::bitcrusher_plugin::Accessor> _accessor;
 
     std::ranlux24 _rand_gen;
     std::uniform_real_distribution<float> _sr_dist{0.0f, 1.0f};
@@ -297,7 +295,7 @@ TEST_F(TestBitcrusherPlugin, TestSilenceInSilenceOut)
         SetRandomParameters();
         _module_under_test->process_audio(in_buffer, out_buffer);
         // Threshold is dependent on bitdepth resolution
-        test_utils::assert_buffer_value(0.0f, out_buffer, 1.0f / (1 + _module_under_test->_bit_depth->processed_value()));
+        test_utils::assert_buffer_value(0.0f, out_buffer, 1.0f / (1.0f + static_cast<float>(_accessor->bit_depth()->processed_value())));
     }
 }
 

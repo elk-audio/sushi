@@ -76,6 +76,8 @@ struct PluginInfo
     }
 };
 
+class ProcessorAccessor;
+
 class Processor
 {
 public:
@@ -89,7 +91,7 @@ public:
      * any resources reserved here.
      * @param sample_rate Host sample rate
      */
-    virtual ProcessorReturnCode init(float /* sample_rate */)
+    virtual ProcessorReturnCode init(float /*sample_rate*/)
     {
         return ProcessorReturnCode::OK;
     }
@@ -98,7 +100,7 @@ public:
      * @brief Configure an already initialised plugin
      * @param sample_rate the new sample rate to use
      */
-    virtual void configure(float /* sample_rate*/) {}
+    virtual void configure(float /*sample_rate*/) {}
 
     /**
      * @brief Process a single realtime event that is to take place during the next call to process
@@ -410,8 +412,8 @@ public:
         return PluginInfo();
     }
 
-
 protected:
+    friend ProcessorAccessor;
 
     /**
      * @brief Register a newly created parameter
@@ -584,13 +586,14 @@ public:
         if (bypass_enabled && this->bypassed() == false)
         {
             _state = BypassState::RAMPING_DOWN;
-            _ramp_chunks = _chunks_to_ramp(sample_rate);
+            _ramp_chunks = chunks_to_ramp(sample_rate);
             _ramp_count = _ramp_chunks;
         }
+
         if (bypass_enabled == false && this->bypassed())
         {
             _state = BypassState::RAMPING_UP;
-            _ramp_chunks = _chunks_to_ramp(sample_rate);
+            _ramp_chunks = chunks_to_ramp(sample_rate);
             _ramp_count = 0;
         }
     }
@@ -598,12 +601,12 @@ public:
     /**
      * @return true if the processors processing functions needs to be called, false otherwise
      */
-    bool should_process() const {return _state != BypassState::BYPASSED;}
+    [[nodiscard]] bool should_process() const {return _state != BypassState::BYPASSED;}
 
     /**
      * @return true if the processor output should be ramped, false if it doesn't need volume ramping
      */
-    bool should_ramp() const {return _state == BypassState::RAMPING_DOWN || _state == BypassState::RAMPING_UP;};
+    [[nodiscard]] bool should_ramp() const {return _state == BypassState::RAMPING_DOWN || _state == BypassState::RAMPING_UP;};
 
     /**
      * @brief Does volume ramping on the buffer passed to the function based on the current bypass state
@@ -634,12 +637,12 @@ public:
      */
     std::pair<float, float> get_ramp();
 
-private:
-    int _chunks_to_ramp(float sample_rate)
+    [[nodiscard]] int chunks_to_ramp(float sample_rate) const
     {
         return static_cast<int>(std::floor(std::max(1.0f, (sample_rate * _ramp_time.count() / AUDIO_CHUNK_SIZE))));
     }
 
+private:
     enum class BypassState
     {
         NOT_BYPASSED,
@@ -652,6 +655,40 @@ private:
     std::chrono::duration<float, std::ratio<1,1>> _ramp_time{std::chrono::milliseconds(10)};
     int _ramp_chunks{0};
     int _ramp_count{0};
+};
+
+class ProcessorAccessor
+{
+public:
+    explicit ProcessorAccessor(Processor& plugin) : _friend(plugin) {}
+
+    bool register_parameter(ParameterDescriptor* parameter)
+    {
+        return _friend.register_parameter(parameter);
+    }
+
+    std::string make_unique_parameter_name(const std::string& name) const
+    {
+        return _friend._make_unique_parameter_name(name);
+    }
+
+    void bypass_process(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer)
+    {
+        _friend.bypass_process(in_buffer, out_buffer);
+    }
+
+    bool maybe_output_cv_value(ObjectId parameter_id, float value)
+    {
+        return _friend.maybe_output_cv_value(parameter_id, value);
+    }
+
+    bool maybe_output_gate_event(int channel, int note, bool note_on)
+    {
+        return _friend.maybe_output_gate_event(channel, note, note_on);
+    }
+
+private:
+    Processor& _friend;
 };
 
 } // end namespace sushi::internal

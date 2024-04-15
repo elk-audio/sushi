@@ -48,6 +48,8 @@ enum class TrackType
     POST
 };
 
+class TrackAccessor;
+
 class Track : public InternalPlugin, public RtEventPipe
 {
 public:
@@ -179,6 +181,8 @@ public:
     void send_event(const RtEvent& event) override;
 
 private:
+    friend TrackAccessor;
+
     enum class PanMode
     {
         GAIN_ONLY,
@@ -210,6 +214,21 @@ private:
 
     RtEventFifo<KEYBOARD_EVENT_QUEUE_SIZE> _kb_event_buffer;
 };
+
+class TrackAccessor
+{
+public:
+    explicit TrackAccessor(Track& plugin) : _plugin(plugin) {}
+
+    [[nodiscard]] std::vector<Processor*>& processors()
+    {
+        return _plugin._processors;
+    }
+
+private:
+    Track& _plugin;
+};
+
 
 } // end namespace sushi::internal::engine
 

@@ -82,6 +82,8 @@ private:
 
 constexpr int MAX_RT_PROCESSOR_ID = 100000;
 
+class AudioEngineAccessor;
+
 class AudioEngine : public BaseEngine
 {
 public:
@@ -508,6 +510,8 @@ public:
     void update_timings() override;
 
 private:
+    friend AudioEngineAccessor;
+
     enum class Direction : bool
     {
         INPUT = true,
@@ -613,7 +617,7 @@ private:
 
     // Processors in the realtime part indexed by their unique 32 bit id
     // Only to be accessed from the process callback in rt mode.
-    std::vector<Processor*> _realtime_processors{MAX_RT_PROCESSOR_ID, nullptr};
+    std::vector<Processor*> _realtime_processors {MAX_RT_PROCESSOR_ID, nullptr};
     AudioGraph              _audio_graph;
 
     Track* _pre_track{nullptr};
@@ -661,5 +665,35 @@ private:
  */
 RealtimeState update_state(RealtimeState current_state);
 
+class AudioEngineAccessor
+{
+public:
+    explicit AudioEngineAccessor(AudioEngine& f) : _friend(f) {}
+
+    [[nodiscard]] AudioGraph& audio_graph()
+    {
+        return _friend._audio_graph;
+    }
+
+    [[nodiscard]] ProcessorContainer& processors()
+    {
+        return _friend._processors;
+    }
+
+    [[nodiscard]] std::vector<Processor*>& realtime_processors()
+    {
+        return _friend._realtime_processors;
+    }
+
+    void remove_connections_from_track(ObjectId track_id)
+    {
+        _friend._remove_connections_from_track(track_id);
+    }
+
+private:
+    AudioEngine& _friend;
+};
+
 } // end namespace sushi::internal::engine
+
 #endif // SUSHI_ENGINE_H

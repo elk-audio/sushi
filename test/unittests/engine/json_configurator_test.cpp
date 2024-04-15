@@ -4,20 +4,11 @@
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-#define protected public
-ELK_POP_WARNING
-
 #include <gmock/gmock.h>
 #include <gmock/gmock-actions.h>
 
 #include "engine/json_configurator.cpp"
 #include "sushi/utils.h"
-
-#undef private
-#undef protected
 
 #include "engine/audio_engine.h"
 #include "engine/midi_dispatcher.h"
@@ -42,7 +33,7 @@ using namespace sushi::internal::control_frontend;
 class TestJsonConfigurator : public ::testing::Test
 {
 protected:
-    TestJsonConfigurator() {}
+    TestJsonConfigurator() = default;
 
     void SetUp() override
     {
@@ -57,24 +48,30 @@ protected:
                                                                 &_midi_dispatcher,
                                                                 _engine.processor_container(),
                                                                 json_data.value());
+
+        _accessor = std::make_unique<sushi::internal::jsonconfig::Accessor>(*_module_under_test);
     }
 
     /* Helper functions */
     JsonConfigReturnStatus _make_track(const rapidjson::Value &track, TrackType type);
 
-    AudioEngine _engine{SAMPLE_RATE};
-    MidiDispatcher _midi_dispatcher{_engine.event_dispatcher()};
+    AudioEngine _engine {SAMPLE_RATE};
+    MidiDispatcher _midi_dispatcher {_engine.event_dispatcher()};
+
+    sushi::internal::midi_dispatcher::Accessor _midi_dispatcher_accessor {_midi_dispatcher};
 
     sushi::control::ControlMockup _controller;
 
     std::unique_ptr<JsonConfigurator> _module_under_test;
+
+    std::unique_ptr<sushi::internal::jsonconfig::Accessor> _accessor;
 
     std::string _path;
 };
 
 JsonConfigReturnStatus TestJsonConfigurator::_make_track(const rapidjson::Value &track, TrackType type)
 {
-    return _module_under_test->_make_track(track, type);
+    return _accessor->make_track(track, type);
 }
 
 TEST_F(TestJsonConfigurator, TestLoadAudioConfig)
@@ -125,10 +122,10 @@ TEST_F(TestJsonConfigurator, TestLoadMidi)
 
     status = _module_under_test->load_midi();
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
-    ASSERT_EQ(1u, _midi_dispatcher._kb_routes_in.size());
-    ASSERT_EQ(1u, _midi_dispatcher._cc_routes.size());
-    ASSERT_EQ(1u, _midi_dispatcher._raw_routes_in.size());
-    ASSERT_EQ(1u, _midi_dispatcher._pc_routes.size());
+    ASSERT_EQ(1u, _midi_dispatcher_accessor.kb_routes_in().size());
+    ASSERT_EQ(1u, _midi_dispatcher_accessor.cc_routes().size());
+    ASSERT_EQ(1u, _midi_dispatcher_accessor.raw_routes_in().size());
+    ASSERT_EQ(1u, _midi_dispatcher_accessor.pc_routes().size());
     ASSERT_TRUE(_midi_dispatcher.midi_clock_enabled(0));
 }
 
@@ -245,12 +242,12 @@ TEST_F(TestJsonConfigurator, TestValidJsonSchema)
     std::string config_file_contents((std::istreambuf_iterator<char>(config_file)), std::istreambuf_iterator<char>());
     rapidjson::Document test_cfg;
     test_cfg.Parse(config_file_contents.c_str());
-    ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::HOST_CONFIG));
-    ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::TRACKS));
-    ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::MIDI));
-    ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::CV_GATE));
-    ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::EVENTS));
-    ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg,JsonSection::STATE));
+    ASSERT_TRUE(_accessor->validate_against_schema(test_cfg,JsonSection::HOST_CONFIG));
+    ASSERT_TRUE(_accessor->validate_against_schema(test_cfg,JsonSection::TRACKS));
+    ASSERT_TRUE(_accessor->validate_against_schema(test_cfg,JsonSection::MIDI));
+    ASSERT_TRUE(_accessor->validate_against_schema(test_cfg,JsonSection::CV_GATE));
+    ASSERT_TRUE(_accessor->validate_against_schema(test_cfg,JsonSection::EVENTS));
+    ASSERT_TRUE(_accessor->validate_against_schema(test_cfg,JsonSection::STATE));
 }
 
 TEST_F(TestJsonConfigurator, TestHostConfigSchema)
@@ -258,18 +255,18 @@ TEST_F(TestJsonConfigurator, TestHostConfigSchema)
     rapidjson::Document test_cfg;
     test_cfg.SetObject();
     /* No definition of host_config */
-    ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::HOST_CONFIG));
+    ASSERT_FALSE(_accessor->validate_against_schema(test_cfg, JsonSection::HOST_CONFIG));
 
     /* no definition of samplerate */
     rapidjson::Value host_config(rapidjson::kObjectType);
     test_cfg.AddMember("host_config", host_config, test_cfg.GetAllocator());
-    ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::HOST_CONFIG));
+    ASSERT_FALSE(_accessor->validate_against_schema(test_cfg, JsonSection::HOST_CONFIG));
 
     /* invalid type */
     rapidjson::Value samplerate(rapidjson::kObjectType);
     test_cfg["host_config"].AddMember("samplerate", samplerate, test_cfg.GetAllocator());
     test_cfg["host_config"]["samplerate"] = "44100";
-    ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::HOST_CONFIG));
+    ASSERT_FALSE(_accessor->validate_against_schema(test_cfg, JsonSection::HOST_CONFIG));
 }
 
 TEST_F(TestJsonConfigurator, TestPluginChainSchema)
@@ -292,15 +289,15 @@ TEST_F(TestJsonConfigurator, TestPluginChainSchema)
     example_track.AddMember("inputs", inputs, test_cfg.GetAllocator());
     example_track.AddMember("outputs", outputs, test_cfg.GetAllocator());
     test_cfg["tracks"].PushBack(example_track, test_cfg.GetAllocator());
-    ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
+    ASSERT_FALSE(_accessor->validate_against_schema(test_cfg, JsonSection::TRACKS));
     test_cfg["tracks"][0].AddMember("plugins", plugins, test_cfg.GetAllocator());
-    ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
+    ASSERT_TRUE(_accessor->validate_against_schema(test_cfg, JsonSection::TRACKS));
 
     /* incorrect mode */
     test_cfg["tracks"][0]["channels"] = -1;
-    ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
+    ASSERT_FALSE(_accessor->validate_against_schema(test_cfg, JsonSection::TRACKS));
     test_cfg["tracks"][0]["channels"] = 2;
-    ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
+    ASSERT_TRUE(_accessor->validate_against_schema(test_cfg, JsonSection::TRACKS));
 }
 
 TEST_F(TestJsonConfigurator, TestPluginSchema)
@@ -334,39 +331,39 @@ TEST_F(TestJsonConfigurator, TestPluginSchema)
     rapidjson::Value& plugin = test_cfg["tracks"][0]["plugins"][0];
 
     /* type = internal; requires uid */
-    ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
+    ASSERT_FALSE(_accessor->validate_against_schema(test_cfg, JsonSection::TRACKS));
     plugin.AddMember("uid", uid, test_cfg.GetAllocator());
-    ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
+    ASSERT_TRUE(_accessor->validate_against_schema(test_cfg, JsonSection::TRACKS));
     plugin["type"] = "vst3x";
-    ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
+    ASSERT_FALSE(_accessor->validate_against_schema(test_cfg, JsonSection::TRACKS));
 
     /* type = vst2x; requires path */
     plugin["type"] = "vst2x";
-    ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
+    ASSERT_FALSE(_accessor->validate_against_schema(test_cfg, JsonSection::TRACKS));
     plugin.AddMember("path", path, test_cfg.GetAllocator());
     plugin.RemoveMember("uid");
-    ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
+    ASSERT_TRUE(_accessor->validate_against_schema(test_cfg, JsonSection::TRACKS));
     plugin["type"] = "vst3x";
-    ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
+    ASSERT_FALSE(_accessor->validate_against_schema(test_cfg, JsonSection::TRACKS));
 
     /* type = vst3x; requires uid & path */
     rapidjson::Value vst3_uid("vst3_uid");
     plugin.AddMember("uid", vst3_uid, test_cfg.GetAllocator());
-    ASSERT_TRUE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
+    ASSERT_TRUE(_accessor->validate_against_schema(test_cfg, JsonSection::TRACKS));
 
     /* type = LV2; requires name & uri */
     plugin["type"] = "lv2";
-    ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
+    ASSERT_FALSE(_accessor->validate_against_schema(test_cfg, JsonSection::TRACKS));
     plugin.AddMember("uri", path, test_cfg.GetAllocator());
     plugin.RemoveMember("uid");
-    ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
+    ASSERT_FALSE(_accessor->validate_against_schema(test_cfg, JsonSection::TRACKS));
     plugin["type"] = "vst3x";
-    ASSERT_FALSE(_module_under_test->_validate_against_schema(test_cfg, JsonSection::TRACKS));
+    ASSERT_FALSE(_accessor->validate_against_schema(test_cfg, JsonSection::TRACKS));
 }
 
 TEST_F(TestJsonConfigurator, TestMidiSchema)
 {
-    auto [status, midi_cfg] =_module_under_test->_parse_section(JsonSection::MIDI);
+    auto [status, midi_cfg] = _accessor->parse_section(JsonSection::MIDI);
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
 
     rapidjson::Document mutable_cfg;
@@ -376,16 +373,16 @@ TEST_F(TestJsonConfigurator, TestMidiSchema)
     mutable_cfg["midi"].CopyFrom(midi_cfg, mutable_cfg.GetAllocator());
 
     rapidjson::Value& track_connections = mutable_cfg["midi"]["track_connections"][0];
-    ASSERT_TRUE(_module_under_test->_validate_against_schema(mutable_cfg,JsonSection::MIDI));
+    ASSERT_TRUE(_accessor->validate_against_schema(mutable_cfg, JsonSection::MIDI));
     track_connections["channel"] = "invalid";
-    ASSERT_FALSE(_module_under_test->_validate_against_schema(mutable_cfg,JsonSection::MIDI));
+    ASSERT_FALSE(_accessor->validate_against_schema(mutable_cfg, JsonSection::MIDI));
     track_connections["channel"] = 16;
-    ASSERT_FALSE(_module_under_test->_validate_against_schema(mutable_cfg,JsonSection::MIDI));
+    ASSERT_FALSE(_accessor->validate_against_schema(mutable_cfg, JsonSection::MIDI));
 }
 
 TEST_F(TestJsonConfigurator, TestCvGateSchema)
 {
-    auto [status, test_cfg] =_module_under_test->_parse_section(JsonSection::CV_GATE);
+    auto [status, test_cfg] = _accessor->parse_section(JsonSection::CV_GATE);
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
 
     rapidjson::Document mutable_cfg;
@@ -395,25 +392,25 @@ TEST_F(TestJsonConfigurator, TestCvGateSchema)
     mutable_cfg["cv_control"].CopyFrom(test_cfg, mutable_cfg.GetAllocator());
 
     rapidjson::Value& cv_in = mutable_cfg["cv_control"]["cv_inputs"][0];
-    ASSERT_TRUE(_module_under_test->_validate_against_schema(mutable_cfg, JsonSection::CV_GATE));
+    ASSERT_TRUE(_accessor->validate_against_schema(mutable_cfg, JsonSection::CV_GATE));
     cv_in["parameter"] = "";
-    ASSERT_FALSE(_module_under_test->_validate_against_schema(mutable_cfg, JsonSection::CV_GATE));
+    ASSERT_FALSE(_accessor->validate_against_schema(mutable_cfg, JsonSection::CV_GATE));
     cv_in["parameter"] = "pitch";
     cv_in["processor"] = "";
-    ASSERT_FALSE(_module_under_test->_validate_against_schema(mutable_cfg, JsonSection::CV_GATE));
+    ASSERT_FALSE(_accessor->validate_against_schema(mutable_cfg, JsonSection::CV_GATE));
     cv_in["processor"] = "synth";
 
     rapidjson::Value& gate_out = mutable_cfg["cv_control"]["gate_outputs"][0];
     gate_out["mode"] = "sync__";
-    ASSERT_FALSE(_module_under_test->_validate_against_schema(mutable_cfg,JsonSection::CV_GATE));
+    ASSERT_FALSE(_accessor->validate_against_schema(mutable_cfg, JsonSection::CV_GATE));
     gate_out["mode"] = "note_event";
     gate_out["channel"] = 1234;
-    ASSERT_FALSE(_module_under_test->_validate_against_schema(mutable_cfg,JsonSection::CV_GATE));
+    ASSERT_FALSE(_accessor->validate_against_schema(mutable_cfg, JsonSection::CV_GATE));
 }
 
 TEST_F(TestJsonConfigurator, TestInititalStateSchema)
 {
-    auto [status, test_cfg] =_module_under_test->_parse_section(JsonSection::STATE);
+    auto [status, test_cfg] = _accessor->parse_section(JsonSection::STATE);
     ASSERT_EQ(JsonConfigReturnStatus::OK, status);
 
     rapidjson::Document mutable_cfg;
@@ -424,19 +421,19 @@ TEST_F(TestJsonConfigurator, TestInititalStateSchema)
     mutable_cfg["initial_state"].CopyFrom(test_cfg, mutable_cfg.GetAllocator());
 
     auto& state_1 = mutable_cfg["initial_state"].GetArray()[0];
-    ASSERT_TRUE(_module_under_test->_validate_against_schema(mutable_cfg, JsonSection::STATE));
+    ASSERT_TRUE(_accessor->validate_against_schema(mutable_cfg, JsonSection::STATE));
     state_1["parameters"]["pan"] = 1.5;
-    ASSERT_FALSE(_module_under_test->_validate_against_schema(mutable_cfg, JsonSection::STATE));
+    ASSERT_FALSE(_accessor->validate_against_schema(mutable_cfg, JsonSection::STATE));
     state_1["parameters"]["pan"] = "0.37";
-    ASSERT_FALSE(_module_under_test->_validate_against_schema(mutable_cfg, JsonSection::STATE));
+    ASSERT_FALSE(_accessor->validate_against_schema(mutable_cfg, JsonSection::STATE));
     state_1["parameters"]["pan"] = 0.37;
     state_1["program"] = "string";
-    ASSERT_FALSE(_module_under_test->_validate_against_schema(mutable_cfg, JsonSection::STATE));
+    ASSERT_FALSE(_accessor->validate_against_schema(mutable_cfg, JsonSection::STATE));
     state_1["program"] = 5;
     state_1["bypassed"] = "off";
-    ASSERT_FALSE(_module_under_test->_validate_against_schema(mutable_cfg, JsonSection::STATE));
+    ASSERT_FALSE(_accessor->validate_against_schema(mutable_cfg, JsonSection::STATE));
     state_1["bypassed"] = true;
-    ASSERT_TRUE(_module_under_test->_validate_against_schema(mutable_cfg,JsonSection::STATE));
+    ASSERT_TRUE(_accessor->validate_against_schema(mutable_cfg, JsonSection::STATE));
  }
 
 TEST_F(TestJsonConfigurator, TestLoadEventList)
