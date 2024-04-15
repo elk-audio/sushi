@@ -316,7 +316,6 @@ bool AppleCoreAudioFrontend::stop_io()
 void AppleCoreAudioFrontend::audio_callback(const float* input_data, int num_input_channels, float* output_data, int num_output_channels, int num_samples, uint64_t host_input_time)
 {
     _out_buffer.clear();
-    // TODO - Are we sure we always get the exact number of samples we request?
     assert(num_samples == AUDIO_CHUNK_SIZE);
     std::chrono::microseconds current_time(_time_conversions.host_time_to_nanos(host_input_time) / 1000);
     _handle_resume(current_time, num_samples);

@@ -85,7 +85,7 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
         }
         _mono = _soundfile_info.channels == 1;
         auto sample_rate_file = _soundfile_info.samplerate;
-        if (static_cast<float>(sample_rate_file) != _engine->sample_rate())
+
         ELKLOG_LOG_WARNING_IF(sample_rate_file != _engine->sample_rate(),
                               "Sample rate mismatch between file ({}) and engine ({})",
                               sample_rate_file, _engine->sample_rate());

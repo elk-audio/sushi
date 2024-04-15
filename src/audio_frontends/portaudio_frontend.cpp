@@ -137,10 +137,11 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
         ELKLOG_LOG_ERROR("Failed to configure samplerate");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
-    if (samplerate != _engine->sample_rate())
-    {
-        ELKLOG_LOG_WARNING("Failed to use engine samplerate ({}), using {} instead", _engine->sample_rate(), samplerate);
-    }
+
+    ELKLOG_LOG_WARNING_IF(samplerate != _engine->sample_rate(),
+                          "Failed to use engine samplerate ({}), using {} instead",
+                          _engine->sample_rate(), samplerate);
+
     _set_engine_sample_rate(samplerate);
 
     // Open the stream
