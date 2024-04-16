@@ -252,7 +252,7 @@ OscState OSCFrontend::save_state() const
             {
                 state.add_enabled_outputs(std::string(processor->name()), std::move(enabled_params));
             }
-            ELKLOG_LOG_ERROR_IF(!processor, "Processor {}, was not found when saving state");
+            ELKLOG_LOG_ERROR_IF(!processor, "Processor {}, was not found when saving state", connection_pair.first);
         }
     }
 
@@ -271,7 +271,7 @@ void OSCFrontend::set_state(const OscState& state)
         auto processor = _processor_container->processor(connections.first);
         if (!processor)
         {
-            ELKLOG_LOG_ERROR("Processor {} not found when restoring outgoing connections from state");
+            ELKLOG_LOG_ERROR("Processor {} not found when restoring outgoing connections from state", connections.first);
             continue;
         }
         for (auto param_id : connections.second)

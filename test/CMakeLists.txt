@@ -132,6 +132,7 @@ if (${SUSHI_WITH_VST2})
     set_target_properties(vst2_test_plugin PROPERTIES
             COMPILE_FLAGS "${VST2_COMPILE_FLAGS}"
     )
+    target_compile_features(vst2_test_plugin PUBLIC cxx_std_20)
     target_include_directories(vst2_test_plugin PRIVATE ${SUSHI_VST2_SDK_PATH})
     target_compile_definitions(vst2_test_plugin PRIVATE -D__cdecl= )
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
