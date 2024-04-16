@@ -48,7 +48,7 @@ class WavWriterPlugin : public InternalPlugin, public UidHelper<WavWriterPlugin>
 public:
     explicit WavWriterPlugin(HostControl host_control);
 
-    ~WavWriterPlugin();
+    ~WavWriterPlugin() override;
 
     ProcessorReturnCode init(float sample_rate) override;
 

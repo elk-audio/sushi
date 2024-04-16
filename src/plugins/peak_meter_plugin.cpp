@@ -19,7 +19,6 @@
  */
 
 #include <cassert>
-
 #include "spdlog/fmt/bundled/format.h"
 
 #include "peak_meter_plugin.h"
@@ -65,11 +64,13 @@ PeakMeterPlugin::PeakMeterPlugin(HostControl host_control) : InternalPlugin(host
                                                       new FloatParameterPreProcessor(0.1, DEFAULT_REFRESH_RATE));
     _update_rate_id = _update_rate_parameter->descriptor()->id();
 
-    std::string param_name = "level_{}";
-    std::string param_label = "Level ch {}";
+    std::string_view param_name = "level_{}";
+    std::string_view param_label = "Level ch {}";
     for (int i = 0; i < MAX_METERED_CHANNELS; ++i)
     {
-        _level_parameters[i] = register_float_parameter(fmt::format(param_name, i), fmt::format(param_label, i), "dB",
+        _level_parameters[i] = register_float_parameter(fmt::vformat(param_name, fmt::make_format_args(i)),
+                                                        fmt::vformat(param_label, fmt::make_format_args(i)),
+                                                        "dB",
                                                         OUTPUT_MIN_DB, OUTPUT_MIN_DB, OUTPUT_MAX_DB,
                                                         Direction::OUTPUT,
                                                         new dBToLinPreProcessor(OUTPUT_MIN_DB, OUTPUT_MAX_DB));
@@ -80,8 +81,8 @@ PeakMeterPlugin::PeakMeterPlugin(HostControl host_control) : InternalPlugin(host
     param_label = "Clip ch {}";
     for (int i = 0; i < MAX_METERED_CHANNELS; ++i)
     {
-        _clip_parameters[i] = register_bool_parameter(fmt::format(param_name, i),
-                                                      fmt::format(param_label, i),
+        _clip_parameters[i] = register_bool_parameter(fmt::vformat(param_name, fmt::make_format_args(i)),
+                                                      fmt::vformat(param_label, fmt::make_format_args(i)),
                                                       "",
                                                       false,
                                                       Direction::OUTPUT);

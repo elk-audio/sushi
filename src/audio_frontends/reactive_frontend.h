@@ -49,7 +49,7 @@ struct ReactiveFrontendConfiguration : public BaseAudioFrontendConfiguration
 class ReactiveFrontend : public BaseAudioFrontend
 {
 public:
-    ReactiveFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
+    explicit ReactiveFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
 
     ~ReactiveFrontend() override
     {
@@ -89,6 +89,13 @@ public:
                         ChunkSampleBuffer& out_buffer,
                         int64_t total_sample_count,
                         Time timestamp);
+
+     /**
+     * @brief Call before the first call to process_audio() when resuming from an interrupt or xrun to
+     *        notify sushi that audio processing was interrupted and that there may be gaps in the audio
+     * @param duration The length of the interruption
+     */
+     void notify_interrupted_audio(Time duration);
 
 private:
     engine::ControlBuffer _in_controls;

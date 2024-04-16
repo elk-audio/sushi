@@ -85,12 +85,12 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
         }
         _mono = _soundfile_info.channels == 1;
         auto sample_rate_file = _soundfile_info.samplerate;
-        if (sample_rate_file != _engine->sample_rate())
-        {
-            ELKLOG_LOG_WARNING("Sample rate mismatch between file ({}) and engine ({})",
-                              sample_rate_file,
-                              _engine->sample_rate());
-        }
+
+        ELKLOG_LOG_WARNING_IF(sample_rate_file != _engine->sample_rate(),
+                              "Sample rate mismatch between file ({}) and engine ({})",
+                              sample_rate_file, _engine->sample_rate());
+
+        _set_engine_sample_rate(static_cast<float>(sample_rate_file));
 
         // Open output file with same format as input file
         if (!(_output_file = sf_open(off_config->output_filename.c_str(), SFM_WRITE, &_soundfile_info)))
@@ -170,6 +170,11 @@ void OfflineFrontend::run()
     {
         _run_blocking();
     }
+}
+
+void OfflineFrontend::pause(bool /*paused*/)
+{
+    // Currently a no-op
 }
 
 // Process all events up until end_time
@@ -267,11 +272,6 @@ void OfflineFrontend::_run_blocking()
         // Not done in libsndfile's example
         sf_writef_float(_output_file, file_buffer, static_cast<sf_count_t>(readcount));
     }
-}
-
-void OfflineFrontend::pause(bool /*enabled*/)
-{
-    // Currently a no-op
 }
 
 } // end namespace sushi::internal::audio_frontend

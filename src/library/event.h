@@ -70,7 +70,7 @@ class Event
     friend class sushi::internal::dispatcher::Worker;
 
 public:
-    virtual ~Event() {}
+    virtual ~Event() = default;
 
     /**
      * @brief Creates an Event from its RtEvent counterpart if possible

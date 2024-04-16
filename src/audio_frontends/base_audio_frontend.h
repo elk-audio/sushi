@@ -59,7 +59,7 @@ struct BaseAudioFrontendConfiguration
 class BaseAudioFrontend
 {
 public:
-    BaseAudioFrontend(engine::BaseEngine* engine) : _engine(engine) {}
+    explicit BaseAudioFrontend(engine::BaseEngine* engine) : _engine(engine) {}
 
     virtual ~BaseAudioFrontend() = default;
 
@@ -89,17 +89,44 @@ public:
      *        data consumed, but the audio engine is not called and all audio outputs are silenced.
      *        When toggling pause, the audio will be quickly ramped down and the function will block
      *        until the change has taken effect.
-     * @param enabled If true enables pause, of false disables pause and calls the audio engine again
+     * @param paused If true enables pause, of false disables pause and calls the audio engine again
      */
-     virtual void pause(bool enabled);
+     virtual void pause(bool paused);
 
 protected:
-    BaseAudioFrontendConfiguration* _config;
-    engine::BaseEngine* _engine;
+    /**
+     * @brief Call before calling engine->process_chunk for default handling of resume and xrun detection
+     * @param current_time Audio timestamp of the current audio callback
+     * @param current_sample Number of samples in the current audio callback
+     */
+    void _handle_resume(Time current_time, int current_samples);
+
+    /**
+     * @brief Call after calling engine->process_chunk for default handling of externally triggered pause
+     * @param current_time Audio timestamp of the current audio callback
+     */
+    void _handle_pause(Time current_time);
+
+    /**
+     * @brief Set the samplerate used for internal calculations and set the engine samplerate
+     * @param sample_rate The new sample rate in Hz
+     */
+    virtual void _set_engine_sample_rate(float sample_rate);
+
+    std::pair<bool, Time> _test_for_xruns(Time current_time, int current_samples);
+
+    BaseAudioFrontendConfiguration* _config {nullptr};
+    engine::BaseEngine* _engine {nullptr};
 
     BypassManager _pause_manager;
     std::unique_ptr<twine::RtConditionVariable> _pause_notify;
-    std::atomic_bool _pause_notified{false};
+    std::atomic_bool _pause_notified {false};
+    std::atomic_bool _resume_notified {true};
+    Time _pause_start;
+
+    Time _last_process_time;
+    float _sample_rate;
+    float _inv_sample_rate;
 };
 
 } // end namespace sushi::internal

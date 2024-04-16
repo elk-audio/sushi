@@ -111,10 +111,10 @@ protected:
         _module_under_test->stop();
     }
 
-    ::testing::NiceMock<MockProcessorContainer>  _mock_processor_container;
+    ::testing::NiceMock<MockProcessorContainer> _mock_processor_container;
     MockOscInterface* _mock_osc_interface {nullptr};
 
-    EngineMockup _mock_engine {TEST_SAMPLE_RATE};
+    EngineMockup                  _mock_engine {TEST_SAMPLE_RATE};
     sushi::control::ControlMockup _mock_controller;
 
     std::unique_ptr<OSCFrontend> _module_under_test;

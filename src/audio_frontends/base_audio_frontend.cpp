@@ -26,6 +26,8 @@ ELKLOG_GET_LOGGER_WITH_MODULE_NAME("audio_frontend");
 
 namespace sushi::internal::audio_frontend {
 
+constexpr float XRUN_LIMIT_FACTOR = 1.8;
+
 AudioFrontendStatus BaseAudioFrontend::init(BaseAudioFrontendConfiguration* config)
 {
     _config = config;
@@ -41,25 +43,81 @@ AudioFrontendStatus BaseAudioFrontend::init(BaseAudioFrontendConfiguration* conf
     return AudioFrontendStatus::OK;
 }
 
-void BaseAudioFrontend::pause(bool enabled)
+void BaseAudioFrontend::pause(bool paused)
 {
     /* This default implementation is for realtime frontends that must remember to call
-     * _pause_notify->notify() in the audio callback when un-pausing */
+     * _handle_resume() and _handle_pause() in the audio callback */
     assert(twine::is_current_thread_realtime() == false);
     bool running = !_pause_manager.bypassed();
-    _pause_manager.set_bypass(enabled, _engine->sample_rate());
 
     // If pausing, return when engine has ramped down.
-    if (enabled && running)
+    if (paused && running)
     {
         _pause_notified = false;
         _pause_notify->wait();
         _engine->enable_realtime(false);
+        _resume_notified = false;
     }
     else
     {
-        _engine->enable_realtime(enabled);
+        if (!paused and !running)
+        {
+            _engine->enable_realtime(true);
+        }
     }
+
+    _pause_manager.set_bypass(paused, _engine->sample_rate());
+}
+
+std::pair<bool, Time> BaseAudioFrontend::_test_for_xruns(Time current_time, int current_samples)
+{
+    auto delta_time = current_time - _last_process_time;
+    bool first = _last_process_time == Time::zero();
+    auto limit = Time(static_cast<int>(current_samples * _inv_sample_rate * XRUN_LIMIT_FACTOR * Time(std::chrono::seconds(1)).count()));
+    _last_process_time = current_time;
+
+    if (!first && (delta_time != Time::zero()) && (std::abs(delta_time.count()) > limit.count()))
+    {
+        return {true, delta_time};
+    }
+    return {false, Time(0)};
+}
+
+void BaseAudioFrontend::_handle_resume(Time current_time, int current_samples)
+{
+    if (!_resume_notified && _pause_manager.should_process())
+    {
+        _resume_notified = false;
+        _engine->notify_interrupted_audio(current_time - _pause_start);
+    }
+    else
+    {
+        auto [xrun, delta_time] = _test_for_xruns(current_time, current_samples);
+        if (xrun)
+        {
+            _engine->notify_interrupted_audio(delta_time);
+        }
+    }
+}
+
+void BaseAudioFrontend::_handle_pause(Time current_time)
+{
+    if (_pause_notified == false && _pause_manager.should_process() == false)
+    {
+        _pause_notify->notify();
+        _pause_notified = true;
+        _pause_start = current_time;
+    }
+}
+
+void BaseAudioFrontend::_set_engine_sample_rate(float sample_rate)
+{
+    if (_engine->sample_rate() != sample_rate)
+    {
+        _engine->set_sample_rate(sample_rate);
+    }
+    _sample_rate = sample_rate;
+    _inv_sample_rate = 1.0f / sample_rate;
 }
 
 } // end namespace sushi::internal::audio_frontend

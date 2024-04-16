@@ -1,6 +1,8 @@
 #ifndef SUSHI_AUDIO_FRONTEND_MOCKUP_H
 #define SUSHI_AUDIO_FRONTEND_MOCKUP_H
 
+#include <gmock/gmock.h>
+
 #include "audio_frontends/base_audio_frontend.h"
 
 using namespace sushi;
@@ -11,14 +13,21 @@ class AudioFrontendMockup : public BaseAudioFrontend
 {
 public:
     AudioFrontendMockup() : BaseAudioFrontend(nullptr) {}
-    AudioFrontendMockup(internal::engine::BaseEngine* engine) : BaseAudioFrontend(engine) {}
 
-    void cleanup() override {}
+    MOCK_METHOD(void,
+                cleanup,
+                (),
+                (override));
 
-    void run() override {}
+    MOCK_METHOD(void,
+                run,
+                (),
+                (override));
 
-    void pause([[maybe_unused]] bool enabled) override {}
+    MOCK_METHOD(void,
+                pause,
+                (bool paused),
+                (override));
 };
-
 
 #endif //SUSHI_AUDIO_FRONTEND_MOCKUP_H

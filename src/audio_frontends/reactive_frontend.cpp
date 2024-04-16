@@ -100,14 +100,11 @@ void ReactiveFrontend::process_audio(ChunkSampleBuffer& in_buffer,
             _pause_manager.ramp_output(out_buffer);
         }
     }
-    else
-    {
-        if (_pause_notified == false && _pause_manager.should_process() == false)
-        {
-            _pause_notify->notify();
-            _pause_notified = true;
-        }
-    }
+}
+
+void ReactiveFrontend::notify_interrupted_audio(Time duration)
+{
+    _engine->notify_interrupted_audio(duration);
 }
 
 } // end namespace sushi::internal::audio_frontend

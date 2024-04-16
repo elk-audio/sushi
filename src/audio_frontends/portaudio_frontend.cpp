@@ -137,11 +137,12 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
         ELKLOG_LOG_ERROR("Failed to configure samplerate");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
-    if (samplerate != _engine->sample_rate())
-    {
-        ELKLOG_LOG_WARNING("Failed to use engine samplerate ({}), using {} instead", _engine->sample_rate(), samplerate);
-        _engine->set_sample_rate(samplerate);
-    }
+
+    ELKLOG_LOG_WARNING_IF(samplerate != _engine->sample_rate(),
+                          "Failed to use engine samplerate ({}), using {} instead",
+                          _engine->sample_rate(), samplerate);
+
+    _set_engine_sample_rate(samplerate);
 
     // Open the stream
     // In case there is no input device available we only want to use output
@@ -411,6 +412,8 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
     Time timestamp = _start_time + std::chrono::duration_cast<std::chrono::microseconds>(pa_time_elapsed);
 
     _out_buffer.clear();
+    _handle_resume(timestamp, frame_count);
+
     if (_pause_manager.should_process())
     {
         _copy_interleaved_audio(static_cast<const float*>(input));
@@ -420,15 +423,8 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
             _pause_manager.ramp_output(_out_buffer);
         }
     }
-    else
-    {
-        if (_pause_notified == false)
-        {
-            _pause_notify->notify();
-            _pause_notified = true;
-            _engine->enable_realtime(false);
-        }
-    }
+
+    _handle_pause(timestamp);
 
     _output_interleaved_audio(static_cast<float*>(output));
 

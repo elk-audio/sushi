@@ -58,15 +58,15 @@ struct OfflineFrontendConfiguration : public BaseAudioFrontendConfiguration
 class OfflineFrontend : public BaseAudioFrontend
 {
 public:
-    OfflineFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine),
-                                                  _input_file(nullptr),
-                                                  _output_file(nullptr),
-                                                  _running{true}
+    explicit OfflineFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine),
+                                                           _input_file(nullptr),
+                                                           _output_file(nullptr),
+                                                           _running{true}
     {
         _buffer.clear();
     }
 
-    virtual ~OfflineFrontend()
+    ~OfflineFrontend() override
     {
         cleanup();
     }
@@ -83,7 +83,7 @@ public:
 
     void run() override;
 
-    void pause(bool enabled) override;
+    void pause(bool paused) override;
 
 private:
     void _process_events(Time end_time);
