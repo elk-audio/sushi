@@ -33,7 +33,7 @@
 #include "plugins/sample_delay_plugin.h"
 #include "plugins/stereo_mixer_plugin.h"
 #include "plugins/freeverb_plugin.h"
-/*
+
 #include "plugins/brickworks/compressor_plugin.h"
 #include "plugins/brickworks/bitcrusher_plugin.h"
 #include "plugins/brickworks/wah_plugin.h"
@@ -56,7 +56,7 @@
 #include "plugins/brickworks/combdelay_plugin.h"
 #include "plugins/brickworks/notch_plugin.h"
 #include "plugins/brickworks/simple_synth_plugin.h"
-*/
+
 namespace sushi::internal {
 
 /**
@@ -106,7 +106,6 @@ InternalProcessorFactory::InternalProcessorFactory() : _send_return_factory(std:
     _add(std::make_unique<InternalFactory<sample_delay_plugin::SampleDelayPlugin>>());
     _add(std::make_unique<InternalFactory<stereo_mixer_plugin::StereoMixerPlugin>>());
     _add(std::make_unique<InternalFactory<freeverb_plugin::FreeverbPlugin>>());
-    /*
     _add(std::make_unique<InternalFactory<compressor_plugin::CompressorPlugin>>());
     _add(std::make_unique<InternalFactory<bitcrusher_plugin::BitcrusherPlugin>>());
     _add(std::make_unique<InternalFactory<wah_plugin::WahPlugin>>());
@@ -127,7 +126,6 @@ InternalProcessorFactory::InternalProcessorFactory() : _send_return_factory(std:
     _add(std::make_unique<InternalFactory<dist_plugin::DistPlugin>>());
     _add(std::make_unique<InternalFactory<drive_plugin::DrivePlugin>>());
     _add(std::make_unique<InternalFactory<simple_synth_plugin::SimpleSynthPlugin>>());
-    */
 }
 
 std::pair<ProcessorReturnCode, std::shared_ptr<Processor>>
@@ -141,7 +139,7 @@ InternalProcessorFactory::new_instance(const PluginInfo &plugin_info,
         return _send_return_factory->new_instance(plugin_info, host_control, sample_rate);
     }
 
-    auto processor = _create_internal_plugin(plugin_info.uid, host_control);
+    auto processor= _create_internal_plugin(plugin_info.uid, host_control);
     if (processor == nullptr)
     {
         return {ProcessorReturnCode::ERROR, nullptr};
