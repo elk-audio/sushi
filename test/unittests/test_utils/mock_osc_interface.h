@@ -33,7 +33,7 @@ public:
                                                                     send_port,
                                                                     send_ip) {}
 
-    ~MockOscInterface() override {}
+    ~MockOscInterface() override = default;
 
     MOCK_METHOD(bool,
                 init,
@@ -55,12 +55,12 @@ public:
                 (const char* address_pattern,
                  const char* type_tag_string,
                  OscMethodType type,
-                 const void* connection),
+                 const void* callback_data),
                 (override));
 
     MOCK_METHOD(void,
                 delete_method,
-                (void* method),
+                (void* handle),
                 (override));
 
     MOCK_METHOD(void,
