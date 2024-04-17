@@ -34,6 +34,30 @@
 #include "plugins/brickworks/drive_plugin.cpp"
 #include "plugins/freeverb_plugin.cpp"
 
+namespace sushi::internal::bitcrusher_plugin
+{
+
+class Accessor
+{
+public:
+    explicit Accessor(BitcrusherPlugin& plugin) : _plugin(plugin) {}
+
+    [[nodiscard]] FloatParameterValue* samplerate_ratio()
+    {
+        return _plugin._samplerate_ratio;
+    }
+
+    [[nodiscard]] IntParameterValue* bit_depth()
+    {
+        return _plugin._bit_depth;
+    }
+
+private:
+    BitcrusherPlugin& _plugin;
+};
+
+} // end sushi::internal::bitcrusher_plugin
+
 using namespace sushi;
 
 constexpr float TEST_SAMPLERATE = 48000;

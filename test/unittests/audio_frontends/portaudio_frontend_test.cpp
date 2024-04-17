@@ -14,6 +14,30 @@ using ::testing::Return;
 using ::testing::NiceMock;
 using ::testing::SetArgPointee;
 
+namespace sushi::internal::audio_frontend
+{
+
+class PortaudioFrontendAccessor
+{
+public:
+    explicit PortaudioFrontendAccessor(PortAudioFrontend& f) : _friend(f) {}
+
+    bool stream_initialized()
+    {
+        return _friend._stream_initialized;
+    }
+
+    PaStream* stream()
+    {
+        return _friend._stream;
+    };
+
+private:
+    PortAudioFrontend& _friend;
+};
+
+}
+
 using namespace sushi;
 using namespace sushi::internal;
 using namespace sushi::internal::audio_frontend;

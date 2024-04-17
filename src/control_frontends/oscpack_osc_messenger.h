@@ -142,35 +142,6 @@ private:
     char _output_buffer[OSC_OUTPUT_BUFFER_SIZE];
 };
 
-class Accessor
-{
-public:
-    explicit Accessor(OscpackOscMessenger& f) : _friend(f) {}
-
-    OSC_CALLBACK_HANDLE last_generated_handle()
-    {
-        return _friend._last_generated_handle;
-    }
-
-    OscpackOscMessenger::RegisteredMessages& registered_messages()
-    {
-        return _friend._registered_messages;
-    }
-
-    void ProcessMessage(const oscpack::ReceivedMessage& m, const IpEndpointName& remoteEndpoint)
-    {
-        _friend.ProcessMessage(m, remoteEndpoint);
-    }
-
-    std::unique_ptr<UdpTransmitSocket>& transmit_socket()
-    {
-        return _friend._transmit_socket;
-    }
-
-private:
-    OscpackOscMessenger& _friend;
-};
-
 } // end namespace sushi::internal::osc
 
 #endif // SUSHI_OSCPACK_OSC_MESSENGER_H

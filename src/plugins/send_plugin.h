@@ -90,25 +90,6 @@ private:
     BypassManager _bypass_manager;
 };
 
-class Accessor
-{
-public:
-    explicit Accessor(SendPlugin& plugin) : _plugin(plugin) {}
-
-    [[nodiscard]] return_plugin::ReturnPlugin* destination()
-    {
-        return _plugin._destination;
-    }
-
-    void set_destination(return_plugin::ReturnPlugin* destination)
-    {
-        _plugin._set_destination(destination);
-    }
-
-private:
-    SendPlugin& _plugin;
-};
-
 } // end namespace sushi::internal
 } // end namespace send_plugin
 

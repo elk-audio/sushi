@@ -63,38 +63,6 @@ private:
     FloatParameterValue* _q;
 };
 
-class Accessor
-{
-public:
-    explicit Accessor(const EqualizerPlugin* plugin) : _const_plugin(plugin) {}
-
-    explicit Accessor(EqualizerPlugin* plugin) : _plugin(plugin) {}
-
-    [[nodiscard]] FloatParameterValue* frequency()
-    {
-        return _plugin->_frequency;
-    }
-
-    [[nodiscard]] FloatParameterValue* gain()
-    {
-        return _plugin->_gain;
-    }
-
-    [[nodiscard]] FloatParameterValue* q()
-    {
-        return _plugin->_q;
-    }
-
-    float const_sample_rate()
-    {
-        return _const_plugin->_sample_rate;
-    }
-
-private:
-    EqualizerPlugin* _plugin {nullptr};
-    const EqualizerPlugin* _const_plugin {nullptr};
-};
-
 } // end namespace sushi::internal::equalizer_plugin
 
 ELK_POP_WARNING

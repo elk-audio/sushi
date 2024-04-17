@@ -264,52 +264,6 @@ private:
     void* _reset_timing_statistics_ss_cb {nullptr};
 };
 
-class OSCFrontendAccessor
-{
-public:
-    explicit OSCFrontendAccessor(OSCFrontend& f) : _friend(f) {}
-
-    void set_processor_container(const engine::BaseProcessorContainer* container)
-    {
-        _friend._processor_container = container;
-    }
-
-    OscConnection* connect_to_parameter(const std::string& processor_name,
-                                        const std::string& parameter_name,
-                                        ObjectId processor_id,
-                                        ObjectId parameter_id)
-    {
-        return _friend._connect_to_parameter(processor_name, parameter_name, processor_id, parameter_id);
-    }
-
-    OscConnection* connect_to_property(const std::string& processor_name,
-                                       const std::string& property_name,
-                                       ObjectId processor_id,
-                                       ObjectId property_id)
-    {
-        return _friend._connect_to_property(processor_name, property_name, processor_id, property_id);
-    }
-
-    OscConnection* connect_kb_to_track(const Processor* processor)
-    {
-        return _friend._connect_kb_to_track(processor);
-    }
-
-    OscConnection* connect_to_program_change(const Processor* processor)
-    {
-        return _friend._connect_to_program_change(processor);
-    }
-
-    OscConnection* connect_to_bypass_state(const Processor* processor)
-    {
-        return _friend._connect_to_bypass_state(processor);
-    }
-
-private:
-    OSCFrontend& _friend;
-};
-
-
 } // end namespace control_frontend
 } // end namespace sushi::internal
 

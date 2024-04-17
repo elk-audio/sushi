@@ -30,6 +30,40 @@
 
 #include "control_frontends/oscpack_osc_messenger.cpp"
 
+namespace sushi::internal::osc
+{
+
+class Accessor
+{
+public:
+    explicit Accessor(OscpackOscMessenger& f) : _friend(f) {}
+
+    [[nodiscard]] OSC_CALLBACK_HANDLE last_generated_handle() const
+    {
+        return _friend._last_generated_handle;
+    }
+
+    OscpackOscMessenger::RegisteredMessages& registered_messages()
+    {
+        return _friend._registered_messages;
+    }
+
+    void ProcessMessage(const oscpack::ReceivedMessage& m, const IpEndpointName& remoteEndpoint)
+    {
+        _friend.ProcessMessage(m, remoteEndpoint);
+    }
+
+    std::unique_ptr<UdpTransmitSocket>& transmit_socket()
+    {
+        return _friend._transmit_socket;
+    }
+
+private:
+    OscpackOscMessenger& _friend;
+};
+
+}
+
 namespace oscpack = ::osc;
 
 using ::testing::Return;

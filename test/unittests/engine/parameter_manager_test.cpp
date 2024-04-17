@@ -12,6 +12,25 @@
 #include "test_utils/mock_processor_container.h"
 #include "test_utils/host_control_mockup.h"
 
+namespace sushi::internal
+{
+
+class ParameterManagerAccessor
+{
+public:
+    explicit ParameterManagerAccessor(ParameterManager& plugin) : _plugin(plugin) {}
+
+    [[nodiscard]] ParameterManager::Parameters& parameters()
+    {
+        return _plugin._parameters;
+    }
+
+private:
+    ParameterManager& _plugin;
+};
+
+} // end namespace sushi::internal
+
 using namespace sushi;
 using namespace sushi::internal;
 

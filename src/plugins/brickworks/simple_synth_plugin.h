@@ -93,25 +93,6 @@ private:
     int _highest_held_note {-1};
 };
 
-class Accessor
-{
-public:
-    explicit Accessor(SimpleSynthPlugin& plugin) : _plugin(plugin) {}
-
-    [[nodiscard]] FloatParameterValue* decay()
-    {
-        return _plugin._decay;
-    }
-
-    [[nodiscard]] FloatParameterValue* release()
-    {
-        return _plugin._release;
-    }
-
-private:
-    SimpleSynthPlugin& _plugin;
-};
-
 } // namespace sushi::internal::simple_synth_plugin
 
 #endif //SUSHI_SIMPLE_SYNTH_PLUGIN_H

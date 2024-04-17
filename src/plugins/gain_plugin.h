@@ -23,10 +23,10 @@
 
 #include "library/internal_plugin.h"
 
-namespace sushi::internal::gain_plugin {
-
 ELK_PUSH_WARNING
 ELK_DISABLE_DOMINANCE_INHERITANCE
+
+namespace sushi::internal::gain_plugin {
 
 class Accessor;
 
@@ -45,20 +45,6 @@ private:
     friend Accessor;
 
     FloatParameterValue* _gain_parameter;
-};
-
-class Accessor
-{
-public:
-    explicit Accessor(GainPlugin& plugin) : _plugin(plugin) {}
-
-    [[nodiscard]] FloatParameterValue* gain_parameter()
-    {
-        return _plugin._gain_parameter;
-    }
-
-private:
-    GainPlugin& _plugin;
 };
 
 } // end namespace sushi::internal::gain_plugin

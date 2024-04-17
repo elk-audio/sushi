@@ -6,6 +6,7 @@
 
 #include "engine/audio_graph.cpp"
 #include "test_utils/host_control_mockup.h"
+#include "test_utils/audio_graph_accessor.h"
 
 constexpr float SAMPLE_RATE = 44000;
 constexpr int TEST_MAX_TRACKS = 2;

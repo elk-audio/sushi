@@ -77,25 +77,6 @@ private:
     std::array<sample_player_voice::Voice, TOTAL_POLYPHONY> _voices;
 };
 
-class Accessor
-{
-public:
-    explicit Accessor(SamplePlayerPlugin& plugin) : _plugin(plugin) {}
-
-    [[nodiscard]] float*  sample_buffer()
-    {
-        return _plugin._sample_buffer;
-    }
-
-    [[nodiscard]] dsp::Sample& sample()
-    {
-        return _plugin._sample;
-    }
-
-private:
-    SamplePlayerPlugin& _plugin;
-};
-
 } // end namespace sushi::internal::sample_player_plugin
 
 ELK_POP_WARNING

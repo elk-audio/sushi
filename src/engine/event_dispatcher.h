@@ -142,64 +142,6 @@ private:
     std::mutex _engine_listener_lock;
 };
 
-class Accessor
-{
-public:
-    explicit Accessor(EventDispatcher& f) : _friend(f) {}
-
-    void event_loop()
-    {
-        _friend._event_loop();
-    }
-
-    std::atomic<bool>& running()
-    {
-        return _friend._running;
-    }
-
-    bool parameter_change_queue_empty()
-    {
-        return _friend._parameter_manager.parameter_change_queue_empty();
-    }
-
-    EventQueue& in_queue()
-    {
-        return _friend._in_queue;
-    }
-
-    void crank_worker()
-    {
-        _friend._worker._worker();
-    }
-
-private:
-    EventDispatcher& _friend;
-};
-
-class WorkerAccessor
-{
-public:
-    explicit WorkerAccessor(Worker& f) : _friend(f) {}
-
-    std::atomic<bool>& running()
-    {
-        return _friend._running;
-    }
-
-    void crank_worker()
-    {
-        _friend._worker();
-    }
-
-    EventQueue& queue()
-    {
-        return _friend._queue;
-    }
-
-private:
-    Worker& _friend;
-};
-
 } // end namespace sushi::internal::dispatcher
 
 #endif // SUSHI_EVENT_DISPATCHER_H

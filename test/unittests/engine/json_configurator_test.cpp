@@ -17,6 +17,69 @@
 
 #include "test_utils/mock_osc_interface.h"
 
+namespace sushi::internal::midi_dispatcher
+{
+
+class Accessor
+{
+public:
+    explicit Accessor(MidiDispatcher& f) : _friend(f) {}
+
+    [[nodiscard]] MidiDispatcher::KeyboardRoutesIn& kb_routes_in()
+    {
+        return _friend._kb_routes_in;
+    }
+
+    [[nodiscard]] MidiDispatcher::CcRoutes& cc_routes()
+    {
+        return _friend._cc_routes;
+    }
+
+    [[nodiscard]] MidiDispatcher::RawRoutesIn& raw_routes_in()
+    {
+        return _friend._raw_routes_in;
+    }
+
+    [[nodiscard]] MidiDispatcher::PcRoutes& pc_routes()
+    {
+        return _friend._pc_routes;
+    }
+
+private:
+    MidiDispatcher& _friend;
+};
+
+}
+
+namespace sushi::internal::jsonconfig
+{
+
+class Accessor
+{
+public:
+    explicit Accessor(JsonConfigurator& f) : _friend(f) {}
+
+    [[nodiscard]] JsonConfigReturnStatus make_track(const rapidjson::Value& track_def, engine::TrackType type)
+    {
+        return _friend._make_track(track_def, type);
+    }
+
+    static bool validate_against_schema(rapidjson::Value& config, JsonSection section)
+    {
+        return sushi::internal::jsonconfig::JsonConfigurator::_validate_against_schema(config, section);
+    }
+
+    std::pair<JsonConfigReturnStatus, const rapidjson::Value&> parse_section(JsonSection section)
+    {
+        return _friend._parse_section(section);
+    }
+
+private:
+    JsonConfigurator& _friend;
+};
+
+}
+
 using ::testing::Return;
 using ::testing::NiceMock;
 using ::testing::_;

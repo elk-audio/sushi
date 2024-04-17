@@ -29,6 +29,39 @@
 #include "test_utils/engine_mockup.h"
 #include "test_utils/control_mockup.h"
 
+namespace sushi::internal {
+
+class RtControllerAccessor
+{
+public:
+    explicit RtControllerAccessor(RealTimeController& f) : _friend(f) {}
+
+    float tempo()
+    {
+        return _friend._tempo;
+    }
+
+    engine::Transport* transport()
+    {
+        return _friend._transport;
+    }
+
+    sushi::TimeSignature time_signature()
+    {
+        return _friend._time_signature;
+    }
+
+    control::PlayingMode playing_mode()
+    {
+        return _friend._playing_mode;
+    }
+
+private:
+    RealTimeController& _friend;
+};
+
+}
+
 using namespace std::chrono_literals;
 
 using ::testing::Return;

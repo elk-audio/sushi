@@ -9,6 +9,30 @@
 #include "plugins/sample_player_voice.cpp"
 #include "plugins/sample_player_plugin.cpp"
 
+namespace sushi::internal::sample_player_plugin
+{
+
+class Accessor
+{
+public:
+    explicit Accessor(SamplePlayerPlugin& plugin) : _plugin(plugin) {}
+
+    [[nodiscard]] float*  sample_buffer()
+    {
+        return _plugin._sample_buffer;
+    }
+
+    [[nodiscard]] dsp::Sample& sample()
+    {
+        return _plugin._sample;
+    }
+
+private:
+    SamplePlayerPlugin& _plugin;
+};
+
+}
+
 using namespace sushi;
 using namespace sushi::internal;
 using namespace sushi::internal::sample_player_plugin;

@@ -9,6 +9,45 @@
 
 #include "library/vst2x/vst2x_wrapper.cpp"
 
+namespace sushi::internal::vst2
+{
+
+class Vst2xWrapperAccessor
+{
+public:
+    explicit Vst2xWrapperAccessor(Vst2xWrapper& f) : _friend(f) {}
+
+    [[nodiscard]] bool can_do_soft_bypass() const
+    {
+        return _friend._can_do_soft_bypass;
+    }
+
+    AEffect* plugin_handle()
+    {
+        return _friend._plugin_handle;
+    }
+
+    [[nodiscard]] float sample_rate() const
+    {
+        return _friend._sample_rate;
+    }
+
+    void notify_parameter_change(VstInt32 parameter_index, float value)
+    {
+        _friend.notify_parameter_change(parameter_index, value);
+    }
+
+    void notify_parameter_change_rt(VstInt32 parameter_index, float value)
+    {
+        _friend.notify_parameter_change_rt(parameter_index, value);
+    }
+
+private:
+    Vst2xWrapper& _friend;
+};
+
+}
+
 using namespace sushi;
 using namespace sushi::internal;
 using namespace sushi::internal::vst2;

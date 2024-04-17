@@ -173,25 +173,6 @@ private:
     friend Accessor;
 };
 
-class Accessor
-{
-public:
-    explicit Accessor(PerformanceTimer& f) : _friend(f) {}
-
-    std::atomic_bool& enabled()
-    {
-        return _friend._enabled;
-    }
-
-    void update_timings()
-    {
-        _friend._update_timings();
-    }
-
-private:
-    PerformanceTimer& _friend;
-};
-
 } // end namespace sushi::internal::performance
 
 #endif // SUSHI_PERFORMANCE_TIMER_H

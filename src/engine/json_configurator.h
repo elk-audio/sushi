@@ -221,30 +221,6 @@ private:
     rapidjson::Document _json_data;
 };
 
-class Accessor
-{
-public:
-    explicit Accessor(JsonConfigurator& f) : _friend(f) {}
-
-    [[nodiscard]] JsonConfigReturnStatus make_track(const rapidjson::Value& track_def, engine::TrackType type)
-    {
-        return _friend._make_track(track_def, type);
-    }
-
-    static bool validate_against_schema(rapidjson::Value& config, JsonSection section)
-    {
-        return sushi::internal::jsonconfig::JsonConfigurator::_validate_against_schema(config, section);
-    }
-
-    std::pair<JsonConfigReturnStatus, const rapidjson::Value&> parse_section(JsonSection section)
-    {
-        return _friend._parse_section(section);
-    }
-
-private:
-    JsonConfigurator& _friend;
-};
-
 } // end namespace sushi::internal::jsonconfig
 
 #endif // SUSHI_CONFIG_FROM_JSON_H

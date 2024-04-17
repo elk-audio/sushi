@@ -3,8 +3,10 @@
 
 #include "gtest/gtest.h"
 
+#include "test_utils/plugin_accessors.h"
 #include "test_utils/test_utils.h"
 #include "test_utils/host_control_mockup.h"
+
 #include "library/internal_plugin.h"
 #include "plugins/passthrough_plugin.cpp"
 #include "plugins/gain_plugin.cpp"

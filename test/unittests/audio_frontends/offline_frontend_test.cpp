@@ -22,6 +22,25 @@ constexpr float SAMPLE_RATE = 44000;
 constexpr int CV_CHANNELS = 0;
 constexpr int AUDIO_CHANNELS = 2;
 
+namespace sushi::internal::audio_frontend
+{
+
+class OfflineFrontendAccessor
+{
+public:
+    explicit OfflineFrontendAccessor(OfflineFrontend& f) : _friend(f) {}
+
+    std::vector<std::unique_ptr<Event>>& event_queue()
+    {
+        return _friend._event_queue;
+    }
+
+private:
+    OfflineFrontend& _friend;
+};
+
+}
+
 class TestOfflineFrontend : public ::testing::Test
 {
 protected:

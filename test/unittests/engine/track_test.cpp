@@ -5,6 +5,7 @@
 #include "engine/transport.h"
 #include "plugins/passthrough_plugin.h"
 
+#include "test_utils/track_accessor.h"
 #include "test_utils/test_utils.h"
 #include "test_utils/host_control_mockup.h"
 #include "test_utils/dummy_processor.h"

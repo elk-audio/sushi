@@ -226,30 +226,6 @@ private:
     std::unordered_map<ObjectId, std::string> _property_values;
 };
 
-class InternalPluginAccessor
-{
-public:
-    explicit InternalPluginAccessor(InternalPlugin& plugin) : _plugin(plugin) {}
-
-    [[nodiscard]] std::deque<ParameterStorage>& parameter_values()
-    {
-        return _plugin._parameter_values;
-    }
-
-    void send_property_to_realtime(ObjectId property_id, const std::string& value)
-    {
-        _plugin.send_property_to_realtime(property_id, value);
-    }
-
-    void send_data_to_realtime(BlobData data, int id)
-    {
-        _plugin.send_data_to_realtime(data, id);
-    }
-
-private:
-    InternalPlugin& _plugin;
-};
-
 } // end namespace sushi::internal
 
 #endif // SUSHI_INTERNAL_PLUGIN_H

@@ -98,36 +98,6 @@ private:
     sf_count_t _total_samples_written{0};
 };
 
-
-class Accessor
-{
-public:
-    explicit Accessor(WavWriterPlugin& plugin) : _plugin(plugin) {}
-
-    [[nodiscard]] BoolParameterValue* recording_parameter()
-    {
-        return _plugin._recording_parameter;
-    }
-
-    WavWriterStatus start_recording()
-    {
-        return _plugin._start_recording();
-    }
-
-    WavWriterStatus stop_recording()
-    {
-        return _plugin._stop_recording();
-    }
-
-    int write_to_file()
-    {
-        return _plugin._write_to_file();
-    }
-
-private:
-    WavWriterPlugin& _plugin;
-};
-
 } // end namespace sushi::internal::wav_writer_plugin
 
 ELK_POP_WARNING

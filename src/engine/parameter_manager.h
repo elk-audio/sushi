@@ -124,20 +124,6 @@ private:
     Parameters _parameters;
 };
 
-class ParameterManagerAccessor
-{
-public:
-    explicit ParameterManagerAccessor(ParameterManager& plugin) : _plugin(plugin) {}
-
-    [[nodiscard]] ParameterManager::Parameters& parameters()
-    {
-        return _plugin._parameters;
-    }
-
-private:
-    ParameterManager& _plugin;
-};
-
 } // end namespace sushi::internal
 
 #endif // SUSHI_PARAMETER_MANAGER_H

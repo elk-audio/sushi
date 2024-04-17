@@ -236,25 +236,6 @@ private:
     engine::ControlBuffer _out_controls;
 };
 
-class PortaudioFrontendAccessor
-{
-public:
-    explicit PortaudioFrontendAccessor(PortAudioFrontend& f) : _friend(f) {}
-
-    bool stream_initialized()
-    {
-        return _friend._stream_initialized;
-    }
-
-    PaStream* stream()
-    {
-        return _friend._stream;
-    };
-
-private:
-    PortAudioFrontend& _friend;
-};
-
 } // end namespace sushi::internal::audio_frontend
 
 #endif // SUSHI_BUILD_WITH_PORTAUDIO

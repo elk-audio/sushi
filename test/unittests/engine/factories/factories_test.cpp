@@ -71,6 +71,62 @@ using ::testing::Return;
 using ::testing::NiceMock;
 using ::testing::_;
 
+namespace sushi::internal
+{
+
+class ConcreteSushiAccessor
+{
+public:
+    explicit ConcreteSushiAccessor(ConcreteSushi& f) : _friend(f) {}
+
+    std::unique_ptr<engine::AudioEngine>& engine()
+    {
+        return _friend._engine;
+    }
+
+    std::unique_ptr<midi_dispatcher::MidiDispatcher>& midi_dispatcher()
+    {
+        return _friend._midi_dispatcher;
+    }
+
+    std::unique_ptr<midi_frontend::BaseMidiFrontend>& midi_frontend()
+    {
+        return _friend._midi_frontend;
+    }
+
+    std::unique_ptr<control_frontend::OSCFrontend>& osc_frontend()
+    {
+        return _friend._osc_frontend;
+    }
+
+    std::unique_ptr<audio_frontend::BaseAudioFrontend>& audio_frontend()
+    {
+        return _friend._audio_frontend;
+    }
+
+    std::unique_ptr<audio_frontend::BaseAudioFrontendConfiguration>& frontend_config()
+    {
+        return _friend._frontend_config;
+    }
+
+    std::unique_ptr<engine::Controller>& engine_controller()
+    {
+        return _friend._engine_controller;
+    }
+
+#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+    std::unique_ptr<sushi_rpc::GrpcServer>& rpc_server()
+    {
+        return _friend._rpc_server;
+    }
+#endif
+
+private:
+    ConcreteSushi& _friend;
+};
+
+} // end namespace sushi::internal
+
 using namespace sushi;
 using namespace sushi::internal;
 

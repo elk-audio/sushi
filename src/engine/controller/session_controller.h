@@ -76,40 +76,6 @@ private:
     control_frontend::OSCFrontend*      _osc_frontend;
 };
 
-class Accessor
-{
-public:
-    explicit Accessor(SessionController& f) : _friend(f) {}
-
-    [[nodiscard]] control::SushiBuildInfo save_build_info() const
-    {
-        return _friend._save_build_info();
-    }
-
-    [[nodiscard]] control::MidiState save_midi_state() const
-    {
-        return _friend._save_midi_state();
-    }
-
-    [[nodiscard]] control::EngineState save_engine_state() const
-    {
-        return _friend._save_engine_state();
-    }
-
-    [[nodiscard]] std::vector<control::TrackState> save_tracks() const
-    {
-        return _friend._save_tracks();
-    }
-
-    void clear_all_tracks()
-    {
-        _friend._clear_all_tracks();
-    }
-
-private:
-    SessionController& _friend;
-};
-
 } // end namespace sushi::internal::engine::controller_impl
 
 #endif // SUSHI_SESSION_CONTROLLER_H

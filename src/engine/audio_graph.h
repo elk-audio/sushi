@@ -107,20 +107,6 @@ private:
     int _current_core;
 };
 
-class AudioGraphAccessor
-{
-public:
-    explicit AudioGraphAccessor(AudioGraph& f) : _friend(f) {}
-
-    [[nodiscard]] std::vector<std::vector<Track*>>& audio_graph()
-    {
-        return _friend._audio_graph;
-    }
-
-private:
-    AudioGraph& _friend;
-};
-
 } // end namespace sushi::internal::engine
 
 #endif // SUSHI_AUDIO_GRAPH_H

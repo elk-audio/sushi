@@ -2,10 +2,9 @@
 
 #include "gtest/gtest.h"
 
+#include "test_utils/plugin_accessors.h"
 #include "test_utils/test_utils.h"
 #include "engine/transport.h"
-
-#include "elk-warning-suppressor/warning_suppressor.hpp"
 
 #include "plugins/equalizer_plugin.h"
 #include "engine/audio_engine.cpp"
@@ -13,11 +12,51 @@
 #include "library/plugin_registry.cpp"
 #include "test_utils/dummy_processor.h"
 
+#include "test_utils/audio_graph_accessor.h"
+#include "test_utils/track_accessor.h"
+
+namespace sushi::internal::engine
+{
+
+class AudioEngineAccessor
+{
+public:
+    explicit AudioEngineAccessor(AudioEngine& f) : _friend(f) {}
+
+    [[nodiscard]] AudioGraph& audio_graph()
+    {
+        return _friend._audio_graph;
+    }
+
+    [[nodiscard]] ProcessorContainer& processors()
+    {
+        return _friend._processors;
+    }
+
+    [[nodiscard]] std::vector<Processor*>& realtime_processors()
+    {
+        return _friend._realtime_processors;
+    }
+
+    void remove_connections_from_track(ObjectId track_id)
+    {
+        _friend._remove_connections_from_track(track_id);
+    }
+
+private:
+    AudioEngine& _friend;
+};
+
+}
+
 constexpr float SAMPLE_RATE = 44000;
 constexpr int TEST_CHANNEL_COUNT = 4;
+
 using namespace sushi;
 using namespace sushi::internal;
 using namespace sushi::internal::engine;
+
+
 
 class TestClipDetector : public ::testing::Test
 {

@@ -215,21 +215,6 @@ private:
     RtEventFifo<KEYBOARD_EVENT_QUEUE_SIZE> _kb_event_buffer;
 };
 
-class TrackAccessor
-{
-public:
-    explicit TrackAccessor(Track& plugin) : _plugin(plugin) {}
-
-    [[nodiscard]] std::vector<Processor*>& processors()
-    {
-        return _plugin._processors;
-    }
-
-private:
-    Track& _plugin;
-};
-
-
 } // end namespace sushi::internal::engine
 
 #endif // SUSHI_TRACK_H

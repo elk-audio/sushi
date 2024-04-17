@@ -11,6 +11,35 @@
 #include "test_utils/host_control_mockup.h"
 #include "test_utils/test_utils.h"
 
+namespace sushi::internal
+{
+
+class InternalPluginAccessor
+{
+public:
+    explicit InternalPluginAccessor(InternalPlugin& plugin) : _plugin(plugin) {}
+
+    [[nodiscard]] std::deque<ParameterStorage>& parameter_values()
+    {
+        return _plugin._parameter_values;
+    }
+
+    void send_property_to_realtime(ObjectId property_id, const std::string& value)
+    {
+        _plugin.send_property_to_realtime(property_id, value);
+    }
+
+    void send_data_to_realtime(BlobData data, int id)
+    {
+        _plugin.send_data_to_realtime(data, id);
+    }
+
+private:
+    InternalPlugin& _plugin;
+};
+
+}
+
 using namespace sushi;
 using namespace sushi::internal;
 

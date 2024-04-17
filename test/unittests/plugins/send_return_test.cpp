@@ -9,6 +9,49 @@
 #include "plugins/send_plugin.cpp"
 #include "plugins/return_plugin.cpp"
 
+namespace sushi::internal::send_plugin
+{
+
+class Accessor
+{
+public:
+    explicit Accessor(SendPlugin& plugin) : _plugin(plugin) {}
+
+    [[nodiscard]] return_plugin::ReturnPlugin* destination()
+    {
+        return _plugin._destination;
+    }
+
+    void set_destination(return_plugin::ReturnPlugin* destination)
+    {
+        _plugin._set_destination(destination);
+    }
+
+private:
+    SendPlugin& _plugin;
+};
+
+}
+
+namespace sushi::internal::return_plugin
+{
+
+class Accessor
+{
+public:
+    explicit Accessor(ReturnPlugin& plugin) : _plugin(plugin) {}
+
+    void swap_buffers()
+    {
+        _plugin._swap_buffers();
+    }
+
+private:
+    ReturnPlugin& _plugin;
+};
+
+}
+
 using namespace sushi;
 using namespace sushi::internal;
 using namespace sushi::internal::send_plugin;

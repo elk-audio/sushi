@@ -197,40 +197,6 @@ private:
 
 VstSpeakerArrangementType arrangement_from_channels(int channels);
 
-class Vst2xWrapperAccessor
-{
-public:
-    explicit Vst2xWrapperAccessor(Vst2xWrapper& f) : _friend(f) {}
-
-    bool can_do_soft_bypass()
-    {
-        return _friend._can_do_soft_bypass;
-    }
-
-    AEffect* plugin_handle()
-    {
-        return _friend._plugin_handle;
-    }
-
-    float sample_rate()
-    {
-        return _friend._sample_rate;
-    }
-
-    void notify_parameter_change(VstInt32 parameter_index, float value)
-    {
-        _friend.notify_parameter_change(parameter_index, value);
-    }
-
-    void notify_parameter_change_rt(VstInt32 parameter_index, float value)
-    {
-        _friend.notify_parameter_change_rt(parameter_index, value);
-    }
-
-private:
-    Vst2xWrapper& _friend;
-};
-
 } // end namespace sushi::internal::vst2
 
 #endif // SUSHI_VST2X_PLUGIN_H

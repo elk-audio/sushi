@@ -4,6 +4,30 @@
 
 #include "library/performance_timer.cpp"
 
+namespace sushi::internal::performance
+{
+
+class Accessor
+{
+public:
+    explicit Accessor(PerformanceTimer& f) : _friend(f) {}
+
+    std::atomic_bool& enabled()
+    {
+        return _friend._enabled;
+    }
+
+    void update_timings()
+    {
+        _friend._update_timings();
+    }
+
+private:
+    PerformanceTimer& _friend;
+};
+
+}
+
 using namespace sushi;
 using namespace sushi::internal;
 using namespace sushi::internal::performance;

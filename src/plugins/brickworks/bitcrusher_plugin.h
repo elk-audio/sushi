@@ -68,15 +68,7 @@ private:
     std::array<bw_sr_reduce_state, MAX_TRACK_CHANNELS> _sr_reduce_states;
 };
 
-class Accessor
-{
-public:
-    explicit Accessor(BitcrusherPlugin& plugin) : _plugin(plugin) {}
-
-    [[nodiscard]] FloatParameterValue* samplerate_ratio()
-    {
-        return _plugin._samplerate_ratio;
-    }
+} // namespace sushi::internal::bitcrusher_plugin
 
     [[nodiscard]] IntParameterValue* bit_depth()
     {

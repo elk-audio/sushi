@@ -11,6 +11,30 @@
 
 #include "plugins/brickworks/simple_synth_plugin.cpp"
 
+namespace sushi::internal::simple_synth_plugin
+{
+
+class Accessor
+{
+public:
+    explicit Accessor(SimpleSynthPlugin& plugin) : _plugin(plugin) {}
+
+    [[nodiscard]] FloatParameterValue* decay()
+    {
+        return _plugin._decay;
+    }
+
+    [[nodiscard]] FloatParameterValue* release()
+    {
+        return _plugin._release;
+    }
+
+private:
+    SimpleSynthPlugin& _plugin;
+};
+
+}
+
 using namespace sushi;
 using namespace sushi::internal::simple_synth_plugin;
 

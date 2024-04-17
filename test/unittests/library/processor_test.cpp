@@ -13,6 +13,45 @@
 using namespace sushi;
 using namespace sushi::internal;
 
+namespace sushi::internal
+{
+
+class ProcessorAccessor
+{
+public:
+    explicit ProcessorAccessor(Processor& plugin) : _friend(plugin) {}
+
+    bool register_parameter(ParameterDescriptor* parameter)
+    {
+        return _friend.register_parameter(parameter);
+    }
+
+    [[nodiscard]] std::string make_unique_parameter_name(const std::string& name) const
+    {
+        return _friend._make_unique_parameter_name(name);
+    }
+
+    void bypass_process(const ChunkSampleBuffer& in_buffer, ChunkSampleBuffer& out_buffer)
+    {
+        _friend.bypass_process(in_buffer, out_buffer);
+    }
+
+    bool maybe_output_cv_value(ObjectId parameter_id, float value)
+    {
+        return _friend.maybe_output_cv_value(parameter_id, value);
+    }
+
+    bool maybe_output_gate_event(int channel, int note, bool note_on)
+    {
+        return _friend.maybe_output_gate_event(channel, note, note_on);
+    }
+
+private:
+    Processor& _friend;
+};
+
+}
+
 constexpr float TEST_SAMPLE_RATE = 44100;
 
 constexpr int TEST_BYPASS_TIME_MS = 13;

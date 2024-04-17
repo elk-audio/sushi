@@ -109,20 +109,6 @@ private:
     std::vector<std::unique_ptr<Event>> _event_queue;
 };
 
-class OfflineFrontendAccessor
-{
-public:
-    explicit OfflineFrontendAccessor(OfflineFrontend& f) : _friend(f) {}
-
-    std::vector<std::unique_ptr<Event>>& event_queue()
-    {
-        return _friend._event_queue;
-    }
-
-private:
-    OfflineFrontend& _friend;
-};
-
 } // end namespace sushi::internal::audio_frontend
 
 #endif // SUSHI_OFFLINE_FRONTEND_H

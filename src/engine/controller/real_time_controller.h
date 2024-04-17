@@ -97,35 +97,6 @@ private:
     control::PlayingMode _playing_mode {control::PlayingMode::STOPPED};
 };
 
-class RtControllerAccessor
-{
-public:
-    explicit RtControllerAccessor(RealTimeController& f) : _friend(f) {}
-
-    float tempo()
-    {
-        return _friend._tempo;
-    }
-
-    engine::Transport* transport()
-    {
-        return _friend._transport;
-    }
-
-    sushi::TimeSignature time_signature()
-    {
-        return _friend._time_signature;
-    }
-
-    control::PlayingMode playing_mode()
-    {
-        return _friend._playing_mode;
-    }
-
-private:
-    RealTimeController& _friend;
-};
-
 } // end namespace sushi::internal
 
 #endif // REACTIVE_CONTROLLER_H

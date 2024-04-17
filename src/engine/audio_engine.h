@@ -665,35 +665,6 @@ private:
  */
 RealtimeState update_state(RealtimeState current_state);
 
-class AudioEngineAccessor
-{
-public:
-    explicit AudioEngineAccessor(AudioEngine& f) : _friend(f) {}
-
-    [[nodiscard]] AudioGraph& audio_graph()
-    {
-        return _friend._audio_graph;
-    }
-
-    [[nodiscard]] ProcessorContainer& processors()
-    {
-        return _friend._processors;
-    }
-
-    [[nodiscard]] std::vector<Processor*>& realtime_processors()
-    {
-        return _friend._realtime_processors;
-    }
-
-    void remove_connections_from_track(ObjectId track_id)
-    {
-        _friend._remove_connections_from_track(track_id);
-    }
-
-private:
-    AudioEngine& _friend;
-};
-
 } // end namespace sushi::internal::engine
 
 #endif // SUSHI_ENGINE_H
