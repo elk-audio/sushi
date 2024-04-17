@@ -268,19 +268,18 @@ public:
 
 /*
  * The templated forms are not intended to be accessed directly.
- * Instead, the typedefs below provide direct access to the right
+ * Instead, the below provide direct access to the right
  * type combinations.
  */
-typedef ParameterPreProcessor<float> FloatParameterPreProcessor;
-typedef ParameterPreProcessor<int>   IntParameterPreProcessor;
-typedef ParameterPreProcessor<bool>  BoolParameterPreProcessor;
+using FloatParameterPreProcessor = ParameterPreProcessor<float>;
+using IntParameterPreProcessor = ParameterPreProcessor<int>;
+using BoolParameterPreProcessor = ParameterPreProcessor<bool>;
 
-typedef TypedParameterDescriptor<float, ParameterType::FLOAT>         FloatParameterDescriptor;
-typedef TypedParameterDescriptor<int, ParameterType::INT>             IntParameterDescriptor;
-typedef TypedParameterDescriptor<bool, ParameterType::BOOL>           BoolParameterDescriptor;
-typedef TypedParameterDescriptor<std::string*, ParameterType::STRING> StringPropertyDescriptor;
-typedef TypedParameterDescriptor<BlobData, ParameterType::DATA>       DataPropertyDescriptor;
-
+using FloatParameterDescriptor = TypedParameterDescriptor<float, ParameterType::FLOAT>;
+using IntParameterDescriptor = TypedParameterDescriptor<int, ParameterType::INT>;
+using BoolParameterDescriptor = TypedParameterDescriptor<bool, ParameterType::BOOL>;
+using StringPropertyDescriptor = TypedParameterDescriptor<std::string*, ParameterType::STRING>;
+using DataPropertyDescriptor = TypedParameterDescriptor<BlobData, ParameterType::DATA>;
 
 /**
  * @brief Preprocessor example to map from decibels to linear gain.
@@ -410,9 +409,9 @@ private:
     bool _processed_value;
 };
 
-typedef ParameterValue<bool, ParameterType::BOOL> BoolParameterValue;
-typedef ParameterValue<int, ParameterType::INT> IntParameterValue;
-typedef ParameterValue<float, ParameterType::FLOAT> FloatParameterValue;
+using BoolParameterValue = ParameterValue<bool, ParameterType::BOOL>;
+using IntParameterValue = ParameterValue<int, ParameterType::INT>;
+using FloatParameterValue = ParameterValue<float, ParameterType::FLOAT>;
 
 class ParameterStorage
 {

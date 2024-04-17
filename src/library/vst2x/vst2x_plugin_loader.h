@@ -64,7 +64,7 @@ ELK_POP_WARNING
 
 namespace sushi::internal::vst2 {
 
-typedef void* LibraryHandle;
+using LibraryHandle = void*;
 
 // TODO:
 //      this class is stateless atm (basically a namespace),

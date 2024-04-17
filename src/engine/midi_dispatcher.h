@@ -372,13 +372,13 @@ private:
     std::vector<CCInputConnection> _get_cc_input_connections(std::optional<int> processor_id_filter);
     std::vector<PCInputConnection> _get_pc_input_connections(std::optional<int> processor_id_filter);
 
-    typedef std::array<std::vector<InputConnection>, midi::MidiChannel::OMNI + 1> InputConnections;
+    using InputConnections = std::array<std::vector<InputConnection>, midi::MidiChannel::OMNI + 1>;
 
-    typedef std::map<int, InputConnections> KeyboardRoutesIn;
-    typedef std::map<ObjectId, std::vector<OutputConnection>> KeyboardRoutesOut;
-    typedef std::map<int, std::array<InputConnections, midi::MAX_CONTROLLER_NO + 1>> CcRoutes;
-    typedef std::map<int, InputConnections> PcRoutes;
-    typedef std::map<int, InputConnections> RawRoutesIn;
+    using KeyboardRoutesIn = std::map<int, InputConnections>;
+    using KeyboardRoutesOut = std::map<ObjectId, std::vector<OutputConnection>>;
+    using CcRoutes = std::map<int, std::array<InputConnections, midi::MAX_CONTROLLER_NO + 1>>;
+    using PcRoutes = std::map<int, InputConnections>;
+    using RawRoutesIn = std::map<int, InputConnections>;
 
     KeyboardRoutesIn _kb_routes_in;
     KeyboardRoutesOut _kb_routes_out;

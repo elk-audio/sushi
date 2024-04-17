@@ -44,7 +44,7 @@ class BaseEventDispatcher;
 class Accessor;
 class WorkerAccessor;
 
-typedef SynchronizedQueue<std::unique_ptr<Event>> EventQueue;
+using EventQueue = SynchronizedQueue<std::unique_ptr<Event>>;
 
 /**
  * @brief Low priority worker for handling possibly time consuming tasks like

@@ -133,7 +133,7 @@ private:
         OSC_CALLBACK_HANDLE handle {0};
     };
 
-    typedef std::map<std::pair<std::string, std::string>, MessageRegistration, std::less<>> RegisteredMessages;
+    using RegisteredMessages = std::map<std::pair<std::string, std::string>, MessageRegistration, std::less<>> ;
 
     RegisteredMessages _registered_messages;
 

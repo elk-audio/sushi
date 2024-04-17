@@ -112,7 +112,7 @@ private:
         Time update_time;
     };
 
-    typedef std::unordered_map<ObjectId, std::unordered_map<ObjectId, ParameterEntry>> Parameters;
+    using Parameters = std::unordered_map<ObjectId, std::unordered_map<ObjectId, ParameterEntry>>;
 
     std::vector<ProcessorUpdate> _processor_change_queue;
     std::vector<ParameterUpdate> _parameter_change_queue;
