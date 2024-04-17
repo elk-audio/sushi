@@ -43,7 +43,7 @@ public:
         return _friend._last_generated_handle;
     }
 
-    OscpackOscMessenger::RegisteredMessages& registered_messages()
+    const OscpackOscMessenger::RegisteredMessages& registered_messages()
     {
         return _friend._registered_messages;
     }

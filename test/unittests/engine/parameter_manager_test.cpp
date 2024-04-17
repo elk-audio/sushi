@@ -20,6 +20,7 @@ class ParameterManagerAccessor
 public:
     explicit ParameterManagerAccessor(ParameterManager& plugin) : _plugin(plugin) {}
 
+    // Not const: it's altered in the tests.
     [[nodiscard]] ParameterManager::Parameters& parameters()
     {
         return _plugin._parameters;

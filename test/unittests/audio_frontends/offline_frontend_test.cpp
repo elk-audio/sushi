@@ -30,7 +30,7 @@ class OfflineFrontendAccessor
 public:
     explicit OfflineFrontendAccessor(OfflineFrontend& f) : _friend(f) {}
 
-    std::vector<std::unique_ptr<Event>>& event_queue()
+    const std::vector<std::unique_ptr<Event>>& event_queue()
     {
         return _friend._event_queue;
     }

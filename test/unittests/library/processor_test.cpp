@@ -21,7 +21,7 @@ class ProcessorAccessor
 public:
     explicit ProcessorAccessor(Processor& plugin) : _friend(plugin) {}
 
-    bool register_parameter(ParameterDescriptor* parameter)
+    [[nodiscard]] bool register_parameter(ParameterDescriptor* parameter)
     {
         return _friend.register_parameter(parameter);
     }
@@ -36,12 +36,12 @@ public:
         _friend.bypass_process(in_buffer, out_buffer);
     }
 
-    bool maybe_output_cv_value(ObjectId parameter_id, float value)
+    [[nodiscard]] bool maybe_output_cv_value(ObjectId parameter_id, float value)
     {
         return _friend.maybe_output_cv_value(parameter_id, value);
     }
 
-    bool maybe_output_gate_event(int channel, int note, bool note_on)
+    [[nodiscard]] bool maybe_output_gate_event(int channel, int note, bool note_on)
     {
         return _friend.maybe_output_gate_event(channel, note, note_on);
     }

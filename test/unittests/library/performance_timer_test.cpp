@@ -12,6 +12,7 @@ class Accessor
 public:
     explicit Accessor(PerformanceTimer& f) : _friend(f) {}
 
+    // Not const: it's modified in the test
     std::atomic_bool& enabled()
     {
         return _friend._enabled;

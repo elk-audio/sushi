@@ -13,7 +13,7 @@ class FixedStackAccessor
 public:
     explicit FixedStackAccessor(FixedStack<T, storage_capacity>& f) : _friend(f) {}
 
-    std::array<T, storage_capacity>& data()
+    const std::array<T, storage_capacity>& data()
     {
         return _friend._data;
     }

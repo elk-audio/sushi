@@ -11,7 +11,7 @@ class AudioGraphAccessor
 public:
     explicit AudioGraphAccessor(AudioGraph& f) : _friend(f) {}
 
-    [[nodiscard]] std::vector<std::vector<Track*>>& audio_graph()
+    [[nodiscard]] const std::vector<std::vector<Track*>>& audio_graph()
     {
         return _friend._audio_graph;
     }

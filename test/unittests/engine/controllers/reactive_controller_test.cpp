@@ -36,7 +36,7 @@ class RtControllerAccessor
 public:
     explicit RtControllerAccessor(RealTimeController& f) : _friend(f) {}
 
-    float tempo()
+    [[nodiscard]] float tempo() const
     {
         return _friend._tempo;
     }
@@ -46,12 +46,12 @@ public:
         return _friend._transport;
     }
 
-    sushi::TimeSignature time_signature()
+    [[nodiscard]] sushi::TimeSignature time_signature() const
     {
         return _friend._time_signature;
     }
 
-    control::PlayingMode playing_mode()
+    [[nodiscard]] control::PlayingMode playing_mode() const
     {
         return _friend._playing_mode;
     }

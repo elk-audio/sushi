@@ -51,7 +51,7 @@ public:
         return _plugin->_q;
     }
 
-    float const_sample_rate()
+    [[nodiscard]] float const_sample_rate() const
     {
         return _const_plugin->_sample_rate;
     }

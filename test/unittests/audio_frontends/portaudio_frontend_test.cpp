@@ -22,7 +22,7 @@ class PortaudioFrontendAccessor
 public:
     explicit PortaudioFrontendAccessor(PortAudioFrontend& f) : _friend(f) {}
 
-    bool stream_initialized()
+    [[nodiscard]] bool stream_initialized() const
     {
         return _friend._stream_initialized;
     }
@@ -43,7 +43,7 @@ using namespace sushi::internal;
 using namespace sushi::internal::audio_frontend;
 using namespace sushi::internal::midi_dispatcher;
 
-constexpr float SAMPLE_RATE = 44000;
+constexpr float SAMPLE_RATE = 44100;
 
 
 class TestPortAudioFrontend : public ::testing::Test

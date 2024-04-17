@@ -25,22 +25,22 @@ class Accessor
 public:
     explicit Accessor(MidiDispatcher& f) : _friend(f) {}
 
-    [[nodiscard]] MidiDispatcher::KeyboardRoutesIn& kb_routes_in()
+    [[nodiscard]] const MidiDispatcher::KeyboardRoutesIn& kb_routes_in()
     {
         return _friend._kb_routes_in;
     }
 
-    [[nodiscard]] MidiDispatcher::CcRoutes& cc_routes()
+    [[nodiscard]] const MidiDispatcher::CcRoutes& cc_routes()
     {
         return _friend._cc_routes;
     }
 
-    [[nodiscard]] MidiDispatcher::RawRoutesIn& raw_routes_in()
+    [[nodiscard]] const MidiDispatcher::RawRoutesIn& raw_routes_in()
     {
         return _friend._raw_routes_in;
     }
 
-    [[nodiscard]] MidiDispatcher::PcRoutes& pc_routes()
+    [[nodiscard]] const MidiDispatcher::PcRoutes& pc_routes()
     {
         return _friend._pc_routes;
     }

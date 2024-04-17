@@ -20,16 +20,18 @@ public:
         _friend._event_loop();
     }
 
+    // Not const: it's altered in the test.
     std::atomic<bool>& running()
     {
         return _friend._running;
     }
 
-    bool parameter_change_queue_empty()
+    [[nodiscard]] bool parameter_change_queue_empty() const
     {
         return _friend._parameter_manager.parameter_change_queue_empty();
     }
 
+    // Not const: it's altered in the test.
     EventQueue& in_queue()
     {
         return _friend._in_queue;

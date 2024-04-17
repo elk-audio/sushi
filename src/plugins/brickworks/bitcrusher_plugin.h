@@ -26,6 +26,9 @@
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::bitcrusher_plugin {
 
 class Accessor;
@@ -70,15 +73,6 @@ private:
 
 } // namespace sushi::internal::bitcrusher_plugin
 
-    [[nodiscard]] IntParameterValue* bit_depth()
-    {
-        return _plugin._bit_depth;
-    }
-
-private:
-    BitcrusherPlugin& _plugin;
-};
-
-} // namespace ssh::internal::bitcrusher_plugin
+ELK_POP_WARNING
 
 #endif // BITCRUSHER_PLUGIN_H

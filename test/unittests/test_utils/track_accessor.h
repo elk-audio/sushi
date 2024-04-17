@@ -10,7 +10,7 @@ class TrackAccessor
 public:
     explicit TrackAccessor(Track& plugin) : _plugin(plugin) {}
 
-    [[nodiscard]] std::vector<Processor*>& processors()
+    [[nodiscard]] const std::vector<Processor*>& processors()
     {
         return _plugin._processors;
     }

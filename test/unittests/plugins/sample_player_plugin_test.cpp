@@ -22,6 +22,7 @@ public:
         return _plugin._sample_buffer;
     }
 
+    // Not const: it's modified in the test
     [[nodiscard]] dsp::Sample& sample()
     {
         return _plugin._sample;
