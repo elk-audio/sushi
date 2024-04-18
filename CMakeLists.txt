@@ -737,10 +737,11 @@ target_link_libraries(${PROJECT_NAME} PUBLIC ${EXTRA_BUILD_LIBRARIES} ${COMMON_L
 ####################################
 
 if(MSVC)
-    # The warning C5045: Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
-    # is disabled for all - Spectre is not a concern for Sushi I don't think.
+    # C5045: Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
+    #        is disabled for all - Spectre is not a concern for Sushi I don't think.
 
-    #C4996: Deprecated warning. This was flooding the terminal, I might remove the suppression from here eventually, and out into the code again.
+    # C4996: Deprecated warning. This was flooding the terminal,
+    #        I might remove the suppression from here eventually, and out into the code again.
     target_compile_options(${PROJECT_NAME} PRIVATE /wd4996 /wd5045)
 else ()
     target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Wextra -Wno-psabi -fPIC -ffast-math)
