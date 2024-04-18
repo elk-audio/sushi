@@ -214,7 +214,16 @@ endif()
 add_executable(unit_tests ${TEST_FILES} ${TEST_HELPER_FILES})
 
 target_compile_definitions(unit_tests PRIVATE ${TEST_COMPILE_DEFINITIONS})
-target_compile_options(unit_tests PRIVATE -Wall  -fno-rtti -ffast-math)
+
+if(MSVC)
+    # C5045: Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
+    #        is disabled for all - Spectre is not a concern for Sushi I don't think.
+    # C4996: Deprecated warning. This was flooding the terminal, I might remove the suppression from here eventually,
+    #        and out into the code again.
+    target_compile_options(unit_tests PRIVATE /W3 /wd5045 /wd4996)
+else ()
+    target_compile_options(unit_tests PRIVATE -Wall -fno-rtti -ffast-math)
+endif()
 
 target_include_directories(unit_tests
         PUBLIC

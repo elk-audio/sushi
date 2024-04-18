@@ -203,7 +203,7 @@ TEST_F(TrackTest, TestGainOnly)
     gain_only_track.add(&plugin);
 
     /* Volume down 6 dB */
-    auto gain_ev_0 = RtEvent::make_parameter_change_event(0, 0, gain_bus_0->id(), 0.7917);
+    auto gain_ev_0 = RtEvent::make_parameter_change_event(0, 0, gain_bus_0->id(), 0.7917f);
     gain_only_track.process_event(gain_ev_0);
 
     for (int i = 0; i < gain_only_track.max_input_channels(); ++i)
@@ -220,7 +220,7 @@ TEST_F(TrackTest, TestGainOnly)
     for (int i = 0; i < gain_only_track.max_output_channels(); ++i)
     {
         auto in_bus = gain_only_track.output_channel(i);
-        EXPECT_LT(out.channel(0)[AUDIO_CHUNK_SIZE-1], 1.0f);
+        EXPECT_LT(out.channel(0)[AUDIO_CHUNK_SIZE - 1], 1.0f);
     }
 }
 

@@ -160,7 +160,7 @@ TEST_F(InternalPluginTest, TestIntParameterHandling)
 
     _module_under_test->process_event(event);
 
-    EXPECT_FLOAT_EQ(6.0f, value->processed_value());
+    EXPECT_FLOAT_EQ(6.0f, static_cast<float>(value->processed_value()));
 
     // Access the parameter from the external interface
     auto [status, ext_value] = _module_under_test->parameter_value_in_domain(value->descriptor()->id());
@@ -370,7 +370,7 @@ TEST_F(InternalPluginTest, TestStateSaving)
     ProcessorState state = _module_under_test->save_state();
 
     _module_under_test->set_property_value(descriptor->id(), "str_2");
-    auto rt_event = RtEvent::make_parameter_change_event(0, 0, param_id, 0.4);
+    auto rt_event = RtEvent::make_parameter_change_event(0, 0, param_id, 0.4f);
     _module_under_test->process_event(rt_event);
 
     ASSERT_NE(param_val, _module_under_test->parameter_value(param_id).second);

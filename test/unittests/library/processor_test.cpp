@@ -116,7 +116,8 @@ TEST_F(TestProcessor, TestParameterHandling)
 {
     /* Register a single parameter and verify accessor functions */
     auto p = new FloatParameterDescriptor("param", "Float", "fl", 0, 1, Direction::AUTOMATABLE, nullptr);
-    _accessor->register_parameter(p);
+    bool success = _accessor->register_parameter(p);
+    ASSERT_TRUE(success);
 
     auto param = _module_under_test->parameter_from_name("not_found");
     EXPECT_FALSE(param);
@@ -135,8 +136,10 @@ TEST_F(TestProcessor, TestParameterHandling)
 
 TEST_F(TestProcessor, TestDuplicateParameterNames)
 {
-    _accessor->register_parameter(new FloatParameterDescriptor("param", "Float", "fl",
-                                                                        0, 1, Direction::AUTOMATABLE, nullptr));
+    bool success = _accessor->register_parameter(new FloatParameterDescriptor("param", "Float", "fl",
+                                                                              0, 1, Direction::AUTOMATABLE, nullptr));
+    ASSERT_TRUE(success);
+
     // Test uniqueness by entering an already existing parameter name
     EXPECT_EQ("param_2", _accessor->make_unique_parameter_name("param"));
     EXPECT_EQ("parameter", _accessor->make_unique_parameter_name(""));
@@ -170,20 +173,23 @@ TEST_F(TestProcessor, TestBypassProcessing)
 TEST_F(TestProcessor, TestCvOutput)
 {
     auto p = new FloatParameterDescriptor("param", "Float", "", 0, 1, Direction::AUTOMATABLE, nullptr);
-    _accessor->register_parameter(p);
+    bool success = _accessor->register_parameter(p);
+    ASSERT_TRUE(success);
+
     _module_under_test->set_event_output(&_event_queue);
     auto param = _module_under_test->parameter_from_name("param");
     ASSERT_TRUE(param);
 
     // Output parameter update
-    _accessor->maybe_output_cv_value(param->id(), 0.5f);
+    auto success_cv_out = _accessor->maybe_output_cv_value(param->id(), 0.5f);
+    ASSERT_FALSE(success_cv_out);
     ASSERT_TRUE(_event_queue.empty());
 
     // Connect parameter to CV output and send update
     auto res = _module_under_test->connect_cv_from_parameter(param->id(), 1);
     ASSERT_EQ(ProcessorReturnCode::OK, res);
-    auto success = _accessor->maybe_output_cv_value(param->id(), 0.25f);
-    ASSERT_TRUE(success);
+    success_cv_out = _accessor->maybe_output_cv_value(param->id(), 0.25f);
+    ASSERT_TRUE(success_cv_out);
     ASSERT_FALSE(_event_queue.empty());
     auto cv_event = _event_queue.pop();
     EXPECT_EQ(RtEventType::CV_EVENT, cv_event.type());
@@ -261,7 +267,7 @@ TEST_F(TestBypassManager, TestSetBypassRampTime)
 
 TEST_F(TestBypassManager, TestRamping)
 {
-    int chunks_in_ramp = (TEST_SAMPLE_RATE * TEST_BYPASS_TIME_MS * 0.001) / AUDIO_CHUNK_SIZE;
+    int chunks_in_ramp = static_cast<int>((TEST_SAMPLE_RATE * TEST_BYPASS_TIME_MS * 0.001f) / AUDIO_CHUNK_SIZE);
 
     // With some sample rate and buffer size combinations this is false.
     if (chunks_in_ramp <= 0)
@@ -309,7 +315,7 @@ TEST_F(TestBypassManager, TestRamping)
 
 TEST_F(TestBypassManager, TestCrossfade)
 {
-    int chunks_in_ramp = (TEST_SAMPLE_RATE * TEST_BYPASS_TIME_MS * 0.001) / AUDIO_CHUNK_SIZE;
+    int chunks_in_ramp = static_cast<int>((TEST_SAMPLE_RATE * TEST_BYPASS_TIME_MS * 0.001f) / AUDIO_CHUNK_SIZE);
     ChunkSampleBuffer buffer(2);
     ChunkSampleBuffer bypass_buffer(2);
     test_utils::fill_sample_buffer(buffer, 2.0f);

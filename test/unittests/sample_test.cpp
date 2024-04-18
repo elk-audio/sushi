@@ -9,7 +9,7 @@ TEST (SampleTest, SimpleTestCase) {
 // And setup and teardown functions added.
 class SampleTestCase : public ::testing::Test
 {
-    protected:
+protected:
     SampleTestCase() = default;
 
     void SetUp() override {}

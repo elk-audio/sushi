@@ -202,7 +202,7 @@ TEST_F(TestSendReturnPlugins, TestSelectiveChannelSending)
 
     // Send only 1 channel
     auto event = RtEvent::make_parameter_change_event(_send_instance.id(), 0, channel_count_param_id,
-                                                      1.0 / (MAX_TRACK_CHANNELS - 1));
+                                                      1.0f / (MAX_TRACK_CHANNELS - 1));
     _send_instance.process_event(event);
     _send_instance.process_audio(buffer_1, buffer_1);
 
@@ -214,7 +214,7 @@ TEST_F(TestSendReturnPlugins, TestSelectiveChannelSending)
 
     // Set the destination channel to channel 1
     event = RtEvent::make_parameter_change_event(_send_instance.id(), 0, dest_channel_param_id,
-                                                 1.0 / (MAX_TRACK_CHANNELS - 1));
+                                                 1.0f / (MAX_TRACK_CHANNELS - 1));
     _send_instance.process_event(event);
     _send_instance.process_audio(buffer_1, buffer_1);
 
@@ -244,10 +244,10 @@ TEST_F(TestSendReturnPlugins, TestSelectiveChannelSending)
     event = RtEvent::make_parameter_change_event(_send_instance.id(), 0, start_channel_param_id, 0);
     _send_instance.process_event(event);
     event = RtEvent::make_parameter_change_event(_send_instance.id(), 0, dest_channel_param_id,
-                                                 2.0 / (MAX_TRACK_CHANNELS - 1));
+                                                 2.0f / (MAX_TRACK_CHANNELS - 1));
     _send_instance.process_event(event);
     event = RtEvent::make_parameter_change_event(_send_instance.id(), 0, channel_count_param_id,
-                                                 2.0 / (MAX_TRACK_CHANNELS - 1));
+                                                 2.0f / (MAX_TRACK_CHANNELS - 1));
     _send_instance.process_event(event);
 
     _send_instance.process_audio(buffer_1, buffer_1);

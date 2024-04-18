@@ -222,7 +222,7 @@ void test_fx_plugin_instantiation(const std::string& uid,
         test_fx_plugin_buffers_not_overflow(plugin_uid);\
     }
 
-EXTERNAL_PLUGIN_TEST_CASES(Chorus, "sushi.brickworks.chorus", "Chorus", 1.0e-4)
+EXTERNAL_PLUGIN_TEST_CASES(Chorus, "sushi.brickworks.chorus", "Chorus", 1.0e-4f)
 EXTERNAL_PLUGIN_TEST_CASES(Clip, "sushi.brickworks.clip", "Clip", 1.0e-2f)
 EXTERNAL_PLUGIN_TEST_CASES(CombDelay,"sushi.brickworks.comb_delay", "Comb Delay", 1.0e-4f)
 EXTERNAL_PLUGIN_TEST_CASES(Compressor, "sushi.brickworks.compressor", "Compressor", 1.0e-4f)
@@ -288,7 +288,7 @@ protected:
     void SetRandomParameters()
     {
         _accessor->samplerate_ratio()->set_processed(_sr_dist(_rand_gen));
-        _accessor->bit_depth()->set_processed(_bd_dist(_rand_gen));
+        _accessor->bit_depth()->set_processed(static_cast<float>(_bd_dist(_rand_gen)));
     }
 
     HostControlMockup _host_control;

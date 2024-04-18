@@ -247,7 +247,7 @@ TEST_F(TestJsonConfigurator, TestLoadInitialState)
     ASSERT_TRUE(main_instance.get());
     auto pan_info = main_instance->parameter_from_name("pan");
     ASSERT_TRUE(pan_info);
-    ASSERT_FLOAT_EQ(0.35, main_instance->parameter_value(pan_info->id()).second);
+    ASSERT_FLOAT_EQ(0.35f, main_instance->parameter_value(pan_info->id()).second);
 }
 
 TEST_F(TestJsonConfigurator, TestMakeChain)

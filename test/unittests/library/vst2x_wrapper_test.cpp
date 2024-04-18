@@ -56,15 +56,15 @@ using namespace sushi::internal::vst2;
 // in response to NoteON C4 (60), vel=127, default parameters
 static constexpr float TEST_SYNTH_EXPECTED_OUT[2][64] = {
         {
-                1, 0.999853, 0.999414, 0.998681, 0.997655, 0.996337, 0.994727, 0.992825,
-                0.990632, 0.988149, 0.985375, 0.982313, 0.978963, 0.975326, 0.971403,
-                0.967195, 0.962703, 0.95793, 0.952875, 0.947541, 0.941929, 0.936041,
-                0.929879, 0.923443, 0.916738, 0.909763, 0.902521, 0.895015, 0.887247,
-                0.879218, 0.870932, 0.86239, 0.853596, 0.844551, 0.835258, 0.825721,
-                0.815941, 0.805923, 0.795668, 0.785179, 0.774461, 0.763515, 0.752346,
-                0.740956, 0.729348, 0.717527, 0.705496, 0.693257, 0.680815, 0.668174,
-                0.655337, 0.642307, 0.62909, 0.615688, 0.602105, 0.588346, 0.574414,
-                0.560314, 0.546049, 0.531625, 0.517045, 0.502313, 0.487433, 0.472411
+                1, 0.999853f, 0.999414f, 0.998681f, 0.997655f, 0.996337f, 0.994727f, 0.992825f,
+                0.990632f, 0.988149f, 0.985375f, 0.982313f, 0.978963f, 0.975326f, 0.971403f,
+                0.967195f, 0.962703f, 0.95793f, 0.952875f, 0.947541f, 0.941929f, 0.936041f,
+                0.929879f, 0.923443f, 0.916738f, 0.909763f, 0.902521f, 0.895015f, 0.887247f,
+                0.879218f, 0.870932f, 0.86239f, 0.853596f, 0.844551f, 0.835258f, 0.825721f,
+                0.815941f, 0.805923f, 0.795668f, 0.785179f, 0.774461f, 0.763515f, 0.752346f,
+                0.740956f, 0.729348f, 0.717527f, 0.705496f, 0.693257f, 0.680815f, 0.668174f,
+                0.655337f, 0.642307f, 0.62909f, 0.615688f, 0.602105f, 0.588346f, 0.574414f,
+                0.560314f, 0.546049f, 0.531625f, 0.517045f, 0.502313f, 0.487433f, 0.472411f
         },
         {
                 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
@@ -256,9 +256,9 @@ TEST_F(TestVst2xWrapper, TestTimeInfo)
      * is good up to AUDIO_CHUNK_SIZE = 256 */
     EXPECT_EQ(static_cast<int64_t>(TEST_SAMPLE_RATE) * 2, time_info->samplePos);
     EXPECT_EQ(2'000'000'000, time_info->nanoSeconds);
-    EXPECT_FLOAT_EQ(2.0f, time_info->ppqPos);
-    EXPECT_FLOAT_EQ(60.0f, time_info->tempo);
-    EXPECT_FLOAT_EQ(0.0f, time_info->barStartPos);
+    EXPECT_FLOAT_EQ(2.0f, static_cast<float>(time_info->ppqPos));
+    EXPECT_FLOAT_EQ(60.0f, static_cast<float>(time_info->tempo));
+    EXPECT_FLOAT_EQ(0.0f, static_cast<float>(time_info->barStartPos));
     EXPECT_EQ(4, time_info->timeSigNumerator);
     EXPECT_EQ(4, time_info->timeSigDenominator);
 }
@@ -344,7 +344,7 @@ TEST_F(TestVst2xWrapper, TestStateHandling)
     ProcessorState state;
     state.set_bypass(true);
     state.set_program(2);
-    state.add_parameter_change(1, 0.33);
+    state.add_parameter_change(1, 0.33f);
 
     auto status = _module_under_test->set_state(&state, false);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
@@ -358,7 +358,7 @@ TEST_F(TestVst2xWrapper, TestStateHandling)
     // Test with realtime set to true
     state.set_bypass(false);
     state.set_program(1);
-    state.add_parameter_change(1, 0.5);
+    state.add_parameter_change(1, 0.5f);
 
     status = _module_under_test->set_state(&state, true);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
@@ -373,7 +373,7 @@ TEST_F(TestVst2xWrapper, TestStateHandling)
     EXPECT_EQ(1, _module_under_test->current_program());
     EXPECT_EQ("Program 2", _module_under_test->current_program_name());
 
-    // Retrive the delete event and execute it
+    // Retrieve the delete event and execute it
     ASSERT_FALSE(_host_control._event_output.empty());
     auto rt_event = _host_control._event_output.pop();
     auto delete_event = Event::from_rt_event(rt_event, IMMEDIATE_PROCESS);

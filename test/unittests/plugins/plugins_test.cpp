@@ -229,7 +229,7 @@ TEST_F(TestPeakMeterPlugin, TestProcess)
     test_utils::fill_sample_buffer(in_buffer, 0.5f);
 
     /* Process enough samples to catch some event outputs */
-    int no_of_process_calls = TEST_SAMPLERATE / (peak_meter_plugin::DEFAULT_REFRESH_RATE * AUDIO_CHUNK_SIZE);
+    int no_of_process_calls = static_cast<int>(TEST_SAMPLERATE / (peak_meter_plugin::DEFAULT_REFRESH_RATE * AUDIO_CHUNK_SIZE));
     ASSERT_TRUE(_fifo.empty());
     for (int i = 0; i <= no_of_process_calls ; ++i)
     {
@@ -307,8 +307,8 @@ TEST_F(TestPeakMeterPlugin, TestClipDetection)
 TEST(TestPeakMeterPluginInternal, TestTodBConversion)
 {
     EXPECT_FLOAT_EQ(0.0f, peak_meter_plugin::to_normalised_dB(0.0f));         // minimum
-    EXPECT_NEAR(0.5f, peak_meter_plugin::to_normalised_dB(0.003981), 0.0001); // -48 dB
-    EXPECT_NEAR(0.8333f, peak_meter_plugin::to_normalised_dB(1.0f), 0.0001);  //  0 dB
+    EXPECT_NEAR(0.5f, peak_meter_plugin::to_normalised_dB(0.003981f), 0.0001f); // -48 dB
+    EXPECT_NEAR(0.8333f, peak_meter_plugin::to_normalised_dB(1.0f), 0.0001f);  //  0 dB
     EXPECT_FLOAT_EQ(1.0f, peak_meter_plugin::to_normalised_dB(15.9f));        // +24 dB
     EXPECT_FLOAT_EQ(1.0f, peak_meter_plugin::to_normalised_dB(251.2f));       // +48 dB (clamped)
 }
