@@ -27,6 +27,9 @@
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::eq3band_plugin {
 
 class Eq3bandPlugin : public InternalPlugin, public UidHelper<Eq3bandPlugin>
@@ -74,5 +77,7 @@ private:
 };
 
 } // namespace sushi::internal::eq3band_plugin
+
+ELK_POP_WARNING
 
 #endif // EQ3BAND_PLUGIN_H

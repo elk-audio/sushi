@@ -74,9 +74,9 @@ ELK_DISABLE_DOMINANCE_INHERITANCE
 class ArpeggiatorPlugin : public InternalPlugin, public UidHelper<ArpeggiatorPlugin>
 {
 public:
-    ArpeggiatorPlugin(HostControl host_control);
+    explicit ArpeggiatorPlugin(HostControl host_control);
 
-    ~ArpeggiatorPlugin() = default;
+    ~ArpeggiatorPlugin() override = default;
 
     ProcessorReturnCode init(float sample_rate) override;
 
@@ -92,8 +92,8 @@ public:
 
 private:
     float                _sample_rate;
-    double               _last_note_beat{0};
-    int                  _current_note{0};
+    double               _last_note_beat {0};
+    int                  _current_note {0};
 
     IntParameterValue*   _range_parameter;
     Arpeggiator          _arp;

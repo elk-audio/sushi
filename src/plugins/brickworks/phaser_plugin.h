@@ -25,6 +25,9 @@
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::phaser_plugin {
 
 class PhaserPlugin : public InternalPlugin, public UidHelper<PhaserPlugin>
@@ -61,5 +64,7 @@ private:
 };
 
 } // namespace sushi::internal::phaser_plugin
+
+ELK_POP_WARNING
 
 #endif // PHASER_PLUGIN_H

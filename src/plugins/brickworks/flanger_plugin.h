@@ -32,6 +32,9 @@ ELK_POP_WARNING
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::flanger_plugin {
 
 class FlangerPlugin : public InternalPlugin, public UidHelper<FlangerPlugin>
@@ -68,5 +71,7 @@ private:
 };
 
 } // namespace sushi::internal::flanger_plugin
+
+ELK_POP_WARNING
 
 #endif // FLANGER_PLUGIN_H

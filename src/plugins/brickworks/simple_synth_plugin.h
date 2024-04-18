@@ -34,6 +34,9 @@
 #include "library/internal_plugin.h"
 #include "library/rt_event_fifo.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::simple_synth_plugin {
 
 constexpr int MAX_MIDI_NOTE = 128;
@@ -94,5 +97,7 @@ private:
 };
 
 } // namespace sushi::internal::simple_synth_plugin
+
+ELK_POP_WARNING
 
 #endif //SUSHI_SIMPLE_SYNTH_PLUGIN_H

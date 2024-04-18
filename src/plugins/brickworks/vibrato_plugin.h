@@ -32,6 +32,9 @@ ELK_POP_WARNING
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::vibrato_plugin {
 
 class VibratoPlugin : public InternalPlugin, public UidHelper<VibratoPlugin>
@@ -68,5 +71,7 @@ private:
 };
 
 } // namespace sushi::internal::vibrato_plugin
+
+ELK_POP_WARNING
 
 #endif // VIBRATO_PLUGIN_H

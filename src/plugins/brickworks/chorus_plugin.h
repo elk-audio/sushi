@@ -32,6 +32,9 @@ ELK_POP_WARNING
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::chorus_plugin {
 
 class ChorusPlugin : public InternalPlugin, public UidHelper<ChorusPlugin>
@@ -68,4 +71,7 @@ private:
 };
 
 } // namespace sushi::internal::chorus_plugin
+
+ELK_POP_WARNING
+
 #endif // CHORUS_PLUGIN_H

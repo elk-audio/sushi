@@ -32,6 +32,9 @@ ELK_POP_WARNING
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::comb_plugin {
 
 class CombPlugin : public InternalPlugin, public UidHelper<CombPlugin>
@@ -71,5 +74,7 @@ private:
 };
 
 } // namespace sushi::internal::comb_plugin
+
+ELK_POP_WARNING
 
 #endif // COMBDELAY_PLUGIN_H

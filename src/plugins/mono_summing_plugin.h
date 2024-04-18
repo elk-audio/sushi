@@ -32,9 +32,9 @@ namespace sushi::internal::mono_summing_plugin {
 class MonoSummingPlugin : public InternalPlugin, public UidHelper<MonoSummingPlugin>
 {
 public:
-    MonoSummingPlugin(HostControl host_control);
+    explicit MonoSummingPlugin(HostControl host_control);
 
-    ~MonoSummingPlugin();
+    ~MonoSummingPlugin() override;
 
     void process_event(const RtEvent& event) override
     {

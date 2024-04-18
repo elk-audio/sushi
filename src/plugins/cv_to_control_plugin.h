@@ -40,9 +40,9 @@ constexpr int MAX_CV_VOICES = MAX_ENGINE_CV_IO_PORTS;
 class CvToControlPlugin : public InternalPlugin, public UidHelper<CvToControlPlugin>
 {
 public:
-    CvToControlPlugin(HostControl host_control);
+    explicit CvToControlPlugin(HostControl host_control);
 
-    ~CvToControlPlugin() {}
+    ~CvToControlPlugin() override = default;
 
     ProcessorReturnCode init(float sample_rate) override;
 
@@ -62,8 +62,8 @@ private:
 
     struct ControlVoice
     {
-        bool active{false};
-        int  note{0};
+        bool active {false};
+        int  note {0};
     };
 
     BoolParameterValue* _pitch_bend_mode_parameter;

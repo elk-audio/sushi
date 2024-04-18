@@ -36,9 +36,9 @@ constexpr int MAX_METERED_CHANNELS = MAX_TRACK_CHANNELS;
 class PeakMeterPlugin : public InternalPlugin, public UidHelper<PeakMeterPlugin>
 {
 public:
-    PeakMeterPlugin(HostControl host_control);
+    explicit PeakMeterPlugin(HostControl host_control);
 
-    virtual ~PeakMeterPlugin() = default;
+    ~PeakMeterPlugin() override = default;
 
     ProcessorReturnCode init(float sample_rate) override;
 
@@ -72,8 +72,8 @@ private:
     std::array<bool, MAX_METERED_CHANNELS> _clipped;
 
     int _refresh_interval;
-    int _sample_count{0};
-    bool _peak_hysteresis{true};
+    int _sample_count {0};
+    bool _peak_hysteresis {true};
 
     float _sample_rate;
 

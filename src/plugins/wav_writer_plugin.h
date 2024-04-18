@@ -83,19 +83,19 @@ private:
     memory_relaxed_aquire_release::CircularFifo<std::array<float, AUDIO_CHUNK_SIZE * N_AUDIO_CHANNELS>, RINGBUFFER_SIZE> _ring_buffer;
 
     std::vector<float> _file_buffer;
-    SNDFILE* _output_file{nullptr};
+    SNDFILE* _output_file {nullptr};
     SF_INFO _soundfile_info;
 
     BoolParameterValue* _recording_parameter;
     FloatParameterValue* _write_speed_parameter;
     std::string _actual_file_path;
 
-    float _write_speed{0.0f};
+    float _write_speed {0.0f};
 
-    int _post_write_timer{0};
-    unsigned int _samples_received{0};
-    sf_count_t _samples_written{0};
-    sf_count_t _total_samples_written{0};
+    int _post_write_timer {0};
+    unsigned int _samples_received {0};
+    sf_count_t _samples_written {0};
+    sf_count_t _total_samples_written {0};
 };
 
 } // end namespace sushi::internal::wav_writer_plugin

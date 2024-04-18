@@ -40,7 +40,7 @@ class StepSequencerPlugin : public InternalPlugin, public UidHelper<StepSequence
 public:
     explicit StepSequencerPlugin(HostControl host_control);
 
-    ~StepSequencerPlugin() = default;
+    ~StepSequencerPlugin() override = default;
 
     ProcessorReturnCode init(float sample_rate) override;
 
@@ -61,10 +61,10 @@ private:
     std::array<int, SEQUENCER_STEPS> _sequence;
 
     float   _sample_rate;
-    int     _current_step{0};
-    bool    _current_step_active{true};
-    int     _transpose{0};
-    int     _current_note{0};
+    int     _current_step {0};
+    bool    _current_step_active {true};
+    int     _transpose {0};
+    int     _current_note {0};
 
     RtEventFifo<NOTE_EVENT_QUEUE_SIZE> _event_queue;
 };
