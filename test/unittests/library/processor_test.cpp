@@ -82,21 +82,19 @@ protected:
 
     void SetUp() override
     {
-        _module_under_test = new ProcessorTest(_host_control.make_host_control_mockup());
+        _module_under_test = std::make_unique<ProcessorTest>(_host_control.make_host_control_mockup());
 
         _accessor = std::make_unique<sushi::internal::ProcessorAccessor>(*_module_under_test);
     }
 
     void TearDown() override
     {
-        delete(_module_under_test);
     }
     
     HostControlMockup _host_control;
     RtEventFifo<10> _event_queue;
 
-    // TODO: Why is this NAKED?
-    Processor* _module_under_test;
+    std::unique_ptr<Processor> _module_under_test;
 
     std::unique_ptr<sushi::internal::ProcessorAccessor> _accessor;
 };
