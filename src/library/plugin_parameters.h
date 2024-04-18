@@ -142,12 +142,18 @@ public:
 
     virtual T to_domain(float value_normalized)
     {
-        return static_cast<T>(_max_domain_value + static_cast<float>(_min_domain_value - _max_domain_value) / (_min_normalized - _max_normalized) * (value_normalized - _max_normalized));
+        return static_cast<T>(static_cast<float>(_max_domain_value) +
+                              static_cast<float>(_min_domain_value - _max_domain_value) /
+                              (_min_normalized - _max_normalized) *
+                              (value_normalized - _max_normalized));
     }
 
     virtual float to_normalized(T value)
     {
-        return _max_normalized + (_min_normalized - _max_normalized) / static_cast<float>(_min_domain_value - _max_domain_value) * (value - _max_domain_value);
+        return _max_normalized +
+               (_min_normalized - _max_normalized) /
+               static_cast<float>(_min_domain_value - _max_domain_value) *
+               static_cast<float>(value - _max_domain_value);
     }
 
 protected:
@@ -352,15 +358,15 @@ public:
                                                                _processed_value(pre_processor->process_to_plugin(value)),
                                                                _normalized_value(pre_processor->to_normalized(value)) {}
 
-    ParameterType type() const {return _type;}
+    [[nodiscard]] ParameterType type() const {return _type;}
 
-    T processed_value() const {return _processed_value;}
+    [[nodiscard]] T processed_value() const {return _processed_value;}
 
-    T domain_value() const {return _pre_processor->process_from_plugin(_pre_processor->to_domain(_normalized_value));}
+    [[nodiscard]] T domain_value() const {return _pre_processor->process_from_plugin(_pre_processor->to_domain(_normalized_value));}
 
-    float normalized_value() const { return _normalized_value; }
+    [[nodiscard]] float normalized_value() const { return _normalized_value; }
 
-    ParameterDescriptor* descriptor() const {return _descriptor;}
+    [[nodiscard]] ParameterDescriptor* descriptor() const {return _descriptor;}
 
     void set(float value_normalized)
     {
@@ -370,14 +376,14 @@ public:
 
     void set_processed(float value_processed)
     {
-        _processed_value = value_processed;
-        _normalized_value = _pre_processor->to_normalized(_pre_processor->process_from_plugin(value_processed));
+        _processed_value = static_cast<T>(value_processed);
+        _normalized_value = _pre_processor->to_normalized(_pre_processor->process_from_plugin(static_cast<T>(value_processed)));
     }
 
 private:
-    ParameterType _type{enumerated_type};
-    ParameterDescriptor* _descriptor{nullptr};
-    ParameterPreProcessor<T>* _pre_processor{nullptr};
+    ParameterType _type {enumerated_type};
+    ParameterDescriptor* _descriptor {nullptr};
+    ParameterPreProcessor<T>* _pre_processor {nullptr};
     T _processed_value;
     float _normalized_value; // Always not processed, but raw as set from the outside.
 };

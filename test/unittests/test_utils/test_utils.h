@@ -17,7 +17,7 @@ using namespace sushi;
 namespace test_utils {
 
 // Enough leeway to approximate 6dB to 2 times amplification.
-const float DECIBEL_ERROR = 0.01;
+const float DECIBEL_ERROR = 0.01f;
 
 template <int size>
 inline void fill_sample_buffer(SampleBuffer<size>& buffer, float value)

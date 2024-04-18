@@ -15,8 +15,11 @@ endif()
 #  Compiler Flags and definitions  #
 ####################################
 
-if(MSVC)    
-    set(SUSHI_COMPILE_OPTIONS /W4 /fp:fast "/wd4996")  #C4996: Deprecated warning. This was flooding the terminal, I might remove the suppression from here eventually, and out into the code again.
+if(MSVC)
+    # C4996: Deprecated warning. This was flooding the terminal,
+    #        I might remove the suppression from here eventually,
+    #        and out into the code again.
+    set(SUSHI_COMPILE_OPTIONS /W4 /fp:fast /wd4996)
     set(APP_LINK_LIBRARIES ${APP_LINK_LIBRARIES} winmm.lib) # oscpack GetCurrentTimeMs
 else()
     set(SUSHI_COMPILE_OPTIONS -Wall -Wextra -Wno-psabi -fPIC -fno-rtti -ffast-math)

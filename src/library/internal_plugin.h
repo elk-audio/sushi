@@ -36,6 +36,8 @@ constexpr int DEFAULT_CHANNELS = MAX_TRACK_CHANNELS;
 class StringUid
 {
 public:
+    virtual ~StringUid() = default;
+
     virtual std::string_view uid() const
     {
         return "";
@@ -52,6 +54,8 @@ template <typename T>
 class UidHelper : public virtual StringUid
 {
 public:
+    ~UidHelper() override = default;
+
     virtual std::string_view uid() const override
     {
         return T::static_uid();

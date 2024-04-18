@@ -52,7 +52,7 @@ constexpr int UPSAMPLING_FACTOR = 4;
  * Experiments in numpy showed 1.6 has good correlation with the attack time for a range of settings
  *
  */
-constexpr float ATTACK_RATIO = 1.6;
+constexpr float ATTACK_RATIO = 1.6f;
 /**
  * @brief 4x polyphase interpolator.
  *

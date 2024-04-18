@@ -33,7 +33,7 @@ namespace sushi::internal::audio_frontend {
 ELKLOG_GET_LOGGER_WITH_MODULE_NAME("offline audio");
 
 #if defined(__clang__)  || defined(_MSC_VER)
-constexpr float INPUT_NOISE_LEVEL = 0.06309573444801933; // pow(10, (-24.0f/20.0f)) pre-computed
+constexpr float INPUT_NOISE_LEVEL = 0.06309573444801933f; // pow(10, (-24.0f/20.0f)) pre-computed
 #elif defined(__GNUC__) || defined(__GNUG__)
 constexpr float INPUT_NOISE_LEVEL = powf(10, (-24.0f/20.0f));
 #endif

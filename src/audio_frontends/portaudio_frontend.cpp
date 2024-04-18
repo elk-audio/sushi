@@ -144,7 +144,7 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
     if (samplerate != _engine->sample_rate())
     {
         ELKLOG_LOG_WARNING("Failed to use engine samplerate ({}), using {} instead", _engine->sample_rate(), samplerate);
-        _engine->set_sample_rate(samplerate);
+        _engine->set_sample_rate(static_cast<float>(samplerate));
     }
 
     // Open the stream

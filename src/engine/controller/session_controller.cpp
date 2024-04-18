@@ -21,7 +21,6 @@
 #include <ctime>
 
 #include "spdlog/fmt/bundled/format.h"
-
 #include "spdlog/fmt/bundled/chrono.h"
 
 #include "elklog/static_logger.h"

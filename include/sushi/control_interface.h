@@ -28,9 +28,14 @@
 #include <vector>
 #include <chrono>
 
+#include "elk-warning-suppressor/warning_suppressor.hpp"
+
 #ifdef ERROR
 #undef ERROR
 #endif
+
+ELK_PUSH_WARNING
+ELK_DISABLE_TRIVIAL_DESTRUCTOR_NOT_VIRTUAL
 
 namespace sushi::control {
 
@@ -368,10 +373,10 @@ class SystemController
 public:
     virtual ~SystemController() = default;
 
-    virtual std::string         get_sushi_version() const = 0;
-    virtual SushiBuildInfo      get_sushi_build_info() const = 0;
-    virtual int                 get_input_audio_channel_count() const = 0;
-    virtual int                 get_output_audio_channel_count() const = 0;
+    [[nodiscard]] virtual std::string    get_sushi_version() const = 0;
+    [[nodiscard]] virtual SushiBuildInfo get_sushi_build_info() const = 0;
+    [[nodiscard]] virtual int            get_input_audio_channel_count() const = 0;
+    [[nodiscard]] virtual int            get_output_audio_channel_count() const = 0;
 
 protected:
     SystemController() = default;
@@ -382,11 +387,11 @@ class TransportController
 public:
     virtual ~TransportController() = default;
 
-    virtual float               get_samplerate() const = 0;
-    virtual PlayingMode         get_playing_mode() const = 0;
-    virtual SyncMode            get_sync_mode() const = 0;
-    virtual TimeSignature       get_time_signature() const = 0;
-    virtual float               get_tempo() const = 0;
+    [[nodiscard]] virtual float           get_samplerate() const = 0;
+    [[nodiscard]] virtual PlayingMode     get_playing_mode() const = 0;
+    [[nodiscard]] virtual SyncMode        get_sync_mode() const = 0;
+    [[nodiscard]] virtual TimeSignature   get_time_signature() const = 0;
+    [[nodiscard]] virtual float           get_tempo() const = 0;
 
     virtual void                set_sync_mode(SyncMode sync_mode) = 0;
     virtual void                set_playing_mode(PlayingMode playing_mode) = 0;
@@ -402,15 +407,15 @@ class TimingController
 public:
     virtual ~TimingController() = default;
 
-    virtual bool                                    get_timing_statistics_enabled() const = 0;
+    [[nodiscard]] virtual bool                      get_timing_statistics_enabled() const = 0;
     virtual void                                    set_timing_statistics_enabled(bool enabled) = 0;
 
-    virtual std::pair<ControlStatus, CpuTimings>    get_engine_timings() const = 0;
-    virtual std::pair<ControlStatus, CpuTimings>    get_track_timings(int track_id) const = 0;
-    virtual std::pair<ControlStatus, CpuTimings>    get_processor_timings(int processor_id) const = 0;
-    virtual ControlStatus                           reset_all_timings() = 0;
-    virtual ControlStatus                           reset_track_timings(int track_id) = 0;
-    virtual ControlStatus                           reset_processor_timings(int processor_id) = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, CpuTimings> get_engine_timings() const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, CpuTimings> get_track_timings(int track_id) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, CpuTimings> get_processor_timings(int processor_id) const = 0;
+    virtual ControlStatus                                      reset_all_timings() = 0;
+    virtual ControlStatus                                      reset_track_timings(int track_id) = 0;
+    virtual ControlStatus                                      reset_processor_timings(int processor_id) = 0;
 
 protected:
     TimingController() = default;
@@ -437,15 +442,15 @@ class AudioGraphController
 public:
     virtual ~AudioGraphController() = default;
 
-    virtual std::vector<ProcessorInfo>                            get_all_processors() const = 0;
-    virtual std::vector<TrackInfo>                                get_all_tracks() const = 0;
-    virtual std::pair<ControlStatus, int>                         get_track_id(const std::string& track_name) const = 0;
-    virtual std::pair<ControlStatus, TrackInfo>                   get_track_info(int track_id) const = 0;
-    virtual std::pair<ControlStatus, std::vector<ProcessorInfo>>  get_track_processors(int track_id) const = 0;
-    virtual std::pair<ControlStatus, int>                         get_processor_id(const std::string& processor_name) const = 0;
-    virtual std::pair<ControlStatus, ProcessorInfo>               get_processor_info(int processor_id) const = 0;
-    virtual std::pair<ControlStatus, bool>                        get_processor_bypass_state(int processor_id) const = 0;
-    virtual std::pair<ControlStatus, ProcessorState>              get_processor_state(int processor_id) const = 0;
+    [[nodiscard]] virtual std::vector<ProcessorInfo>                           get_all_processors() const = 0;
+    [[nodiscard]] virtual std::vector<TrackInfo>                               get_all_tracks() const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, int>                        get_track_id(const std::string& track_name) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, TrackInfo>                  get_track_info(int track_id) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, std::vector<ProcessorInfo>> get_track_processors(int track_id) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, int>                        get_processor_id(const std::string& processor_name) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, ProcessorInfo>              get_processor_info(int processor_id) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, bool>                       get_processor_bypass_state(int processor_id) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, ProcessorState>             get_processor_state(int processor_id) const = 0;
 
     virtual ControlStatus set_processor_bypass_state(int processor_id, bool bypass_enabled) = 0;
     virtual ControlStatus set_processor_state(int processor_id, const ProcessorState& state) = 0;
@@ -456,7 +461,7 @@ public:
     virtual ControlStatus create_post_track(const std::string& name) = 0;
     virtual ControlStatus move_processor_on_track(int processor_id, int source_track_id, int dest_track_id, std::optional<int> before_processor_id) = 0;
     virtual ControlStatus create_processor_on_track(const std::string& name, const std::string& uid, const std::string& file,
-                                                      PluginType type, int track_id, std::optional<int> before_processor_id) = 0;
+                                                    PluginType type, int track_id, std::optional<int> before_processor_id) = 0;
 
     virtual ControlStatus delete_processor_from_track(int processor_id, int track_id) = 0;
     virtual ControlStatus delete_track(int track_id) = 0;
@@ -470,10 +475,10 @@ class ProgramController
 public:
     virtual ~ProgramController() = default;
 
-    virtual std::pair<ControlStatus, int>                       get_processor_current_program(int processor_id) const = 0;
-    virtual std::pair<ControlStatus, std::string>               get_processor_current_program_name(int processor_id) const = 0;
-    virtual std::pair<ControlStatus, std::string>               get_processor_program_name(int processor_id, int program_id) const = 0;
-    virtual std::pair<ControlStatus, std::vector<std::string>>  get_processor_programs(int processor_id) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, int>                      get_processor_current_program(int processor_id) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, std::string>              get_processor_current_program_name(int processor_id) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, std::string>              get_processor_program_name(int processor_id, int program_id) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, std::vector<std::string>> get_processor_programs(int processor_id) const = 0;
 
     virtual ControlStatus                                       set_processor_program(int processor_id, int program_id)= 0;
 
@@ -486,21 +491,23 @@ class ParameterController
 public:
     virtual ~ParameterController() = default;
 
-    virtual std::pair<ControlStatus, std::vector<ParameterInfo>>  get_processor_parameters(int processor_id) const = 0;
-    virtual std::pair<ControlStatus, std::vector<ParameterInfo>>  get_track_parameters(int processor_id) const = 0;
-    virtual std::pair<ControlStatus, int>                         get_parameter_id(int processor_id, const std::string& parameter) const = 0;
-    virtual std::pair<ControlStatus, ParameterInfo>               get_parameter_info(int processor_id, int parameter_id) const = 0;
-    virtual std::pair<ControlStatus, float>                       get_parameter_value(int processor_id, int parameter_id) const = 0;
-    virtual std::pair<ControlStatus, float>                       get_parameter_value_in_domain(int processor_id, int parameter_id) const = 0;
-    virtual std::pair<ControlStatus, std::string>                 get_parameter_value_as_string(int processor_id, int parameter_id) const = 0;
-    virtual ControlStatus                                         set_parameter_value(int processor_id, int parameter_id, float value) = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, std::vector<ParameterInfo>> get_processor_parameters(int processor_id) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, std::vector<ParameterInfo>> get_track_parameters(int processor_id) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, int>                        get_parameter_id(int processor_id, const std::string& parameter) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, ParameterInfo>              get_parameter_info(int processor_id, int parameter_id) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, float>                      get_parameter_value(int processor_id, int parameter_id) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, float>                      get_parameter_value_in_domain(int processor_id, int parameter_id) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, std::string>                get_parameter_value_as_string(int processor_id, int parameter_id) const = 0;
 
-    virtual std::pair<ControlStatus, std::vector<PropertyInfo>>   get_processor_properties(int processor_id) const = 0;
-    virtual std::pair<ControlStatus, std::vector<PropertyInfo>>   get_track_properties(int processor_id) const = 0;
-    virtual std::pair<ControlStatus, int>                         get_property_id(int processor_id, const std::string& parameter) const = 0;
-    virtual std::pair<ControlStatus, PropertyInfo>                get_property_info(int processor_id, int parameter_id) const = 0;
-    virtual std::pair<ControlStatus, std::string>                 get_property_value(int processor_id, int parameter_id) const = 0;
-    virtual ControlStatus                                         set_property_value(int processor_id, int parameter_id, const std::string& value) = 0;
+    virtual ControlStatus set_parameter_value(int processor_id, int parameter_id, float value) = 0;
+
+    [[nodiscard]] virtual std::pair<ControlStatus, std::vector<PropertyInfo>>  get_processor_properties(int processor_id) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, std::vector<PropertyInfo>>  get_track_properties(int processor_id) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, int>                        get_property_id(int processor_id, const std::string& parameter) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, PropertyInfo>               get_property_info(int processor_id, int parameter_id) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, std::string>                get_property_value(int processor_id, int parameter_id) const = 0;
+
+    virtual ControlStatus set_property_value(int processor_id, int parameter_id, const std::string& value) = 0;
 
 protected:
     ParameterController() = default;
@@ -511,17 +518,17 @@ class MidiController
 public:
     virtual ~MidiController() = default;
 
-    virtual int                            get_input_ports() const = 0;
-    virtual int                            get_output_ports() const = 0;
-    virtual std::vector<MidiKbdConnection> get_all_kbd_input_connections() const = 0;
-    virtual std::vector<MidiKbdConnection> get_all_kbd_output_connections() const = 0;
-    virtual std::vector<MidiCCConnection>  get_all_cc_input_connections() const = 0;
-    virtual std::vector<MidiPCConnection>  get_all_pc_input_connections() const = 0;
-    virtual std::pair<ControlStatus, std::vector<MidiCCConnection>> get_cc_input_connections_for_processor(int processor_id) const = 0;
-    virtual std::pair<ControlStatus, std::vector<MidiPCConnection>> get_pc_input_connections_for_processor(int processor_id) const = 0;
+    [[nodiscard]] virtual int                            get_input_ports() const = 0;
+    [[nodiscard]] virtual int                            get_output_ports() const = 0;
+    [[nodiscard]] virtual std::vector<MidiKbdConnection> get_all_kbd_input_connections() const = 0;
+    [[nodiscard]] virtual std::vector<MidiKbdConnection> get_all_kbd_output_connections() const = 0;
+    [[nodiscard]] virtual std::vector<MidiCCConnection>  get_all_cc_input_connections() const = 0;
+    [[nodiscard]] virtual std::vector<MidiPCConnection>  get_all_pc_input_connections() const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, std::vector<MidiCCConnection>> get_cc_input_connections_for_processor(int processor_id) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, std::vector<MidiPCConnection>> get_pc_input_connections_for_processor(int processor_id) const = 0;
 
-    virtual bool                           get_midi_clock_output_enabled(int port) const = 0;
-    virtual ControlStatus                  set_midi_clock_output_enabled(bool enabled, int port) = 0;
+    [[nodiscard]] virtual bool get_midi_clock_output_enabled(int port) const = 0;
+    virtual ControlStatus set_midi_clock_output_enabled(bool enabled, int port) = 0;
 
     virtual ControlStatus connect_kbd_input_to_track(int track_id, MidiChannel channel, int port, bool raw_midi) = 0;
     virtual ControlStatus connect_kbd_output_from_track(int track_id, MidiChannel channel, int port) = 0;
@@ -545,10 +552,10 @@ class AudioRoutingController
 public:
     virtual ~AudioRoutingController() = default;
 
-    virtual std::vector<AudioConnection> get_all_input_connections() const = 0;
-    virtual std::vector<AudioConnection> get_all_output_connections() const = 0;
-    virtual std::vector<AudioConnection> get_input_connections_for_track(int track_id) const = 0;
-    virtual std::vector<AudioConnection> get_output_connections_for_track(int track_id) const = 0;
+    [[nodiscard]] virtual std::vector<AudioConnection> get_all_input_connections() const = 0;
+    [[nodiscard]] virtual std::vector<AudioConnection> get_all_output_connections() const = 0;
+    [[nodiscard]] virtual std::vector<AudioConnection> get_input_connections_for_track(int track_id) const = 0;
+    [[nodiscard]] virtual std::vector<AudioConnection> get_output_connections_for_track(int track_id) const = 0;
 
     virtual ControlStatus                connect_input_channel_to_track(int track_id, int track_channel, int input_channel) = 0;
     virtual ControlStatus                connect_output_channel_to_track(int track_id, int track_channel, int output_channel) = 0;
@@ -567,18 +574,18 @@ class CvGateController
 public:
     virtual ~CvGateController() = default;
 
-    virtual int                         get_cv_input_ports() const = 0;
-    virtual int                         get_cv_output_ports() const = 0;
+    [[nodiscard]] virtual int get_cv_input_ports() const = 0;
+    [[nodiscard]] virtual int get_cv_output_ports() const = 0;
 
 
-    virtual std::vector<CvConnection>   get_all_cv_input_connections() const = 0;
-    virtual std::vector<CvConnection>   get_all_cv_output_connections() const = 0;
-    virtual std::vector<GateConnection> get_all_gate_input_connections() const = 0;
-    virtual std::vector<GateConnection> get_all_gate_output_connections() const = 0;
-    virtual std::pair<ControlStatus, std::vector<CvConnection>>   get_cv_input_connections_for_processor(int processor_id) const = 0;
-    virtual std::pair<ControlStatus, std::vector<CvConnection>>   get_cv_output_connections_for_processor(int processor_id) const = 0;
-    virtual std::pair<ControlStatus, std::vector<GateConnection>> get_gate_input_connections_for_processor(int processor_id) const = 0;
-    virtual std::pair<ControlStatus, std::vector<GateConnection>> get_gate_output_connections_for_processor(int processor_id) const = 0;
+    [[nodiscard]] virtual std::vector<CvConnection>   get_all_cv_input_connections() const = 0;
+    [[nodiscard]] virtual std::vector<CvConnection>   get_all_cv_output_connections() const = 0;
+    [[nodiscard]] virtual std::vector<GateConnection> get_all_gate_input_connections() const = 0;
+    [[nodiscard]] virtual std::vector<GateConnection> get_all_gate_output_connections() const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, std::vector<CvConnection>>   get_cv_input_connections_for_processor(int processor_id) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, std::vector<CvConnection>>   get_cv_output_connections_for_processor(int processor_id) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, std::vector<GateConnection>> get_gate_input_connections_for_processor(int processor_id) const = 0;
+    [[nodiscard]] virtual std::pair<ControlStatus, std::vector<GateConnection>> get_gate_output_connections_for_processor(int processor_id) const = 0;
 
     virtual ControlStatus               connect_cv_input_to_parameter(int processor_id, int parameter_id, int cv_input_id) = 0;
     virtual ControlStatus               connect_cv_output_from_parameter(int processor_id, int parameter_id, int cv_output_id) = 0;
@@ -603,10 +610,10 @@ class OscController
 public:
     virtual ~OscController() = default;
 
-    virtual std::string get_send_ip() const = 0;
-    virtual int get_send_port() const = 0;
-    virtual int get_receive_port() const = 0;
-    virtual std::vector<std::string> get_enabled_parameter_outputs() const = 0;
+    [[nodiscard]] virtual std::string get_send_ip() const = 0;
+    [[nodiscard]] virtual int get_send_port() const = 0;
+    [[nodiscard]] virtual int get_receive_port() const = 0;
+    [[nodiscard]] virtual std::vector<std::string> get_enabled_parameter_outputs() const = 0;
     virtual ControlStatus enable_output_for_parameter(int processor_id, int parameter_id) = 0;
     virtual ControlStatus disable_output_for_parameter(int processor_id, int parameter_id) = 0;
     virtual ControlStatus enable_all_output() = 0;
@@ -621,7 +628,7 @@ class SessionController
 public:
     virtual ~SessionController() = default;
 
-    virtual SessionState save_session() const = 0;
+    [[nodiscard]] virtual SessionState save_session() const = 0;
     virtual ControlStatus restore_session(const SessionState& state) = 0;
 };
 
@@ -630,8 +637,8 @@ class ControlNotification
 public:
     virtual ~ControlNotification() = default;
 
-    NotificationType type() const {return _type;}
-    Time timestamp() const {return _timestamp;}
+    [[nodiscard]] NotificationType type() const {return _type;}
+    [[nodiscard]] Time timestamp() const {return _timestamp;}
 
 protected:
     ControlNotification(NotificationType type, Time timestamp) : _type(type),
@@ -709,5 +716,7 @@ private:
 };
 
 } // end namespace sushi::control
+
+ELK_POP_WARNING
 
 #endif //SUSHI_CONTROL_INTERFACE_H

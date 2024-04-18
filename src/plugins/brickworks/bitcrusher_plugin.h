@@ -21,8 +21,14 @@
 #ifndef BITCRUSHER_PLUGIN_H
 #define BITCRUSHER_PLUGIN_H
 
+#include "elk-warning-suppressor/warning_suppressor.hpp"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_CONVERSION_FROM_INT_TO_FLOAT
+ELK_DISABLE_CONVERSION_FROM_SIZE_T_TO_INT
 #include <bw_sr_reduce.h>
 #include <bw_bd_reduce.h>
+ELK_POP_WARNING
 
 #include "library/internal_plugin.h"
 

@@ -27,6 +27,11 @@
 
 #include "library/rt_event.h"
 
+#include "elk-warning-suppressor/warning_suppressor.hpp"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_TRIVIAL_DESTRUCTOR_NOT_VIRTUAL
+
 namespace sushi::internal {
 
 class RtEventPipe
@@ -36,5 +41,7 @@ public:
 };
 
 } // end namespace sushi::internal
+
+ELK_POP_WARNING
 
 #endif // SUSHI_RT_EVENT_PIPE_H

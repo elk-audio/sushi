@@ -187,8 +187,9 @@ private:
         T   coeff{0};
     };
 
-    static constexpr T TIMECONSTANTS_RISE_TIME = 2.19;
-    static constexpr T STATIONARY_LIMIT = 0.0001; // -80dB
+    static constexpr T TIMECONSTANTS_RISE_TIME = static_cast<const T>(2.19);
+    static constexpr T STATIONARY_LIMIT = static_cast<const T>(0.0001); // -80dB
+
     static_assert(mode == Mode::RAMP || mode == Mode::FILTER || mode == Mode::EXP_RAMP);
 
     void _update_internals(std::chrono::duration<float, std::ratio<1,1>> lag_time, float sample_rate)

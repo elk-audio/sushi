@@ -23,13 +23,14 @@
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
-ELK_PUSH_WARNING
-ELK_DISABLE_ALIGNMENT_PADDING
-
 #include "fifo/circularfifo_memory_relaxed_aquire_release.h"
 #include "library/simple_fifo.h"
 #include "library/rt_event.h"
 #include "library/rt_event_pipe.h"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_ALIGNMENT_PADDING
+ELK_DISABLE_NON_TRIVIAL_DESTRUCTOR_NOT_VIRTUAL
 
 namespace sushi::internal {
 
