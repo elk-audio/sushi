@@ -17,6 +17,7 @@
 #include <gmock/gmock-actions.h>
 
 #include "test_utils/test_utils.h"
+#include "test_utils/event_dispatcher_accessor.h"
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
@@ -78,8 +79,8 @@ class ReactiveControllerTestFrontend : public ::testing::Test
 public:
     void crank_event_loop_once()
     {
-        _event_dispatcher->_running = false;
-        _event_dispatcher->_event_loop();
+        _event_dispatcher_accessor->running() = false;
+        _event_dispatcher_accessor->event_loop();
     }
 
 protected:
@@ -90,6 +91,8 @@ protected:
         _mock_engine = std::make_unique<EngineMockup>(TEST_SAMPLE_RATE);
 
         _event_dispatcher = std::make_unique<dispatcher::EventDispatcher>(_mock_engine.get(), &_in_rt_queue, &_out_rt_queue);
+
+        _event_dispatcher_accessor = std::make_unique<sushi::internal::dispatcher::Accessor>(*_event_dispatcher);
 
         _audio_frontend = std::make_unique<ReactiveFrontend>(_mock_engine.get());
 
@@ -106,6 +109,7 @@ protected:
 
     std::unique_ptr<RealTimeController>          _real_time_controller;
     std::unique_ptr<dispatcher::EventDispatcher> _event_dispatcher;
+    std::unique_ptr<sushi::internal::dispatcher::Accessor> _event_dispatcher_accessor;
     std::unique_ptr<EngineMockup>                _mock_engine;
     std::unique_ptr<ReactiveFrontend>            _audio_frontend;
 

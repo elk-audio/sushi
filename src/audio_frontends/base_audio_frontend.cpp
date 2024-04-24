@@ -26,7 +26,7 @@ ELKLOG_GET_LOGGER_WITH_MODULE_NAME("audio_frontend");
 
 namespace sushi::internal::audio_frontend {
 
-constexpr float XRUN_LIMIT_FACTOR = 1.8;
+constexpr float XRUN_LIMIT_FACTOR = 1.8f;
 
 AudioFrontendStatus BaseAudioFrontend::init(BaseAudioFrontendConfiguration* config)
 {
