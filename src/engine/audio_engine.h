@@ -351,7 +351,7 @@ public:
      *
      * @param path Absolute path of the base plugin folder
      */
-    virtual void set_base_plugin_path(const std::string& path) override
+    void set_base_plugin_path(const std::string& path) override
     {
         _plugin_library.set_base_plugin_path(path);
     }
@@ -508,6 +508,13 @@ public:
      * @brief Print the current processor timings (if enabled) in the log
      */
     void update_timings() override;
+
+    /**
+     * @brief Notify sushi that audio processing was interrupted. Possibly due to to
+     *        audio over/underruns, audio was paused or similar issues
+     * @param duration An estimation of how long the interrupt lasted
+     */
+    void notify_interrupted_audio(Time duration) override;
 
 private:
     friend AudioEngineAccessor;

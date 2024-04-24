@@ -19,7 +19,6 @@
  */
 
 #include <cassert>
-
 #include "peak_meter_plugin.h"
 
 namespace sushi::internal::peak_meter_plugin {

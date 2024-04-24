@@ -38,7 +38,8 @@ protected:
         delete _module_under_test;
     }
 
-    EngineMockup _engine{SAMPLE_RATE};
+    EngineMockup _engine {SAMPLE_RATE};
+
     JackFrontend* _module_under_test;
 };
 

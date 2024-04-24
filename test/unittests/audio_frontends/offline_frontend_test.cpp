@@ -58,7 +58,7 @@ protected:
 
     EngineMockup _engine {SAMPLE_RATE};
     MidiDispatcher _midi_dispatcher {_engine.event_dispatcher()};
-    std::unique_ptr<OfflineFrontend> _module_under_test;
+    std::unique_ptr<OfflineFrontend> _module_under_test ;
     std::unique_ptr<OfflineFrontendAccessor> _accessor;
 };
 

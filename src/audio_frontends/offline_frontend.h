@@ -86,7 +86,7 @@ public:
 
     void run() override;
 
-    void pause(bool enabled) override;
+    void pause(bool paused) override;
 
 private:
     friend OfflineFrontendAccessor;

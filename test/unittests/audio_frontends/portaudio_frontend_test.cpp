@@ -55,7 +55,7 @@ protected:
     void SetUp() override
     {
         mockPortAudio = std::make_unique<NiceMock<MockPortAudio>>();
-        _module_under_test = std::make_unique<PortAudioFrontend>(&_engine);
+        _module_under_test = std::make_unique<PortAudioFrontend>(&_test_engine);
 
         _accessor = std::make_unique<PortaudioFrontendAccessor>(*_module_under_test);
     }
@@ -72,7 +72,7 @@ protected:
         mockPortAudio.reset();
     }
 
-    EngineMockup _engine{SAMPLE_RATE};
+    EngineMockup _test_engine {SAMPLE_RATE};
     std::unique_ptr<PortAudioFrontend> _module_under_test;
     std::unique_ptr<PortaudioFrontendAccessor> _accessor;
 };
@@ -164,7 +164,7 @@ TEST_F(TestPortAudioFrontend, TestRun)
 {
     EXPECT_CALL(*mockPortAudio, Pa_StartStream);
     _module_under_test->run();
-    ASSERT_TRUE(_engine.realtime());
+    ASSERT_TRUE(_test_engine.realtime());
 }
 
 TEST_F(TestPortAudioFrontend, TestProcess)
@@ -194,7 +194,7 @@ TEST_F(TestPortAudioFrontend, TestProcess)
                                            status_flags,
                                            static_cast<void*>(_module_under_test.get()));
     ASSERT_EQ(input_data, output_data);
-    ASSERT_TRUE(_engine.process_called);
+    ASSERT_TRUE(_test_engine.process_called);
 }
 
 TEST_F(TestPortAudioFrontend, TestGetDeviceName)

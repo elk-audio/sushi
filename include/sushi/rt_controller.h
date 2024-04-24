@@ -16,6 +16,8 @@
 #ifndef REAL_TIME_CONTROLLER_H
 #define REAL_TIME_CONTROLLER_H
 
+#include <functional>
+
 #include "control_interface.h"
 #include "sushi_time.h"
 #include "types.h"
@@ -102,6 +104,13 @@ public:
     virtual void process_audio(ChunkSampleBuffer& in_buffer,
                                ChunkSampleBuffer& out_buffer,
                                Time timestamp) = 0;
+
+    /**
+     * @brief Call before the first call to process_audio() when resuming from an interrupt or xrun to
+     *        notify sushi that audio processing was interrupted and that there may be gaps in the audio
+     * @param duration The length of the interruption
+     */
+    virtual void notify_interrupted_audio(Time duration) = 0;
 
     /// For MIDI:
     /////////////////////////////////////////////////////////////

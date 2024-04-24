@@ -110,6 +110,11 @@ void RealTimeController::process_audio(ChunkSampleBuffer& in_buffer,
                                    timestamp);
 }
 
+void RealTimeController::notify_interrupted_audio(Time duration)
+{
+    _audio_frontend->notify_interrupted_audio(duration);
+}
+
 void RealTimeController::receive_midi(int input, MidiDataByte data, Time timestamp)
 {
     _midi_frontend->receive_midi(input, data, timestamp);

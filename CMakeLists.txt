@@ -30,8 +30,6 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
-set(CMAKE_CXX_STANDARD 20)
-
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 ##################################
@@ -439,6 +437,7 @@ if (${SUSHI_WITH_VST3})
     add_library(vst3_host STATIC ${VST3_HOST_SOURCES})
     target_link_libraries(vst3_host PRIVATE ${AUDIOHOST_PLATFORM_LIBS})
     set_target_properties(vst3_host PROPERTIES EXCLUDE_FROM_ALL true)
+    target_compile_features(vst3_host PUBLIC cxx_std_20)
     if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
         set_target_properties(vst3_host PROPERTIES COMPILE_FLAGS "-DRELEASE ${VST3_COMPILE_FLAGS}")
     else()
@@ -746,7 +745,7 @@ if(MSVC)
 else ()
     target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Wextra -Wno-psabi -fPIC -ffast-math)
 
-    target_compile_options(${PROJECT_NAME}  PRIVATE -fno-rtti)
+    target_compile_options(${PROJECT_NAME} PRIVATE -fno-rtti)
 
     if (SUSHI_BUILD_WITH_SANITIZERS)
         target_compile_options(${PROJECT_NAME}  PUBLIC -fsanitize=address -g)

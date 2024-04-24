@@ -70,8 +70,8 @@ public:
             Processor(host_control),
             _plugin_load_name(plugin_name),
             _plugin_load_path(vst_plugin_path),
-            _instance(host_app),
-            _component_handler(this, &_host_control)
+            _component_handler(this, &_host_control),
+            _instance(host_app)
     {
         _max_input_channels = VST_WRAPPER_MAX_N_CHANNELS;
         _max_output_channels = VST_WRAPPER_MAX_N_CHANNELS;
@@ -227,8 +227,8 @@ private:
 
     std::string _plugin_load_name;
     std::string _plugin_load_path;
-    PluginInstance _instance;
     ComponentHandler _component_handler;
+    PluginInstance _instance;
 
     Steinberg::Vst::EventList _in_event_list{VST_WRAPPER_NOTE_EVENT_QUEUE_SIZE};
     Steinberg::Vst::EventList _out_event_list{VST_WRAPPER_NOTE_EVENT_QUEUE_SIZE};
