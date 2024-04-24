@@ -121,6 +121,12 @@ if (${SUSHI_WITH_VST2})
             unittests/test_utils/vst2_test_plugin.cpp
             ${VST2_SDK_PLUGIN_SOURCES}
     )
+    if (MSVC)
+        set(VST2_TEST_PLUGIN_SOURCES
+                unittests/test_utils/vst2_test_plugin.def
+                ${VST2_TEST_PLUGIN_SOURCES}
+        )
+    endif ()
 
     add_library(vst2_test_plugin MODULE ${VST2_TEST_PLUGIN_SOURCES})
 
