@@ -7,12 +7,12 @@
 using namespace sushi;
 using namespace sushi::internal;
 
-#ifdef __APPLE__
-constexpr auto PLUGIN_PATH = "/home/foo/bar/my_absolute_plugin.so";
-constexpr auto INEXISTENT_PATH = "/home/foo/bar";
-#elif defined(_MSC_VER)
+#ifdef _MSC_VER
 constexpr auto PLUGIN_PATH = R"(C:\home\foo\bar\my_absolute_plugin.so)";
 constexpr auto INEXISTENT_PATH = R"(C:\home\foo\bar)";
+#else
+constexpr auto PLUGIN_PATH = "/home/foo/bar/my_absolute_plugin.so";
+constexpr auto INEXISTENT_PATH = "/home/foo/bar";
 #endif
 
 class TestPluginLibrary : public ::testing::Test
