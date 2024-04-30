@@ -41,15 +41,6 @@ constexpr Time IMMEDIATE_PROCESS = std::chrono::microseconds(0);
  */
 inline Time get_current_time()
 {
-    /*
-    timespec tp;
-    auto res = clock_gettime(CLOCK_MONOTONIC, &tp);
-    if (res != 0)
-    {
-        return IMMEDIATE_PROCESS;
-    }
-    return std::chrono::seconds(tp.tv_sec) + std::chrono::duration_cast<Time>(std::chrono::nanoseconds(tp.tv_nsec));
-    */
     return std::chrono::duration_cast<Time>(std::chrono::steady_clock::now().time_since_epoch());
 }
 
