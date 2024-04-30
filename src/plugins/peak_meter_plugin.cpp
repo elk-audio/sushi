@@ -19,6 +19,8 @@
  */
 
 #include <cassert>
+#include "spdlog/fmt/bundled/format.h"
+
 #include "peak_meter_plugin.h"
 
 namespace sushi::internal::peak_meter_plugin {
@@ -66,8 +68,8 @@ PeakMeterPlugin::PeakMeterPlugin(HostControl host_control) : InternalPlugin(host
     std::string_view param_label = "Level ch {}";
     for (int i = 0; i < MAX_METERED_CHANNELS; ++i)
     {
-        _level_parameters[i] = register_float_parameter(std::vformat(param_name, std::make_format_args(i)),
-                                                        std::vformat(param_label, std::make_format_args(i)),
+        _level_parameters[i] = register_float_parameter(fmt::vformat(param_name, fmt::make_format_args(i)),
+                                                        fmt::vformat(param_label, fmt::make_format_args(i)),
                                                         "dB",
                                                         OUTPUT_MIN_DB, OUTPUT_MIN_DB, OUTPUT_MAX_DB,
                                                         Direction::OUTPUT,
@@ -79,8 +81,8 @@ PeakMeterPlugin::PeakMeterPlugin(HostControl host_control) : InternalPlugin(host
     param_label = "Clip ch {}";
     for (int i = 0; i < MAX_METERED_CHANNELS; ++i)
     {
-        _clip_parameters[i] = register_bool_parameter(std::vformat(param_name, std::make_format_args(i)),
-                                                      std::vformat(param_label, std::make_format_args(i)),
+        _clip_parameters[i] = register_bool_parameter(fmt::vformat(param_name, fmt::make_format_args(i)),
+                                                      fmt::vformat(param_label, fmt::make_format_args(i)),
                                                       "",
                                                       false,
                                                       Direction::OUTPUT);
