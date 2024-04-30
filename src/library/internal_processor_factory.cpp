@@ -139,7 +139,7 @@ InternalProcessorFactory::new_instance(const PluginInfo &plugin_info,
         return _send_return_factory->new_instance(plugin_info, host_control, sample_rate);
     }
 
-    auto processor= _create_internal_plugin(plugin_info.uid, host_control);
+    auto processor = _create_internal_plugin(plugin_info.uid, host_control);
     if (processor == nullptr)
     {
         return {ProcessorReturnCode::ERROR, nullptr};
