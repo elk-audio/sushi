@@ -92,7 +92,7 @@ if (APPLE)
     set(SUSHI_WITH_UNIT_TESTS_DEFAULT ON)
     set(SUSHI_BUILD_TWINE_DEFAULT ON)
     set(SUSHI_DISABLE_MULTICORE_UNIT_TESTS_DEFAULT ON)
-elseif (WIN32)
+elseif (MSVC)
     # windows defaults
     set(SUSHI_WITH_XENOMAI_DEFAULT OFF)
     set(SUSHI_WITH_PORTAUDIO_DEFAULT ON)
@@ -110,9 +110,7 @@ elseif (WIN32)
     set(SUSHI_WITH_VST3_DEFAULT OFF)
     set(SUSHI_LINK_VST3_DEFAULT OFF)
 
-    if(MSVC)
-        add_compile_definitions(_USE_MATH_DEFINES)
-    endif()
+    add_compile_definitions(_USE_MATH_DEFINES)
 
 elseif (CMAKE_CROSSCOMPILING)
     # Yocto cross-compilation defaults
