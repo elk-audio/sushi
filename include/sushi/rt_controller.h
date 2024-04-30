@@ -23,8 +23,6 @@
 #include "types.h"
 #include "sample_buffer.h"
 
-#include <functional>
-
 namespace sushi {
 
 enum class TransportPositionSource
