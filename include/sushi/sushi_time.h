@@ -23,8 +23,6 @@
 
 #include <chrono>
 
-//#include "sys/time.h"
-
 namespace sushi {
 
 /**
