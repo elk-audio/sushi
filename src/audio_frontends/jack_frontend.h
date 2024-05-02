@@ -51,7 +51,7 @@ struct JackFrontendConfiguration : public BaseAudioFrontendConfiguration
     std::string server_name;
     bool autoconnect_ports;
 };
-
+class JackFrontendAccessor;
 class JackFrontend : public BaseAudioFrontend
 {
 public:
@@ -108,6 +108,7 @@ public:
     void run() override;
 
 private:
+    friend JackFrontendAccessor;
     void _set_engine_sample_rate(float sample_rate) override;
 
     /* Set up the jack client and associated ports */
