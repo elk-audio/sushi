@@ -22,7 +22,9 @@
 #include <iomanip>
 #include <functional>
 
-#include "twine/src/twine_internal.h"
+#define TWINE_EXPOSE_INTERNALS
+#include "twine/twine.h"
+
 #include "elklog/static_logger.h"
 
 #include "audio_engine.h"
