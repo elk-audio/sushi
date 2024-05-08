@@ -416,7 +416,7 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
     Time timestamp = _start_time + std::chrono::duration_cast<std::chrono::microseconds>(pa_time_elapsed);
 
     _out_buffer.clear();
-    _handle_resume(timestamp, frame_count);
+    _handle_resume(timestamp, static_cast<int>(frame_count));
 
     if (_pause_manager.should_process())
     {
