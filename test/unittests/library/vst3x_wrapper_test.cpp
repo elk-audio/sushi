@@ -598,3 +598,18 @@ TEST_F(TestVst3xUtils, TestAftertouchConversion)
     EXPECT_FLOAT_EQ(0.5f, vst_event.polyPressure.pressure);
     EXPECT_EQ(-1, vst_event.polyPressure.noteId);
 }
+
+TEST(TestVst3xUtilFucntions, TestMakeSafeFolderName)
+{
+    EXPECT_EQ("il_&_al_file n__me", make_safe_folder_name("il*&?al_file n<>me"));
+}
+
+TEST(TestVst3xUtilFucntions, TestIsHidden)
+{
+    auto entry = std::filesystem::directory_entry(std::filesystem::absolute(PLUGIN_FILE));
+    EXPECT_FALSE(is_hidden(entry));
+
+    auto path = std::filesystem::path(test_utils::get_data_dir_path()).append(".hidden_file.txt");
+    entry = std::filesystem::directory_entry(path);
+    EXPECT_TRUE(is_hidden(entry));
+}

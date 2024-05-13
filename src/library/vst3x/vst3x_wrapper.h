@@ -23,6 +23,7 @@
 
 #include <map>
 #include <utility>
+#include <filesystem>
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
@@ -223,7 +224,7 @@ private:
 
     BypassManager _bypass_manager{_bypassed};
 
-    std::vector<std::string> _program_files;
+    std::vector<std::filesystem::path> _program_files;
 
     std::string _plugin_load_name;
     std::string _plugin_load_path;
