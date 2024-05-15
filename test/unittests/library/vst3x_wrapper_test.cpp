@@ -72,6 +72,12 @@ const char PLUGIN_FILE[] = "../VST3/Debug/adelay.vst3";
 
 const char PLUGIN_NAME[] = "ADelay";
 
+#ifdef _WIN32
+auto UNITTEST_EXE = "unit_tests.exe";
+#else
+auto UNITTEST_EXE = "unit_tests";
+#endif
+
 constexpr unsigned int DELAY_PARAM_ID = 100;
 constexpr unsigned int BYPASS_PARAM_ID = 101;
 constexpr float TEST_SAMPLE_RATE = 48000;
@@ -599,12 +605,12 @@ TEST_F(TestVst3xUtils, TestAftertouchConversion)
     EXPECT_EQ(-1, vst_event.polyPressure.noteId);
 }
 
-TEST(TestVst3xUtilFucntions, TestMakeSafeFolderName)
+TEST(TestVst3xUtilFunctions, TestMakeSafeFolderName)
 {
     EXPECT_EQ("il_&_al_file n__me", make_safe_folder_name("il*&?al_file n<>me"));
 }
 
-TEST(TestVst3xUtilFucntions, TestIsHidden)
+TEST(TestVst3xUtilFunctions, TestIsHidden)
 {
     auto entry = std::filesystem::directory_entry(std::filesystem::absolute(PLUGIN_FILE));
     EXPECT_FALSE(is_hidden(entry));
@@ -612,4 +618,23 @@ TEST(TestVst3xUtilFucntions, TestIsHidden)
     auto path = std::filesystem::path(test_utils::get_data_dir_path()).append(".hidden_file.txt");
     entry = std::filesystem::directory_entry(path);
     EXPECT_TRUE(is_hidden(entry));
+}
+
+TEST(TestVst3xUtilFunctions, TestGetExecutablePath)
+{
+    auto path = get_executable_path();
+    ASSERT_FALSE(path.empty());
+    ASSERT_FALSE(path.filename().empty());
+    EXPECT_TRUE(path.is_absolute());
+    EXPECT_EQ(UNITTEST_EXE, path.filename().string());
+}
+
+TEST(TestVst3xUtilFunctions, TestGetPresetLocations)
+{
+    auto locations = get_preset_locations();
+    EXPECT_EQ(4, locations.size());
+    for (const auto& path : locations)
+    {
+        EXPECT_FALSE(path.empty());
+    }
 }

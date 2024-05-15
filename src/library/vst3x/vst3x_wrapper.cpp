@@ -20,7 +20,13 @@
 
 #include <string>
 #include <cstdlib>
+#ifdef _WIN32
+#include <libloaderapi.h>
+#else
+#include <mach-o/dyld.h>
 #include <unistd.h>
+#endif
+#include "iostream"
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
@@ -67,6 +73,7 @@ std::string to_ascii_str(Steinberg::Vst::String128 wchar_buffer)
     return {char_buf};
 }
 
+// Remove illegal characters from name to create a folder name
 std::string make_safe_folder_name(std::string name)
 {
     // See https://steinbergmedia.github.io/vst3_dev_portal/pages/Technical+Documentation/Locations+Format/Preset+Locations.html
@@ -86,41 +93,70 @@ bool is_hidden(const std::filesystem::directory_entry& entry)
     return !entry.path().filename().empty() && entry.path().filename().c_str()[0] == '.';
 }
 
-// Get all vst3 preset locations in the right priority order
+std::filesystem::path get_executable_path()
+{
+#ifdef _WIN32
+    std::array<char, 256> buffer;
+    buffer[0] = 0;
+    int res = GetModuleFileNameA(nullptr, buffer, buffer.size());
+    if (res == 0)
+    {
+        return std::filesystem::absolute(buffer.data());
+    }
+#elif defined(__APPLE__)
+    std::array<char, 256> buffer{0};
+    uint32_t  size = buffer.size();
+    int res = _NSGetExecutablePath(buffer.data(), &size);
+    if (res == 0)
+    {
+        return std::filesystem::absolute(buffer.data());
+    }
+#else
+    std::array<char, _POSIX_SYMLINK_MAX + 1> buffer{0};
+    auto path_length = readlink("/proc/self/exe", buffer.data(), buffer.size() - 1);
+    if (path_length > 0)
+    {
+        return std::filesystem::absolute(buffer.data());
+    }
+#endif
+    ELKLOG_LOG_WARNING("Failed to get binary directory");
+    return {};
+}
+
+// Get all vst3 platform specific preset locations in the right priority order
 // See Steinberg documentation of "Preset locations".
 std::vector<std::filesystem::path> get_preset_locations()
 {
     std::vector<std::filesystem::path> locations;
-    char* home_dir = getenv("HOME");
-    if (home_dir != nullptr)
-    {
-        locations.push_back(std::filesystem::path(home_dir).append(".vst3").append("presets"));
-    }
-    ELKLOG_LOG_WARNING_IF(home_dir == nullptr, "Failed to get home directory")
 #ifdef _WIN32
 
 #elif defined(__APPLE__)
+    char* home_dir = getenv("HOME");
+    if (home_dir != nullptr)
+    {
+        locations.push_back(std::filesystem::path(home_dir) / "Library" / "Audio" / "Presets");
+    }
+    ELKLOG_LOG_WARNING_IF(home_dir == nullptr, "Failed to get home directory")
     locations.emplace_back("/Library/Audio/Presets/");
     locations.emplace_back("/Network/Library/Audio/Presets/");
-#endif
+    auto exe_path = get_executable_path();
+    exe_path.remove_filename();
+    locations.emplace_back(std::filesystem::absolute(exe_path /".."/ ".." / "VST3 Presets"));
+#else
+    std::vector<std::filesystem::path> locations;
+    char* home_dir = getenv("HOME");
+    if (home_dir != nullptr)
+    {
+        locations.push_back(std::filesystem::path(home_dir) / ".vst3" / "presets");
+    }
+    ELKLOG_LOG_WARNING_IF(home_dir == nullptr, "Failed to get home directory")
+
     locations.emplace_back("/usr/share/vst3/presets/");
     locations.emplace_back("/usr/local/share/vst3/presets/");
-    char buffer[_POSIX_SYMLINK_MAX + 1] = {0};
-    auto path_length = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
-    if (path_length > 0)
-    {
-        std::string path(buffer);
-        auto pos = path.find_last_of('/');
-        if (pos != std::string::npos)
-        {
-            locations.emplace_back(path.substr(0, pos) + "/vst3/presets/");
-        }
-        else
-        {
-            path_length = 0;
-        }
-    }
-    ELKLOG_LOG_WARNING_IF(path_length <= 0, "Failed to get binary directory")
+    auto exe_path = get_executable_path();
+    exe_path.remove_filename();
+    locations.emplace_back(exe_path / "vst3" / "presets");
+#endif
     return locations;
 }
 
@@ -167,7 +203,7 @@ std::vector<std::filesystem::path> enumerate_patches(const std::string& plugin_n
     std::vector<std::filesystem::path> paths = get_preset_locations();
     for (auto path : paths)
     {
-        add_patches(path.append(company).append(plugin_name), patches);
+        add_patches(path / company / plugin_name, patches);
     }
     return patches;
 }
