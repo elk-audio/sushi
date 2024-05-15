@@ -87,7 +87,7 @@ constexpr int   TEST_CHANNEL_COUNT = 2;
 TEST(TestVst3xPluginInstance, TestLoadPlugin)
 {
     auto full_path = std::filesystem::path(PLUGIN_FILE);
-    auto full_test_plugin_path = std::string(std::filesystem::absolute(full_path));
+    auto full_test_plugin_path = std::filesystem::absolute(full_path).string();
 
     SushiHostApplication host_app;
     PluginInstance module_under_test(&host_app);
@@ -109,7 +109,7 @@ TEST(TestVst3xPluginInstance, TestLoadPluginFromErroneousFilename)
 
     /* Existing library but non-existing plugin */
     auto full_path = std::filesystem::path(PLUGIN_FILE);
-    auto full_test_plugin_path = std::string(std::filesystem::absolute(full_path));
+    auto full_test_plugin_path = std::filesystem::absolute(full_path).string();
 
     success = module_under_test.load_plugin(full_test_plugin_path, "NoPluginWithThisName");
     ASSERT_FALSE(success);
@@ -155,7 +155,7 @@ protected:
     void SetUp(const char* plugin_file, const char* plugin_name)
     {
         auto full_path = std::filesystem::path(plugin_file);
-        auto full_plugin_path = std::string(std::filesystem::absolute(full_path));
+        auto full_plugin_path = std::string(std::filesystem::absolute(full_path).string());
 
         _module_under_test = std::make_unique<Vst3xWrapper>(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE),
                                                             full_plugin_path,

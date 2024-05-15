@@ -21,9 +21,15 @@
 #include <string>
 #include <cstdlib>
 #ifdef _WIN32
+#define NOMINMAX
+#include <Windows.h>
 #include <libloaderapi.h>
-#else
+#include <shlobj_core.h>
+#undef DELETE
+#undef ERROR
+#elif defined(__APPLE__)
 #include <mach-o/dyld.h>
+#else
 #include <unistd.h>
 #endif
 #include "iostream"
@@ -39,6 +45,7 @@ ELK_DISABLE_SHORTEN_64_TO_32
 #include "pluginterfaces/vst/ivstmidicontrollers.h"
 #include "public.sdk/source/vst/vstpresetfile.h"
 #include "public.sdk/source/common/memorystream.h"
+#include "public.sdk/source/vst/hosting/module.h"
 
 ELK_POP_WARNING
 
@@ -98,7 +105,7 @@ std::filesystem::path get_executable_path()
 #ifdef _WIN32
     std::array<char, 256> buffer;
     buffer[0] = 0;
-    int res = GetModuleFileNameA(nullptr, buffer, buffer.size());
+    int res = GetModuleFileNameA(nullptr, buffer.data(), buffer.size());
     if (res == 0)
     {
         return std::filesystem::absolute(buffer.data());
@@ -129,7 +136,25 @@ std::vector<std::filesystem::path> get_preset_locations()
 {
     std::vector<std::filesystem::path> locations;
 #ifdef _WIN32
-
+    PWSTR path = nullptr;
+    HRESULT res = SHGetKnownFolderPath(FOLDERID_Documents, 0, NULL, &path);
+    if (res == S_OK)
+    {
+        locations.emplace_back(std::filesystem::path(path) / "VST3 Presets");
+    }
+    res = SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, NULL, &path);
+    if (res == S_OK)
+    {
+        locations.emplace_back(std::filesystem::path(path) / "VST3 Presets");
+    }
+    res = SHGetKnownFolderPath(FOLDERID_ProgramData, 0, NULL, &path);
+    if (res == S_OK)
+    {
+        locations.emplace_back(std::filesystem::path(path) / "VST3 Presets");
+    }
+    auto exe_path = get_executable_path();
+    exe_path.remove_filename();
+    locations.emplace_back(exe_path / "VST3 Presets");
 #elif defined(__APPLE__)
     char* home_dir = getenv("HOME");
     if (home_dir != nullptr)
@@ -143,7 +168,6 @@ std::vector<std::filesystem::path> get_preset_locations()
     exe_path.remove_filename();
     locations.emplace_back(std::filesystem::absolute(exe_path /".."/ ".." / "VST3 Presets"));
 #else
-    std::vector<std::filesystem::path> locations;
     char* home_dir = getenv("HOME");
     if (home_dir != nullptr)
     {
@@ -540,7 +564,7 @@ std::pair<ProcessorReturnCode, std::string> Vst3xWrapper::program_name(int progr
     }
     else if (_supports_programs && _file_based_programs && program < static_cast<int>(_program_files.size()))
     {
-        return {ProcessorReturnCode::OK, extract_preset_name(_program_files[program])};
+        return {ProcessorReturnCode::OK, extract_preset_name(_program_files[program].string())};
     }
     ELKLOG_LOG_INFO("Set program name failed");
     return {ProcessorReturnCode::UNSUPPORTED_OPERATION, ""};
@@ -570,7 +594,7 @@ std::pair<ProcessorReturnCode, std::vector<std::string>> Vst3xWrapper::all_progr
             }
             else if (_file_based_programs)
             {
-                programs.push_back(extract_preset_name(_program_files[i]));
+                programs.push_back(extract_preset_name(_program_files[i].string()));
             }
         }
         ELKLOG_LOG_INFO("Return list with {} programs", programs.size());
@@ -606,7 +630,7 @@ ProcessorReturnCode Vst3xWrapper::set_program(int program)
     else if (_file_based_programs && program < static_cast<int>(_program_files.size()))
     {
         ELKLOG_LOG_INFO("Loading file based preset");
-        Steinberg::OPtr<Steinberg::IBStream> stream(Steinberg::Vst::FileStream::open(_program_files[program].c_str(), "rb"));
+        Steinberg::OPtr<Steinberg::IBStream> stream(Steinberg::Vst::FileStream::open(_program_files[program].string().c_str(), "rb"));
         if (stream == nullptr)
         {
             ELKLOG_LOG_INFO("Failed to load file {}", _program_files[program].c_str());
