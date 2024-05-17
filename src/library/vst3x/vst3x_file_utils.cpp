@@ -137,25 +137,17 @@ std::vector<std::filesystem::path> get_platform_locations()
 std::vector<std::filesystem::path> get_platform_locations()
 {
     std::vector<std::filesystem::path> locations;
-    PWSTR path = nullptr;
-    HRESULT res = SHGetKnownFolderPath(FOLDERID_Documents, 0, NULL, &path);
-    if (res == S_OK)
+    char* home_dir = getenv("HOME");
+    if (home_dir != nullptr)
     {
-        locations.emplace_back(std::filesystem::path(path) / "VST3 Presets");
+        locations.push_back(std::filesystem::path(home_dir) / ".vst3" / "presets");
     }
-    res = SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, NULL, &path);
-    if (res == S_OK)
-    {
-        locations.emplace_back(std::filesystem::path(path) / "VST3 Presets");
-    }
-    res = SHGetKnownFolderPath(FOLDERID_ProgramData, 0, NULL, &path);
-    if (res == S_OK)
-    {
-        locations.emplace_back(std::filesystem::path(path) / "VST3 Presets");
-    }
+    ELKLOG_LOG_WARNING_IF(home_dir == nullptr, "Failed to get home directory")
+    locations.emplace_back("/usr/share/vst3/presets/");
+    locations.emplace_back("/usr/local/share/vst3/presets/");
     auto exe_path = get_executable_path();
     exe_path.remove_filename();
-    locations.emplace_back(exe_path / "VST3 Presets");
+    locations.emplace_back(exe_path / "vst3" / "presets");
     return locations;
 }
 #endif
