@@ -22,7 +22,7 @@
 
 #include "elklog/static_logger.h"
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 #define NOMINMAX
 #include <Windows.h>
 #include <libloaderapi.h>
@@ -55,7 +55,7 @@ std::string make_safe_folder_name(std::string name)
 
 bool is_hidden(const std::filesystem::directory_entry& entry)
 {
-#ifdef _WIN32
+#ifdef _MSC_VER
     return false;
 #endif
     return !entry.path().filename().empty() && entry.path().filename().c_str()[0] == '.';
@@ -63,7 +63,7 @@ bool is_hidden(const std::filesystem::directory_entry& entry)
 
 std::filesystem::path get_executable_path()
 {
-#ifdef _WIN32
+#ifdef _MSC_VER
     std::array<char, 256> buffer;
     buffer[0] = 0;
     int res = GetModuleFileNameA(nullptr, buffer.data(), buffer.size());
@@ -90,7 +90,7 @@ std::filesystem::path get_executable_path()
     ELKLOG_LOG_WARNING("Failed to get binary directory");
     return {};
 }
-#if defined(_WIN32)
+#if defined(_MSC_VER)
 std::vector<std::filesystem::path> get_platform_locations()
 {
     std::vector<std::filesystem::path> locations;
@@ -196,8 +196,6 @@ void add_patches(const std::filesystem::path& path, std::vector<std::filesystem:
 
 std::vector<std::filesystem::path> scan_for_presets(const std::string& plugin_name, const std::string& company)
 {
-    /* VST3 standard says you should put preset files in specific locations, So we recursively
-     * scan these folders for all files that match, just like we do with Re plugins*/
     std::vector<std::filesystem::path> patches;
     std::vector<std::filesystem::path> paths = get_platform_locations();
     for (auto path : paths)

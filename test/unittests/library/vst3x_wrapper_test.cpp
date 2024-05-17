@@ -71,7 +71,7 @@ const char PLUGIN_FILE[] = "../VST3/Debug/adelay.vst3";
 
 const char PLUGIN_NAME[] = "ADelay";
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 auto UNITTEST_EXE = "unit_tests.exe";
 #else
 auto UNITTEST_EXE = "unit_tests";
@@ -621,8 +621,8 @@ TEST(TestVst3xUtilFunctions, TestIsHidden)
 
 TEST(TestVst3xUtilFunctions, TestScanForPresets)
 {
-    // This is more of a smoke test, it will likely return 0 results, but we excercise the code
-    // a bit to catch exceptions or crashes.
+    // This is more of a smoke test, it will likely return 0 results,
+    // but we exercise the code to catch exceptions or crashes.
     auto paths = scan_for_presets("Elk Audio", "Elk Wire");
     ASSERT_GE(paths.size(), 0u);
 }
@@ -649,6 +649,6 @@ TEST(TestVst3xUtilFunctions, TestGetPlatformLocations)
 TEST(TestVst3xUtilFunctions, TestExtractPresetName)
 {
     EXPECT_EQ("lately bass", extract_preset_name(std::filesystem::path("/etc/presets/lately bass.vstpreset")));
-    // This should not crash at least
+    // This should not crash or throw
     EXPECT_EQ("", extract_preset_name(std::filesystem::path("etc/presets/")));
 }
