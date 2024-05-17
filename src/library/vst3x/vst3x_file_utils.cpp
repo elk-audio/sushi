@@ -27,8 +27,6 @@
 #include <Windows.h>
 #include <libloaderapi.h>
 #include <shlobj_core.h>
-#undef DELETE
-#undef ERROR
 #elif defined(__APPLE__)
 #include <mach-o/dyld.h>
 #else
@@ -92,11 +90,10 @@ std::filesystem::path get_executable_path()
     ELKLOG_LOG_WARNING("Failed to get binary directory");
     return {};
 }
-
-std::vector<std::filesystem::path> get_preset_locations()
+#if defined(_WIN32)
+std::vector<std::filesystem::path> get_platform_locations()
 {
     std::vector<std::filesystem::path> locations;
-#ifdef _WIN32
     PWSTR path = nullptr;
     HRESULT res = SHGetKnownFolderPath(FOLDERID_Documents, 0, NULL, &path);
     if (res == S_OK)
@@ -116,7 +113,13 @@ std::vector<std::filesystem::path> get_preset_locations()
     auto exe_path = get_executable_path();
     exe_path.remove_filename();
     locations.emplace_back(exe_path / "VST3 Presets");
+    return locations;
+}
+
 #elif defined(__APPLE__)
+std::vector<std::filesystem::path> get_platform_locations()
+{
+    std::vector<std::filesystem::path> locations;
     char* home_dir = getenv("HOME");
     if (home_dir != nullptr)
     {
@@ -128,22 +131,34 @@ std::vector<std::filesystem::path> get_preset_locations()
     auto exe_path = get_executable_path();
     exe_path.remove_filename();
     locations.emplace_back(std::filesystem::absolute(exe_path /".."/ ".." / "VST3 Presets"));
-#else
-    char* home_dir = getenv("HOME");
-    if (home_dir != nullptr)
-    {
-        locations.push_back(std::filesystem::path(home_dir) / ".vst3" / "presets");
-    }
-    ELKLOG_LOG_WARNING_IF(home_dir == nullptr, "Failed to get home directory")
-
-    locations.emplace_back("/usr/share/vst3/presets/");
-    locations.emplace_back("/usr/local/share/vst3/presets/");
-    auto exe_path = get_executable_path();
-    exe_path.remove_filename();
-    locations.emplace_back(exe_path / "vst3" / "presets");
-#endif
     return locations;
 }
+#else
+std::vector<std::filesystem::path> get_platform_locations()
+{
+    std::vector<std::filesystem::path> locations;
+    PWSTR path = nullptr;
+    HRESULT res = SHGetKnownFolderPath(FOLDERID_Documents, 0, NULL, &path);
+    if (res == S_OK)
+    {
+        locations.emplace_back(std::filesystem::path(path) / "VST3 Presets");
+    }
+    res = SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, NULL, &path);
+    if (res == S_OK)
+    {
+        locations.emplace_back(std::filesystem::path(path) / "VST3 Presets");
+    }
+    res = SHGetKnownFolderPath(FOLDERID_ProgramData, 0, NULL, &path);
+    if (res == S_OK)
+    {
+        locations.emplace_back(std::filesystem::path(path) / "VST3 Presets");
+    }
+    auto exe_path = get_executable_path();
+    exe_path.remove_filename();
+    locations.emplace_back(exe_path / "VST3 Presets");
+    return locations;
+}
+#endif
 
 std::string extract_preset_name(const std::filesystem::path& path)
 {
@@ -184,7 +199,7 @@ std::vector<std::filesystem::path> scan_for_presets(const std::string& plugin_na
     /* VST3 standard says you should put preset files in specific locations, So we recursively
      * scan these folders for all files that match, just like we do with Re plugins*/
     std::vector<std::filesystem::path> patches;
-    std::vector<std::filesystem::path> paths = get_preset_locations();
+    std::vector<std::filesystem::path> paths = get_platform_locations();
     for (auto path : paths)
     {
         add_patches(path / company / plugin_name, patches);

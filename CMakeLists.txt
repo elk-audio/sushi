@@ -666,8 +666,6 @@ set(SOURCE_FILES
     src/plugins/brickworks/dist_plugin.cpp
     src/plugins/brickworks/drive_plugin.cpp
     src/plugins/brickworks/simple_synth_plugin.cpp
-        src/library/vst3x/vst3x_file_utils.h
-        src/library/vst3x/vst3x_file_utils.cpp
 )
 
 add_library(${PROJECT_NAME} STATIC "${SOURCE_FILES}"

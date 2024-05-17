@@ -636,9 +636,9 @@ TEST(TestVst3xUtilFunctions, TestGetExecutablePath)
     EXPECT_EQ(UNITTEST_EXE, path.filename().string());
 }
 
-TEST(TestVst3xUtilFunctions, TestGetPresetLocations)
+TEST(TestVst3xUtilFunctions, TestGetPlatformLocations)
 {
-    auto locations = get_preset_locations();
+    auto locations = get_platform_locations();
     EXPECT_EQ(4, locations.size());
     for (const auto& path : locations)
     {
