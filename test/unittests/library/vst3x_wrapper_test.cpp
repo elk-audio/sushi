@@ -7,10 +7,9 @@
 #include "library/vst3x/vst3x_utils.cpp"
 #include "test_utils/host_control_mockup.h"
 
-#include "elk-warning-suppressor/warning_suppressor.hpp"
-
 #include "library/vst3x/vst3x_wrapper.cpp"
 #include "library/vst3x/vst3x_host_app.cpp"
+#include "library/vst3x/vst3x_file_utils.cpp"
 
 namespace sushi::internal::vst3
 {
@@ -620,6 +619,14 @@ TEST(TestVst3xUtilFunctions, TestIsHidden)
     EXPECT_TRUE(is_hidden(entry));
 }
 
+TEST(TestVst3xUtilFunctions, TestScanForPresets)
+{
+    // This is more of a smoke test, it will likely return 0 results, but we excercise the code
+    // a bit to catch exceptions or crashes.
+    auto paths = scan_for_presets("Elk Audio", "Elk Wire");
+    ASSERT_GE(paths.size(), 0u);
+}
+
 TEST(TestVst3xUtilFunctions, TestGetExecutablePath)
 {
     auto path = get_executable_path();
@@ -637,4 +644,11 @@ TEST(TestVst3xUtilFunctions, TestGetPresetLocations)
     {
         EXPECT_FALSE(path.empty());
     }
+}
+
+TEST(TestVst3xUtilFunctions, TestExtractPresetName)
+{
+    EXPECT_EQ("lately bass", extract_preset_name(std::filesystem::path("/etc/presets/lately bass.vstpreset")));
+    // This should not crash at least
+    EXPECT_EQ("", extract_preset_name(std::filesystem::path("etc/presets/")));
 }

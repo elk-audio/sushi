@@ -19,20 +19,7 @@
  */
 
 #include <string>
-#include <cstdlib>
-#ifdef _WIN32
-#define NOMINMAX
-#include <Windows.h>
-#include <libloaderapi.h>
-#include <shlobj_core.h>
-#undef DELETE
-#undef ERROR
-#elif defined(__APPLE__)
-#include <mach-o/dyld.h>
-#else
-#include <unistd.h>
-#endif
-#include "iostream"
+
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
@@ -54,14 +41,12 @@ ELK_POP_WARNING
 #include "elklog/static_logger.h"
 
 #include "vst3x_wrapper.h"
+#include "vst3x_file_utils.h"
 #include "library/event.h"
 
 namespace sushi::internal::vst3 {
 
 constexpr int VST_NAME_BUFFER_SIZE = 128;
-
-constexpr char VST_PRESET_SUFFIX[] = ".vstpreset";
-constexpr int VST_PRESET_SUFFIX_LENGTH = 10;
 
 constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = Steinberg::Vst::ProcessContext::kSystemTimeValid &
                                                   Steinberg::Vst::ProcessContext::kContTimeValid &
@@ -78,158 +63,6 @@ std::string to_ascii_str(Steinberg::Vst::String128 wchar_buffer)
     Steinberg::UString128 str(wchar_buffer, 128);
     str.toAscii(char_buf, VST_NAME_BUFFER_SIZE);
     return {char_buf};
-}
-
-// Remove illegal characters from name to create a folder name
-std::string make_safe_folder_name(std::string name)
-{
-    // See https://steinbergmedia.github.io/vst3_dev_portal/pages/Technical+Documentation/Locations+Format/Preset+Locations.html
-    constexpr std::string_view INVALID_CHARS = "\\*?/:<>|";
-    for (char i : INVALID_CHARS)
-    {
-        std::replace(name.begin(), name.end(), i, '_');
-    }
-    return name;
-}
-
-bool is_hidden(const std::filesystem::directory_entry& entry)
-{
-#ifdef _WIN32
-    return false;
-#endif
-    return !entry.path().filename().empty() && entry.path().filename().c_str()[0] == '.';
-}
-
-std::filesystem::path get_executable_path()
-{
-#ifdef _WIN32
-    std::array<char, 256> buffer;
-    buffer[0] = 0;
-    int res = GetModuleFileNameA(nullptr, buffer.data(), buffer.size());
-    if (res == 0)
-    {
-        return std::filesystem::absolute(buffer.data());
-    }
-#elif defined(__APPLE__)
-    std::array<char, 256> buffer{0};
-    uint32_t  size = buffer.size();
-    int res = _NSGetExecutablePath(buffer.data(), &size);
-    if (res == 0)
-    {
-        return std::filesystem::absolute(buffer.data());
-    }
-#else
-    std::array<char, _POSIX_SYMLINK_MAX + 1> buffer{0};
-    auto path_length = readlink("/proc/self/exe", buffer.data(), buffer.size() - 1);
-    if (path_length > 0)
-    {
-        return std::filesystem::absolute(buffer.data());
-    }
-#endif
-    ELKLOG_LOG_WARNING("Failed to get binary directory");
-    return {};
-}
-
-// Get all vst3 platform specific preset locations in the right priority order
-// See Steinberg documentation of "Preset locations".
-std::vector<std::filesystem::path> get_preset_locations()
-{
-    std::vector<std::filesystem::path> locations;
-#ifdef _WIN32
-    PWSTR path = nullptr;
-    HRESULT res = SHGetKnownFolderPath(FOLDERID_Documents, 0, NULL, &path);
-    if (res == S_OK)
-    {
-        locations.emplace_back(std::filesystem::path(path) / "VST3 Presets");
-    }
-    res = SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, NULL, &path);
-    if (res == S_OK)
-    {
-        locations.emplace_back(std::filesystem::path(path) / "VST3 Presets");
-    }
-    res = SHGetKnownFolderPath(FOLDERID_ProgramData, 0, NULL, &path);
-    if (res == S_OK)
-    {
-        locations.emplace_back(std::filesystem::path(path) / "VST3 Presets");
-    }
-    auto exe_path = get_executable_path();
-    exe_path.remove_filename();
-    locations.emplace_back(exe_path / "VST3 Presets");
-#elif defined(__APPLE__)
-    char* home_dir = getenv("HOME");
-    if (home_dir != nullptr)
-    {
-        locations.push_back(std::filesystem::path(home_dir) / "Library" / "Audio" / "Presets");
-    }
-    ELKLOG_LOG_WARNING_IF(home_dir == nullptr, "Failed to get home directory")
-    locations.emplace_back("/Library/Audio/Presets/");
-    locations.emplace_back("/Network/Library/Audio/Presets/");
-    auto exe_path = get_executable_path();
-    exe_path.remove_filename();
-    locations.emplace_back(std::filesystem::absolute(exe_path /".."/ ".." / "VST3 Presets"));
-#else
-    char* home_dir = getenv("HOME");
-    if (home_dir != nullptr)
-    {
-        locations.push_back(std::filesystem::path(home_dir) / ".vst3" / "presets");
-    }
-    ELKLOG_LOG_WARNING_IF(home_dir == nullptr, "Failed to get home directory")
-
-    locations.emplace_back("/usr/share/vst3/presets/");
-    locations.emplace_back("/usr/local/share/vst3/presets/");
-    auto exe_path = get_executable_path();
-    exe_path.remove_filename();
-    locations.emplace_back(exe_path / "vst3" / "presets");
-#endif
-    return locations;
-}
-
-std::string extract_preset_name(const std::string& path)
-{
-    auto fname_pos = path.find_last_of('/') + 1;
-    return path.substr(fname_pos, path.length() - fname_pos - VST_PRESET_SUFFIX_LENGTH);
-}
-
-// Recursively search subdirs for preset files
-void add_patches(const std::filesystem::path& path, std::vector<std::filesystem::path>& patches)
-{
-    ELKLOG_LOG_DEBUG("Looking for presets in: {}", path.c_str());
-    std::error_code error_code;
-    auto items = std::filesystem::directory_iterator(path, error_code);
-    if (!error_code)
-    {
-        ELKLOG_LOG_WARNING("Failed to open directory {} with error {} ({})", path.c_str(), error_code.value(), error_code.message());
-        return;
-    }
-    for (const auto& entry : items)
-    {
-        if (entry.is_regular_file())
-        {
-            auto suffix_pos = entry.path().string().rfind(VST_PRESET_SUFFIX);
-            if (suffix_pos != std::string::npos && entry.path().filename().string().length() - suffix_pos == VST_PRESET_SUFFIX_LENGTH)
-            {
-                ELKLOG_LOG_DEBUG("Reading vst preset patch: {}", entry.path().filename().c_str());
-                patches.push_back(entry.path());
-            }
-        }
-        else if (entry.is_directory() && !is_hidden(entry))
-        {
-            add_patches(entry.path(), patches);
-        }
-    }
-}
-
-std::vector<std::filesystem::path> enumerate_patches(const std::string& plugin_name, const std::string& company)
-{
-    /* VST3 standard says you should put preset files in specific locations, So we recursively
-     * scan these folders for all files that match, just like we do with Re plugins*/
-    std::vector<std::filesystem::path> patches;
-    std::vector<std::filesystem::path> paths = get_preset_locations();
-    for (auto path : paths)
-    {
-        add_patches(path / company / plugin_name, patches);
-    }
-    return patches;
 }
 
 void Vst3xWrapper::_cleanup()
@@ -999,7 +832,7 @@ bool Vst3xWrapper::_setup_internal_program_handling()
 
 bool Vst3xWrapper::_setup_file_program_handling()
 {
-    _program_files = enumerate_patches(make_safe_folder_name(_instance.name()), make_safe_folder_name(_instance.vendor()));
+    _program_files = scan_for_presets(make_safe_folder_name(_instance.name()), make_safe_folder_name(_instance.vendor()));
     if (!_program_files.empty())
     {
         _supports_programs = true;

@@ -452,7 +452,8 @@ if (${SUSHI_WITH_VST3})
                                 src/library/vst3x/vst3x_processor_factory.h
                                 src/library/vst3x/vst3x_wrapper.cpp
                                 src/library/vst3x/vst3x_host_app.cpp
-                                src/library/vst3x/vst3x_utils.cpp)
+                                src/library/vst3x/vst3x_utils.cpp
+                                src/library/vst3x/vst3x_file_utils.cpp)
 
     # Linked libraries
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} vst3_host sdk)
@@ -665,6 +666,8 @@ set(SOURCE_FILES
     src/plugins/brickworks/dist_plugin.cpp
     src/plugins/brickworks/drive_plugin.cpp
     src/plugins/brickworks/simple_synth_plugin.cpp
+        src/library/vst3x/vst3x_file_utils.h
+        src/library/vst3x/vst3x_file_utils.cpp
 )
 
 add_library(${PROJECT_NAME} STATIC "${SOURCE_FILES}"
