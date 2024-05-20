@@ -32,7 +32,6 @@ ELK_DISABLE_SHORTEN_64_TO_32
 #include "pluginterfaces/vst/ivstmidicontrollers.h"
 #include "public.sdk/source/vst/vstpresetfile.h"
 #include "public.sdk/source/common/memorystream.h"
-#include "public.sdk/source/vst/hosting/module.h"
 
 ELK_POP_WARNING
 
@@ -466,7 +465,7 @@ ProcessorReturnCode Vst3xWrapper::set_program(int program)
         Steinberg::OPtr<Steinberg::IBStream> stream(Steinberg::Vst::FileStream::open(_program_files[program].string().c_str(), "rb"));
         if (stream == nullptr)
         {
-            ELKLOG_LOG_INFO("Failed to load file {}", _program_files[program].c_str());
+            ELKLOG_LOG_INFO("Failed to load file {}", _program_files[program].string.c_str());
             return ProcessorReturnCode::ERROR;
         }
         Steinberg::Vst::PresetFile preset_file(stream);

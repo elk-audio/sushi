@@ -27,6 +27,8 @@
 #include <Windows.h>
 #include <libloaderapi.h>
 #include <shlobj_core.h>
+#undef DELETE
+#undef ERROR
 #elif defined(__APPLE__)
 #include <mach-o/dyld.h>
 #else
