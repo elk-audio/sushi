@@ -407,6 +407,10 @@ if (${SUSHI_WITH_VST3})
             "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/pluginterfacesupport.cpp"
             "${VST3_SDK_PATH}/public.sdk/source/common/memorystream.cpp")
 
+    if (MSVC)
+        set(VST3_HOST_SOURCES ${VST3_HOST_SOURCES} "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_win32.cpp")
+    endif()
+
     if(NOT MSVC)
         set(VST3_COMPILE_FLAGS "-Wno-unused-parameter \
                                 -Wno-extra \

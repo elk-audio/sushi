@@ -69,7 +69,7 @@ std::filesystem::path get_executable_path()
     std::array<char, 256> buffer;
     buffer[0] = 0;
     int res = GetModuleFileNameA(nullptr, buffer.data(), buffer.size());
-    if (res == 0)
+    if (res >= 0)
     {
         return std::filesystem::absolute(buffer.data());
     }
