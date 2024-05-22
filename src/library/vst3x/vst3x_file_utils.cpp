@@ -58,7 +58,8 @@ std::string make_safe_folder_name(std::string name)
 bool is_hidden(const std::filesystem::directory_entry& entry)
 {
 #ifdef _MSC_VER
-    return false;
+    auto attributes = GetFileAttributes(entry.path().string().c_str());
+    return attributes & FILE_ATTRIBUTE_HIDDEN;
 #endif
     return !entry.path().filename().empty() && entry.path().filename().c_str()[0] == '.';
 }
@@ -163,12 +164,12 @@ std::string extract_preset_name(const std::filesystem::path& path)
 // Recursively search subdirs for preset files
 void add_patches(const std::filesystem::path& path, std::vector<std::filesystem::path>& patches)
 {
-    ELKLOG_LOG_DEBUG("Looking for presets in: {}", path.c_str());
+    ELKLOG_LOG_DEBUG("Looking for presets in: {}", path.string());
     std::error_code error_code;
     auto items = std::filesystem::directory_iterator(path, error_code);
     if (!error_code)
     {
-        ELKLOG_LOG_WARNING("Failed to open directory {} with error {} ({})", path.c_str(), error_code.value(), error_code.message());
+        ELKLOG_LOG_WARNING("Failed to open directory {} with error {} ({})", path.string(), error_code.value(), error_code.message());
         return;
     }
     for (const auto& entry : items)
@@ -177,7 +178,7 @@ void add_patches(const std::filesystem::path& path, std::vector<std::filesystem:
         {
             if (entry.path().string().ends_with(VST_PRESET_SUFFIX))
             {
-                ELKLOG_LOG_DEBUG("Reading vst preset patch: {}", entry.path().filename().c_str());
+                ELKLOG_LOG_DEBUG("Reading vst preset patch: {}", entry.path().filename().string());
                 patches.push_back(entry.path());
             }
         }
