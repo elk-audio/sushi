@@ -198,6 +198,7 @@ else()
     find_package(twine 0.4)
     set(INCLUDE_DIRS ${INCLUDE_DIRS} ${TWINE_PATH})
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${TWINE_LIB})
+    find_package(elk-warning-suppressor 0.1.0 COMPONENTS warningSuppressor)
 endif()
 
 set(ELKLOG_WITH_UNIT_TESTS OFF CACHE BOOL "")
@@ -727,7 +728,8 @@ target_include_directories(${PROJECT_NAME}
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
-target_link_libraries(${PROJECT_NAME} PUBLIC ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES} elk::warningSuppressor)
+target_link_libraries(${PROJECT_NAME} PUBLIC ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} INTERFACE $<BUILD_INTERFACE:elk::warningSuppressor>)
 
 ####################################
 #  Compiler Flags and definitions  #
