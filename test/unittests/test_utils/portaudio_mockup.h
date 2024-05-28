@@ -17,6 +17,7 @@ public:
     MOCK_METHOD(int, Pa_GetDefaultInputDevice, ());
     MOCK_METHOD(int, Pa_GetDefaultOutputDevice, ());
     MOCK_METHOD(const PaDeviceInfo*, Pa_GetDeviceInfo, (int));
+    MOCK_METHOD(const PaHostApiInfo*, Pa_GetHostApiInfo, (int));
     MOCK_METHOD(PaError, Pa_IsFormatSupported, (const PaStreamParameters* input,
                                                 const PaStreamParameters* output,
                                                 double samplerate));
@@ -50,6 +51,8 @@ int Pa_GetDefaultInputDevice();
 int Pa_GetDefaultOutputDevice();
 
 const PaDeviceInfo* Pa_GetDeviceInfo(int device_index);
+
+const PaHostApiInfo* Pa_GetHostApiInfo(int api_index);
 
 PaError Pa_IsFormatSupported(const PaStreamParameters* input,
                              const PaStreamParameters* output,
