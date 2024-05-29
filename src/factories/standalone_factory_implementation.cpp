@@ -19,6 +19,9 @@
  * @copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
+#define TWINE_EXPOSE_INTERNALS
+#include "twine/twine.h"
+
 #include "elklog/static_logger.h"
 
 #include "standalone_factory_implementation.h"
