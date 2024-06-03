@@ -130,7 +130,7 @@ Status
             break;
         }
 
-#ifdef SUSHI_BUILD_WITH_XENOMAI
+#ifdef SUSHI_BUILD_WITH_RASPA
         case FrontendType::XENOMAI_RASPA:
         {
             ELKLOG_LOG_INFO("Setting up Xenomai RASPA frontend");
