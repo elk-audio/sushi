@@ -48,7 +48,7 @@ ELK_POP_WARNING
 #define SUSHI_OSC_SERVER_PORT_DEFAULT 24024
 #define SUSHI_OSC_SEND_PORT_DEFAULT 24023
 #define SUSHI_OSC_SEND_IP_DEFAULT "127.0.0.1"
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(_WIN64) || defined(__NT__) 
+#if defined(_MSC_VER)
     #define SUSHI_GRPC_LISTENING_PORT_DEFAULT "[::]:510"
 #else
     #define SUSHI_GRPC_LISTENING_PORT_DEFAULT "[::]:51051"
