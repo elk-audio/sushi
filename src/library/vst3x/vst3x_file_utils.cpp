@@ -58,7 +58,7 @@ std::string make_safe_folder_name(std::string name)
 bool is_hidden(const std::filesystem::directory_entry& entry)
 {
 #ifdef _MSC_VER
-    auto attributes = GetFileAttributes(entry.path().string().c_str());
+    auto attributes = GetFileAttributesA(entry.path().string().c_str());
     return attributes & FILE_ATTRIBUTE_HIDDEN;
 #endif
     return !entry.path().filename().empty() && entry.path().filename().c_str()[0] == '.';

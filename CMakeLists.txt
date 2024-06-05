@@ -104,12 +104,6 @@ elseif (MSVC)
     set(SUSHI_WITH_UNIT_TESTS_DEFAULT ON)
     set(SUSHI_BUILD_TWINE_DEFAULT ON)
 
-    # TODO: debug purposes, remove below
-    set(SUSHI_TWINE_STATIC_DEFAULT ON)
-    set(SUSHI_WITH_LINK_DEFAULT OFF)
-    set(SUSHI_WITH_VST3_DEFAULT OFF)
-    set(SUSHI_LINK_VST3_DEFAULT OFF)
-
     add_compile_definitions(_USE_MATH_DEFINES)
 
 elseif (CMAKE_CROSSCOMPILING)
@@ -123,6 +117,7 @@ elseif (CMAKE_CROSSCOMPILING)
     set(SUSHI_WITH_LV2_MDA_TESTS_DEFAULT OFF)
     set(SUSHI_WITH_UNIT_TESTS_DEFAULT OFF)
     set(SUSHI_BUILD_TWINE_DEFAULT OFF)
+
 else()
     # Native Linux defaults
     set(SUSHI_WITH_JACK_DEFAULT ON)
@@ -284,9 +279,9 @@ endif()
 if (${SUSHI_WITH_PORTAUDIO})
     message("Building with PortAudio support.")
 
-    find_package(portaudio CONFIG REQUIRED)
+    #find_package(portaudio CONFIG REQUIRED)
 
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} portaudio_static)
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} PortAudio)
 
     # Compile definitions
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_PORTAUDIO)

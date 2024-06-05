@@ -96,6 +96,9 @@ endif()
 set(FREEVERB_UNDENORMALIZE OFF CACHE BOOL "" FORCE)
 add_subdirectory(freeverb)
 
+if (SUSHI_WITH_PORTAUDIO)
+    add_subdirectory(portaudio)
+endif()
 #####################################################
 #  External Projects definitions (non-Cmake based)  #
 #####################################################
