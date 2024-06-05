@@ -194,7 +194,7 @@ void EventDispatcher::_event_loop()
 {
     do
     {
-        auto start_time = std::chrono::system_clock::now();
+        auto start_time = std::chrono::steady_clock::now();
 
         // Handle incoming Events
         while (auto event = _next_event())
@@ -417,10 +417,10 @@ int Worker::dispatch(std::unique_ptr<Event> event)
 
 void Worker::_worker()
 {
-    std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> timing_update_counter;
+    std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds> timing_update_counter;
     do
     {
-        auto start_time = std::chrono::system_clock::now();
+        auto start_time = std::chrono::steady_clock::now();
         while (!_queue.empty())
         {
             int status = EventStatus::UNRECOGNIZED_EVENT;
