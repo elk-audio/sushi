@@ -79,6 +79,7 @@ set(TEST_HELPER_FILES ${TEST_HELPER_FILES}
 set(INCLUDE_DIRS ${INCLUDE_DIRS}
     ${PROJECT_SOURCE_DIR}/test/unittests
     ${PROJECT_SOURCE_DIR}/test/gtest/include
+    ${PROJECT_SOURCE_DIR}/third-party/portaudio/include
 )
 
 set(TEST_LINK_LIBRARIES
