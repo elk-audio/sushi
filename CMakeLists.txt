@@ -283,8 +283,6 @@ endif()
 if (${SUSHI_WITH_PORTAUDIO})
     message("Building with PortAudio support.")
 
-    #find_package(portaudio CONFIG REQUIRED)
-
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} PortAudio)
 
     # Compile definitions
