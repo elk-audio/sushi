@@ -614,9 +614,11 @@ TEST(TestVst3xUtilFunctions, TestIsHidden)
     auto entry = std::filesystem::directory_entry(std::filesystem::absolute(PLUGIN_FILE));
     EXPECT_FALSE(is_hidden(entry));
 
+#ifndef _MSC_VER // Currently not testing this under windows as git doesn't preserve file properties across platforms
     auto path = std::filesystem::path(test_utils::get_data_dir_path()).append(".hidden_file.txt");
     entry = std::filesystem::directory_entry(path);
     EXPECT_TRUE(is_hidden(entry));
+#endif
 }
 
 TEST(TestVst3xUtilFunctions, TestScanForPresets)
