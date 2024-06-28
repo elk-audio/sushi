@@ -204,12 +204,21 @@ TEST_F(TestPortAudioFrontend, TestGetDeviceName)
     device_info.maxInputChannels = 1;
     device_info.maxOutputChannels = 1;
     device_info.name = expected_name;
+    device_info.hostApi = 1;
+
+    auto expected_api_name = "jack";
+    PaHostApiInfo api_info;
+    api_info.name = expected_api_name;
 
     EXPECT_CALL(*mockPortAudio, Pa_GetDeviceInfo)
     .WillOnce(Return(&device_info))
     .WillOnce(Return(&device_info))
     .WillOnce(Return(nullptr));
 
+    EXPECT_CALL(*mockPortAudio, Pa_GetHostApiInfo)
+    .WillOnce(Return(&api_info))
+    .WillOnce(Return(&api_info));
+    
     std::optional<int> portaudio_output_device_id = 1;
 
     auto device_name = sushi::internal::audio_frontend::get_portaudio_output_device_name(portaudio_output_device_id);

@@ -37,6 +37,11 @@ const PaDeviceInfo* Pa_GetDeviceInfo(int device_index)
     return mockPortAudio->Pa_GetDeviceInfo(device_index);
 }
 
+const PaHostApiInfo* Pa_GetHostApiInfo(int api_index)
+{
+    return mockPortAudio->Pa_GetHostApiInfo(api_index);
+}
+
 PaError Pa_IsFormatSupported(const PaStreamParameters* input,
                              const PaStreamParameters* output,
                              double samplerate)

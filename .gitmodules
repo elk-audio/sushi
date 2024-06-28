@@ -35,3 +35,6 @@
 [submodule "elklog"]
 	path = elklog
 	url = ../elklog.git
+[submodule "third-party/portaudio"]
+	path = third-party/portaudio
+	url = https://github.com/PortAudio/portaudio.git

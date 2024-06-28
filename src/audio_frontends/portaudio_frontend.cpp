@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2023 Elk Audio AB
+ * Copyright 2017-2024 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Realtime audio frontend for PortAudio
- * @Copyright 2017-2023 Elk Audio AB, Stockholm
+ * @Copyright 2017-2024 Elk Audio AB, Stockholm
  */
 
 #ifdef SUSHI_BUILD_WITH_PORTAUDIO
@@ -260,14 +260,21 @@ std::optional<PortaudioDeviceInfo> PortAudioFrontend::device_info(int device_idx
     }
 
     const PaDeviceInfo* pa_devinfo = Pa_GetDeviceInfo(device_idx);
-    if (pa_devinfo == nullptr)
+    if (!pa_devinfo)
     {
         ELKLOG_LOG_ERROR("Error querying portaudio devices {}", device_idx);
+        return std::nullopt;
+    }
+    const PaHostApiInfo* pa_apiinfo = Pa_GetHostApiInfo(pa_devinfo->hostApi);
+    if (!pa_apiinfo)
+    {
+        ELKLOG_LOG_ERROR("Error querying portaudio host api {}", pa_devinfo->hostApi);
         return std::nullopt;
     }
 
     PortaudioDeviceInfo devinfo;
     devinfo.name = pa_devinfo->name;
+    devinfo.host_api = pa_apiinfo->name;
     devinfo.inputs = pa_devinfo->maxInputChannels;
     devinfo.outputs = pa_devinfo->maxOutputChannels;
 

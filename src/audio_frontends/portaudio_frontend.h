@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2023 Elk Audio AB
+ * Copyright 2017-2024 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
  /**
   * @brief Realtime audio frontend for PortAudio
-  * @Copyright 2017-2023 Elk Audio AB, Stockholm
+  * @Copyright 2017-2024 Elk Audio AB, Stockholm
   */
 
 #ifndef SUSHI_PORTAUDIO_FRONTEND_H
@@ -57,6 +57,7 @@ namespace sushi::internal::audio_frontend {
 struct PortaudioDeviceInfo
 {
     std::string name;
+    std::string host_api;
     int inputs;
     int outputs;
 };
@@ -257,6 +258,7 @@ struct PortAudioFrontendConfiguration : public BaseAudioFrontendConfiguration
 struct PortaudioDeviceInfo
 {
     std::string name;
+    std::string host_api;
     int inputs;
     int outputs;
 };
