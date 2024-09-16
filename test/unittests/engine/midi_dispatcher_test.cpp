@@ -3,7 +3,8 @@
 #include "test_utils/engine_mockup.h"
 #include "test_utils/mock_midi_frontend.h"
 
-#define private public
+#include "elk-warning-suppressor/warning_suppressor.hpp"
+
 #include "engine/midi_dispatcher.cpp"
 
 using ::testing::NiceMock;
@@ -14,6 +15,8 @@ using namespace sushi;
 using namespace sushi::internal;
 using namespace sushi::internal::engine;
 using namespace sushi::internal::midi_dispatcher;
+
+constexpr float TEST_SAMPLE_RATE = 48000.0;
 
 const MidiDataByte TEST_NOTE_ON_CH2   = {0x91, 62, 55, 0}; /* Channel 2 */
 const MidiDataByte TEST_NOTE_OFF_CH3  = {0x82, 60, 45, 0}; /* Channel 3 */
@@ -118,8 +121,8 @@ protected:
         _module_under_test.set_frontend(&_mock_frontend);
     }
 
-    EngineMockup _test_engine{48000};
     EventDispatcherMockup _test_dispatcher;
+    EngineMockup          _test_engine {TEST_SAMPLE_RATE};
     ::testing::NiceMock<MockMidiFrontend> _mock_frontend{nullptr};
     MidiDispatcher _module_under_test{&_test_dispatcher};
 };

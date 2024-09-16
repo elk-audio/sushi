@@ -5,15 +5,34 @@
 
 set(APP_FILES main.cpp)
 
-add_executable(sushi MACOSX_BUNDLE ${APP_FILES})
+if(APPLE)
+    add_executable(sushi MACOSX_BUNDLE ${APP_FILES})
+else()
+    add_executable(sushi ${APP_FILES})
+endif()
 
 ####################################
 #  Compiler Flags and definitions  #
 ####################################
 
-target_compile_options(sushi PRIVATE -Wall -Wextra -Wno-psabi -fPIC -fno-rtti -ffast-math)
+if(MSVC)
+    # C4996: Deprecated warning. This was flooding the terminal,
+    #        I might remove the suppression from here eventually,
+    #        and out into the code again.
+    set(SUSHI_COMPILE_OPTIONS /W4 /fp:fast /wd4996)
+    set(APP_LINK_LIBRARIES ${APP_LINK_LIBRARIES} winmm.lib) # oscpack GetCurrentTimeMs
+else()
+    set(SUSHI_COMPILE_OPTIONS -Wall -Wextra -Wno-psabi -fPIC -fno-rtti -ffast-math)
+endif()
 
-target_link_libraries(sushi PRIVATE sushi_library "${APP_LINK_LIBRARIES}")
+if(MSVC)
+    # Link statically to the msvc runtime
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
+target_compile_options(sushi PRIVATE ${SUSHI_COMPILE_OPTIONS})
+
+target_link_libraries(sushi PRIVATE sushi_library ${APP_LINK_LIBRARIES})
 
 ####################
 #  Install         #

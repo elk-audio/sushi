@@ -25,6 +25,9 @@
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::notch_plugin {
 
 class NotchPlugin : public InternalPlugin, public UidHelper<NotchPlugin>
@@ -50,15 +53,17 @@ public:
 
 private:
     BypassManager _bypass_manager;
-    float _sample_rate{0};
+    float _sample_rate {0};
 
     FloatParameterValue* _frequency;
     FloatParameterValue* _Q;
 
-    bw_notch_coeffs _notch_coeffs;
-    std::array<bw_notch_state, MAX_TRACK_CHANNELS> _notch_states;
+    bw_notch_coeffs _notch_coeffs {};
+    std::array<bw_notch_state, MAX_TRACK_CHANNELS> _notch_states {};
 };
 
 } // namespace sushi::internal::notch_plugin
+
+ELK_POP_WARNING
 
 #endif // NOTCH_PLUGIN_H

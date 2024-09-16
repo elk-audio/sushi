@@ -1,12 +1,11 @@
 #include "gtest/gtest.h"
 
-#define private public
 #include "engine/track.cpp"
-#undef private
 
 #include "engine/transport.h"
 #include "plugins/passthrough_plugin.h"
 
+#include "test_utils/track_accessor.h"
 #include "test_utils/test_utils.h"
 #include "test_utils/host_control_mockup.h"
 #include "test_utils/dummy_processor.h"
@@ -30,7 +29,13 @@ protected:
 
     HostControlMockup _host_control;
     performance::PerformanceTimer _timer;
-    Track _module_under_test{_host_control.make_host_control_mockup(), TEST_CHANNEL_COUNT, &_timer, CREATE_PAN_CONTROLS};
+
+    Track _module_under_test {_host_control.make_host_control_mockup(),
+                              TEST_CHANNEL_COUNT,
+                              &_timer,
+                              CREATE_PAN_CONTROLS};
+
+    sushi::internal::engine::TrackAccessor _accessor {_module_under_test};
 };
 
 TEST_F(TrackTest, TestMultibusSetup)
@@ -50,20 +55,20 @@ TEST_F(TrackTest, TestAddAndRemove)
     // Add to back
     auto ok = _module_under_test.add(&test_processor);
     EXPECT_TRUE(ok);
-    EXPECT_EQ(1u, _module_under_test._processors.size());
+    EXPECT_EQ(1u, _accessor.processors().size());
     EXPECT_FALSE(_module_under_test.remove(1234567u));
-    EXPECT_EQ(1u, _module_under_test._processors.size());
+    EXPECT_EQ(1u, _accessor.processors().size());
 
     // Add test_processor_2 to the front
     ok = _module_under_test.add(&test_processor_2, test_processor.id());
     EXPECT_TRUE(ok);
-    EXPECT_EQ(2u, _module_under_test._processors.size());
-    EXPECT_EQ(&test_processor_2, _module_under_test._processors[0]);
-    EXPECT_EQ(&test_processor, _module_under_test._processors[1]);
+    EXPECT_EQ(2u, _accessor.processors().size());
+    EXPECT_EQ(&test_processor_2, _accessor.processors()[0]);
+    EXPECT_EQ(&test_processor, _accessor.processors()[1]);
 
     EXPECT_TRUE(_module_under_test.remove(test_processor.id()));
     EXPECT_TRUE(_module_under_test.remove(test_processor_2.id()));
-    EXPECT_TRUE(_module_under_test._processors.empty());
+    EXPECT_TRUE(_accessor.processors().empty());
 }
 
 TEST_F(TrackTest, TestNestedBypass)
@@ -198,7 +203,7 @@ TEST_F(TrackTest, TestGainOnly)
     gain_only_track.add(&plugin);
 
     /* Volume down 6 dB */
-    auto gain_ev_0 = RtEvent::make_parameter_change_event(0, 0, gain_bus_0->id(), 0.7917);
+    auto gain_ev_0 = RtEvent::make_parameter_change_event(0, 0, gain_bus_0->id(), 0.7917f);
     gain_only_track.process_event(gain_ev_0);
 
     for (int i = 0; i < gain_only_track.max_input_channels(); ++i)
@@ -215,7 +220,7 @@ TEST_F(TrackTest, TestGainOnly)
     for (int i = 0; i < gain_only_track.max_output_channels(); ++i)
     {
         auto in_bus = gain_only_track.output_channel(i);
-        EXPECT_LT(out.channel(0)[AUDIO_CHUNK_SIZE-1], 1.0f);
+        EXPECT_LT(out.channel(0)[AUDIO_CHUNK_SIZE - 1], 1.0f);
     }
 }
 

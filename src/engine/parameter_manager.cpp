@@ -176,4 +176,9 @@ void ParameterManager::_output_processor_notifications(dispatcher::BaseEventDisp
     _processor_change_queue.erase(swap_iter, _processor_change_queue.end());
 }
 
+bool ParameterManager::parameter_change_queue_empty() const
+{
+    return _parameter_change_queue.empty();
+}
+
 } // end namespace sushi::internal

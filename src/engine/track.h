@@ -48,6 +48,8 @@ enum class TrackType
     POST
 };
 
+class TrackAccessor;
+
 class Track : public InternalPlugin, public RtEventPipe
 {
 public:
@@ -179,6 +181,8 @@ public:
     void send_event(const RtEvent& event) override;
 
 private:
+    friend TrackAccessor;
+
     enum class PanMode
     {
         GAIN_ONLY,

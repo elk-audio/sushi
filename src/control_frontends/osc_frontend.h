@@ -74,6 +74,8 @@ struct OscConnection
     void* callback;
 };
 
+class OSCFrontendAccessor;
+
 class OSCFrontend : public BaseControlFrontend
 {
 public:
@@ -142,7 +144,7 @@ public:
 
     int receive_port() const;
 
-    bool get_connect_from_all_parameters() {return _connect_from_all_parameters;}
+    [[nodiscard]] bool get_connect_from_all_parameters() const {return _connect_from_all_parameters;}
 
     void set_connect_from_all_parameters(bool connect) {_connect_from_all_parameters = connect;}
 
@@ -151,6 +153,8 @@ public:
     void set_state(const OscState& state);
 
 private:
+    friend OSCFrontendAccessor;
+
     /**
      * @brief Connect to control all parameters from a given processor.
      * @param processor The name of the processor to connect.

@@ -51,9 +51,16 @@ add_library(sushi_rpc STATIC ${SUSHI_GRPC_SOURCES})
 
 target_include_directories(sushi_rpc PUBLIC include)
 target_include_directories(sushi_rpc PRIVATE ${SUSHI_RPC_INCLUDE_DIRS})
-target_link_libraries(sushi_rpc PUBLIC gRPC::grpc++ protos-lib)
+target_link_libraries(sushi_rpc PUBLIC gRPC::grpc++ protos-lib elk::warningSuppressor)
 target_compile_features(sushi_rpc PRIVATE cxx_std_17)
-target_compile_options(sushi_rpc PRIVATE -Wall -Wextra -fPIC)
+
+if(MSVC)    
+    set(SUSHI_RPC_COMPILE_OPTIONS /W4)
+else()
+    set(SUSHI_RPC_COMPILE_OPTIONS -Wall -Wextra -fPIC)
+endif()
+
+target_compile_options(sushi_rpc PRIVATE ${SUSHI_RPC_COMPILE_OPTIONS})
 
 ##################
 #  Install step  #

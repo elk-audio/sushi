@@ -1,7 +1,5 @@
 #include "gtest/gtest.h"
 
-#define private public
-
 #include "test_utils/test_utils.h"
 #include "dsp_library/sample_wrapper.h"
 
@@ -13,7 +11,7 @@ const int SAMPLE_DATA_LENGTH = sizeof(SAMPLE_DATA) / sizeof(float);
 class TestSampleWrapper : public ::testing::Test
 {
 protected:
-    TestSampleWrapper() {}
+    TestSampleWrapper() = default;
 
     Sample _module_under_test{SAMPLE_DATA, SAMPLE_DATA_LENGTH};
 };

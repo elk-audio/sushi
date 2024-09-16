@@ -6,10 +6,10 @@
 
 #include "control_frontends/base_control_frontend.cpp"
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
+#include "elk-warning-suppressor/warning_suppressor.hpp"
 
-#define private public
+ELK_PUSH_WARNING
+ELK_DISABLE_UNUSED_PARAMETER
 
 #include "test_utils/mock_osc_interface.h"
 #include "test_utils/engine_mockup.h"
@@ -19,13 +19,62 @@
 
 #include "control_frontends/osc_frontend.cpp"
 
-#undef private
-#pragma GCC diagnostic pop
+ELK_POP_WARNING
 
 using ::testing::Return;
 using ::testing::StrEq;
 using ::testing::NiceMock;
 using ::testing::_;
+
+namespace sushi::internal::control_frontend
+{
+
+class OSCFrontendAccessor
+{
+public:
+    explicit OSCFrontendAccessor(OSCFrontend& f) : _friend(f) {}
+
+    void set_processor_container(const engine::BaseProcessorContainer* container)
+    {
+        _friend._processor_container = container;
+    }
+
+    OscConnection* connect_to_parameter(const std::string& processor_name,
+                                        const std::string& parameter_name,
+                                        ObjectId processor_id,
+                                        ObjectId parameter_id)
+    {
+        return _friend._connect_to_parameter(processor_name, parameter_name, processor_id, parameter_id);
+    }
+
+    OscConnection* connect_to_property(const std::string& processor_name,
+                                       const std::string& property_name,
+                                       ObjectId processor_id,
+                                       ObjectId property_id)
+    {
+        return _friend._connect_to_property(processor_name, property_name, processor_id, property_id);
+    }
+
+    OscConnection* connect_kb_to_track(const Processor* processor)
+    {
+        return _friend._connect_kb_to_track(processor);
+    }
+
+    OscConnection* connect_to_program_change(const Processor* processor)
+    {
+        return _friend._connect_to_program_change(processor);
+    }
+
+    OscConnection* connect_to_bypass_state(const Processor* processor)
+    {
+        return _friend._connect_to_bypass_state(processor);
+    }
+
+private:
+    OSCFrontend& _friend;
+};
+
+}
 
 using namespace sushi;
 using namespace sushi::internal;
@@ -50,25 +99,25 @@ protected:
 
         EXPECT_CALL(*_mock_osc_interface, init()).Times(1).WillOnce(Return(true));
 
-        EXPECT_CALL(*_mock_osc_interface, add_method("/engine/set_tempo", "f",
+        EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/engine/set_tempo"), StrEq("f"),
                                                      OscMethodType::SET_TEMPO, _)).Times(1);
 
-        EXPECT_CALL(*_mock_osc_interface, add_method("/engine/set_time_signature", "ii",
+        EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/engine/set_time_signature"), StrEq("ii"),
                                                      OscMethodType::SET_TIME_SIGNATURE, _)).Times(1);
 
-        EXPECT_CALL(*_mock_osc_interface, add_method("/engine/set_playing_mode", "s",
+        EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/engine/set_playing_mode"), StrEq("s"),
                                                      OscMethodType::SET_PLAYING_MODE, _)).Times(1);
 
-        EXPECT_CALL(*_mock_osc_interface, add_method("/engine/set_sync_mode", "s",
+        EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/engine/set_sync_mode"), StrEq("s"),
                                                      OscMethodType::SET_TEMPO_SYNC_MODE, _)).Times(1);
 
-        EXPECT_CALL(*_mock_osc_interface, add_method("/engine/set_timing_statistics_enabled", "i",
+        EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/engine/set_timing_statistics_enabled"), StrEq("i"),
                                                      OscMethodType::SET_TIMING_STATISTICS_ENABLED, _)).Times(1);
 
-        EXPECT_CALL(*_mock_osc_interface, add_method("/engine/reset_timing_statistics", "s",
+        EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/engine/reset_timing_statistics"), StrEq("s"),
                                                      OscMethodType::RESET_TIMING_STATISTICS, _)).Times(1);
 
-        EXPECT_CALL(*_mock_osc_interface, add_method("/engine/reset_timing_statistics", "ss",
+        EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/engine/reset_timing_statistics"), StrEq("ss"),
                                                      OscMethodType::RESET_TIMING_STATISTICS, _)).Times(1);
 
         EXPECT_CALL(*_mock_osc_interface, run()).Times(1);
@@ -81,8 +130,10 @@ protected:
 
         ASSERT_EQ(ControlFrontendStatus::OK, _module_under_test->init());
 
+        _accessor = std::make_unique<OSCFrontendAccessor>(*_module_under_test);
+
         // Inject the mock container
-        _module_under_test->_processor_container = &_mock_processor_container;
+        _accessor->set_processor_container(&_mock_processor_container);
         _module_under_test->run();
 
         // Set up default returns for mock processor container
@@ -106,13 +157,14 @@ protected:
         _module_under_test->stop();
     }
 
-    ::testing::NiceMock<MockProcessorContainer>  _mock_processor_container;
+    ::testing::NiceMock<MockProcessorContainer> _mock_processor_container;
     MockOscInterface* _mock_osc_interface {nullptr};
 
-    EngineMockup _mock_engine {TEST_SAMPLE_RATE};
+    EngineMockup                  _mock_engine {TEST_SAMPLE_RATE};
     sushi::control::ControlMockup _mock_controller;
 
     std::unique_ptr<OSCFrontend> _module_under_test;
+    std::unique_ptr<OSCFrontendAccessor> _accessor;
 
     HostControlMockup _host_control_mockup;
     std::shared_ptr<Processor> _test_processor;
@@ -144,16 +196,16 @@ TEST_F(TestOSCFrontend, TestConnectFromAllParameters)
 
 TEST_F(TestOSCFrontend, TestAddAndRemoveConnectionsForProcessor)
 {
-    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/bypass/proc"), "i",
+    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/bypass/proc"), StrEq("i"),
                                                  OscMethodType::SEND_BYPASS_STATE_EVENT, _)).Times(1);
 
-    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/program/proc"), "i",
+    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/program/proc"), StrEq("i"),
                                                  OscMethodType::SEND_PROGRAM_CHANGE_EVENT, _)).Times(1);
 
-    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/parameter/proc/param_1"), "f",
+    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/parameter/proc/param_1"), StrEq("f"),
                                                  OscMethodType::SEND_PARAMETER_CHANGE_EVENT, _)).Times(1);
 
-    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/parameter/proc/gain"), "f",
+    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/parameter/proc/gain"), StrEq("f"),
                                                  OscMethodType::SEND_PARAMETER_CHANGE_EVENT, _)).Times(1);
 
     // As this in only done in response to events, test the event handling at the same time
@@ -173,22 +225,22 @@ TEST_F(TestOSCFrontend, TestAddAndRemoveConnectionsForProcessor)
 
 TEST_F(TestOSCFrontend, TestAddAndRemoveConnectionsForTrack)
 {
-    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/keyboard_event/track"), "siif",
+    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/keyboard_event/track"), StrEq("siif"),
                                                  OscMethodType::SEND_KEYBOARD_NOTE_EVENT, _)).Times(1);
 
-    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/keyboard_event/track"), "sif",
+    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/keyboard_event/track"), StrEq("sif"),
                                                  OscMethodType::SEND_KEYBOARD_MODULATION_EVENT, _)).Times(1);
 
-    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/bypass/track"), "i",
+    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/bypass/track"), StrEq("i"),
                                                  OscMethodType::SEND_BYPASS_STATE_EVENT, _)).Times(1);
 
-    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/parameter/track/gain"), "f",
+    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/parameter/track/gain"), StrEq("f"),
                                                  OscMethodType::SEND_PARAMETER_CHANGE_EVENT, _)).Times(1);
 
-    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/parameter/track/pan"), "f",
+    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/parameter/track/pan"), StrEq("f"),
                                                  OscMethodType::SEND_PARAMETER_CHANGE_EVENT, _)).Times(1);
 
-    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/parameter/track/mute"), "f",
+    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/parameter/track/mute"), StrEq("f"),
                                                  OscMethodType::SEND_PARAMETER_CHANGE_EVENT, _)).Times(1);
 
     // As this in only done in response to events, test the event handling at the same time
@@ -208,10 +260,10 @@ TEST_F(TestOSCFrontend, TestAddAndRemoveConnectionsForTrack)
 
 TEST_F(TestOSCFrontend, TestConnectParameterChange)
 {
-    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/parameter/proc/param_1"), "f",
+    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/parameter/proc/param_1"), StrEq("f"),
                                                  OscMethodType::SEND_PARAMETER_CHANGE_EVENT, _)).Times(1);
 
-    auto connection = _module_under_test->_connect_to_parameter("proc", "param 1", 1, 2);
+    auto connection = _accessor->connect_to_parameter("proc", "param 1", 1, 2);
     ASSERT_TRUE(connection != nullptr);
     EXPECT_EQ(1, connection->processor);
     EXPECT_EQ(2, connection->parameter);
@@ -219,10 +271,10 @@ TEST_F(TestOSCFrontend, TestConnectParameterChange)
 
 TEST_F(TestOSCFrontend, TestConnectPropertyChange)
 {
-    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/property/sampler/sample_file"), "s",
+    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/property/sampler/sample_file"), StrEq("s"),
                                                  OscMethodType::SEND_PROPERTY_CHANGE_EVENT, _)).Times(1);
 
-    auto connection = _module_under_test->_connect_to_property("sampler", "sample_file", 1, 2);
+    auto connection = _accessor->connect_to_property("sampler", "sample_file", 1, 2);
     ASSERT_TRUE(connection != nullptr);
     EXPECT_EQ(1, connection->processor);
     EXPECT_EQ(2, connection->parameter);
@@ -230,13 +282,13 @@ TEST_F(TestOSCFrontend, TestConnectPropertyChange)
 
 TEST_F(TestOSCFrontend, TestAddKbdToTrack)
 {
-    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/keyboard_event/track"), "siif",
+    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/keyboard_event/track"), StrEq("siif"),
                                                  OscMethodType::SEND_KEYBOARD_NOTE_EVENT, _)).Times(1);
 
-    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/keyboard_event/track"), "sif",
+    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/keyboard_event/track"), StrEq("sif"),
                                                  OscMethodType::SEND_KEYBOARD_MODULATION_EVENT, _)).Times(1);
 
-    auto connection = _module_under_test->_connect_kb_to_track(_test_track.get());
+    auto connection = _accessor->connect_kb_to_track(_test_track.get());
     EXPECT_EQ(_test_track->id(), connection->processor);
 
     ASSERT_TRUE(connection != nullptr);
@@ -244,20 +296,20 @@ TEST_F(TestOSCFrontend, TestAddKbdToTrack)
 
 TEST_F(TestOSCFrontend, TestConnectProgramChange)
 {
-    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/program/proc"), "i",
+    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/program/proc"), StrEq("i"),
                                                  OscMethodType::SEND_PROGRAM_CHANGE_EVENT, _)).Times(1);
 
-    auto connection = _module_under_test->_connect_to_program_change(_test_processor.get());
+    auto connection = _accessor->connect_to_program_change(_test_processor.get());
     ASSERT_TRUE(connection != nullptr);
     EXPECT_EQ(_test_processor->id(), connection->processor);
 }
 
 TEST_F(TestOSCFrontend, TestSetBypassState)
 {
-    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/bypass/proc"), "i",
+    EXPECT_CALL(*_mock_osc_interface, add_method(StrEq("/bypass/proc"), StrEq("i"),
                                                  OscMethodType::SEND_BYPASS_STATE_EVENT, _)).Times(1);
 
-    auto connection = _module_under_test->_connect_to_bypass_state(_test_processor.get());
+    auto connection = _accessor->connect_to_bypass_state(_test_processor.get());
 
     ASSERT_TRUE(connection != nullptr);
     EXPECT_EQ(_test_processor->id(), connection->processor);

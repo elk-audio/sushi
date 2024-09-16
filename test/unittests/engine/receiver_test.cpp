@@ -1,7 +1,6 @@
 #include "gtest/gtest.h"
 
-#define private public
-#define protected public
+#include "elk-warning-suppressor/warning_suppressor.hpp"
 
 #include "engine/receiver.cpp"
 

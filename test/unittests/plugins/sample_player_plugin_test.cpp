@@ -4,10 +4,35 @@
 #include "test_utils/host_control_mockup.h"
 #include "library/rt_event_fifo.h"
 
-#define private public
+#include "elk-warning-suppressor/warning_suppressor.hpp"
 
 #include "plugins/sample_player_voice.cpp"
 #include "plugins/sample_player_plugin.cpp"
+
+namespace sushi::internal::sample_player_plugin
+{
+
+class Accessor
+{
+public:
+    explicit Accessor(SamplePlayerPlugin& plugin) : _plugin(plugin) {}
+
+    [[nodiscard]] float*  sample_buffer()
+    {
+        return _plugin._sample_buffer;
+    }
+
+    // Not const: it's modified in the test
+    [[nodiscard]] dsp::Sample& sample()
+    {
+        return _plugin._sample;
+    }
+
+private:
+    SamplePlayerPlugin& _plugin;
+};
+
+}
 
 using namespace sushi;
 using namespace sushi::internal;
@@ -89,19 +114,21 @@ protected:
 
     void SetUp() override
     {
-        _module_under_test = new SamplePlayerPlugin(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
+        _module_under_test = std::make_unique<SamplePlayerPlugin>(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
         ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
         ASSERT_EQ(ProcessorReturnCode::OK, status);
+
+        _accessor = std::make_unique<sushi::internal::sample_player_plugin::Accessor>(*_module_under_test);
     }
 
     void TearDown() override
     {
-        delete _module_under_test;
     }
 
     HostControlMockup _host_control;
-    SamplePlayerPlugin* _module_under_test;
+    std::unique_ptr<SamplePlayerPlugin> _module_under_test;
 
+    std::unique_ptr<sushi::internal::sample_player_plugin::Accessor> _accessor;
 };
 
 TEST_F(TestSamplePlayerPlugin, TestSampleLoading)
@@ -111,7 +138,7 @@ TEST_F(TestSamplePlayerPlugin, TestSampleLoading)
     auto path = std::string(test_utils::get_data_dir_path());
     path.append(SAMPLE_FILE);
 
-    ASSERT_EQ(nullptr, _module_under_test->_sample_buffer);
+    ASSERT_EQ(nullptr, _accessor->sample_buffer());
     auto status = _module_under_test->set_property_value(SAMPLE_PROPERTY_ID, path);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
 
@@ -125,7 +152,7 @@ TEST_F(TestSamplePlayerPlugin, TestSampleLoading)
     _module_under_test->process_event(rt_event);
 
     // Sample should now be changed
-    ASSERT_NE(nullptr, _module_under_test->_sample_buffer);
+    ASSERT_NE(nullptr, _accessor->sample_buffer());
 
     // Plugin should have put a delete event on the output queue, just check that it's there
     ASSERT_FALSE(queue.empty());
@@ -135,7 +162,7 @@ TEST_F(TestSamplePlayerPlugin, TestProcessing)
 {
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(1);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(1);
-    _module_under_test->_sample.set_sample(SAMPLE_DATA, SAMPLE_DATA_LENGTH);
+    _accessor->sample().set_sample(SAMPLE_DATA, SAMPLE_DATA_LENGTH);
     out_buffer.clear();
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(0.0f, out_buffer);
@@ -145,9 +172,9 @@ TEST_F(TestSamplePlayerPlugin, TestEventProcessing)
 {
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(1);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(1);
-    BlobData data = _module_under_test->_load_sample_file(test_utils::get_data_dir_path().append(SAMPLE_FILE));
+    BlobData data = load_sample_file(test_utils::get_data_dir_path().append(SAMPLE_FILE));
     ASSERT_NE(0, data.size);
-    _module_under_test->_sample.set_sample(reinterpret_cast<float*>(data.data), data.size * sizeof(float));
+    _accessor->sample().set_sample(reinterpret_cast<float*>(data.data), data.size * sizeof(float));
     out_buffer.clear();
     RtEvent note_on = RtEvent::make_note_on_event(0, 5, 0, 60, 1.0f);
     RtEvent note_on2 = RtEvent::make_note_on_event(0, 50, 0, 65, 1.0f);

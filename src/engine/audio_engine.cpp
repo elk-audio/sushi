@@ -22,7 +22,9 @@
 #include <iomanip>
 #include <functional>
 
-#include "twine/src/twine_internal.h"
+#define TWINE_EXPOSE_INTERNALS
+#include "twine/twine.h"
+
 #include "elklog/static_logger.h"
 
 #include "audio_engine.h"
@@ -723,7 +725,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
 
     if (plugin->active_rt_processing())
     {
-        ELKLOG_LOG_ERROR("Plugin {} is already active on a track");
+        ELKLOG_LOG_ERROR("Plugin {} is already active on a track", plugin_id);
         return EngineReturnStatus::ERROR;
     }
 
@@ -740,7 +742,7 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
         if (added == false)
         {
             ELKLOG_LOG_ERROR("Failed to add processor {} to track {}", plugin->name(), track->name());
-            return EngineReturnStatus::INVALID_PROCESSOR;
+            return EngineReturnStatus::ERROR;
         }
     }
     else
@@ -782,8 +784,11 @@ EngineReturnStatus AudioEngine::remove_plugin_from_track(ObjectId plugin_id, Obj
         // Send events to handle this in the rt domain
         auto remove_event = RtEvent::make_remove_processor_from_track_event(plugin_id, track_id);
         _send_control_event(remove_event);
-        [[maybe_unused]] bool remove_ok = _event_receiver.wait_for_response(remove_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT);
-        ELKLOG_LOG_ERROR_IF(remove_ok == false, "Failed to remove/delete processor {} from processing part", plugin_id)
+        if (!_event_receiver.wait_for_response(remove_event.returnable_event()->event_id(), RT_EVENT_TIMEOUT))
+        {
+            ELKLOG_LOG_ERROR("Failed to remove/delete processor {} in rt from track {}", plugin_id, track_id);
+            return EngineReturnStatus::ERROR;
+        }
     }
     else
     {
@@ -1019,7 +1024,7 @@ EngineReturnStatus AudioEngine::_disconnect_audio_channel(int engine_channel,
 void AudioEngine::_process_internal_rt_events()
 {
     RtEvent event;
-    while(_control_queue_in.pop(event))
+    while (_control_queue_in.pop(event))
     {
         switch (event.type())
         {
@@ -1110,7 +1115,7 @@ void AudioEngine::_process_internal_rt_events()
 void AudioEngine::_send_rt_events_to_processors()
 {
     RtEvent event;
-    while(_main_in_queue.pop(event))
+    while (_main_in_queue.pop(event))
     {
         _send_rt_event(event);
     }
@@ -1188,8 +1193,10 @@ void AudioEngine::update_timings()
     if (_process_timer.enabled())
     {
         auto engine_timings = _process_timer.timings_for_node(ENGINE_TIMING_ID);
-
-        _event_dispatcher->post_event(std::make_unique<EngineTimingNotificationEvent>(*engine_timings, IMMEDIATE_PROCESS));
+        if (engine_timings.has_value())
+        {
+            _event_dispatcher->post_event(std::make_unique<EngineTimingNotificationEvent>(*engine_timings, IMMEDIATE_PROCESS));
+        }
 
         _log_timing_print_counter += 1;
         if (_log_timing_print_counter > TIMING_LOG_PRINT_INTERVAL)
@@ -1201,16 +1208,33 @@ void AudioEngine::update_timings()
                 if (timings.has_value())
                 {
                     ELKLOG_LOG_INFO("Processor: {} ({}), avg: {}%, min: {}%, max: {}%", id, processor->name(),
-                                   timings->avg_case * 100.0f, timings->min_case * 100.0f, timings->max_case * 100.0f);
+                                    timings->avg_case * 100.0f, timings->min_case * 100.0f, timings->max_case * 100.0f);
                 }
             }
+
             if (engine_timings.has_value())
             {
                 ELKLOG_LOG_INFO("Engine total: avg: {}%, min: {}%, max: {}%",
-                               engine_timings->avg_case * 100.0f, engine_timings->min_case * 100.0f, engine_timings->max_case * 100.0f);
+                                engine_timings->avg_case * 100.0f, engine_timings->min_case * 100.0f, engine_timings->max_case * 100.0f);
             }
             _log_timing_print_counter = 0;
         }
+    }
+}
+
+void AudioEngine::notify_interrupted_audio(Time interrupt_time)
+{
+    if (interrupt_time > RT_EVENT_TIMEOUT / 2 )
+    {
+        /* If audio was paused for long enough, pending RtEvents (add/remove processor, etc)
+         * May have timed out and should not be processed. Also assume that midi notes and
+         * parameter changes should not take effect */
+        ELKLOG_LOG_INFO("Rt thread timed out for too long, clearing queues");
+        RtEvent event;
+        while (_control_queue_in.pop(event))
+        {}
+        while (_main_in_queue.pop(event))
+        {}
     }
 }
 
@@ -1221,7 +1245,7 @@ void print_single_timings_for_node(std::fstream& f, performance::PerformanceTime
     {
         f << std::setw(16) << timings.value().avg_case * 100.0
           << std::setw(16) << timings.value().min_case * 100.0
-          << std::setw(16) << timings.value().max_case * 100.0 <<"\n";
+          << std::setw(16) << timings.value().max_case * 100.0 << "\n";
     }
 }
 
@@ -1321,6 +1345,7 @@ void AudioEngine::_route_cv_gate_ins(ControlBuffer& buffer)
         auto ev = RtEvent::make_parameter_change_event(r.processor_id, 0, r.parameter_id, value);
         _send_rt_event(ev);
     }
+
     // Get gate state changes by xor:ing with previous states
     auto gate_diffs = _prev_gate_values ^ buffer.gate_values;
     if (gate_diffs.any())
@@ -1352,10 +1377,12 @@ RealtimeState update_state(RealtimeState current_state)
     {
         return RealtimeState::RUNNING;
     }
+
     if (current_state == RealtimeState::STOPPING)
     {
         return RealtimeState::STOPPED;
     }
+
     return current_state;
 }
 

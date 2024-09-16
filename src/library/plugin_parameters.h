@@ -142,20 +142,26 @@ public:
 
     virtual T to_domain(float value_normalized)
     {
-        return _max_domain_value + (_min_domain_value - _max_domain_value) / (_min_normalized - _max_normalized) * (value_normalized - _max_normalized);
+        return static_cast<T>(static_cast<float>(_max_domain_value) +
+                              static_cast<float>(_min_domain_value - _max_domain_value) /
+                              (_min_normalized - _max_normalized) *
+                              (value_normalized - _max_normalized));
     }
 
     virtual float to_normalized(T value)
     {
-        return _max_normalized + (_min_normalized - _max_normalized) / (_min_domain_value - _max_domain_value) * (value - _max_domain_value);
+        return _max_normalized +
+               (_min_normalized - _max_normalized) /
+               static_cast<float>(_min_domain_value - _max_domain_value) *
+               static_cast<float>(value - _max_domain_value);
     }
 
 protected:
     T _min_domain_value;
     T _max_domain_value;
 
-    static constexpr float _min_normalized{0.0f};
-    static constexpr float _max_normalized{1.0f};
+    static constexpr float _min_normalized {0.0f};
+    static constexpr float _max_normalized {1.0f};
 };
 
 /**
@@ -268,19 +274,18 @@ public:
 
 /*
  * The templated forms are not intended to be accessed directly.
- * Instead, the typedefs below provide direct access to the right
+ * Instead, the below provide direct access to the right
  * type combinations.
  */
-typedef ParameterPreProcessor<float> FloatParameterPreProcessor;
-typedef ParameterPreProcessor<int>   IntParameterPreProcessor;
-typedef ParameterPreProcessor<bool>  BoolParameterPreProcessor;
+using FloatParameterPreProcessor = ParameterPreProcessor<float>;
+using IntParameterPreProcessor = ParameterPreProcessor<int>;
+using BoolParameterPreProcessor = ParameterPreProcessor<bool>;
 
-typedef TypedParameterDescriptor<float, ParameterType::FLOAT>         FloatParameterDescriptor;
-typedef TypedParameterDescriptor<int, ParameterType::INT>             IntParameterDescriptor;
-typedef TypedParameterDescriptor<bool, ParameterType::BOOL>           BoolParameterDescriptor;
-typedef TypedParameterDescriptor<std::string*, ParameterType::STRING> StringPropertyDescriptor;
-typedef TypedParameterDescriptor<BlobData, ParameterType::DATA>       DataPropertyDescriptor;
-
+using FloatParameterDescriptor = TypedParameterDescriptor<float, ParameterType::FLOAT>;
+using IntParameterDescriptor = TypedParameterDescriptor<int, ParameterType::INT>;
+using BoolParameterDescriptor = TypedParameterDescriptor<bool, ParameterType::BOOL>;
+using StringPropertyDescriptor = TypedParameterDescriptor<std::string*, ParameterType::STRING>;
+using DataPropertyDescriptor = TypedParameterDescriptor<BlobData, ParameterType::DATA>;
 
 /**
  * @brief Preprocessor example to map from decibels to linear gain.
@@ -353,15 +358,15 @@ public:
                                                                _processed_value(pre_processor->process_to_plugin(value)),
                                                                _normalized_value(pre_processor->to_normalized(value)) {}
 
-    ParameterType type() const {return _type;}
+    [[nodiscard]] ParameterType type() const {return _type;}
 
-    T processed_value() const {return _processed_value;}
+    [[nodiscard]] T processed_value() const {return _processed_value;}
 
-    T domain_value() const {return _pre_processor->process_from_plugin(_pre_processor->to_domain(_normalized_value));}
+    [[nodiscard]] T domain_value() const {return _pre_processor->process_from_plugin(_pre_processor->to_domain(_normalized_value));}
 
-    float normalized_value() const { return _normalized_value; }
+    [[nodiscard]] float normalized_value() const { return _normalized_value; }
 
-    ParameterDescriptor* descriptor() const {return _descriptor;}
+    [[nodiscard]] ParameterDescriptor* descriptor() const {return _descriptor;}
 
     void set(float value_normalized)
     {
@@ -371,14 +376,14 @@ public:
 
     void set_processed(float value_processed)
     {
-        _processed_value = value_processed;
-        _normalized_value = _pre_processor->to_normalized(_pre_processor->process_from_plugin(value_processed));
+        _processed_value = static_cast<T>(value_processed);
+        _normalized_value = _pre_processor->to_normalized(_pre_processor->process_from_plugin(static_cast<T>(value_processed)));
     }
 
 private:
-    ParameterType _type{enumerated_type};
-    ParameterDescriptor* _descriptor{nullptr};
-    ParameterPreProcessor<T>* _pre_processor{nullptr};
+    ParameterType _type {enumerated_type};
+    ParameterDescriptor* _descriptor {nullptr};
+    ParameterPreProcessor<T>* _pre_processor {nullptr};
     T _processed_value;
     float _normalized_value; // Always not processed, but raw as set from the outside.
 };
@@ -410,9 +415,9 @@ private:
     bool _processed_value;
 };
 
-typedef ParameterValue<bool, ParameterType::BOOL> BoolParameterValue;
-typedef ParameterValue<int, ParameterType::INT> IntParameterValue;
-typedef ParameterValue<float, ParameterType::FLOAT> FloatParameterValue;
+using BoolParameterValue = ParameterValue<bool, ParameterType::BOOL>;
+using IntParameterValue = ParameterValue<int, ParameterType::INT>;
+using FloatParameterValue = ParameterValue<float, ParameterType::FLOAT>;
 
 class ParameterStorage
 {

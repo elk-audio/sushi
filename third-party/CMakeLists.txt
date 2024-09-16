@@ -11,8 +11,12 @@ set(OSC_LIB_ONLY ON)
 
 add_subdirectory(oscpack)
 
-# oscpack sets the -Wall flag, which is negated below, to suppress warnings.
-target_compile_options(oscpack PRIVATE "-Wno-all")
+if (MSVC)
+    target_compile_options(oscpack PRIVATE "/W0")
+else()
+    # oscpack sets the -Wall flag, which is negated below, to suppress warnings.
+    target_compile_options(oscpack PRIVATE "-Wno-all")
+endif()
 
 ##########################
 #  VST3SDK and examples  #
@@ -24,6 +28,7 @@ if (${SUSHI_WITH_VST3})
     set(SMTG_ADD_VSTGUI OFF CACHE BOOL "" FORCE)
     set(SMTG_ADD_VST3_HOSTING_SAMPLES OFF CACHE BOOL "" FORCE)
     set(SMTG_RUN_VST_VALIDATOR OFF CACHE BOOL "" FORCE)
+    set(SMTG_USE_STATIC_CRT ON CACHE BOOL "" FORCE) # Force static runtime lib
 
     # if cross compiling, switch off the create module info post build step
     if(CMAKE_CROSSCOMPILING)
@@ -62,7 +67,23 @@ if (${SUSHI_WITH_VST3})
     set(SDK_IDE_PLUGIN_EXAMPLES_FOLDER FOLDER "PlugInExamples")
 
     # Suppress warnings to keep our build output clean
-    set(VST3_COMPILE_FLAGS "-Wno-unused-parameter -Wno-extra -Wno-deprecated -Wno-cpp -Wno-pointer-bool-conversion -Wno-suggest-override -Wno-format")
+    if(MSVC)
+        set(VST3_COMPILE_FLAGS " /W0")
+    else()
+        set(VST3_COMPILE_FLAGS "-Wno-unused-parameter \
+                                -Wno-extra -Wno-deprecated \
+                                -Wno-cpp \
+                                -Wno-pointer-bool-conversion \
+                                -Wno-suggest-override \
+                                -Wno-deprecated-declarations \
+                                -Wno-unqualified-std-cast-call \
+                                -Wno-shorten-64-to-32 \
+                                -Wformat=0")
+
+        if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+            set(VST3_COMPILE_FLAGS "${VST3_COMPILE_FLAGS} -fobjc-arc -Wno-unqualified-std-cast-call")
+        endif()
+    endif()
 
     if (SMTG_ADD_VST3_PLUGINS_SAMPLES)
         add_subdirectory(vst3sdk/public.sdk/samples/vst)
@@ -76,6 +97,9 @@ endif()
 set(FREEVERB_UNDENORMALIZE OFF CACHE BOOL "" FORCE)
 add_subdirectory(freeverb)
 
+if (SUSHI_WITH_PORTAUDIO)
+    add_subdirectory(portaudio)
+endif()
 #####################################################
 #  External Projects definitions (non-Cmake based)  #
 #####################################################

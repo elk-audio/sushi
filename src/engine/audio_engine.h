@@ -82,6 +82,8 @@ private:
 
 constexpr int MAX_RT_PROCESSOR_ID = 100000;
 
+class AudioEngineAccessor;
+
 class AudioEngine : public BaseEngine
 {
 public:
@@ -349,7 +351,7 @@ public:
      *
      * @param path Absolute path of the base plugin folder
      */
-    virtual void set_base_plugin_path(const std::string& path) override
+    void set_base_plugin_path(const std::string& path) override
     {
         _plugin_library.set_base_plugin_path(path);
     }
@@ -507,7 +509,16 @@ public:
      */
     void update_timings() override;
 
+    /**
+     * @brief Notify sushi that audio processing was interrupted. Possibly due to to
+     *        audio over/underruns, audio was paused or similar issues
+     * @param duration An estimation of how long the interrupt lasted
+     */
+    void notify_interrupted_audio(Time duration) override;
+
 private:
+    friend AudioEngineAccessor;
+
     enum class Direction : bool
     {
         INPUT = true,
@@ -613,7 +624,7 @@ private:
 
     // Processors in the realtime part indexed by their unique 32 bit id
     // Only to be accessed from the process callback in rt mode.
-    std::vector<Processor*> _realtime_processors{MAX_RT_PROCESSOR_ID, nullptr};
+    std::vector<Processor*> _realtime_processors {MAX_RT_PROCESSOR_ID, nullptr};
     AudioGraph              _audio_graph;
 
     Track* _pre_track{nullptr};
@@ -662,4 +673,5 @@ private:
 RealtimeState update_state(RealtimeState current_state);
 
 } // end namespace sushi::internal::engine
+
 #endif // SUSHI_ENGINE_H

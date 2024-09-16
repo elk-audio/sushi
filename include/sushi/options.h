@@ -22,7 +22,15 @@
 #define SUSHI_OPTIONS_H
 
 #include <cstdio>
+
+#include "elk-warning-suppressor/warning_suppressor.hpp"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_ZERO_AS_NULL_POINTER_CONSTANT
+ELK_DISABLE_SIGN_CONVERSION
+ELK_DISABLE_CONDITIONAL_UNINITIALIZED
 #include "optionparser.h"
+ELK_POP_WARNING
 
 #define _SUSHI_STRINGIZE(X) #X
 #define SUSHI_STRINGIZE(X) _SUSHI_STRINGIZE(X)
@@ -40,7 +48,7 @@
 #define SUSHI_OSC_SERVER_PORT_DEFAULT 24024
 #define SUSHI_OSC_SEND_PORT_DEFAULT 24023
 #define SUSHI_OSC_SEND_IP_DEFAULT "127.0.0.1"
-#define SUSHI_GRPC_LISTENING_PORT_DEFAULT "[::]:51051"
+#define SUSHI_GRPC_LISTENING_PORT_DEFAULT "[::]:510"
 #define SUSHI_PORTAUDIO_INPUT_LATENCY_DEFAULT 0.0f
 #define SUSHI_PORTAUDIO_OUTPUT_LATENCY_DEFAULT 0.0f
 #define SUSHI_SENTRY_CRASH_HANDLER_PATH_DEFAULT "./crashpad_handler"
@@ -76,7 +84,7 @@ struct SushiArg : public optionparser::Arg
 
     static optionparser::ArgStatus NonEmpty(const optionparser::Option& option, bool msg)
     {
-        if (option.arg != 0 && option.arg[0] != 0)
+        if (option.arg && option.arg[0])
         {
             return optionparser::ARG_OK;
         }
@@ -90,8 +98,8 @@ struct SushiArg : public optionparser::Arg
 
     static optionparser::ArgStatus Numeric(const optionparser::Option& option, bool msg)
     {
-        char* endptr = 0;
-        if (option.arg != 0 && strtol(option.arg, &endptr, 10))
+        char* endptr = nullptr;
+        if (option.arg != nullptr && strtol(option.arg, &endptr, 10))
         {}
 
         if (endptr != option.arg && *endptr == 0)
@@ -436,7 +444,7 @@ const optionparser::Descriptor usage[] =
         OPT_IDX_NO_OSC,
         OPT_TYPE_DISABLED,
         "",
-        "disable-osc",
+        "no-osc",
         SushiArg::Optional,
         "\t\t--no-osc \tDisable Open Sound Control completely"
     },
@@ -444,7 +452,7 @@ const optionparser::Descriptor usage[] =
         OPT_IDX_NO_GRPC,
         OPT_TYPE_DISABLED,
         "",
-        "disable-grpc",
+        "no-grpc",
         SushiArg::Optional,
         "\t\t--no-grpc \tDisable gRPC Control completely"
     },
@@ -473,7 +481,7 @@ const optionparser::Descriptor usage[] =
         "\t\t--sentry-dsn=<dsn.address> \tSet the DSN that sentry should upload crash logs to [default address=" SUSHI_STRINGIZE(SUSHI_SENTRY_DSN_DEFAULT) "]."
     },
     // Don't touch this one (sets default values for optionparser library)
-    { 0, 0, 0, 0, 0, 0}
+    { 0, 0, nullptr, nullptr, nullptr, nullptr}
 };
 
 } // end namespace sushi

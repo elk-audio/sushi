@@ -41,7 +41,7 @@ std::string PluginLibrary::to_absolute_path(const std::string& path)
     }
 
     auto full_path = std::filesystem::path(_base_plugin_path) / fspath;
-    return std::string(std::filesystem::absolute(full_path));
+    return std::string(std::filesystem::absolute(full_path).string());
 }
 
 } // end namespace sushi::internal::engine

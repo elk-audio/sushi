@@ -24,15 +24,17 @@
 #include "library/rt_event_fifo.h"
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
 
 namespace sushi::internal::transposer_plugin {
 
 class TransposerPlugin : public InternalPlugin, public UidHelper<TransposerPlugin>
 {
 public:
-    TransposerPlugin(HostControl host_control);
+    explicit TransposerPlugin(HostControl host_control);
 
-    ~TransposerPlugin() = default;
+    ~TransposerPlugin() override = default;
 
     ProcessorReturnCode init(float sample_rate) override;
 
@@ -51,5 +53,7 @@ private:
 };
 
 } // end namespace sushi::internal::transposer_plugin
+
+ELK_POP_WARNING
 
 #endif // SUSHI_TRANSPOSER_PLUGIN_H

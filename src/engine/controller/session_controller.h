@@ -31,6 +31,8 @@
 
 namespace sushi::internal::engine::controller_impl {
 
+class Accessor;
+
 class SessionController : public control::SessionController
 {
 public:
@@ -42,19 +44,22 @@ public:
 
     void set_osc_frontend(control_frontend::OSCFrontend* osc_frontend);
 
-    control::SessionState save_session() const override;
+    [[nodiscard]] control::SessionState save_session() const override;
 
     control::ControlStatus restore_session(const control::SessionState& state) override;
 
 private:
-    control::SushiBuildInfo _save_build_info() const;
-    control::OscState       _save_osc_state() const;
-    control::MidiState      _save_midi_state() const;
-    control::EngineState    _save_engine_state() const;
-    std::vector<control::TrackState> _save_tracks() const;
-    control::PluginClass    _save_plugin(const sushi::internal::Processor* plugin) const;
+    friend Accessor;
 
-    bool _check_state(const control::SessionState& state) const;
+    [[nodiscard]] control::SushiBuildInfo _save_build_info() const;
+    [[nodiscard]] control::OscState       _save_osc_state() const;
+    [[nodiscard]] control::MidiState      _save_midi_state() const;
+    [[nodiscard]] control::EngineState    _save_engine_state() const;
+    [[nodiscard]] std::vector<control::TrackState> _save_tracks() const;
+    [[nodiscard]] control::PluginClass    _save_plugin(const sushi::internal::Processor* plugin) const;
+
+    [[nodiscard]] bool _check_state(const control::SessionState& state) const;
+
     void _restore_tracks(std::vector<control::TrackState> tracks);
     void _restore_plugin_states(std::vector<control::TrackState> tracks);
     void _restore_plugin(control::PluginClass plugin, sushi::internal::engine::Track* track);

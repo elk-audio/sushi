@@ -23,6 +23,9 @@
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 class revmodel;
 
 namespace sushi::internal::freeverb_plugin {
@@ -63,5 +66,7 @@ private:
 };
 
 } // namespace sushi::internal::freeverb_plugin
+
+ELK_POP_WARNING
 
 #endif // FREEVERB_PLUGIN_H

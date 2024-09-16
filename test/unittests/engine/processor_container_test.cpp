@@ -5,8 +5,7 @@
 #include "test_utils/test_utils.h"
 #include "test_utils/host_control_mockup.h"
 
-#define private public
-#define protected public
+#include "elk-warning-suppressor/warning_suppressor.hpp"
 
 #include "engine/processor_container.cpp"
 

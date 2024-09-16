@@ -27,6 +27,9 @@
 #include "send_return_factory.h"
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal {
 
 // Forward declarations to keep the number of includes down
@@ -35,6 +38,8 @@ class SendReturnFactory;
 namespace send_plugin { class SendPlugin; }
 
 namespace return_plugin {
+
+class Accessor;
 
 class ReturnPlugin : public InternalPlugin, public UidHelper<ReturnPlugin>
 {
@@ -75,6 +80,8 @@ public:
     static std::string_view static_uid();
 
 private:
+    friend Accessor;
+
     void _channel_config(int channels);
 
     void inline _swap_buffers();
@@ -104,5 +111,7 @@ private:
 } // end namespace return_plugin
 
 } // end namespace sushi::internal
+
+ELK_POP_WARNING
 
 #endif // SUSHI_RETURN_PLUGIN_H

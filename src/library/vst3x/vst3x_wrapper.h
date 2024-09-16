@@ -23,10 +23,20 @@
 
 #include <map>
 #include <utility>
+#include <filesystem>
+
+#include "elk-warning-suppressor/warning_suppressor.hpp"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_EXTRA
+ELK_DISABLE_DEPRECATED_DECLARATIONS
+ELK_DISABLE_SHORTEN_64_TO_32
 
 #include "pluginterfaces/base/ipluginbase.h"
 #include "public.sdk/source/vst/hosting/eventlist.h"
 #include "public.sdk/source/vst/hosting/parameterchanges.h"
+
+ELK_POP_WARNING
 
 #include "fifo/circularfifo_memory_relaxed_aquire_release.h"
 
@@ -41,6 +51,8 @@ constexpr int VST_WRAPPER_NOTE_EVENT_QUEUE_SIZE = 256;
 constexpr int PARAMETER_UPDATE_QUEUE_SIZE = 100;
 // Maximum number of cached state changes, as only 1 can be processes per audio process call
 constexpr int STATE_CHANGE_QUEUE_SIZE = 10;
+
+class Vst3xWrapperAccessor;
 
 /**
  * @brief internal wrapper class for loading VST plugins and make them accessible as Processor to the Engine.
@@ -59,8 +71,8 @@ public:
             Processor(host_control),
             _plugin_load_name(plugin_name),
             _plugin_load_path(vst_plugin_path),
-            _instance(host_app),
-            _component_handler(this, &_host_control)
+            _component_handler(this, &_host_control),
+            _instance(host_app)
     {
         _max_input_channels = VST_WRAPPER_MAX_N_CHANNELS;
         _max_output_channels = VST_WRAPPER_MAX_N_CHANNELS;
@@ -134,6 +146,8 @@ public:
     }
 
 private:
+    friend Vst3xWrapperAccessor;
+
     /**
      * @brief Tell the plugin that we're done with it and release all resources
      * we allocated during initialization.
@@ -210,12 +224,12 @@ private:
 
     BypassManager _bypass_manager{_bypassed};
 
-    std::vector<std::string> _program_files;
+    std::vector<std::filesystem::path> _program_files;
 
     std::string _plugin_load_name;
     std::string _plugin_load_path;
-    PluginInstance _instance;
     ComponentHandler _component_handler;
+    PluginInstance _instance;
 
     Steinberg::Vst::EventList _in_event_list{VST_WRAPPER_NOTE_EVENT_QUEUE_SIZE};
     Steinberg::Vst::EventList _out_event_list{VST_WRAPPER_NOTE_EVENT_QUEUE_SIZE};

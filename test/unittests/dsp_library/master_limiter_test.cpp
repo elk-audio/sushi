@@ -2,8 +2,6 @@
 
 #include "gtest/gtest.h"
 
-#define private public
-
 #include "dsp_library/master_limiter.h"
 #include "test/data/master_limiter_test_data.h"
 

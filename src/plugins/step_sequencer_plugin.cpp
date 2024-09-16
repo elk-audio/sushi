@@ -130,8 +130,8 @@ void StepSequencerPlugin::process_audio(const ChunkSampleBuffer& in_buffer, Chun
         return;
     }
 
-    float start_beat = _host_control.transport()->current_bar_beats() * MULTIPLIER_8TH_NOTE;
-    float end_beat = _host_control.transport()->current_bar_beats(AUDIO_CHUNK_SIZE) * MULTIPLIER_8TH_NOTE;
+    float start_beat = static_cast<float>(_host_control.transport()->current_bar_beats() * MULTIPLIER_8TH_NOTE);
+    float end_beat = static_cast<float>(_host_control.transport()->current_bar_beats(AUDIO_CHUNK_SIZE) * MULTIPLIER_8TH_NOTE);
 
     /* New 8th note during this chunk */
     if (static_cast<int>(end_beat) - static_cast<int>(start_beat) != 0)

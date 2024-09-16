@@ -25,6 +25,9 @@
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::compressor_plugin {
 
 class CompressorPlugin : public InternalPlugin, public UidHelper<CompressorPlugin>
@@ -63,5 +66,7 @@ private:
 };
 
 } // namespace sushi::internal::compressor_plugin
+
+ELK_POP_WARNING
 
 #endif // COMPRESSOR_PLUGIN_H

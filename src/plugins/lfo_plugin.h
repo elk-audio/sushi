@@ -23,6 +23,9 @@
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::lfo_plugin {
 
 class LfoPlugin : public InternalPlugin, public UidHelper<LfoPlugin>
@@ -41,12 +44,14 @@ public:
     static std::string_view static_uid();
 
 private:
-    float _phase{0};
-    float _buffers_per_second{0};
+    float _phase {0};
+    float _buffers_per_second {0};
     FloatParameterValue* _freq_parameter;
     FloatParameterValue* _out_parameter;
 };
 
 } // end namespace sushi::internal::lfo_plugin
+
+ELK_POP_WARNING
 
 #endif // LFO_PLUGIN_H

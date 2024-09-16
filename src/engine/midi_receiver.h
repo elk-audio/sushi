@@ -28,6 +28,8 @@ namespace sushi::internal::midi_receiver {
 class MidiReceiver
 {
 public:
+    virtual ~MidiReceiver() = default;
+
     virtual void send_midi(int port, MidiDataByte data, Time timestamp) = 0;
 };
 

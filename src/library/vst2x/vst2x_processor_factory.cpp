@@ -28,10 +28,12 @@
 
 namespace sushi::internal::vst2 {
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-const-variable"
+#include "elk-warning-suppressor/warning_suppressor.hpp"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_UNUSED_CONST_VARIABLE
 ELKLOG_GET_LOGGER_WITH_MODULE_NAME("Vst2");
-#pragma GCC diagnostic pop
+ELK_POP_WARNING
 
 #ifdef SUSHI_BUILD_WITH_VST2
 

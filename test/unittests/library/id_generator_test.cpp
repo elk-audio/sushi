@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
-#define private public
+
+#include "elk-warning-suppressor/warning_suppressor.hpp"
 
 #include "library/id_generator.h"
 

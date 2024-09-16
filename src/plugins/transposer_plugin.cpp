@@ -98,7 +98,7 @@ void TransposerPlugin::process_event(const RtEvent& event)
 
 int TransposerPlugin::_transpose_note(int note)
 {
-    int steps = _transpose_parameter->processed_value();
+    int steps = static_cast<int>(_transpose_parameter->processed_value());
     return std::clamp(note + steps, MIN_NOTE, MAX_NOTE);
 }
 

@@ -32,8 +32,8 @@ namespace sushi::internal::audio_frontend {
 
 ELKLOG_GET_LOGGER_WITH_MODULE_NAME("offline audio");
 
-#if defined(__clang__)
-constexpr float INPUT_NOISE_LEVEL = 0.06309573444801933; // pow(10, (-24.0f/20.0f)) pre-computed
+#if defined(__clang__)  || defined(_MSC_VER)
+constexpr float INPUT_NOISE_LEVEL = 0.06309573444801933f; // pow(10, (-24.0f/20.0f)) pre-computed
 #elif defined(__GNUC__) || defined(__GNUG__)
 constexpr float INPUT_NOISE_LEVEL = powf(10, (-24.0f/20.0f));
 #endif
@@ -77,7 +77,10 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
     {
         // Open audio file and check channels / sample rate
         memset(&_soundfile_info, 0, sizeof(_soundfile_info));
-        if (!(_input_file = sf_open(off_config->input_filename.c_str(), SFM_READ, &_soundfile_info)))
+
+        _input_file = sf_open(off_config->input_filename.c_str(), SFM_READ, &_soundfile_info);
+
+        if (!_input_file)
         {
             cleanup();
             ELKLOG_LOG_ERROR("Unable to open input file {}", off_config->input_filename);
@@ -85,15 +88,18 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
         }
         _mono = _soundfile_info.channels == 1;
         auto sample_rate_file = _soundfile_info.samplerate;
-        if (sample_rate_file != _engine->sample_rate())
-        {
-            ELKLOG_LOG_WARNING("Sample rate mismatch between file ({}) and engine ({})",
-                              sample_rate_file,
-                              _engine->sample_rate());
-        }
+
+        ELKLOG_LOG_WARNING_IF(sample_rate_file != _engine->sample_rate(),
+                              "Sample rate mismatch between file ({}) and engine ({})",
+                              sample_rate_file, _engine->sample_rate());
+
+        _set_engine_sample_rate(static_cast<float>(sample_rate_file));
 
         // Open output file with same format as input file
-        if (!(_output_file = sf_open(off_config->output_filename.c_str(), SFM_WRITE, &_soundfile_info)))
+
+        _output_file = sf_open(off_config->output_filename.c_str(), SFM_WRITE, &_soundfile_info);
+
+        if (!_output_file)
         {
             cleanup();
             ELKLOG_LOG_ERROR("Unable to open output file {}", off_config->output_filename);
@@ -172,6 +178,11 @@ void OfflineFrontend::run()
     }
 }
 
+void OfflineFrontend::pause(bool /*paused*/)
+{
+    // Currently a no-op
+}
+
 // Process all events up until end_time
 void OfflineFrontend::_process_events(Time end_time)
 {
@@ -220,15 +231,18 @@ void OfflineFrontend::_process_dummy()
 void OfflineFrontend::_run_blocking()
 {
     set_flush_denormals_to_zero();
-    int readcount;
     int samplecount = 0;
     double usec_time = 0.0f;
     Time start_time = std::chrono::microseconds(0);
 
     float file_buffer[OFFLINE_FRONTEND_CHANNELS * AUDIO_CHUNK_SIZE];
-    while ( (readcount = static_cast<int>(sf_readf_float(_input_file,
+
+    ELK_PUSH_WARNING
+    ELK_DISABLE_ASSIGNMENT_WITHIN_CONDITIONAL
+
+    while (int readcount = static_cast<int>(sf_readf_float(_input_file,
                                                          file_buffer,
-                                                         static_cast<sf_count_t>(AUDIO_CHUNK_SIZE)))) )
+                                                         static_cast<sf_count_t>(AUDIO_CHUNK_SIZE))))
     {
         auto process_time = start_time + std::chrono::microseconds(static_cast<uint64_t>(usec_time));
 
@@ -267,11 +281,8 @@ void OfflineFrontend::_run_blocking()
         // Not done in libsndfile's example
         sf_writef_float(_output_file, file_buffer, static_cast<sf_count_t>(readcount));
     }
-}
 
-void OfflineFrontend::pause(bool /*enabled*/)
-{
-    // Currently a no-op
+    ELK_POP_WARNING
 }
 
 } // end namespace sushi::internal::audio_frontend

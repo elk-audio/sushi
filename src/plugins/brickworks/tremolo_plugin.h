@@ -25,6 +25,9 @@
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::tremolo_plugin {
 
 class TremoloPlugin : public InternalPlugin, public UidHelper<TremoloPlugin>
@@ -60,5 +63,7 @@ private:
 };
 
 } // namespace sushi::internal::tremolo_plugin
+
+ELK_POP_WARNING
 
 #endif // TREMOLO_PLUGIN_H

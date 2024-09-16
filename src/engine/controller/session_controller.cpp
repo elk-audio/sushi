@@ -20,6 +20,7 @@
 
 #include <ctime>
 
+#include "spdlog/fmt/bundled/format.h"
 #include "spdlog/fmt/bundled/chrono.h"
 
 #include "elklog/static_logger.h"
@@ -148,6 +149,7 @@ control::ControlStatus SessionController::restore_session(const control::Session
     {
         return control::ControlStatus::INVALID_ARGUMENTS;
     }
+
     auto new_session = std::make_unique<control::SessionState>(state);
 
     auto lambda = [&, state = std::move(new_session)] () -> int
@@ -158,6 +160,7 @@ control::ControlStatus SessionController::restore_session(const control::Session
             ELKLOG_LOG_DEBUG("Pausing engine");
             _audio_frontend->pause(true);
         }
+
         _clear_all_tracks();
         _restore_tracks(state->tracks);
         _restore_plugin_states(state->tracks);
@@ -170,6 +173,7 @@ control::ControlStatus SessionController::restore_session(const control::Session
             ELKLOG_LOG_DEBUG("Un-Pausing engine");
             _audio_frontend->pause(false);
         }
+
         return EventStatus::HANDLED_OK;
     };
 
@@ -348,6 +352,7 @@ bool SessionController::_check_state(const control::SessionState& state) const
         ELKLOG_LOG_ERROR("Audio engine doesn't have enough audio channels to restore saved session");
         return false;
     }
+
     if (state.midi_state.inputs > _midi_dispatcher->get_midi_inputs() ||
         state.midi_state.outputs > _midi_dispatcher->get_midi_outputs())
     {
@@ -421,7 +426,7 @@ void SessionController::_restore_plugin_states(std::vector<control::TrackState> 
         auto status = track_instance->set_state(&state, false);
         if (status != ProcessorReturnCode::OK)
         {
-            ELKLOG_LOG_ERROR("Failed to restore state to track {} with status {}", track.name, status);
+            ELKLOG_LOG_ERROR("Failed to restore state to track {} with status {}", track.name, static_cast<int>(status));
         }
 
         for (auto& plugin : track.processors)
@@ -436,7 +441,7 @@ void SessionController::_restore_plugin_states(std::vector<control::TrackState> 
             status = instance->set_state(&state, false);
             if (status != ProcessorReturnCode::OK)
             {
-                ELKLOG_LOG_ERROR("Failed to restore state to track {} with status {}", track.name, status);
+                ELKLOG_LOG_ERROR("Failed to restore state to track {} with status {}", track.name, static_cast<int>(status));
             }
         }
     }

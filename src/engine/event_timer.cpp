@@ -29,7 +29,7 @@
 namespace sushi::internal::event_timer {
 
 using namespace std::chrono_literals;
-constexpr float MICROSECONDS = std::chrono::microseconds(1s).count();
+constexpr float MICROSECONDS = static_cast<float>(std::chrono::microseconds(1s).count());
 
 inline Time calc_chunk_time(float samplerate)
 {

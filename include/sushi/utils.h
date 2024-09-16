@@ -25,7 +25,6 @@
 #include <optional>
 
 #include "rapidjson/document.h"
-#include "sushi/utils.h"
 
 namespace sushi {
 

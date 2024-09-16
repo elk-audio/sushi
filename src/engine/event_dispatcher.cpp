@@ -46,7 +46,6 @@ EventDispatcher::EventDispatcher(engine::BaseEngine* engine,
                                                                     _parameter_update_count{0}
 {}
 
-
 EventDispatcher::~EventDispatcher()
 {
     if (_running)

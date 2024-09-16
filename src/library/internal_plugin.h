@@ -25,6 +25,7 @@
 #include <unordered_map>
 #include <mutex>
 
+#include "elk-warning-suppressor/warning_suppressor.hpp"
 #include "library/processor.h"
 #include "library/plugin_parameters.h"
 
@@ -35,6 +36,8 @@ constexpr int DEFAULT_CHANNELS = MAX_TRACK_CHANNELS;
 class StringUid
 {
 public:
+    virtual ~StringUid() = default;
+
     virtual std::string_view uid() const
     {
         return "";
@@ -51,11 +54,15 @@ template <typename T>
 class UidHelper : public virtual StringUid
 {
 public:
+    ~UidHelper() override = default;
+
     virtual std::string_view uid() const override
     {
         return T::static_uid();
     }
 };
+
+class InternalPluginAccessor;
 
 /**
  * @brief internal base class for processors that keeps track of all host-related
@@ -208,6 +215,8 @@ protected:
     void send_property_to_realtime(ObjectId property_id, const std::string& value);
 
 private:
+    friend InternalPluginAccessor;
+
     void _set_rt_state(const RtState* state);
 
     void _handle_parameter_event(const ParameterChangeRtEvent* event);
@@ -222,4 +231,5 @@ private:
 };
 
 } // end namespace sushi::internal
+
 #endif // SUSHI_INTERNAL_PLUGIN_H

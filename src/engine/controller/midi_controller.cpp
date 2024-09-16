@@ -32,8 +32,8 @@ namespace sushi::internal::engine::controller_impl {
 
     ext_connection.processor_id = connection.input_connection.target;
     ext_connection.parameter_id = connection.input_connection.parameter;
-    ext_connection.min_range = connection.input_connection.min_range;
-    ext_connection.max_range = connection.input_connection.max_range;
+    ext_connection.min_range = static_cast<int>(connection.input_connection.min_range);
+    ext_connection.max_range = static_cast<int>(connection.input_connection.max_range);
     ext_connection.relative_mode = connection.input_connection.relative;
     ext_connection.channel = to_external_midi_channel(connection.channel);
     ext_connection.port = connection.port;

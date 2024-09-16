@@ -3,7 +3,7 @@
 #include "library/rt_event_fifo.h"
 #include "test_utils/host_control_mockup.h"
 
-#define private public
+#include "elk-warning-suppressor/warning_suppressor.hpp"
 
 #include "plugins/arpeggiator_plugin.cpp"
 

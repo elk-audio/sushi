@@ -88,7 +88,7 @@ struct CCInputConnection
 
 struct PCInputConnection
 {
-    int processor_id;
+    ObjectId processor_id;
     int channel;
     int port;
 };
@@ -108,14 +108,16 @@ struct KbdOutputConnection
     int channel;
 };
 
+class Accessor;
+
 class MidiDispatcher : public EventPoster, public midi_receiver::MidiReceiver
 {
     SUSHI_DECLARE_NON_COPYABLE(MidiDispatcher);
 
 public:
-    MidiDispatcher(dispatcher::BaseEventDispatcher* event_dispatcher);
+    explicit MidiDispatcher(dispatcher::BaseEventDispatcher* event_dispatcher);
 
-    virtual ~MidiDispatcher();
+    ~MidiDispatcher() override;
 
     void set_frontend(midi_frontend::BaseMidiFrontend* frontend)
     {
@@ -135,7 +137,7 @@ public:
     /**
      * @brief Returns the number of midi input ports.
      */
-    int get_midi_inputs() const
+    [[nodiscard]] int get_midi_inputs() const
     {
         return _midi_inputs;
     }
@@ -150,7 +152,7 @@ public:
     /**
      * @brief Returns the number of midi output ports.
      */
-    int get_midi_outputs() const
+    [[nodiscard]] int get_midi_outputs() const
     {
         return _midi_outputs;
     }
@@ -360,6 +362,7 @@ public:
     int process(Event* /*event*/) override;
 
 private:
+    friend Accessor;
 
     bool _handle_engine_notification(const EngineNotificationEvent* event);
     bool _handle_audio_graph_notification(const AudioGraphNotificationEvent* event);
@@ -369,13 +372,22 @@ private:
     std::vector<CCInputConnection> _get_cc_input_connections(std::optional<int> processor_id_filter);
     std::vector<PCInputConnection> _get_pc_input_connections(std::optional<int> processor_id_filter);
 
-    std::map<int, std::array<std::vector<InputConnection>, midi::MidiChannel::OMNI + 1>> _kb_routes_in;
-    std::map<ObjectId, std::vector<OutputConnection>>  _kb_routes_out;
-    std::map<int, std::array<std::array<std::vector<InputConnection>, midi::MidiChannel::OMNI + 1>, midi::MAX_CONTROLLER_NO + 1>> _cc_routes;
-    std::map<int, std::array<std::vector<InputConnection>, midi::MidiChannel::OMNI + 1>> _pc_routes;
-    std::map<int, std::array<std::vector<InputConnection>, midi::MidiChannel::OMNI + 1>> _raw_routes_in;
-    int _midi_inputs{0};
-    int _midi_outputs{0};
+    using InputConnections = std::array<std::vector<InputConnection>, midi::MidiChannel::OMNI + 1>;
+
+    using KeyboardRoutesIn = std::map<int, InputConnections>;
+    using KeyboardRoutesOut = std::map<ObjectId, std::vector<OutputConnection>>;
+    using CcRoutes = std::map<int, std::array<InputConnections, midi::MAX_CONTROLLER_NO + 1>>;
+    using PcRoutes = std::map<int, InputConnections>;
+    using RawRoutesIn = std::map<int, InputConnections>;
+
+    KeyboardRoutesIn _kb_routes_in;
+    KeyboardRoutesOut _kb_routes_out;
+    CcRoutes _cc_routes;
+    PcRoutes _pc_routes;
+    RawRoutesIn _raw_routes_in;
+
+    int _midi_inputs {0};
+    int _midi_outputs {0};
 
     std::mutex _kb_routes_in_lock;
     std::mutex _kb_routes_out_lock;

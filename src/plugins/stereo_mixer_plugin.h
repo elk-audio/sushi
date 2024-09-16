@@ -24,13 +24,17 @@
 #include "library/internal_plugin.h"
 #include "dsp_library/value_smoother.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
 
 namespace sushi::internal::stereo_mixer_plugin {
+
+class Accessor;
 
 class StereoMixerPlugin : public InternalPlugin, public UidHelper<StereoMixerPlugin>
 {
 public:
-    StereoMixerPlugin(HostControl host_control);
+    explicit StereoMixerPlugin(HostControl host_control);
 
     ProcessorReturnCode init(float sample_rate) override;
 
@@ -41,6 +45,8 @@ public:
     static std::string_view static_uid();
 
 private:
+    friend Accessor;
+
     FloatParameterValue* _ch1_pan;
     FloatParameterValue* _ch1_gain;
     FloatParameterValue* _ch1_invert_phase;
@@ -55,5 +61,7 @@ private:
 };
 
 } // end namespace sushi::internal::stereo_mixer_plugin
+
+ELK_POP_WARNING
 
 #endif // SUSHI_STEREO_MIXER_PLUGIN_H

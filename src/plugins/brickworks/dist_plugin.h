@@ -26,6 +26,9 @@
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::dist_plugin {
 
 class DistPlugin : public InternalPlugin, public UidHelper<DistPlugin>
@@ -68,5 +71,7 @@ private:
 };
 
 } // namespace sushi::internal::dist_plugin
+
+ELK_POP_WARNING
 
 #endif // DIST_PLUGIN_H

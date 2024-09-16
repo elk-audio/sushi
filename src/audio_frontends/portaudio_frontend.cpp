@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2023 Elk Audio AB
+ * Copyright 2017-2024 Elk Audio AB
  *
  * SUSHI is free software: you can redistribute it and/or modify it under the terms of
  * the GNU Affero General Public License as published by the Free Software Foundation,
@@ -15,7 +15,7 @@
 
 /**
  * @brief Realtime audio frontend for PortAudio
- * @Copyright 2017-2023 Elk Audio AB, Stockholm
+ * @Copyright 2017-2024 Elk Audio AB, Stockholm
  */
 
 #ifdef SUSHI_BUILD_WITH_PORTAUDIO
@@ -27,6 +27,10 @@
 #include "portaudio_frontend.h"
 
 #include "audio_frontend_internals.h"
+
+#ifdef _MSC_VER
+    #define bzero(b, len) (memset((b), '\0', (len)), (void) 0)
+#endif
 
 namespace sushi::internal::audio_frontend {
 
@@ -137,11 +141,12 @@ AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration* conf
         ELKLOG_LOG_ERROR("Failed to configure samplerate");
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
-    if (samplerate != _engine->sample_rate())
-    {
-        ELKLOG_LOG_WARNING("Failed to use engine samplerate ({}), using {} instead", _engine->sample_rate(), samplerate);
-        _engine->set_sample_rate(samplerate);
-    }
+
+    ELKLOG_LOG_WARNING_IF(samplerate != _engine->sample_rate(),
+                          "Failed to use engine samplerate ({}), using {} instead",
+                          _engine->sample_rate(), samplerate);
+
+    _set_engine_sample_rate(static_cast<float>(samplerate));
 
     // Open the stream
     // In case there is no input device available we only want to use output
@@ -255,14 +260,21 @@ std::optional<PortaudioDeviceInfo> PortAudioFrontend::device_info(int device_idx
     }
 
     const PaDeviceInfo* pa_devinfo = Pa_GetDeviceInfo(device_idx);
-    if (pa_devinfo == nullptr)
+    if (!pa_devinfo)
     {
         ELKLOG_LOG_ERROR("Error querying portaudio devices {}", device_idx);
+        return std::nullopt;
+    }
+    const PaHostApiInfo* pa_apiinfo = Pa_GetHostApiInfo(pa_devinfo->hostApi);
+    if (!pa_apiinfo)
+    {
+        ELKLOG_LOG_ERROR("Error querying portaudio host api {}", pa_devinfo->hostApi);
         return std::nullopt;
     }
 
     PortaudioDeviceInfo devinfo;
     devinfo.name = pa_devinfo->name;
+    devinfo.host_api = pa_apiinfo->name;
     devinfo.inputs = pa_devinfo->maxInputChannels;
     devinfo.outputs = pa_devinfo->maxOutputChannels;
 
@@ -411,6 +423,8 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
     Time timestamp = _start_time + std::chrono::duration_cast<std::chrono::microseconds>(pa_time_elapsed);
 
     _out_buffer.clear();
+    _handle_resume(timestamp, static_cast<int>(frame_count));
+
     if (_pause_manager.should_process())
     {
         _copy_interleaved_audio(static_cast<const float*>(input));
@@ -420,15 +434,8 @@ int PortAudioFrontend::_internal_process_callback(const void* input,
             _pause_manager.ramp_output(_out_buffer);
         }
     }
-    else
-    {
-        if (_pause_notified == false)
-        {
-            _pause_notify->notify();
-            _pause_notified = true;
-            _engine->enable_realtime(false);
-        }
-    }
+
+    _handle_pause(timestamp);
 
     _output_interleaved_audio(static_cast<float*>(output));
 

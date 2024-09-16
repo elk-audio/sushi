@@ -21,15 +21,15 @@
 #include <cassert>
 #include <cmath>
 #include <algorithm>
-#include <mutex>
 
 #ifdef SUSHI_BUILD_WITH_ABLETON_LINK
 #include "ableton/Link.hpp"
+#ifdef _MSC_VER
+#undef DELETE // Because Link pulls in Windows headers
+#endif
 #else //SUSHI_BUILD_WITH_ABLETON_LINK
 #include "link_dummy.h"
 #endif // SUSHI_BUILD_WITH_ABLETON_LINK
-
-#include "twine/twine.h"
 
 #include "elklog/static_logger.h"
 
@@ -251,7 +251,6 @@ void Transport::set_sync_mode(SyncMode mode, bool update_via_event)
         case SyncMode::GATE_INPUT:
             _link_controller->enable(false);
             break;
-
         case SyncMode::ABLETON_LINK:
             _link_controller->enable(true);
             _set_link_playing(_set_playmode != PlayingMode::STOPPED);

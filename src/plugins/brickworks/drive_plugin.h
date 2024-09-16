@@ -26,6 +26,9 @@
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::drive_plugin {
 
 class DrivePlugin : public InternalPlugin, public UidHelper<DrivePlugin>
@@ -68,5 +71,7 @@ private:
 };
 
 } // namespace sushi::internal::drive_plugin
+
+ELK_POP_WARNING
 
 #endif // DRIVE_PLUGIN_H

@@ -67,7 +67,7 @@ bool OscpackOscMessenger::init()
     {
         _transmit_socket = std::make_unique<UdpTransmitSocket>(IpEndpointName(_send_ip.c_str(), _send_port));
     }
-    catch (std::exception& e)
+    catch ([[maybe_unused]] std::exception& e)
     {
         status = false;
         ELKLOG_LOG_ERROR("OSC transmitter failed instantiating for IP {} and port {}, with message: ",
@@ -81,7 +81,7 @@ bool OscpackOscMessenger::init()
         _receive_socket = std::make_unique<UdpListeningReceiveSocket>(IpEndpointName(IpEndpointName::ANY_ADDRESS, _receive_port),
                                                                       this);
     }
-    catch (std::exception& e)
+    catch ([[maybe_unused]] std::exception& e)
     {
         status = false;
         ELKLOG_LOG_ERROR("OSC receiver failed instantiating for port {}, with message: ",
@@ -261,7 +261,7 @@ void OscpackOscMessenger::ProcessMessage(const oscpack::ReceivedMessage& m, cons
             }
         }
     }
-    catch (oscpack::Exception& e)
+    catch ([[maybe_unused]] oscpack::Exception& e)
     {
         // Any parsing errors such as unexpected argument types, or missing arguments get thrown as exceptions.
         ELKLOG_LOG_ERROR("Exception while parsing message: {}: {}", m.AddressPattern(), e.what());

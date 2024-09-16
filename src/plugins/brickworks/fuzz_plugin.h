@@ -26,6 +26,9 @@
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::fuzz_plugin {
 
 class FuzzPlugin : public InternalPlugin, public UidHelper<FuzzPlugin>
@@ -51,7 +54,7 @@ public:
 
 private:
     BypassManager _bypass_manager;
-    float _sample_rate{0};
+    float _sample_rate {0};
 
     FloatParameterValue* _fuzz;
     FloatParameterValue* _volume;
@@ -63,9 +66,11 @@ private:
     std::array<bw_src_int_state, MAX_TRACK_CHANNELS> _src_up_states;
     std::array<bw_src_int_state, MAX_TRACK_CHANNELS> _src_down_states;
 
-    ChunkSampleBuffer _tmp_buf{MAX_TRACK_CHANNELS};
+    ChunkSampleBuffer _tmp_buf {MAX_TRACK_CHANNELS};
 };
 
 } // namespace sushi::internal::fuzz_plugin
+
+ELK_POP_WARNING
 
 #endif // FUZZ_PLUGIN_H

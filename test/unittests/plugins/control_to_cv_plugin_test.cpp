@@ -155,22 +155,22 @@ TEST_F(ControlToCvPluginTest, TestPolyphonicMode)
     e = _event_output.pop();
     EXPECT_EQ(RtEventType::CV_EVENT, e.type());
     EXPECT_EQ(PITCH_CV_1, e.cv_event()->cv_id());
-    EXPECT_FLOAT_EQ(0.50, e.cv_event()->value());
+    EXPECT_FLOAT_EQ(0.50f, e.cv_event()->value());
 
     e = _event_output.pop();
     EXPECT_EQ(RtEventType::CV_EVENT, e.type());
     EXPECT_EQ(PITCH_CV_2, e.cv_event()->cv_id());
-    EXPECT_FLOAT_EQ(0.40, e.cv_event()->value());
+    EXPECT_FLOAT_EQ(0.40f, e.cv_event()->value());
 
     e = _event_output.pop();
     EXPECT_EQ(RtEventType::CV_EVENT, e.type());
     EXPECT_EQ(VEL_CV_1, e.cv_event()->cv_id());
-    EXPECT_FLOAT_EQ(0.75, e.cv_event()->value());
+    EXPECT_FLOAT_EQ(0.75f, e.cv_event()->value());
 
     e = _event_output.pop();
     EXPECT_EQ(RtEventType::CV_EVENT, e.type());
     EXPECT_EQ(VEL_CV_2, e.cv_event()->cv_id());
-    EXPECT_FLOAT_EQ(0.50, e.cv_event()->value());
+    EXPECT_FLOAT_EQ(0.50f, e.cv_event()->value());
 
     _event_output.clear();
 
@@ -185,22 +185,22 @@ TEST_F(ControlToCvPluginTest, TestPolyphonicMode)
     e = _event_output.pop();
     EXPECT_EQ(RtEventType::CV_EVENT, e.type());
     EXPECT_EQ(PITCH_CV_1, e.cv_event()->cv_id());
-    EXPECT_FLOAT_EQ(0.65, e.cv_event()->value());
+    EXPECT_FLOAT_EQ(0.65f, e.cv_event()->value());
 
     e = _event_output.pop();
     EXPECT_EQ(RtEventType::CV_EVENT, e.type());
     EXPECT_EQ(PITCH_CV_2, e.cv_event()->cv_id());
-    EXPECT_FLOAT_EQ(0.4, e.cv_event()->value());
+    EXPECT_FLOAT_EQ(0.4f, e.cv_event()->value());
 
     e = _event_output.pop();
     EXPECT_EQ(RtEventType::CV_EVENT, e.type());
     EXPECT_EQ(VEL_CV_1, e.cv_event()->cv_id());
-    EXPECT_FLOAT_EQ(0.4, e.cv_event()->value());
+    EXPECT_FLOAT_EQ(0.4f, e.cv_event()->value());
 
     e = _event_output.pop();
     EXPECT_EQ(RtEventType::CV_EVENT, e.type());
     EXPECT_EQ(VEL_CV_2, e.cv_event()->cv_id());
-    EXPECT_FLOAT_EQ(0.5, e.cv_event()->value());
+    EXPECT_FLOAT_EQ(0.5f, e.cv_event()->value());
 
     _event_output.clear();
 
@@ -246,7 +246,7 @@ TEST_F(ControlToCvPluginTest, TestPitchBend)
     auto e = _event_output[1];
     EXPECT_EQ(RtEventType::CV_EVENT, e.type());
     EXPECT_EQ(PITCH_CV, e.cv_event()->cv_id());
-    EXPECT_FLOAT_EQ(0.45, e.cv_event()->value());
+    EXPECT_FLOAT_EQ(0.45f, e.cv_event()->value());
     _event_output.clear();
 
     // Set the tune parameters up 1 octave
@@ -259,7 +259,7 @@ TEST_F(ControlToCvPluginTest, TestPitchBend)
     e = _event_output[0];
     EXPECT_EQ(RtEventType::CV_EVENT, e.type());
     EXPECT_EQ(PITCH_CV, e.cv_event()->cv_id());
-    EXPECT_FLOAT_EQ(0.55, e.cv_event()->value());
+    EXPECT_FLOAT_EQ(0.55f, e.cv_event()->value());
     _event_output.clear();
 }
 
@@ -291,6 +291,6 @@ TEST_F(ControlToCvPluginTest, TestModulation)
     auto e = _event_output[2];
     EXPECT_EQ(RtEventType::CV_EVENT, e.type());
     EXPECT_EQ(MOD_CV, e.cv_event()->cv_id());
-    EXPECT_FLOAT_EQ(0.5, e.cv_event()->value());
+    EXPECT_FLOAT_EQ(0.5f, e.cv_event()->value());
 }
 

@@ -50,17 +50,21 @@
 
 #include <string>
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
+#include "elk-warning-suppressor/warning_suppressor.hpp"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_UNUSED_PARAMETER
 #define VST_FORCE_DEPRECATED 0
 #include "aeffectx.h"
-#pragma GCC diagnostic pop
+ELK_POP_WARNING
 
+#ifndef _MSC_VER
 #include <dlfcn.h>
+#endif
 
 namespace sushi::internal::vst2 {
 
-typedef void* LibraryHandle;
+using LibraryHandle = void*;
 
 // TODO:
 //      this class is stateless atm (basically a namespace),

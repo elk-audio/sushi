@@ -35,8 +35,8 @@ char canDoBypass[] = "bypass";
 
 namespace sushi::internal::vst2 {
 
-constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = kVstNanosValid | kVstPpqPosValid | kVstTempoValid |
-                                                  kVstBarsValid | kVstTimeSigValid;
+constexpr int SUSHI_HOST_TIME_CAPABILITIES = kVstNanosValid | kVstPpqPosValid | kVstTempoValid |
+                                             kVstBarsValid | kVstTimeSigValid;
 
 ELKLOG_GET_LOGGER_WITH_MODULE_NAME("vst2");
 
@@ -271,6 +271,7 @@ void Vst2xWrapper::_cleanup()
     if (_library_handle != nullptr)
     {
         PluginLoader::close_library_handle(_library_handle);
+        _library_handle = nullptr;
     }
 }
 
@@ -421,15 +422,15 @@ VstTimeInfo* Vst2xWrapper::time_info()
     auto transport = _host_control.transport();
     auto ts = transport->time_signature();
 
-    _time_info.samplePos          = transport->current_samples();
+    _time_info.samplePos          = static_cast<double>(transport->current_samples());
     _time_info.sampleRate         = _sample_rate;
-    _time_info.nanoSeconds        = std::chrono::duration_cast<std::chrono::nanoseconds>(transport->current_process_time()).count();
+    _time_info.nanoSeconds        = static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(transport->current_process_time()).count());
     _time_info.ppqPos             = transport->current_beats();
     _time_info.tempo              = transport->current_tempo();
     _time_info.barStartPos        = transport->current_bar_start_beats();
     _time_info.timeSigNumerator   = ts.numerator;
     _time_info.timeSigDenominator = ts.denominator;
-    _time_info.flags = (SUSHI_HOST_TIME_CAPABILITIES | transport->playing()) ? kVstTransportPlaying : 0;
+    _time_info.flags = SUSHI_HOST_TIME_CAPABILITIES | (transport->playing() ? kVstTransportPlaying : 0);
     if (transport->current_state_change() != PlayStateChange::UNCHANGED)
     {
         _time_info.flags |= kVstTransportChanged;

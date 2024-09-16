@@ -17,7 +17,7 @@ using namespace sushi;
 namespace test_utils {
 
 // Enough leeway to approximate 6dB to 2 times amplification.
-const float DECIBEL_ERROR = 0.01;
+const float DECIBEL_ERROR = 0.01f;
 
 template <int size>
 inline void fill_sample_buffer(SampleBuffer<size>& buffer, float value)
@@ -27,7 +27,6 @@ inline void fill_sample_buffer(SampleBuffer<size>& buffer, float value)
         std::fill(buffer.channel(ch), buffer.channel(ch) + size, value);
     }
 }
-
 
 template <int size>
 inline void fill_buffer_with_noise(SampleBuffer<size>& buffer, std::optional<int> seed=std::nullopt)
@@ -47,7 +46,6 @@ inline void fill_buffer_with_noise(SampleBuffer<size>& buffer, std::optional<int
         }
     }
 }
-
 
 template <int size>
 inline void assert_buffer_value(float value, const SampleBuffer <size> &buffer)

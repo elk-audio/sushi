@@ -70,7 +70,7 @@ class Event
     friend class sushi::internal::dispatcher::Worker;
 
 public:
-    virtual ~Event() {}
+    virtual ~Event() = default;
 
     /**
      * @brief Creates an Event from its RtEvent counterpart if possible
@@ -99,17 +99,17 @@ public:
      * @brief Whether the events should be processes asynchronously in a low priority thread or not
      * @return true if the Event should be processed asynchronously, false otherwise.
      */
-    virtual bool process_asynchronously() const {return false;}
+    [[nodiscard]] virtual bool process_asynchronously() const {return false;}
 
     /**
      * Events that are directly convertible to an RtEvent.
      */
-    virtual bool maps_to_rt_event() const {return false;}
+    [[nodiscard]] virtual bool maps_to_rt_event() const {return false;}
 
     /**
      * Return the RtEvent counterpart of the Event
      */
-    virtual RtEvent to_rt_event(int /*sample_offset*/) const {return {};}
+    [[nodiscard]] virtual RtEvent to_rt_event(int /*sample_offset*/) const {return {};}
 
     /**
      * The below should all be overridden only by one single sub-class.
@@ -118,33 +118,33 @@ public:
      */
 
     /* Convertible to KeyboardEvent */
-    virtual bool is_keyboard_event() const {return false;}
+    [[nodiscard]] virtual bool is_keyboard_event() const {return false;}
 
     /* Convertible to ParameterChangeNotification */
-    virtual bool is_parameter_change_event() const {return false;}
+    [[nodiscard]] virtual bool is_parameter_change_event() const {return false;}
 
     /* Convertible to ParameterChangeNotification */
-    virtual bool is_parameter_change_notification() const {return false;}
+    [[nodiscard]] virtual bool is_parameter_change_notification() const {return false;}
 
     /* Convertible to PropertyChangeNotification */
-    virtual bool is_property_change_notification() const {return false;}
+    [[nodiscard]] virtual bool is_property_change_notification() const {return false;}
 
     /* Convertible to EngineEvent */
-    virtual bool is_engine_event() const {return false;}
+    [[nodiscard]] virtual bool is_engine_event() const {return false;}
 
     /* Convertible to EngineNotificationEvent */
-    virtual bool is_engine_notification() const {return false;}
+    [[nodiscard]] virtual bool is_engine_notification() const {return false;}
 
     /* Convertible to AsynchronousWorkEvent */
-    virtual bool is_async_work_event() const {return false;}
+    [[nodiscard]] virtual bool is_async_work_event() const {return false;}
 
 protected:
     explicit Event(Time timestamp) : _timestamp(timestamp) {}
 
     /* Only the dispatcher can set the receiver and call the completion callback */
 
-    EventCompletionCallback completion_cb() const {return _completion_cb;}
-    void*                   callback_arg() const {return _callback_arg;}
+    [[nodiscard]] EventCompletionCallback completion_cb() const {return _completion_cb;}
+    [[nodiscard]] void*                   callback_arg() const {return _callback_arg;}
 
 private:
     int                     _receiver{0};
@@ -212,15 +212,15 @@ public:
 
     bool maps_to_rt_event() const override {return true;}
 
-    RtEvent to_rt_event(int sample_offset) const override;
+    [[nodiscard]] RtEvent to_rt_event(int sample_offset) const override;
 
-    Subtype         subtype() {return _subtype;}
-    ObjectId        processor_id() {return _processor_id;}
-    int             channel() {return _channel;}
-    int             note() {return _note;}
-    float           velocity() {return _velocity;}
-    float           value() {return _velocity;}
-    MidiDataByte    midi_data() {return _midi_data;}
+    Subtype       subtype() const {return _subtype;}
+    [[nodiscard]] ObjectId processor_id() const {return _processor_id;}
+    [[nodiscard]] int      channel() const {return _channel;}
+    [[nodiscard]] int      note() const {return _note;}
+    [[nodiscard]] float    velocity() const {return _velocity;}
+    [[nodiscard]] float    value() const {return _velocity;}
+    MidiDataByte midi_data() {return _midi_data;}
 
 private:
     Subtype         _subtype;
@@ -251,18 +251,18 @@ public:
                                            _parameter_id(parameter_id),
                                            _value(value) {}
 
-    bool maps_to_rt_event() const override {return true;}
+    [[nodiscard]] bool maps_to_rt_event() const override {return true;}
 
-    RtEvent to_rt_event(int sample_offset) const override;
+    [[nodiscard]] RtEvent to_rt_event(int sample_offset) const override;
 
-    bool is_parameter_change_event() const override {return true;}
+    [[nodiscard]] bool is_parameter_change_event() const override {return true;}
 
-    Subtype             subtype() const {return _subtype;}
-    ObjectId            processor_id() const {return _processor_id;}
-    ObjectId            parameter_id() const {return _parameter_id;}
-    float               float_value() const {return _value;}
-    int                 int_value() const {return static_cast<int>(_value);}
-    bool                bool_value() const {return _value > 0.5f;}
+    [[nodiscard]] Subtype             subtype() const {return _subtype;}
+    [[nodiscard]] ObjectId            processor_id() const {return _processor_id;}
+    [[nodiscard]] ObjectId            parameter_id() const {return _parameter_id;}
+    [[nodiscard]] float               float_value() const {return _value;}
+    [[nodiscard]] int                 int_value() const {return static_cast<int>(_value);}
+    [[nodiscard]] bool                bool_value() const {return _value > 0.5f;}
 
 private:
     Subtype             _subtype;
@@ -284,9 +284,9 @@ public:
                                         _property_id(property_id),
                                         _blob_value(blob_value) {}
 
-    bool maps_to_rt_event() const override {return true;}
+    [[nodiscard]] bool maps_to_rt_event() const override {return true;}
 
-    RtEvent to_rt_event(int sample_offset) const override;
+    [[nodiscard]] RtEvent to_rt_event(int sample_offset) const override;
 
 private:
     ObjectId _processor_id;
@@ -305,9 +305,9 @@ public:
                                         _property_id(property_id),
                                         _string_value(string_value) {}
 
-    bool maps_to_rt_event() const override {return true;}
+    [[nodiscard]] bool maps_to_rt_event() const override {return true;}
 
-    RtEvent to_rt_event(int sample_offset) const override;
+    [[nodiscard]] RtEvent to_rt_event(int sample_offset) const override;
 
 private:
     ObjectId    _processor_id;
@@ -341,12 +341,12 @@ public:
                                                                                           _bypass_enabled(bypass_enabled)
     {}
 
-    bool maps_to_rt_event() const override {return true;}
+    [[nodiscard]] bool maps_to_rt_event() const override {return true;}
 
-    RtEvent to_rt_event(int sample_offset) const override;
+    [[nodiscard]] RtEvent to_rt_event(int sample_offset) const override;
 
-    ObjectId processor_id() const {return _processor_id;}
-    bool bypass_enabled() const {return _bypass_enabled;}
+    [[nodiscard]] ObjectId processor_id() const {return _processor_id;}
+    [[nodiscard]] bool bypass_enabled() const {return _bypass_enabled;}
 
 private:
     ObjectId _processor_id;
@@ -365,8 +365,8 @@ public:
                                                                _rt_processor(processor),
                                                                _rt_event_id(rt_event_id) {}
 
-    bool maps_to_rt_event() const override {return true;}
-    RtEvent to_rt_event(int sample_offset) const override;
+    [[nodiscard]] bool maps_to_rt_event() const override {return true;}
+    [[nodiscard]] RtEvent to_rt_event(int sample_offset) const override;
 
 private:
     int         _return_value;
@@ -381,11 +381,11 @@ private:
 class EngineEvent : public Event
 {
 public:
-    bool process_asynchronously() const override {return true;}
+    [[nodiscard]] bool process_asynchronously() const override {return true;}
 
-    bool is_engine_event() const override {return true;}
+    [[nodiscard]] bool is_engine_event() const override {return true;}
 
-    virtual int execute(engine::BaseEngine* engine) const = 0;
+    [[nodiscard]] virtual int execute(engine::BaseEngine* engine) const = 0;
 
 protected:
     explicit EngineEvent(Time timestamp) : Event(timestamp) {}
@@ -423,8 +423,8 @@ public:
 
     int execute(engine::BaseEngine* engine) const override;
 
-    ObjectId            processor_id() const {return _processor_id;}
-    int                 program_no() const {return _program_no;}
+    [[nodiscard]] ObjectId processor_id() const {return _processor_id;}
+    [[nodiscard]] int      program_no() const {return _program_no;}
 
 private:
     ObjectId            _processor_id;
@@ -436,11 +436,11 @@ class PropertyChangeEvent : public EngineEvent
 public:
     PropertyChangeEvent(ObjectId processor_id,
                         ObjectId property_id,
-                        const std::string& string_value,
+                        std::string  string_value,
                         Time timestamp) : EngineEvent(timestamp),
                                           _processor_id(processor_id),
                                           _property_id(property_id),
-                                          _string_value(string_value) {}
+                                          _string_value(std::move(string_value)) {}
 
     int execute(engine::BaseEngine* engine) const override;
 
@@ -501,8 +501,8 @@ private:
 class AsynchronousWorkEvent : public Event
 {
 public:
-    bool process_asynchronously() const override {return true;}
-    bool is_async_work_event() const override {return true;}
+    [[nodiscard]] bool process_asynchronously() const override {return true;}
+    [[nodiscard]] bool is_async_work_event() const override {return true;}
     virtual std::unique_ptr<Event> execute() = 0;
 
 protected:
@@ -576,19 +576,19 @@ public:
                                                        _parameter_id(parameter_id),
                                                        _normalized_value(normalized_value),
                                                        _domain_value(domain_value),
-                                                       _formatted_value(formatted_value) {}
+                                                       _formatted_value(std::move(formatted_value)) {}
 
-    bool is_parameter_change_notification() const override {return true;}
+    [[nodiscard]] bool is_parameter_change_notification() const override {return true;}
 
-    ObjectId  processor_id() const {return _processor_id;}
+    [[nodiscard]] ObjectId processor_id() const {return _processor_id;}
 
-    ObjectId  parameter_id() const {return _parameter_id;}
+    [[nodiscard]] ObjectId parameter_id() const {return _parameter_id;}
 
-    float normalized_value() const {return _normalized_value;}
+    [[nodiscard]] float normalized_value() const {return _normalized_value;}
 
-    float domain_value() const {return _domain_value;}
+    [[nodiscard]] float domain_value() const {return _domain_value;}
 
-    const std::string& formatted_value() const {return _formatted_value;}
+    [[nodiscard]] const std::string& formatted_value() const {return _formatted_value;}
 
 private:
     ObjectId    _processor_id;
@@ -603,19 +603,19 @@ class PropertyChangeNotificationEvent : public Event
 public:
     PropertyChangeNotificationEvent(ObjectId processor_id,
                                     ObjectId property_id,
-                                    const std::string& value,
+                                    std::string value,
                                     Time timestamp) : Event(timestamp),
                                                       _processor_id(processor_id),
                                                       _property_id(property_id),
-                                                      _value(value) {}
+                                                      _value(std::move(value)) {}
 
-    bool is_property_change_notification() const override {return true;}
+    [[nodiscard]] bool is_property_change_notification() const override {return true;}
 
-    ObjectId processor_id() const {return _processor_id;}
+    [[nodiscard]] ObjectId processor_id() const {return _processor_id;}
 
-    ObjectId property_id() const {return _property_id;}
+    [[nodiscard]] ObjectId property_id() const {return _property_id;}
 
-    const std::string& value() const {return _value;}
+    [[nodiscard]] const std::string& value() const {return _value;}
 
 private:
     ObjectId    _processor_id;
@@ -626,31 +626,31 @@ private:
 class EngineNotificationEvent : public Event
 {
 public:
-    bool is_engine_notification() const override {return true;}
+    [[nodiscard]] bool is_engine_notification() const override {return true;}
 
     /* Convertible to ClippingNotification */
-    virtual bool is_clipping_notification() const {return false;}
+    [[nodiscard]] virtual bool is_clipping_notification() const {return false;}
 
     /* Convertible to AudioGraphNotification */
-    virtual bool is_audio_graph_notification() const {return false;}
+    [[nodiscard]] virtual bool is_audio_graph_notification() const {return false;}
 
     /* Convertible to TempoNotification */
-    virtual bool is_tempo_notification() const {return false;}
+    [[nodiscard]] virtual bool is_tempo_notification() const {return false;}
 
     /* Convertible to TimeSignatureNotification */
-    virtual bool is_time_sign_notification() const {return false;}
+    [[nodiscard]] virtual bool is_time_sign_notification() const {return false;}
 
     /* Convertible to PlayingModeNotification */
-    virtual bool is_playing_mode_notification() const {return false;}
+    [[nodiscard]] virtual bool is_playing_mode_notification() const {return false;}
 
     /* Convertible to SyncModeNotification */
-    virtual bool is_sync_mode_notification() const {return false;}
+    [[nodiscard]] virtual bool is_sync_mode_notification() const {return false;}
 
     /* Convertible to TimingNotification */
-    virtual bool is_timing_notification() const {return false;}
+    [[nodiscard]] virtual bool is_timing_notification() const {return false;}
 
     /* Convertible to TimingTickNotification */
-    virtual bool is_timing_tick_notification() const {return false;}
+    [[nodiscard]] virtual bool is_timing_tick_notification() const {return false;}
 
 protected:
     EngineNotificationEvent(Time timestamp) : Event(timestamp) {}
@@ -700,10 +700,10 @@ public:
                                                   _processor(processor_id),
                                                   _track(track_id) {}
 
-    bool     is_audio_graph_notification() const override {return true;}
-    Action   action() const {return _action;}
-    ObjectId processor() const {return _processor;}
-    ObjectId track() const {return _track;}
+    [[nodiscard]] bool     is_audio_graph_notification() const override {return true;}
+    [[nodiscard]] Action   action() const {return _action;}
+    [[nodiscard]] ObjectId processor() const {return _processor;}
+    [[nodiscard]] ObjectId track() const {return _track;}
 
 private:
     Action   _action;
@@ -716,8 +716,8 @@ class TempoNotificationEvent : public EngineNotificationEvent
 public: TempoNotificationEvent(float tempo, Time timestamp) : EngineNotificationEvent(timestamp),
                                                               _tempo(tempo) {}
 
-    bool is_tempo_notification() const override {return true;}
-    float tempo() const {return _tempo;}
+    [[nodiscard]] bool is_tempo_notification() const override {return true;}
+    [[nodiscard]] float tempo() const {return _tempo;}
 
 private:
     float _tempo;
@@ -729,8 +729,8 @@ public: TimeSignatureNotificationEvent(TimeSignature signature,
                                        Time timestamp) : EngineNotificationEvent(timestamp),
                                                          _signature(signature) {}
 
-    bool is_time_sign_notification() const override {return true;}
-    TimeSignature time_signature() const {return _signature;}
+    [[nodiscard]] bool is_time_sign_notification() const override {return true;}
+    [[nodiscard]] TimeSignature time_signature() const {return _signature;}
 
 private:
     TimeSignature _signature;
@@ -741,8 +741,8 @@ class PlayingModeNotificationEvent : public EngineNotificationEvent
 public: PlayingModeNotificationEvent(PlayingMode mode, Time timestamp) : EngineNotificationEvent(timestamp),
                                                                          _mode(mode) {}
 
-    bool is_playing_mode_notification() const override {return true;}
-    PlayingMode mode() const {return _mode;}
+    [[nodiscard]] bool is_playing_mode_notification() const override {return true;}
+    [[nodiscard]] PlayingMode mode() const {return _mode;}
 
 private:
     PlayingMode _mode;
@@ -753,8 +753,8 @@ class SyncModeNotificationEvent : public EngineNotificationEvent
 public: SyncModeNotificationEvent(SyncMode mode, Time timestamp) : EngineNotificationEvent(timestamp),
                                                                    _mode(mode) {}
 
-    bool is_sync_mode_notification() const override {return true;}
-    SyncMode mode() const {return _mode;}
+    [[nodiscard]] bool is_sync_mode_notification() const override {return true;}
+    [[nodiscard]] SyncMode mode() const {return _mode;}
 
 private:
     SyncMode _mode;
@@ -767,8 +767,8 @@ public:
                                   Time timestamp) : EngineNotificationEvent(timestamp),
                                                     _timings(timings){}
 
-    bool is_timing_notification() const override {return true;}
-    const performance::ProcessTimings& timings() const {return _timings;}
+    [[nodiscard]] bool is_timing_notification() const override {return true;}
+    [[nodiscard]] const performance::ProcessTimings& timings() const {return _timings;}
 
 private:
     performance::ProcessTimings _timings;
@@ -780,8 +780,8 @@ public:
     EngineTimingTickNotificationEvent(int tick_count, Time timestamp) : EngineNotificationEvent(timestamp),
                                                                         _tick_count(tick_count) {}
 
-    bool is_timing_tick_notification() const override {return true;}
-    int tick_count() const {return _tick_count;}
+    [[nodiscard]] bool is_timing_tick_notification() const override {return true;}
+    [[nodiscard]] int tick_count() const {return _tick_count;}
 
 private:
     int _tick_count;

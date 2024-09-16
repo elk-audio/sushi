@@ -1,5 +1,6 @@
 #ifndef SUSHI_MOCK_EVENT_DISPATCHER_H
 #define SUSHI_MOCK_EVENT_DISPATCHER_H
+
 #include <gmock/gmock.h>
 
 #include "engine/base_event_dispatcher.h"

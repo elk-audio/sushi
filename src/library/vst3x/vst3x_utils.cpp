@@ -107,7 +107,7 @@ Steinberg::tresult StateParamValue::getPoint(Steinberg::int32 /*id*/,
 
 Steinberg::int32 Vst3xRtState::getParameterCount()
 {
-    return _parameter_changes.size();
+    return static_cast<Steinberg::int32>(_parameter_changes.size());
 }
 
 

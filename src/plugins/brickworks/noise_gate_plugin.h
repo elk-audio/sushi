@@ -25,6 +25,9 @@
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::noise_gate_plugin {
 
 class NoiseGatePlugin : public InternalPlugin, public UidHelper<NoiseGatePlugin>
@@ -50,17 +53,19 @@ public:
 
 private:
     BypassManager _bypass_manager;
-    float _sample_rate{0};
+    float _sample_rate {0};
 
     FloatParameterValue* _threshold;
     FloatParameterValue* _ratio;
     FloatParameterValue* _attack;
     FloatParameterValue* _release;
 
-    bw_noise_gate_coeffs _noise_gate_coeffs;
-    std::array<bw_noise_gate_state, MAX_TRACK_CHANNELS> _noise_gate_states;
+    bw_noise_gate_coeffs _noise_gate_coeffs {};
+    std::array<bw_noise_gate_state, MAX_TRACK_CHANNELS> _noise_gate_states {};
 };
 
 } // namespace sushi::internal::noise_gate_plugin
+
+ELK_POP_WARNING
 
 #endif // NOISE_GATE_PLUGIN_H

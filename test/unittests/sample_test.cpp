@@ -1,5 +1,4 @@
 #include "gtest/gtest.h"
-#define private public
 
 // A simple test case
 TEST (SampleTest, SimpleTestCase) {
@@ -10,17 +9,12 @@ TEST (SampleTest, SimpleTestCase) {
 // And setup and teardown functions added.
 class SampleTestCase : public ::testing::Test
 {
-    protected:
-    SampleTestCase()
-    {
-    }
-    void SetUp()
-    {
-    }
+protected:
+    SampleTestCase() = default;
 
-    void TearDown()
-    {
-    }
+    void SetUp() override {}
+
+    void TearDown() override {}
 };
 
 TEST_F(SampleTestCase, SampleTest)

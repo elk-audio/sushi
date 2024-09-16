@@ -252,7 +252,7 @@ OscState OSCFrontend::save_state() const
             {
                 state.add_enabled_outputs(std::string(processor->name()), std::move(enabled_params));
             }
-            ELKLOG_LOG_ERROR_IF(!processor, "Processor {}, was not found when saving state");
+            ELKLOG_LOG_ERROR_IF(!processor, "Processor {}, was not found when saving state", connection_pair.first);
         }
     }
 
@@ -271,7 +271,7 @@ void OSCFrontend::set_state(const OscState& state)
         auto processor = _processor_container->processor(connections.first);
         if (!processor)
         {
-            ELKLOG_LOG_ERROR("Processor {} not found when restoring outgoing connections from state");
+            ELKLOG_LOG_ERROR("Processor {} not found when restoring outgoing connections from state", connections.first);
             continue;
         }
         for (auto param_id : connections.second)
@@ -529,7 +529,7 @@ bool OSCFrontend::_remove_processor_connections(ObjectId processor_id)
                                       [&](const auto& c) { return c->processor == processor_id; }),
                        _connections.end());
 
-    count += _outgoing_connections.erase(static_cast<ObjectId>(processor_id));
+    count += static_cast<int>(_outgoing_connections.erase(static_cast<ObjectId>(processor_id)));
 
     ELKLOG_LOG_ERROR_IF(count == 0, "Failed to remove any connections for processor {}", processor_id)
     return count > 0;

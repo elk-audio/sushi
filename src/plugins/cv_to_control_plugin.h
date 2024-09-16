@@ -30,6 +30,9 @@
 #include "library/internal_plugin.h"
 #include "library/rt_event_fifo.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::cv_to_control_plugin {
 
 constexpr int MAX_CV_VOICES = MAX_ENGINE_CV_IO_PORTS;
@@ -37,9 +40,9 @@ constexpr int MAX_CV_VOICES = MAX_ENGINE_CV_IO_PORTS;
 class CvToControlPlugin : public InternalPlugin, public UidHelper<CvToControlPlugin>
 {
 public:
-    CvToControlPlugin(HostControl host_control);
+    explicit CvToControlPlugin(HostControl host_control);
 
-    ~CvToControlPlugin() {}
+    ~CvToControlPlugin() override = default;
 
     ProcessorReturnCode init(float sample_rate) override;
 
@@ -59,8 +62,8 @@ private:
 
     struct ControlVoice
     {
-        bool active{false};
-        int  note{0};
+        bool active {false};
+        int  note {0};
     };
 
     BoolParameterValue* _pitch_bend_mode_parameter;
@@ -80,5 +83,7 @@ private:
 std::pair<int, float> cv_to_pitch(float value);
 
 } // end namespace sushi::internal::cv_to_control_plugin
+
+ELK_POP_WARNING
 
 #endif // SUSHI_CV_TO_CONTROL_PLUGIN_H

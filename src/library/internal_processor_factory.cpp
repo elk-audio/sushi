@@ -33,6 +33,7 @@
 #include "plugins/sample_delay_plugin.h"
 #include "plugins/stereo_mixer_plugin.h"
 #include "plugins/freeverb_plugin.h"
+
 #include "plugins/brickworks/compressor_plugin.h"
 #include "plugins/brickworks/bitcrusher_plugin.h"
 #include "plugins/brickworks/wah_plugin.h"

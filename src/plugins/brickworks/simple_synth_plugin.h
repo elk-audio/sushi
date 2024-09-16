@@ -34,10 +34,14 @@
 #include "library/internal_plugin.h"
 #include "library/rt_event_fifo.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::simple_synth_plugin {
 
 constexpr int MAX_MIDI_NOTE = 128;
 
+class Accessor;
 
 class SimpleSynthPlugin : public InternalPlugin, public UidHelper<SimpleSynthPlugin>
 {
@@ -59,12 +63,14 @@ public:
     static std::string_view static_uid();
 
 private:
+    friend Accessor;
+
     void _render_loop(int offset, int n);
 
     void _change_active_note(int notenum);
 
-    ChunkSampleBuffer _render_buffer{1};
-    ChunkSampleBuffer _aux_buffer{1};
+    ChunkSampleBuffer _render_buffer {1};
+    ChunkSampleBuffer _aux_buffer {1};
 
     FloatParameterValue* _volume;
     FloatParameterValue* _portamento;
@@ -76,20 +82,22 @@ private:
     FloatParameterValue* _sustain;
     FloatParameterValue* _release;
 
-    bw_phase_gen_coeffs _phase_gen_coeffs;
-    bw_phase_gen_state  _phase_gen_state;
-    bw_osc_pulse_coeffs _osc_pulse_coeffs;
-    bw_osc_filt_state   _osc_filt_state;
-    bw_svf_coeffs       _svf_coeffs;
-    bw_svf_state        _svf_state;
-    bw_env_gen_coeffs   _env_gen_coeffs;
-    bw_env_gen_state    _env_gen_state;
+    bw_phase_gen_coeffs _phase_gen_coeffs {};
+    bw_phase_gen_state  _phase_gen_state {};
+    bw_osc_pulse_coeffs _osc_pulse_coeffs {};
+    bw_osc_filt_state   _osc_filt_state {};
+    bw_svf_coeffs       _svf_coeffs {};
+    bw_svf_state        _svf_state {};
+    bw_env_gen_coeffs   _env_gen_coeffs {};
+    bw_env_gen_state    _env_gen_state {};
 
     RtSafeRtEventFifo _event_fifo;
-    std::array<bool, MAX_MIDI_NOTE> _held_notes{false};
-    int _highest_held_note{-1};
+    std::array<bool, MAX_MIDI_NOTE> _held_notes {false};
+    int _highest_held_note {-1};
 };
 
 } // namespace sushi::internal::simple_synth_plugin
+
+ELK_POP_WARNING
 
 #endif //SUSHI_SIMPLE_SYNTH_PLUGIN_H

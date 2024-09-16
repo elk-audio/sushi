@@ -3,10 +3,10 @@
 
 #include "gtest/gtest.h"
 
-#define private public
-
+#include "test_utils/plugin_accessors.h"
 #include "test_utils/test_utils.h"
 #include "test_utils/host_control_mockup.h"
+
 #include "library/internal_plugin.h"
 #include "plugins/passthrough_plugin.cpp"
 #include "plugins/gain_plugin.cpp"
@@ -80,6 +80,9 @@ protected:
     void SetUp() override
     {
         _module_under_test = std::make_unique<gain_plugin::GainPlugin>(_host_control.make_host_control_mockup());
+
+        _accessor = std::make_unique<sushi::internal::gain_plugin::Accessor>(*_module_under_test);
+
         ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
         _module_under_test->set_enabled(true);
         _module_under_test->set_input_channels(TEST_CHANNEL_COUNT);
@@ -89,6 +92,8 @@ protected:
 
     HostControlMockup _host_control;
     std::unique_ptr<gain_plugin::GainPlugin> _module_under_test;
+
+    std::unique_ptr<sushi::internal::gain_plugin::Accessor> _accessor;
 };
 
 TEST_F(TestGainPlugin, TestInstantiation)
@@ -116,7 +121,8 @@ TEST_F(TestGainPlugin, TestProcess)
     SampleBuffer<AUDIO_CHUNK_SIZE> in_buffer(2);
     SampleBuffer<AUDIO_CHUNK_SIZE> out_buffer(2);
     test_utils::fill_sample_buffer(in_buffer, 1.0f);
-    _module_under_test->_gain_parameter->set(0.875f);
+
+    _accessor->gain_parameter()->set(0.875f);
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(2.0f, out_buffer, test_utils::DECIBEL_ERROR);
 }
@@ -129,6 +135,9 @@ protected:
     void SetUp() override
     {
         _module_under_test = std::make_unique<equalizer_plugin::EqualizerPlugin>(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
+
+        _accessor = std::make_unique<sushi::internal::equalizer_plugin::Accessor>(_module_under_test.get());
+
         ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
         _module_under_test->set_enabled(true);
         _module_under_test->set_input_channels(TEST_CHANNEL_COUNT);
@@ -138,6 +147,8 @@ protected:
 
     HostControlMockup _host_control;
     std::unique_ptr<equalizer_plugin::EqualizerPlugin> _module_under_test;
+
+    std::unique_ptr<sushi::internal::equalizer_plugin::Accessor> _accessor;
 };
 
 TEST_F(TestEqualizerPlugin, TestInstantiation)
@@ -175,9 +186,9 @@ TEST_F(TestEqualizerPlugin, TestProcess)
     auto q_param = static_cast<const FloatParameterDescriptor*>(_module_under_test->parameter_from_name("q"));
     ASSERT_TRUE(q_param);
 
-    _module_under_test->_frequency->set(0.1991991991991992f);
-    _module_under_test->_gain->set(0.625f);
-    _module_under_test->_q->set(0.1f);
+    _accessor->frequency()->set(0.1991991991991992f);
+    _accessor->gain()->set(0.625f);
+    _accessor->q()->set(0.1f);
 
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(0.0f, out_buffer);
@@ -218,7 +229,7 @@ TEST_F(TestPeakMeterPlugin, TestProcess)
     test_utils::fill_sample_buffer(in_buffer, 0.5f);
 
     /* Process enough samples to catch some event outputs */
-    int no_of_process_calls = TEST_SAMPLERATE / (peak_meter_plugin::DEFAULT_REFRESH_RATE * AUDIO_CHUNK_SIZE);
+    int no_of_process_calls = static_cast<int>(TEST_SAMPLERATE / (peak_meter_plugin::DEFAULT_REFRESH_RATE * AUDIO_CHUNK_SIZE));
     ASSERT_TRUE(_fifo.empty());
     for (int i = 0; i <= no_of_process_calls ; ++i)
     {
@@ -296,8 +307,8 @@ TEST_F(TestPeakMeterPlugin, TestClipDetection)
 TEST(TestPeakMeterPluginInternal, TestTodBConversion)
 {
     EXPECT_FLOAT_EQ(0.0f, peak_meter_plugin::to_normalised_dB(0.0f));         // minimum
-    EXPECT_NEAR(0.5f, peak_meter_plugin::to_normalised_dB(0.003981), 0.0001); // -48 dB
-    EXPECT_NEAR(0.8333f, peak_meter_plugin::to_normalised_dB(1.0f), 0.0001);  //  0 dB
+    EXPECT_NEAR(0.5f, peak_meter_plugin::to_normalised_dB(0.003981f), 0.0001f); // -48 dB
+    EXPECT_NEAR(0.8333f, peak_meter_plugin::to_normalised_dB(1.0f), 0.0001f);  //  0 dB
     EXPECT_FLOAT_EQ(1.0f, peak_meter_plugin::to_normalised_dB(15.9f));        // +24 dB
     EXPECT_FLOAT_EQ(1.0f, peak_meter_plugin::to_normalised_dB(251.2f));       // +48 dB (clamped)
 }
@@ -358,6 +369,9 @@ protected:
     void SetUp() override
     {
         _module_under_test = std::make_unique<wav_writer_plugin::WavWriterPlugin>(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
+
+        _accessor = std::make_unique<sushi::internal::wav_writer_plugin::Accessor>(*_module_under_test);
+
         auto status = _module_under_test->init(TEST_SAMPLERATE);
         ASSERT_EQ(ProcessorReturnCode::OK, status);
         _module_under_test->set_event_output(&_fifo);
@@ -368,6 +382,9 @@ protected:
 
     HostControlMockup _host_control;
     std::unique_ptr<wav_writer_plugin::WavWriterPlugin> _module_under_test;
+
+    std::unique_ptr<sushi::internal::wav_writer_plugin::Accessor> _accessor;
+
     RtEventFifo<10> _fifo;
 };
 
@@ -398,23 +415,23 @@ TEST_F(TestWavWriterPlugin, TestProcess)
 
     // Test start recording and open file
     _module_under_test->process_event(start_recording_event);
-    ASSERT_TRUE(_module_under_test->_recording_parameter->domain_value());
-    ASSERT_EQ(wav_writer_plugin::WavWriterStatus::SUCCESS, _module_under_test->_start_recording());
+    ASSERT_TRUE(_accessor->recording_parameter()->domain_value());
+    ASSERT_EQ(wav_writer_plugin::WavWriterStatus::SUCCESS, _accessor->start_recording());
 
     // Test processing
-    _module_under_test->_recording_parameter->set_values(true, true);
+    _accessor->recording_parameter()->set_values(true, true);
     _module_under_test->process_audio(in_buffer, out_buffer);
     test_utils::assert_buffer_value(1.0f, in_buffer);
     test_utils::assert_buffer_value(1.0f, out_buffer);
 
     // Test Writing.
-    _module_under_test->_recording_parameter->set_values(false, false); // set recording to false, to immediately write
-    ASSERT_EQ(_module_under_test->input_channels() * AUDIO_CHUNK_SIZE, _module_under_test->_write_to_file());
+    _accessor->recording_parameter()->set_values(false, false); // set recording to false - to write immediately.
+    ASSERT_EQ(_module_under_test->input_channels() * AUDIO_CHUNK_SIZE, _accessor->write_to_file());
 
     // Test end recording and close file
     _module_under_test->process_event(stop_recording_event);
-    ASSERT_FALSE(_module_under_test->_recording_parameter->domain_value());
-    ASSERT_EQ(wav_writer_plugin::WavWriterStatus::SUCCESS, _module_under_test->_stop_recording());
+    ASSERT_FALSE(_accessor->recording_parameter()->domain_value());
+    ASSERT_EQ(wav_writer_plugin::WavWriterStatus::SUCCESS, _accessor->stop_recording());
 
     // Verify written samples
     path.append(".wav");
@@ -426,8 +443,10 @@ TEST_F(TestWavWriterPlugin, TestProcess)
         FAIL() << "While opening file " << path.c_str() << " " << sf_strerror(file) << std::endl;
     }
     int number_of_samples = AUDIO_CHUNK_SIZE * _module_under_test->input_channels();
-    float written_data[number_of_samples];
-    ASSERT_EQ(AUDIO_CHUNK_SIZE, sf_readf_float(file, written_data, AUDIO_CHUNK_SIZE));
+
+    std::vector<float> written_data(number_of_samples);
+
+    ASSERT_EQ(AUDIO_CHUNK_SIZE, sf_readf_float(file, written_data.data(), AUDIO_CHUNK_SIZE));
     for (int sample = 0; sample < number_of_samples; ++sample)
     {
         ASSERT_FLOAT_EQ(1.0f, written_data[sample]);
@@ -564,6 +583,9 @@ protected:
     void SetUp() override
     {
         _module_under_test = std::make_unique<stereo_mixer_plugin::StereoMixerPlugin>(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
+
+        _accessor = std::make_unique<sushi::internal::stereo_mixer_plugin::Accessor>(*_module_under_test);
+
         auto status = _module_under_test->init(TEST_SAMPLERATE);
         ASSERT_EQ(ProcessorReturnCode::OK, status);
         _module_under_test->set_enabled(true);
@@ -580,20 +602,23 @@ protected:
         _module_under_test->process_audio(temp_in_buffer, temp_out_buffer);
 
         // Update smoothers until they are stationary
-        while ((_module_under_test->_ch1_left_gain_smoother.stationary() &&
-                _module_under_test->_ch1_right_gain_smoother.stationary() &&
-                _module_under_test->_ch2_left_gain_smoother.stationary() &&
-                _module_under_test->_ch2_right_gain_smoother.stationary()) == false)
+        while (! (_accessor->ch1_left_gain_smoother().stationary() &&
+                  _accessor->ch1_right_gain_smoother().stationary() &&
+                  _accessor->ch2_left_gain_smoother().stationary() &&
+                  _accessor->ch2_right_gain_smoother().stationary()))
         {
-            _module_under_test->_ch1_left_gain_smoother.next_value();
-            _module_under_test->_ch1_right_gain_smoother.next_value();
-            _module_under_test->_ch2_left_gain_smoother.next_value();
-            _module_under_test->_ch2_right_gain_smoother.next_value();
+            _accessor->ch1_left_gain_smoother().next_value();
+            _accessor->ch1_right_gain_smoother().next_value();
+            _accessor->ch2_left_gain_smoother().next_value();
+            _accessor->ch2_right_gain_smoother().next_value();
         }
     }
 
     HostControlMockup _host_control;
     std::unique_ptr<stereo_mixer_plugin::StereoMixerPlugin> _module_under_test;
+
+    std::unique_ptr<sushi::internal::stereo_mixer_plugin::Accessor> _accessor;
+
     RtSafeRtEventFifo _fifo;
 };
 
@@ -625,12 +650,12 @@ TEST_F(TestStereoMixerPlugin, TestProcess)
 
     // Standard stereo throughput, right input channel inverted
 
-    _module_under_test->_ch1_pan->set(0.0f);
-    _module_under_test->_ch1_gain->set(0.791523611713336f);
-    _module_under_test->_ch1_invert_phase->set(0.0f);
-    _module_under_test->_ch2_pan->set(1.0f);
-    _module_under_test->_ch2_gain->set(0.6944444444444444f);
-    _module_under_test->_ch2_invert_phase->set(1.0f);
+    _accessor->ch1_pan()->set(0.0f);
+    _accessor->ch1_gain()->set(0.791523611713336f);
+    _accessor->ch1_invert_phase()->set(0.0f);
+    _accessor->ch2_pan()->set(1.0f);
+    _accessor->ch2_gain()->set(0.6944444444444444f);
+    _accessor->ch2_invert_phase()->set(1.0f);
 
     std::fill(expected_buffer.channel(0), expected_buffer.channel(0) + AUDIO_CHUNK_SIZE, 0.5f);
     std::fill(expected_buffer.channel(1), expected_buffer.channel(1) + AUDIO_CHUNK_SIZE, 0.2f);
@@ -642,12 +667,12 @@ TEST_F(TestStereoMixerPlugin, TestProcess)
 
     // Inverted panning, left input channel inverted
 
-    _module_under_test->_ch1_pan->set(1.0f);
-    _module_under_test->_ch1_gain->set(0.8118191722242023f);
-    _module_under_test->_ch1_invert_phase->set(1.0f);
-    _module_under_test->_ch2_pan->set(0.0f);
-    _module_under_test->_ch2_gain->set(0.7607112853777309f);
-    _module_under_test->_ch2_invert_phase->set(0.0f);
+    _accessor->ch1_pan()->set(1.0f);
+    _accessor->ch1_gain()->set(0.8118191722242023f);
+    _accessor->ch1_invert_phase()->set(1.0f);
+    _accessor->ch2_pan()->set(0.0f);
+    _accessor->ch2_gain()->set(0.7607112853777309f);
+    _accessor->ch2_invert_phase()->set(0.0f);
 
     std::fill(expected_buffer.channel(0), expected_buffer.channel(0) + AUDIO_CHUNK_SIZE, -0.6f);
     std::fill(expected_buffer.channel(1), expected_buffer.channel(1) + AUDIO_CHUNK_SIZE, -0.7f);
@@ -658,12 +683,12 @@ TEST_F(TestStereoMixerPlugin, TestProcess)
     test_utils::compare_buffers<AUDIO_CHUNK_SIZE>(output_buffer, expected_buffer, 2);
 
     // Mono summing
-    _module_under_test->_ch1_pan->set(0.5f);
-    _module_under_test->_ch1_gain->set(0.8333333333333334f);
-    _module_under_test->_ch1_invert_phase->set(0.0f);
-    _module_under_test->_ch2_pan->set(0.5f);
-    _module_under_test->_ch2_gain->set(0.8333333333333334f);
-    _module_under_test->_ch2_invert_phase->set(0.0f);
+    _accessor->ch1_pan()->set(0.5f);
+    _accessor->ch1_gain()->set(0.8333333333333334f);
+    _accessor->ch1_invert_phase()->set(0.0f);
+    _accessor->ch2_pan()->set(0.5f);
+    _accessor->ch2_gain()->set(0.8333333333333334f);
+    _accessor->ch2_invert_phase()->set(0.0f);
 
     std::fill(expected_buffer.channel(0), expected_buffer.channel(0) + AUDIO_CHUNK_SIZE, -0.707946f);
     std::fill(expected_buffer.channel(1), expected_buffer.channel(1) + AUDIO_CHUNK_SIZE, -0.707946f);
@@ -674,12 +699,12 @@ TEST_F(TestStereoMixerPlugin, TestProcess)
     test_utils::compare_buffers<AUDIO_CHUNK_SIZE>(output_buffer, expected_buffer, 2);
 
     // Pan law test
-    _module_under_test->_ch1_pan->set(0.35f);
-    _module_under_test->_ch1_gain->set(0.8333333333333334f);
-    _module_under_test->_ch1_invert_phase->set(0.0f);
-    _module_under_test->_ch2_pan->set(0.9f);
-    _module_under_test->_ch2_gain->set(0.8333333333333334f);
-    _module_under_test->_ch2_invert_phase->set(0.0f);
+    _accessor->ch1_pan()->set(0.35f);
+    _accessor->ch1_gain()->set(0.8333333333333334f);
+    _accessor->ch1_invert_phase()->set(0.0f);
+    _accessor->ch2_pan()->set(0.9f);
+    _accessor->ch2_gain()->set(0.8333333333333334f);
+    _accessor->ch2_invert_phase()->set(0.0f);
 
     std::fill(expected_buffer.channel(0), expected_buffer.channel(0) + AUDIO_CHUNK_SIZE, 0.7955587392184001f + -0.28317642241051433f);
     std::fill(expected_buffer.channel(1), expected_buffer.channel(1) + AUDIO_CHUNK_SIZE, 0.49555873921840016f + -1.8831764224105143f);

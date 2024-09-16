@@ -4,7 +4,7 @@
 #include "test_utils/host_control_mockup.h"
 #include "library/rt_event_fifo.h"
 
-#define private public
+#include "elk-warning-suppressor/warning_suppressor.hpp"
 
 #include "plugins/wav_streamer_plugin.cpp"
 

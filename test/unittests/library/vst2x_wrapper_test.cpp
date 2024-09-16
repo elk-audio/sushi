@@ -2,12 +2,51 @@
 
 #include "gtest/gtest.h"
 
-#define private public
+#include "elk-warning-suppressor/warning_suppressor.hpp"
 
 #include "test_utils/test_utils.h"
 #include "test_utils/host_control_mockup.h"
 
 #include "library/vst2x/vst2x_wrapper.cpp"
+
+namespace sushi::internal::vst2
+{
+
+class Vst2xWrapperAccessor
+{
+public:
+    explicit Vst2xWrapperAccessor(Vst2xWrapper& f) : _friend(f) {}
+
+    [[nodiscard]] bool can_do_soft_bypass() const
+    {
+        return _friend._can_do_soft_bypass;
+    }
+
+    AEffect* plugin_handle()
+    {
+        return _friend._plugin_handle;
+    }
+
+    [[nodiscard]] float sample_rate() const
+    {
+        return _friend._sample_rate;
+    }
+
+    void notify_parameter_change(VstInt32 parameter_index, float value)
+    {
+        _friend.notify_parameter_change(parameter_index, value);
+    }
+
+    void notify_parameter_change_rt(VstInt32 parameter_index, float value)
+    {
+        _friend.notify_parameter_change_rt(parameter_index, value);
+    }
+
+private:
+    Vst2xWrapper& _friend;
+};
+
+}
 
 using namespace sushi;
 using namespace sushi::internal;
@@ -17,15 +56,15 @@ using namespace sushi::internal::vst2;
 // in response to NoteON C4 (60), vel=127, default parameters
 static constexpr float TEST_SYNTH_EXPECTED_OUT[2][64] = {
         {
-                1, 0.999853, 0.999414, 0.998681, 0.997655, 0.996337, 0.994727, 0.992825,
-                0.990632, 0.988149, 0.985375, 0.982313, 0.978963, 0.975326, 0.971403,
-                0.967195, 0.962703, 0.95793, 0.952875, 0.947541, 0.941929, 0.936041,
-                0.929879, 0.923443, 0.916738, 0.909763, 0.902521, 0.895015, 0.887247,
-                0.879218, 0.870932, 0.86239, 0.853596, 0.844551, 0.835258, 0.825721,
-                0.815941, 0.805923, 0.795668, 0.785179, 0.774461, 0.763515, 0.752346,
-                0.740956, 0.729348, 0.717527, 0.705496, 0.693257, 0.680815, 0.668174,
-                0.655337, 0.642307, 0.62909, 0.615688, 0.602105, 0.588346, 0.574414,
-                0.560314, 0.546049, 0.531625, 0.517045, 0.502313, 0.487433, 0.472411
+                1, 0.999853f, 0.999414f, 0.998681f, 0.997655f, 0.996337f, 0.994727f, 0.992825f,
+                0.990632f, 0.988149f, 0.985375f, 0.982313f, 0.978963f, 0.975326f, 0.971403f,
+                0.967195f, 0.962703f, 0.95793f, 0.952875f, 0.947541f, 0.941929f, 0.936041f,
+                0.929879f, 0.923443f, 0.916738f, 0.909763f, 0.902521f, 0.895015f, 0.887247f,
+                0.879218f, 0.870932f, 0.86239f, 0.853596f, 0.844551f, 0.835258f, 0.825721f,
+                0.815941f, 0.805923f, 0.795668f, 0.785179f, 0.774461f, 0.763515f, 0.752346f,
+                0.740956f, 0.729348f, 0.717527f, 0.705496f, 0.693257f, 0.680815f, 0.668174f,
+                0.655337f, 0.642307f, 0.62909f, 0.615688f, 0.602105f, 0.588346f, 0.574414f,
+                0.560314f, 0.546049f, 0.531625f, 0.517045f, 0.502313f, 0.487433f, 0.472411f
         },
         {
                 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f,
@@ -49,16 +88,16 @@ class TestVst2xWrapper : public ::testing::Test
 {
 protected:
     using ::testing::Test::SetUp; // Hide error of hidden overload of virtual function in clang when signatures differ but the name is the same
-    TestVst2xWrapper()
-    {
-    }
+    TestVst2xWrapper() = default;
 
     void SetUp(const std::string& plugin_path)
     {
         auto full_path = std::filesystem::path(plugin_path.c_str());
-        auto full_plugin_path = std::string(std::filesystem::absolute(full_path));
+        auto full_plugin_path = std::string(std::filesystem::absolute(full_path).string());
 
         _module_under_test = std::make_unique<Vst2xWrapper>(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE), full_plugin_path);
+
+        _accessor = std::make_unique<Vst2xWrapperAccessor>(*_module_under_test);
 
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
         ASSERT_EQ(ProcessorReturnCode::OK, ret);
@@ -70,6 +109,8 @@ protected:
 
     HostControlMockup _host_control;
     std::unique_ptr<Vst2xWrapper> _module_under_test;
+
+    std::unique_ptr<Vst2xWrapperAccessor> _accessor;
 };
 
 
@@ -105,7 +146,7 @@ TEST_F(TestVst2xWrapper, TestParameterInitialization)
 TEST_F(TestVst2xWrapper, TestPluginCanDos)
 {
     SetUp(VST2_TEST_PLUGIN_PATH);
-    EXPECT_FALSE(_module_under_test->_can_do_soft_bypass);
+    EXPECT_FALSE(_accessor->can_do_soft_bypass());
 }
 
 TEST_F(TestVst2xWrapper, TestParameterSetViaEvent)
@@ -113,7 +154,7 @@ TEST_F(TestVst2xWrapper, TestParameterSetViaEvent)
     SetUp(VST2_TEST_PLUGIN_PATH);
     auto event = RtEvent::make_parameter_change_event(0, 0, 0, 0.123f);
     _module_under_test->process_event(event);
-    auto handle = _module_under_test->_plugin_handle;
+    auto handle = _accessor->plugin_handle();
     EXPECT_EQ(0.123f, handle->getParameter(handle, 0));
 }
 
@@ -215,9 +256,9 @@ TEST_F(TestVst2xWrapper, TestTimeInfo)
      * is good up to AUDIO_CHUNK_SIZE = 256 */
     EXPECT_EQ(static_cast<int64_t>(TEST_SAMPLE_RATE) * 2, time_info->samplePos);
     EXPECT_EQ(2'000'000'000, time_info->nanoSeconds);
-    EXPECT_FLOAT_EQ(2.0f, time_info->ppqPos);
-    EXPECT_FLOAT_EQ(60.0f, time_info->tempo);
-    EXPECT_FLOAT_EQ(0.0f, time_info->barStartPos);
+    EXPECT_FLOAT_EQ(2.0f, static_cast<float>(time_info->ppqPos));
+    EXPECT_FLOAT_EQ(60.0f, static_cast<float>(time_info->tempo));
+    EXPECT_FLOAT_EQ(0.0f, static_cast<float>(time_info->barStartPos));
     EXPECT_EQ(4, time_info->timeSigNumerator);
     EXPECT_EQ(4, time_info->timeSigDenominator);
 }
@@ -248,14 +289,14 @@ TEST_F(TestVst2xWrapper, TestConfigurationChange)
 {
     SetUp(VST2_TEST_PLUGIN_PATH);
     _module_under_test->configure(44100.0f);
-    ASSERT_FLOAT_EQ(44100, _module_under_test->_sample_rate);
+    ASSERT_FLOAT_EQ(44100, _accessor->sample_rate());
 }
 
 TEST_F(TestVst2xWrapper, TestParameterChangeNotifications)
 {
     SetUp(VST2_TEST_PLUGIN_PATH);
     EXPECT_FALSE(_host_control._dummy_dispatcher.got_event());
-    _module_under_test->notify_parameter_change(0, 0.5f);
+    _accessor->notify_parameter_change(0, 0.5f);
     auto event = _host_control._dummy_dispatcher.retrieve_event();
     ASSERT_FALSE(event == nullptr);
     ASSERT_TRUE(event->is_parameter_change_notification());
@@ -267,7 +308,7 @@ TEST_F(TestVst2xWrapper, TestRTParameterChangeNotifications)
     RtSafeRtEventFifo queue;
     _module_under_test->set_event_output(&queue);
     ASSERT_TRUE(queue.empty());
-    _module_under_test->notify_parameter_change_rt(0, 0.5f);
+    _accessor->notify_parameter_change_rt(0, 0.5f);
     RtEvent event;
     auto received = queue.pop(event);
     ASSERT_TRUE(received);
@@ -303,7 +344,7 @@ TEST_F(TestVst2xWrapper, TestStateHandling)
     ProcessorState state;
     state.set_bypass(true);
     state.set_program(2);
-    state.add_parameter_change(1, 0.33);
+    state.add_parameter_change(1, 0.33f);
 
     auto status = _module_under_test->set_state(&state, false);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
@@ -317,7 +358,7 @@ TEST_F(TestVst2xWrapper, TestStateHandling)
     // Test with realtime set to true
     state.set_bypass(false);
     state.set_program(1);
-    state.add_parameter_change(1, 0.5);
+    state.add_parameter_change(1, 0.5f);
 
     status = _module_under_test->set_state(&state, true);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
@@ -332,7 +373,7 @@ TEST_F(TestVst2xWrapper, TestStateHandling)
     EXPECT_EQ(1, _module_under_test->current_program());
     EXPECT_EQ("Program 2", _module_under_test->current_program_name());
 
-    // Retrive the delete event and execute it
+    // Retrieve the delete event and execute it
     ASSERT_FALSE(_host_control._event_output.empty());
     auto rt_event = _host_control._event_output.pop();
     auto delete_event = Event::from_rt_event(rt_event, IMMEDIATE_PROCESS);

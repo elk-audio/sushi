@@ -25,6 +25,9 @@
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::multi_filter_plugin {
 
 class MultiFilterPlugin : public InternalPlugin, public UidHelper<MultiFilterPlugin>
@@ -64,5 +67,7 @@ private:
 };
 
 } // namespace sushi::internal::multi_filter_plugin
+
+ELK_POP_WARNING
 
 #endif // MULTIFILTER_PLUGIN_H

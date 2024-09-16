@@ -18,9 +18,18 @@
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
+#include "elk-warning-suppressor/warning_suppressor.hpp"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_EXTRA
+ELK_DISABLE_DEPRECATED_DECLARATIONS
+ELK_DISABLE_SHORTEN_64_TO_32
+
 #include "pluginterfaces/base/ustring.h"
 #include "public.sdk/source/vst/utility/stringconvert.h"
 #include "base/source/fobject.h"
+
+ELK_POP_WARNING
 
 #include "elklog/static_logger.h"
 

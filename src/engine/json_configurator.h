@@ -27,10 +27,12 @@
 
 #include <optional>
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wtype-limits"
+#include "elk-warning-suppressor/warning_suppressor.hpp"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_TYPE_LIMITS
 #include "rapidjson/document.h"
-#pragma GCC diagnostic pop
+ELK_POP_WARNING
 
 #include "base_engine.h"
 #include "engine/midi_dispatcher.h"
@@ -73,6 +75,8 @@ struct ControlConfig
     std::vector<std::tuple<int, int, bool>> rt_midi_input_mappings;
     std::vector<std::tuple<int, int, bool>> rt_midi_output_mappings;
 };
+
+class Accessor;
 
 class JsonConfigurator
 {
@@ -155,6 +159,8 @@ public:
     void set_osc_frontend(control_frontend::OSCFrontend* osc_frontend);
 
 private:
+    friend Accessor;
+
     /**
      * @brief Helper function to retrieve a particular section of the json configuration
      * @param section JsonSection to denote which section is to be validated.
@@ -179,7 +185,7 @@ private:
      * @param channels rapidjson document object containing the channel information parsed from the file.
      * @return The number of MIDI channels.
      */
-    int _get_midi_channel(const rapidjson::Value& channels);
+    [[nodiscard]] int _get_midi_channel(const rapidjson::Value& channels) const;
 
     /* Helper enum for more expressive code */
     enum EventParseMode : bool

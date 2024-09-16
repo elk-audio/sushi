@@ -38,7 +38,7 @@ namespace sushi::internal::midi_frontend {
 void midi_callback([[maybe_unused]]double deltatime, std::vector<unsigned char>* message, void* user_data)
 {
     auto* callback_data = static_cast<RtMidiCallbackData*>(user_data);
-    auto byte_count = message->size();
+    int byte_count = static_cast<int>(message->size());
     if (byte_count > 0)
     {
         const uint8_t* data_buffer = static_cast<const uint8_t*>(message->data());

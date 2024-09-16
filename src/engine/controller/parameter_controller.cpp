@@ -161,7 +161,7 @@ std::pair<control::ControlStatus, float> ParameterController::get_parameter_valu
             return {control::ControlStatus::OK, value};
         }
     }
-    return {control::ControlStatus::NOT_FOUND, 0};
+    return {control::ControlStatus::NOT_FOUND, 0.0f};
 }
 
 std::pair<control::ControlStatus, float> ParameterController::get_parameter_value_in_domain(int processor_id, int parameter_id) const
@@ -176,7 +176,7 @@ std::pair<control::ControlStatus, float> ParameterController::get_parameter_valu
             return {control::ControlStatus::OK, value};
         }
     }
-    return {control::ControlStatus::NOT_FOUND, 0};
+    return {control::ControlStatus::NOT_FOUND, 0.0f};
 }
 
 std::pair<control::ControlStatus, std::string> ParameterController::get_parameter_value_as_string(int processor_id, int parameter_id) const
