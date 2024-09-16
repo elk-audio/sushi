@@ -19,6 +19,9 @@
  * @copyright 2017-2023 Elk Audio AB, Stockholm
  */
 
+#define TWINE_EXPOSE_INTERNALS
+#include "twine/twine.h"
+
 #include "elklog/static_logger.h"
 
 #include "standalone_factory_implementation.h"
@@ -57,14 +60,13 @@ StandaloneFactoryImplementation::~StandaloneFactoryImplementation() = default;
 
 std::pair<std::unique_ptr<Sushi>, Status> StandaloneFactoryImplementation::new_instance(SushiOptions& options)
 {
-    // TODO: TEST THAT BUILDING WITH XENOMAI WORKS!
 
 #ifdef SUSHI_BUILD_WITH_RASPA
     auto raspa_status = audio_frontend::XenomaiRaspaFrontend::global_init();
     if (raspa_status < 0)
     {
-        _status = INIT_STATUS::FAILED_XENOMAI_INITIALIZATION;
-        return nullptr;
+        _status = Status::FAILED_XENOMAI_INITIALIZATION;
+        return {nullptr, _status};
     }
 
     if (options.frontend_type == FrontendType::XENOMAI_RASPA)
@@ -128,7 +130,7 @@ Status
             break;
         }
 
-#ifdef SUSHI_BUILD_WITH_XENOMAI
+#ifdef SUSHI_BUILD_WITH_RASPA
         case FrontendType::XENOMAI_RASPA:
         {
             ELKLOG_LOG_INFO("Setting up Xenomai RASPA frontend");

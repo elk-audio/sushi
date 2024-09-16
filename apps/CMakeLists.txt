@@ -52,7 +52,7 @@ if (APPLE)
     ]] COMPONENT Runtime)
 endif()
 
-install(TARGETS sushi RUNTIME DESTINATION bin, BUNDLE DESTINATION Applications)
+install(TARGETS sushi RUNTIME DESTINATION bin BUNDLE DESTINATION Applications)
 foreach(ITEM ${DOC_FILES_INSTALL})
     install(FILES ${ITEM} DESTINATION share/sushi/doc)
 endforeach()
