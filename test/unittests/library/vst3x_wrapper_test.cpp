@@ -605,7 +605,7 @@ TEST(TestVst3xUtilFunctions, TestMakeSafeFolderName)
 
 TEST(TestVst3xUtilFunctions, TestIsHidden)
 {
-    auto entry = std::filesystem::directory_entry(std::filesystem::absolute(PLUGIN_FILE));
+    auto entry = std::filesystem::directory_entry(std::filesystem::absolute(SUSHI_VST3_TEST_PLUGIN_PATH));
     EXPECT_FALSE(is_hidden(entry));
 
 #ifndef _MSC_VER // Currently not testing this under windows as git doesn't preserve file properties across platforms
