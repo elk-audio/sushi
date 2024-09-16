@@ -24,6 +24,9 @@
 
 #ifdef SUSHI_BUILD_WITH_ABLETON_LINK
 #include "ableton/Link.hpp"
+#ifdef _MSC_VER
+#undef DELETE // Because Link pulls in Windows headers
+#endif
 #else //SUSHI_BUILD_WITH_ABLETON_LINK
 #include "link_dummy.h"
 #endif // SUSHI_BUILD_WITH_ABLETON_LINK

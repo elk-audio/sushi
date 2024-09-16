@@ -3,6 +3,7 @@
 #####################################
 
 # build gtest framework
+#set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 add_subdirectory(gtest)
 enable_testing()
 
@@ -78,6 +79,7 @@ set(TEST_HELPER_FILES ${TEST_HELPER_FILES}
 set(INCLUDE_DIRS ${INCLUDE_DIRS}
     ${PROJECT_SOURCE_DIR}/test/unittests
     ${PROJECT_SOURCE_DIR}/test/gtest/include
+    ${PROJECT_SOURCE_DIR}/third-party/portaudio/include
 )
 
 set(TEST_LINK_LIBRARIES
@@ -195,6 +197,12 @@ endif()
 if (${SUSHI_WITH_VST3})
     set(TEST_FILES ${TEST_FILES} unittests/library/vst3x_wrapper_test.cpp)
     set(TEST_COMPILE_DEFINITIONS ${TEST_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_VST3)
+    if (APPLE)
+        # When building with Xcode the result of TARGET_BUNDLE_DIR returns .bundle instead of .vst3 so we need to replace it
+        set(TEST_COMPILE_DEFINITIONS ${TEST_COMPILE_DEFINITIONS} -DSUSHI_VST3_TEST_PLUGIN_PATH="$<PATH:REPLACE_EXTENSION,$<TARGET_BUNDLE_DIR:adelay>,.vst3>")
+    else()
+        set(TEST_COMPILE_DEFINITIONS ${TEST_COMPILE_DEFINITIONS} -DSUSHI_VST3_TEST_PLUGIN_PATH="../VST3/$<IF:$<CONFIG:DEBUG>,Debug,Release>/adelay.vst3")
+    endif()
     set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} vst3_host sdk base)
     set(TEST_DEPENDENCIES ${TEST_DEPENDENCIES} adelay vst3_host)
 endif()

@@ -28,7 +28,6 @@ inline void fill_sample_buffer(SampleBuffer<size>& buffer, float value)
     }
 }
 
-
 template <int size>
 inline void fill_buffer_with_noise(SampleBuffer<size>& buffer, std::optional<int> seed=std::nullopt)
 {
@@ -47,7 +46,6 @@ inline void fill_buffer_with_noise(SampleBuffer<size>& buffer, std::optional<int
         }
     }
 }
-
 
 template <int size>
 inline void assert_buffer_value(float value, const SampleBuffer <size> &buffer)

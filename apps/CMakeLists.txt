@@ -25,6 +25,11 @@ else()
     set(SUSHI_COMPILE_OPTIONS -Wall -Wextra -Wno-psabi -fPIC -fno-rtti -ffast-math)
 endif()
 
+if(MSVC)
+    # Link statically to the msvc runtime
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
 target_compile_options(sushi PRIVATE ${SUSHI_COMPILE_OPTIONS})
 
 target_link_libraries(sushi PRIVATE sushi_library ${APP_LINK_LIBRARIES})

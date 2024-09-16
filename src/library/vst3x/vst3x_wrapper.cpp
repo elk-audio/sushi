@@ -15,13 +15,11 @@
 
 /**
  * @brief Wrapper for VST 3.x plugins.
- * @Copyright 2017-2023 Elk Audio AB, Stockholm
+ * @Copyright 2017-2024 Elk Audio AB, Stockholm
  */
 
 #include <string>
-#include <cstdlib>
-#include <dirent.h>
-#include <unistd.h>
+
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
@@ -42,14 +40,12 @@ ELK_POP_WARNING
 #include "elklog/static_logger.h"
 
 #include "vst3x_wrapper.h"
+#include "vst3x_file_utils.h"
 #include "library/event.h"
 
 namespace sushi::internal::vst3 {
 
 constexpr int VST_NAME_BUFFER_SIZE = 128;
-
-constexpr char VST_PRESET_SUFFIX[] = ".vstpreset";
-constexpr int VST_PRESET_SUFFIX_LENGTH = 10;
 
 constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = Steinberg::Vst::ProcessContext::kSystemTimeValid &
                                                   Steinberg::Vst::ProcessContext::kContTimeValid &
@@ -66,87 +62,6 @@ std::string to_ascii_str(Steinberg::Vst::String128 wchar_buffer)
     Steinberg::UString128 str(wchar_buffer, 128);
     str.toAscii(char_buf, VST_NAME_BUFFER_SIZE);
     return {char_buf};
-}
-
-// Get all vst3 preset locations in the right priority order
-// See Steinberg documentation of "Preset locations".
-std::vector<std::string> get_preset_locations()
-{
-    std::vector<std::string> locations;
-    char* home_dir = getenv("HOME");
-    if (home_dir != nullptr)
-    {
-        locations.push_back(std::string(home_dir) + "/.vst3/presets/");
-    }
-    ELKLOG_LOG_WARNING_IF(home_dir == nullptr, "Failed to get home directory")
-    locations.emplace_back("/usr/share/vst3/presets/");
-    locations.emplace_back("/usr/local/share/vst3/presets/");
-    char buffer[_POSIX_SYMLINK_MAX + 1] = {0};
-    auto path_length = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
-    if (path_length > 0)
-    {
-        std::string path(buffer);
-        auto pos = path.find_last_of('/');
-        if (pos != std::string::npos)
-        {
-            locations.emplace_back(path.substr(0, pos) + "/vst3/presets/");
-        }
-        else
-        {
-            path_length = 0;
-        }
-    }
-    ELKLOG_LOG_WARNING_IF(path_length <= 0, "Failed to get binary directory")
-    return locations;
-}
-
-std::string extract_preset_name(const std::string& path)
-{
-    auto fname_pos = path.find_last_of('/') + 1;
-    return path.substr(fname_pos, path.length() - fname_pos - VST_PRESET_SUFFIX_LENGTH);
-}
-
-// Recursively search subdirs for preset files
-void add_patches(const std::string& path, std::vector<std::string>& patches)
-{
-    ELKLOG_LOG_INFO("Looking for presets in: {}", path);
-    DIR* dir = opendir(path.c_str());
-    if (dir == nullptr)
-    {
-        return;
-    }
-    dirent* entry;
-    while((entry = readdir(dir)) != nullptr)
-    {
-        if (entry->d_type == DT_REG)
-        {
-            std::string patch_name(entry->d_name);
-            auto suffix_pos = patch_name.rfind(VST_PRESET_SUFFIX);
-            if (suffix_pos != std::string::npos && patch_name.length() - suffix_pos == VST_PRESET_SUFFIX_LENGTH)
-            {
-                ELKLOG_LOG_DEBUG("Reading vst preset patch: {}", patch_name);
-                patches.push_back(path + "/" + patch_name);
-            }
-        }
-        else if (entry->d_type == DT_DIR && entry->d_name[0] != '.') /* Dirty way to ignore ./,../ and hidden files */
-        {
-            add_patches(path + "/" +  entry->d_name, patches);
-        }
-    }
-    closedir(dir);
-}
-
-std::vector<std::string> enumerate_patches(const std::string& plugin_name, const std::string& company)
-{
-    /* VST3 standard says you should put preset files in specific locations, So we recursively
-     * scan these folders for all files that match, just like we do with Re plugins*/
-    std::vector<std::string> patches;
-    std::vector<std::string> paths = get_preset_locations();
-    for (const auto& path : paths)
-    {
-        add_patches(path + company + "/" + plugin_name, patches);
-    }
-    return patches;
 }
 
 void Vst3xWrapper::_cleanup()
@@ -481,7 +396,7 @@ std::pair<ProcessorReturnCode, std::string> Vst3xWrapper::program_name(int progr
     }
     else if (_supports_programs && _file_based_programs && program < static_cast<int>(_program_files.size()))
     {
-        return {ProcessorReturnCode::OK, extract_preset_name(_program_files[program])};
+        return {ProcessorReturnCode::OK, extract_preset_name(_program_files[program].string())};
     }
     ELKLOG_LOG_INFO("Set program name failed");
     return {ProcessorReturnCode::UNSUPPORTED_OPERATION, ""};
@@ -511,7 +426,7 @@ std::pair<ProcessorReturnCode, std::vector<std::string>> Vst3xWrapper::all_progr
             }
             else if (_file_based_programs)
             {
-                programs.push_back(extract_preset_name(_program_files[i]));
+                programs.push_back(extract_preset_name(_program_files[i].string()));
             }
         }
         ELKLOG_LOG_INFO("Return list with {} programs", programs.size());
@@ -547,10 +462,10 @@ ProcessorReturnCode Vst3xWrapper::set_program(int program)
     else if (_file_based_programs && program < static_cast<int>(_program_files.size()))
     {
         ELKLOG_LOG_INFO("Loading file based preset");
-        Steinberg::OPtr<Steinberg::IBStream> stream(Steinberg::Vst::FileStream::open(_program_files[program].c_str(), "rb"));
+        Steinberg::OPtr<Steinberg::IBStream> stream(Steinberg::Vst::FileStream::open(_program_files[program].string().c_str(), "rb"));
         if (stream == nullptr)
         {
-            ELKLOG_LOG_INFO("Failed to load file {}", _program_files[program]);
+            ELKLOG_LOG_INFO("Failed to load file {}", _program_files[program].string().c_str());
             return ProcessorReturnCode::ERROR;
         }
         Steinberg::Vst::PresetFile preset_file(stream);
@@ -916,7 +831,7 @@ bool Vst3xWrapper::_setup_internal_program_handling()
 
 bool Vst3xWrapper::_setup_file_program_handling()
 {
-    _program_files = enumerate_patches(_instance.name(), _instance.vendor());
+    _program_files = scan_for_presets(make_safe_folder_name(_instance.name()), make_safe_folder_name(_instance.vendor()));
     if (!_program_files.empty())
     {
         _supports_programs = true;
