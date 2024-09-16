@@ -95,8 +95,10 @@ int main(int argc, char* argv[])
 {
     signal(SIGINT, exit_on_signal);
     signal(SIGTERM, exit_on_signal);
-    //signal(SIGPIPE, pipe_signal_handler);
-
+#ifndef _MSC_VER
+    signal(SIGPIPE, pipe_signal_handler);
+#endif
+    
     // option_parser accepts arguments excluding program name,
     // so skip it if it is present.
     if (argc > 0)
