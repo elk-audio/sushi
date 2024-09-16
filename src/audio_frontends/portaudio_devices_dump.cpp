@@ -63,8 +63,12 @@ rapidjson::Document generate_portaudio_devices_info_document()
         auto di = devinfo.value();
 
         rapidjson::Value device_obj(rapidjson::kObjectType);
+        device_obj.AddMember(rapidjson::Value("id", allocator).Move(),
+                             rapidjson::Value(i).Move(), allocator);
         device_obj.AddMember(rapidjson::Value("name", allocator).Move(),
                              rapidjson::Value(di.name.c_str(), allocator).Move(), allocator);
+        device_obj.AddMember(rapidjson::Value("host api", allocator).Move(),
+                             rapidjson::Value(di.host_api.c_str(), allocator).Move(), allocator);
         device_obj.AddMember(rapidjson::Value("inputs", allocator).Move(),
                              rapidjson::Value(di.inputs).Move(), allocator);
         device_obj.AddMember(rapidjson::Value("outputs", allocator).Move(),

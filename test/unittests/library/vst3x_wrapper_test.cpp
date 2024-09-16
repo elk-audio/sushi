@@ -7,10 +7,9 @@
 #include "library/vst3x/vst3x_utils.cpp"
 #include "test_utils/host_control_mockup.h"
 
-#include "elk-warning-suppressor/warning_suppressor.hpp"
-
 #include "library/vst3x/vst3x_wrapper.cpp"
 #include "library/vst3x/vst3x_host_app.cpp"
+#include "library/vst3x/vst3x_file_utils.cpp"
 
 namespace sushi::internal::vst3
 {
@@ -66,6 +65,12 @@ using namespace sushi::internal::vst3;
 
 const char PLUGIN_NAME[] = "ADelay";
 
+#ifdef _MSC_VER
+auto UNITTEST_EXE = "unit_tests.exe";
+#else
+auto UNITTEST_EXE = "unit_tests";
+#endif
+
 constexpr unsigned int DELAY_PARAM_ID = 100;
 constexpr unsigned int BYPASS_PARAM_ID = 101;
 constexpr float TEST_SAMPLE_RATE = 48000;
@@ -75,7 +80,7 @@ constexpr int   TEST_CHANNEL_COUNT = 2;
 TEST(TestVst3xPluginInstance, TestLoadPlugin)
 {
     auto full_path = std::filesystem::path(SUSHI_VST3_TEST_PLUGIN_PATH);
-    auto full_test_plugin_path = std::string(std::filesystem::absolute(full_path));
+    auto full_test_plugin_path = std::filesystem::absolute(full_path).string();
 
     SushiHostApplication host_app;
     PluginInstance module_under_test(&host_app);
@@ -97,7 +102,7 @@ TEST(TestVst3xPluginInstance, TestLoadPluginFromErroneousFilename)
 
     /* Existing library but non-existing plugin */
     auto full_path = std::filesystem::path(SUSHI_VST3_TEST_PLUGIN_PATH);
-    auto full_test_plugin_path = std::string(std::filesystem::absolute(full_path));
+    auto full_test_plugin_path = std::filesystem::absolute(full_path).string();
 
     success = module_under_test.load_plugin(full_test_plugin_path, "NoPluginWithThisName");
     ASSERT_FALSE(success);
@@ -143,7 +148,7 @@ protected:
     void SetUp(const char* plugin_file, const char* plugin_name)
     {
         auto full_path = std::filesystem::path(plugin_file);
-        auto full_plugin_path = std::string(std::filesystem::absolute(full_path));
+        auto full_plugin_path = std::string(std::filesystem::absolute(full_path).string());
 
         _module_under_test = std::make_unique<Vst3xWrapper>(_host_control.make_host_control_mockup(TEST_SAMPLE_RATE),
                                                             full_plugin_path,
@@ -591,4 +596,55 @@ TEST_F(TestVst3xUtils, TestAftertouchConversion)
     EXPECT_EQ(45, vst_event.polyPressure.pitch);
     EXPECT_FLOAT_EQ(0.5f, vst_event.polyPressure.pressure);
     EXPECT_EQ(-1, vst_event.polyPressure.noteId);
+}
+
+TEST(TestVst3xUtilFunctions, TestMakeSafeFolderName)
+{
+    EXPECT_EQ("il_&_al_file n__me", make_safe_folder_name("il*&?al_file n<>me"));
+}
+
+TEST(TestVst3xUtilFunctions, TestIsHidden)
+{
+    auto entry = std::filesystem::directory_entry(std::filesystem::absolute(PLUGIN_FILE));
+    EXPECT_FALSE(is_hidden(entry));
+
+#ifndef _MSC_VER // Currently not testing this under windows as git doesn't preserve file properties across platforms
+    auto path = std::filesystem::path(test_utils::get_data_dir_path()).append(".hidden_file.txt");
+    entry = std::filesystem::directory_entry(path);
+    EXPECT_TRUE(is_hidden(entry));
+#endif
+}
+
+TEST(TestVst3xUtilFunctions, TestScanForPresets)
+{
+    // This is more of a smoke test, it will likely return 0 results,
+    // but we exercise the code to catch exceptions or crashes.
+    auto paths = scan_for_presets("Elk Audio", "Elk Wire");
+    ASSERT_GE(paths.size(), 0u);
+}
+
+TEST(TestVst3xUtilFunctions, TestGetExecutablePath)
+{
+    auto path = get_executable_path();
+    ASSERT_FALSE(path.empty());
+    ASSERT_FALSE(path.filename().empty());
+    EXPECT_TRUE(path.is_absolute());
+    EXPECT_EQ(UNITTEST_EXE, path.filename().string());
+}
+
+TEST(TestVst3xUtilFunctions, TestGetPlatformLocations)
+{
+    auto locations = get_platform_locations();
+    EXPECT_EQ(4, locations.size());
+    for (const auto& path : locations)
+    {
+        EXPECT_FALSE(path.empty());
+    }
+}
+
+TEST(TestVst3xUtilFunctions, TestExtractPresetName)
+{
+    EXPECT_EQ("lately bass", extract_preset_name(std::filesystem::path("/etc/presets/lately bass.vstpreset")));
+    // This should not crash or throw
+    EXPECT_EQ("", extract_preset_name(std::filesystem::path("etc/presets/")));
 }
