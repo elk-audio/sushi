@@ -28,7 +28,6 @@ if (${SUSHI_WITH_VST3})
     set(SMTG_ADD_VSTGUI OFF CACHE BOOL "" FORCE)
     set(SMTG_ADD_VST3_HOSTING_SAMPLES OFF CACHE BOOL "" FORCE)
     set(SMTG_RUN_VST_VALIDATOR OFF CACHE BOOL "" FORCE)
-    set(SMTG_USE_STATIC_CRT ON CACHE BOOL "" FORCE) # Force static runtime lib
 
     # if cross compiling, switch off the create module info post build step
     if(CMAKE_CROSSCOMPILING)

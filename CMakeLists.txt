@@ -105,9 +105,6 @@ elseif (MSVC)
     set(SUSHI_WITH_UNIT_TESTS_DEFAULT ON)
     set(SUSHI_BUILD_TWINE_DEFAULT ON)
 
-    # TODO: debug purposes, remove below
-    set(SUSHI_TWINE_STATIC_DEFAULT ON)
-
     add_compile_definitions(_USE_MATH_DEFINES)
 
 elseif (CMAKE_CROSSCOMPILING)

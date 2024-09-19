@@ -52,6 +52,15 @@ if (APPLE)
     ]] COMPONENT Runtime)
 endif()
 
+### Custom command to copy the dynamic dependencies to the binary folder
+#   Mainly for twine.dll because windows cannot find it from ../twine but
+#   needs it in the same directory
+if (MSVC)
+    add_custom_command(TARGET sushi POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:sushi> $<TARGET_FILE_DIR:sushi>
+            COMMAND_EXPAND_LISTS)
+endif()
+
 install(TARGETS sushi RUNTIME DESTINATION bin BUNDLE DESTINATION Applications)
 foreach(ITEM ${DOC_FILES_INSTALL})
     install(FILES ${ITEM} DESTINATION share/sushi/doc)

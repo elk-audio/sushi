@@ -3,7 +3,6 @@
 #####################################
 
 # build gtest framework
-#set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 add_subdirectory(gtest)
 enable_testing()
 
@@ -260,6 +259,15 @@ if(${SUSHI_DISABLE_MULTICORE_UNIT_TESTS})
 endif()
 
 add_test(unit_tests unit_tests)
+
+### Custom command to copy the dynamic dependencies to the binary folder
+#   Mainly for twine.dll because windows cannot find it from ../twine but
+#   needs it in the same directory
+if (MSVC)
+    add_custom_command(TARGET unit_tests POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:unit_tests> $<TARGET_FILE_DIR:unit_tests>
+    COMMAND_EXPAND_LISTS)
+endif()
 
 ### Custom target for running the tests
 # Environment variable pointing to test/data/ is set so that
