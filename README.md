@@ -32,11 +32,20 @@ Since version 1.0, Sushi can be built natively for macOS as a native binary with
 
 There is a new Core Audio frontend (selectable with the `--coreaudio` command-line option) to interface directly with Core Audio. As an alternative, a Portaudio frontend is also available (with the `--portaudio` flag).
 
-With Core Audio, you can select other devices than the default with the `--audio-input-device-uid` and `--audio-output-device-uid` options. To find out the right number there, you can launch Sushi with the `--dump-portaudio-devs` to get a list in JSON format printed to stdout.
+With Core Audio, you can select other devices than the default with the `--audio-input-device-uid` and `--audio-output-device-uid` options. To find out the right number there, you can launch Sushi with the `--dump-audio-devices` together with `--coreaudio` to get a list in JSON format printed to stdout.
 
-MIDI support is provided through RtMidi and can access directly CoreMidi devices.
+MIDI support is provided through RtMidi and can access CoreMidi devices directly.
 
 LV2 support is currently not available for macOS.
+
+## Sushi Windows
+Since version 1.2, Sushi can be built natively for Windows.
+
+The suggested audio frontend for Windows is Portaudio (selectable with the `--portaudio` option), which can use most available sound device apis on Windows. You can select which devices to use with the `--audio-input-device` and `--audio-output-device` options. As with Core Audio, to find the id corresponding to a device, launch Sushi with the `--dump-audio-devices` option together with `--portaudio` to get a JSON formatted list printed to stdout.
+
+By default, Portaudio does not support Asio, to build with Asio support, pass the `-DPA_USE_ASIO=ON` flag to cmake. This will download and build the Asio SDK automatically.
+
+LV2 support is currently not available for Windows.
 
 ## Example Sushi configuration files in repository
 Under `misc/config_files` in this repository, we have a large variety of example Sushi configuration files.
@@ -99,15 +108,27 @@ Sushi handles most dependencies with vcpkg (or as submodules) and will build and
           * mda-lv2 - at least version 1.2.4 of [drobilla's port](http://drobilla.net/software/mda-lv2/) - not that from Mod Devices or others.
 
 ### Building with vcpkg (native Linux & macOS)
-Instructions:
+To build from a terminal, use the commands below. Vcpkg also integrates nicely with CLion and other IDEs though must manually set the toolchain file.
 
 ```
 $ mkdir build && cd build 
+$ ../third-party/vcpkg/boostrap-vcpkg.sh
 $ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../third-party/vcpkg/scripts/buildsystems/vcpkg.cmake ..
+$ make 
 ```
 
-This might take some time for the first build since all the vcpkg dependencies will have to be built first.
+This might take a while the first time since all the vcpkg dependencies will have to be built first.
 
+### Building with vcpkg (Windows)
+Building on Windows is similar to Posix and macOS, with the addition of the triplet configuration.
+To build from a terminal, use the commands below. Vcpkg also integrates nicely with CLion and Visual Studio, though you must manually set the toolchain file for vcpkg integration.
+
+````
+$ mkdir build ; cd build
+$ ../third-party/vcpkg/boostrap.bat
+$ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="../third-party/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_OVERLAY_TRIPLETS="../triplets/" -DVCPKG_TARGET_TRIPLET=win-custom-x86_64 ..
+$ cmake --build ./
+````
 
 ### Building with Yocto for Elk Audio OS
 Sushi can be built either with the provided [Elk Audio OS SDK](https://github.com/elk-audio/elkpi-sdk), or as part of a [full Elk Audio OS image build with bitbake](https://github.com/elk-audio/elk-audio-os-builder).
