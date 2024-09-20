@@ -54,12 +54,6 @@ configure_file(
 ###########################
 #  Build and link options #
 ###########################
-
-if(MSVC)
-    # Link statically to the msvc runtime
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-endif()
-
 # The defaults enable all options and select APIs available for either Xenomai or macOS
 set(SUSHI_WITH_JACK_DEFAULT OFF)
 set(SUSHI_WITH_VST2_DEFAULT OFF)
