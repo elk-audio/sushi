@@ -112,7 +112,7 @@ To build from a terminal, use the commands below. Vcpkg also integrates nicely w
 
 ```
 $ mkdir build && cd build 
-$ ../third-party/vcpkg/boostrap-vcpkg.sh
+$ ../third-party/vcpkg/bootstrap-vcpkg.sh
 $ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../third-party/vcpkg/scripts/buildsystems/vcpkg.cmake ..
 $ make 
 ```
@@ -125,9 +125,9 @@ To build from a terminal, use the commands below. Vcpkg also integrates nicely w
 
 ````
 $ mkdir build ; cd build
-$ ../third-party/vcpkg/boostrap.bat
+$ ../third-party/vcpkg/bootstrap-vcpkg.bat
 $ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="../third-party/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_OVERLAY_TRIPLETS="../triplets/" -DVCPKG_TARGET_TRIPLET=win-custom-x86_64 ..
-$ cmake --build ./
+$ cmake --build ./ --config Release
 ````
 
 ### Building with Yocto for Elk Audio OS
