@@ -54,12 +54,6 @@ configure_file(
 ###########################
 #  Build and link options #
 ###########################
-
-if(MSVC)
-    # Link statically to the msvc runtime
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-endif()
-
 # The defaults enable all options and select APIs available for either Xenomai or macOS
 set(SUSHI_WITH_JACK_DEFAULT OFF)
 set(SUSHI_WITH_VST2_DEFAULT OFF)
@@ -98,15 +92,12 @@ elseif (MSVC)
     set(SUSHI_WITH_XENOMAI_DEFAULT OFF)
     set(SUSHI_WITH_PORTAUDIO_DEFAULT ON)
     set(SUSHI_WITH_ALSA_MIDI_DEFAULT OFF)
-    set(SUSHI_WITH_RT_MIDI_DEFAULT OFF)
+    set(SUSHI_WITH_RT_MIDI_DEFAULT ON)
     set(SUSHI_WITH_VST2_DEFAULT OFF)
     set(SUSHI_WITH_LV2_DEFAULT OFF)
     set(SUSHI_WITH_LV2_MDA_TESTS_DEFAULT OFF)
     set(SUSHI_WITH_UNIT_TESTS_DEFAULT ON)
     set(SUSHI_BUILD_TWINE_DEFAULT ON)
-
-    # TODO: debug purposes, remove below
-    set(SUSHI_TWINE_STATIC_DEFAULT ON)
 
     add_compile_definitions(_USE_MATH_DEFINES)
 
