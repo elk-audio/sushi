@@ -1,8 +1,8 @@
 {
   "name": "sushi",
   "version-string": "1.0.0",
-  "homepage" : "https://github.com/elk-audio/sushi",
-  "description" : "Headless plugin host for Elk Audio OS",
+  "homepage": "https://github.com/elk-audio/sushi",
+  "description": "Headless plugin host for Elk Audio OS",
   "dependencies": [
     {
       "name": "grpc",
@@ -16,6 +16,9 @@
     },
     "portaudio",
     "rtmidi",
-    "sentry-native"
+    {
+      "name": "sentry-native",
+      "platform": "!arm64-linux"
+    }
   ]
 }
