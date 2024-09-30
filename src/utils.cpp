@@ -34,6 +34,10 @@ ELK_POP_WARNING
 #include "elklog/static_logger.h"
 #include "sushi/sushi.h"
 
+#ifdef SUSHI_BUILD_WITH_SENTRY
+#include "sushi/elk_sentry_log_sink.h"
+#endif
+
 namespace sushi {
 
 ELKLOG_GET_LOGGER_WITH_MODULE_NAME("utils");
@@ -82,6 +86,12 @@ void init_logger([[maybe_unused]] const SushiOptions& options)
     {
         ELKLOG_LOG_INFO("Logger flush interval disabled.");
     }
+
+#ifdef SUSHI_BUILD_WITH_SENTRY
+    auto sentry_sink = std::make_shared<elk::sentry_sink_mt>();
+    ELKLOG_ADD_SINK(sentry_sink);
+#endif
+
 }
 
 }
