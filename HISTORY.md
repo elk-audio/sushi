@@ -1,12 +1,19 @@
-## Next
+## 1.2.0
 
 New Features:
+  * Support for using Sushi as a library
+  * Windows support
   * C++20 support
   * Updated Elklog
+  * Updated Twine to 1.0
+  * Warning suppressor included
 
 Fixes:
   * Improved handling of audio pause / resume
   * Xrun detection in audio frontends
+  * Improved handling of processor add/delete if audio thread is not running
+  * Better event lifetime management
+  * EventDispatcher thread could stall if clock changed
 
 
 ## 1.1.0

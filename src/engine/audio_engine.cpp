@@ -24,7 +24,6 @@
 
 #define TWINE_EXPOSE_INTERNALS
 #include "twine/twine.h"
-
 #include "elklog/static_logger.h"
 
 #include "audio_engine.h"

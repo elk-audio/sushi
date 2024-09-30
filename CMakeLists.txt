@@ -16,7 +16,7 @@ endif()
 
 # Don't change version anywhere else. Everything is generated from this.
 set(SUSHI_VERSION_MAJOR 1)
-set(SUSHI_VERSION_MINOR 1)
+set(SUSHI_VERSION_MINOR 2)
 set(SUSHI_VERSION_REVISION 0)
 
 project(sushi_library
@@ -185,7 +185,7 @@ if (${SUSHI_BUILD_TWINE})
     endif()
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${TWINE_LIB})
 else()
-    find_package(twine 0.4)
+    find_package(twine 0.5)
     set(INCLUDE_DIRS ${INCLUDE_DIRS} ${TWINE_PATH})
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${TWINE_LIB})
     find_package(elk-warning-suppressor 0.1.0 COMPONENTS warningSuppressor)
