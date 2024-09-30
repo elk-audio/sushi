@@ -2,16 +2,9 @@
 
 #include "gtest/gtest.h"
 
+#include "test_utils/plugin_accessors.h"
 #include "test_utils/test_utils.h"
 #include "engine/transport.h"
-
-#include "elk-warning-suppressor/warning_suppressor.hpp"
-
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-#define protected public
-ELK_POP_WARNING
 
 #include "plugins/equalizer_plugin.h"
 #include "engine/audio_engine.cpp"
@@ -19,11 +12,51 @@ ELK_POP_WARNING
 #include "library/plugin_registry.cpp"
 #include "test_utils/dummy_processor.h"
 
+#include "test_utils/audio_graph_accessor.h"
+#include "test_utils/track_accessor.h"
+
+namespace sushi::internal::engine
+{
+
+class AudioEngineAccessor
+{
+public:
+    explicit AudioEngineAccessor(AudioEngine& f) : _friend(f) {}
+
+    [[nodiscard]] AudioGraph& audio_graph()
+    {
+        return _friend._audio_graph;
+    }
+
+    [[nodiscard]] ProcessorContainer& processors()
+    {
+        return _friend._processors;
+    }
+
+    [[nodiscard]] std::vector<Processor*>& realtime_processors()
+    {
+        return _friend._realtime_processors;
+    }
+
+    void remove_connections_from_track(ObjectId track_id)
+    {
+        _friend._remove_connections_from_track(track_id);
+    }
+
+private:
+    AudioEngine& _friend;
+};
+
+}
+
 constexpr float SAMPLE_RATE = 44000;
 constexpr int TEST_CHANNEL_COUNT = 4;
+
 using namespace sushi;
 using namespace sushi::internal;
 using namespace sushi::internal::engine;
+
+
 
 class TestClipDetector : public ::testing::Test
 {
@@ -87,11 +120,17 @@ protected:
         _module_under_test = std::make_unique<AudioEngine>(SAMPLE_RATE, 1);
         _module_under_test->set_audio_input_channels(TEST_CHANNEL_COUNT);
         _module_under_test->set_audio_output_channels(TEST_CHANNEL_COUNT);
+
+        _accessor = std::make_unique<sushi::internal::engine::AudioEngineAccessor>(*_module_under_test);
+
         _processors = _module_under_test->processor_container();
     }
 
     std::unique_ptr<AudioEngine> _module_under_test;
-    const BaseProcessorContainer* _processors;
+
+    std::unique_ptr<sushi::internal::engine::AudioEngineAccessor> _accessor;
+
+    const BaseProcessorContainer* _processors {};
 };
 
 /*
@@ -176,8 +215,12 @@ TEST_F(TestEngine, TestCreateEmptyTrack)
     ASSERT_EQ(EngineReturnStatus::OK, status);
     ASSERT_TRUE(_processors->processor_exists("left"));
     auto left_track_id = track_id;
-    ASSERT_EQ(_module_under_test->_audio_graph._audio_graph[0].size(),1u);
-    ASSERT_EQ(_module_under_test->_audio_graph._audio_graph[0][0]->name(),"left");
+
+    AudioGraph& audio_graph = _accessor->audio_graph();
+    AudioGraphAccessor _ag_accessor {audio_graph};
+
+    ASSERT_EQ(_ag_accessor.audio_graph()[0].size(), 1u);
+    ASSERT_EQ(_ag_accessor.audio_graph()[0][0]->name(), "left");
 
     /* Test invalid name */
     std::tie(status, track_id) = _module_under_test->create_track("left", 1);
@@ -189,7 +232,7 @@ TEST_F(TestEngine, TestCreateEmptyTrack)
     status = _module_under_test->delete_track(left_track_id);
     ASSERT_EQ(EngineReturnStatus::OK, status);
     ASSERT_FALSE(_processors->processor_exists("left"));
-    ASSERT_EQ(_module_under_test->_audio_graph._audio_graph[0].size(),0u);
+    ASSERT_EQ(_ag_accessor.audio_graph()[0].size(), 0u);
 
     /* Test invalid number of channels */
     std::tie(status, track_id) = _module_under_test->create_track("left", MAX_TRACK_CHANNELS + 1);
@@ -254,9 +297,14 @@ TEST_F(TestEngine, TestAddAndRemovePlugin)
     /* Check that processors exists and in the right order on track "main" */
     ASSERT_TRUE(_processors->processor_exists("gain"));
     ASSERT_TRUE(_processors->processor_exists("synth"));
-    ASSERT_EQ(2u, _module_under_test->_audio_graph._audio_graph[0][0]->_processors.size());
-    ASSERT_EQ("synth", _module_under_test->_audio_graph._audio_graph[0][0]->_processors[0]->name());
-    ASSERT_EQ("gain", _module_under_test->_audio_graph._audio_graph[0][0]->_processors[1]->name());
+
+    AudioGraph& audio_graph = _accessor->audio_graph();
+    AudioGraphAccessor _ag_accessor {audio_graph};
+    TrackAccessor _track_accessor_0 {*(_ag_accessor.audio_graph()[0][0])};
+
+    ASSERT_EQ(2u, _track_accessor_0.processors().size());
+    ASSERT_EQ("synth", _track_accessor_0.processors()[0]->name());
+    ASSERT_EQ("gain", _track_accessor_0.processors()[1]->name());
 
     /* Move a processor from 1 track to another */
     auto [right_track_status, right_track_id] = _module_under_test->create_track("right", 2);
@@ -283,9 +331,11 @@ TEST_F(TestEngine, TestAddAndRemovePlugin)
     status = _module_under_test->delete_plugin(gain_id);
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
+    TrackAccessor _track_accessor_1 {*(_ag_accessor.audio_graph()[0][1])};
+
     ASSERT_FALSE(_processors->processor_exists("gain"));
-    ASSERT_EQ(0u, _module_under_test->_audio_graph._audio_graph[0][0]->_processors.size());
-    ASSERT_EQ("synth", _module_under_test->_audio_graph._audio_graph[0][1]->_processors[0]->name());
+    ASSERT_EQ(0u, _track_accessor_0.processors().size());
+    ASSERT_EQ("synth", _track_accessor_1.processors()[0]->name());
 
     /* Negative tests */
     ObjectId id;
@@ -340,8 +390,11 @@ TEST_F(TestEngine, TestSetSamplerate)
     _module_under_test->set_sample_rate(48000.0f);
     ASSERT_FLOAT_EQ(48000.0f, _module_under_test->sample_rate());
     /* Pretty ugly way of checking that it was actually set, but wth */
-    auto eq_plugin = static_cast<const equalizer_plugin::EqualizerPlugin*>(_module_under_test->_processors.processor("eq").get());
-    ASSERT_FLOAT_EQ(48000.0f, eq_plugin->_sample_rate);
+    auto eq_plugin = static_cast<const equalizer_plugin::EqualizerPlugin*>(_accessor->processors().processor("eq").get());
+
+    sushi::internal::equalizer_plugin::Accessor eq_plugin_accessor {eq_plugin};
+
+    ASSERT_FLOAT_EQ(48000.0f, eq_plugin_accessor.const_sample_rate());
 }
 
 TEST_F(TestEngine, TestRealtimeConfiguration)
@@ -378,7 +431,11 @@ TEST_F(TestEngine, TestRealtimeConfiguration)
     rt.join();
     ASSERT_EQ(EngineReturnStatus::OK, status);
 
-    ASSERT_EQ(1u, _module_under_test->_audio_graph._audio_graph[0][0]->_processors.size());
+    AudioGraph& audio_graph = _accessor->audio_graph();
+    AudioGraphAccessor _ag_accessor {audio_graph};
+    TrackAccessor _track_accessor_0 {*(_ag_accessor.audio_graph()[0][0])};
+
+    ASSERT_EQ(1u, _track_accessor_0.processors().size());
 
     // Remove the plugin and track.
 
@@ -390,7 +447,7 @@ TEST_F(TestEngine, TestRealtimeConfiguration)
     status = _module_under_test->remove_plugin_from_track(plugin_id, track_id);
     rt.join();
     ASSERT_EQ(EngineReturnStatus::OK, status);
-    ASSERT_EQ(0u, _module_under_test->_audio_graph._audio_graph[0][0]->_processors.size());
+    ASSERT_EQ(0u, _track_accessor_0.processors().size());
 
     rt = std::thread(faux_rt_thread, _module_under_test.get());
     status = _module_under_test->delete_plugin(plugin_id);
@@ -408,8 +465,8 @@ TEST_F(TestEngine, TestRealtimeConfiguration)
     ASSERT_FALSE(_processors->processor_exists("gain_0_r"));
     ASSERT_FALSE(_processors->processor_exists(plugin_id));
     ASSERT_FALSE(_processors->processor_exists(track_id));
-    ASSERT_FALSE(_module_under_test->_realtime_processors[track_id]);
-    ASSERT_FALSE(_module_under_test->_realtime_processors[plugin_id]);
+    ASSERT_FALSE(_accessor->realtime_processors()[track_id]);
+    ASSERT_FALSE(_accessor->realtime_processors()[plugin_id]);
 }
 
 TEST_F(TestEngine, TestAudioConnections)
@@ -468,7 +525,9 @@ TEST_F(TestEngine, TestAudioConnections)
     // Remove the connections
     _module_under_test->enable_realtime(false);
     rt = std::thread(faux_rt_thread, _module_under_test.get(), &in_buffer, &out_buffer, &control_buffer);
-    _module_under_test->_remove_connections_from_track(track_id);
+
+    _accessor->remove_connections_from_track(track_id);
+
     rt.join();
     EXPECT_EQ(0u, _module_under_test->audio_input_connections().size());
     EXPECT_EQ(0u, _module_under_test->audio_output_connections().size());

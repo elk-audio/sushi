@@ -28,6 +28,9 @@
 namespace sushi {
 
 template<typename T, size_t storage_capacity>
+class FixedStackAccessor;
+
+template<typename T, size_t storage_capacity>
 class FixedStack
 {
 public:
@@ -95,11 +98,13 @@ public:
     }
 
 private:
+    friend FixedStackAccessor<T, storage_capacity>;
+
     std::array<T, storage_capacity> _data;
 
-    int _head{-1};
+    int _head {-1};
 };
 
-}// namespace sushi
+} // namespace sushi
 
 #endif //SUSHI_FIXED_STACK_H

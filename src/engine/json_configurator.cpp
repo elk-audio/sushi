@@ -22,6 +22,8 @@
 
 ELK_PUSH_WARNING
 ELK_DISABLE_TYPE_LIMITS
+ELK_DISABLE_CONDITIONAL_EXPRESSION_IS_CONSTANT
+ELK_DISABLE_COMPARISON_CALLS_NAME_RECURSIVELY
 #include "rapidjson/error/en.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/schema.h"
@@ -102,14 +104,17 @@ std::pair<JsonConfigReturnStatus, ControlConfig> JsonConfigurator::load_control_
     {
         control_config.cv_inputs = host_config["cv_inputs"].GetInt();
     }
+
     if (host_config.HasMember("cv_outputs"))
     {
         control_config.cv_outputs = host_config["cv_outputs"].GetInt();
     }
+
     if (host_config.HasMember("midi_inputs"))
     {
         control_config.midi_inputs = host_config["midi_inputs"].GetInt();
     }
+
     if (host_config.HasMember("midi_outputs"))
     {
         control_config.midi_outputs = host_config["midi_outputs"].GetInt();
@@ -283,11 +288,12 @@ JsonConfigReturnStatus JsonConfigurator::load_tracks()
 
 JsonConfigReturnStatus JsonConfigurator::load_midi()
 {
-    auto [status, midi] = _parse_section(JsonSection::MIDI);
-    if (status != JsonConfigReturnStatus::OK)
+    auto [midi_section_status, midi] = _parse_section(JsonSection::MIDI);
+    if (midi_section_status != JsonConfigReturnStatus::OK)
     {
-        return status;
+        return midi_section_status;
     }
+
     if (midi.HasMember("track_connections"))
     {
         for (const auto& con : midi["track_connections"].GetArray())
@@ -316,6 +322,7 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
                                                             track->id(),
                                                             _get_midi_channel(con["channel"]));
             }
+
             if (res != MidiDispatcherStatus::OK)
             {
                 if (res == MidiDispatcherStatus::INVALID_MIDI_INPUT)
@@ -452,8 +459,8 @@ JsonConfigReturnStatus JsonConfigurator::load_midi()
     {
         for (const auto& port : midi["clock_output"]["enabled_ports"].GetArray())
         {
-            auto status = _midi_dispatcher->enable_midi_clock(true, port.GetInt());
-            if (status != midi_dispatcher::MidiDispatcherStatus::OK)
+            auto midi_clock_status = _midi_dispatcher->enable_midi_clock(true, port.GetInt());
+            if (midi_clock_status != midi_dispatcher::MidiDispatcherStatus::OK)
             {
                 ELKLOG_LOG_ERROR("Failed to enable midi clock output on port {}", port.GetInt());
                 return JsonConfigReturnStatus::INVALID_MIDI_PORT;
@@ -513,6 +520,7 @@ JsonConfigReturnStatus JsonConfigurator::load_osc()
             }
         }
     }
+
     return JsonConfigReturnStatus::OK;
 }
 
@@ -523,6 +531,7 @@ JsonConfigReturnStatus JsonConfigurator::load_cv_gate()
     {
         return status;
     }
+
     if (cv_config.HasMember("cv_inputs"))
     {
         for (const auto& cv_in : cv_config["cv_inputs"].GetArray())
@@ -539,6 +548,7 @@ JsonConfigReturnStatus JsonConfigurator::load_cv_gate()
             }
         }
     }
+
     if (cv_config.HasMember("cv_outputs"))
     {
         for (const auto& cv_out : cv_config["cv_outputs"].GetArray())
@@ -555,6 +565,7 @@ JsonConfigReturnStatus JsonConfigurator::load_cv_gate()
             }
         }
     }
+
     if (cv_config.HasMember("gate_inputs"))
     {
         for (const auto& gate_in : cv_config["gate_inputs"].GetArray())
@@ -584,6 +595,7 @@ JsonConfigReturnStatus JsonConfigurator::load_cv_gate()
             }
         }
     }
+
     if (cv_config.HasMember("gate_outputs"))
     {
         for (const auto& gate_out : cv_config["gate_outputs"].GetArray())
@@ -613,6 +625,7 @@ JsonConfigReturnStatus JsonConfigurator::load_cv_gate()
             }
         }
     }
+
     return JsonConfigReturnStatus::OK;
 }
 
@@ -632,6 +645,7 @@ JsonConfigReturnStatus JsonConfigurator::load_events()
             dispatcher->post_event(std::move(e));
         }
     }
+
     return JsonConfigReturnStatus::OK;
 }
 
@@ -664,6 +678,7 @@ JsonConfigReturnStatus JsonConfigurator::load_initial_state()
     {
         return status;
     }
+
     for (auto& json_state : json_states.GetArray())
     {
         ProcessorState state;
@@ -678,10 +693,12 @@ JsonConfigReturnStatus JsonConfigurator::load_initial_state()
         {
             state.set_bypass(json_state["bypassed"].GetBool());
         }
+
         if (json_state.HasMember("program"))
         {
             state.set_program(json_state["program"].GetInt());
         }
+
         if (json_state.HasMember("parameters"))
         {
             for (const auto& parameter : json_state["parameters"].GetObject())
@@ -695,6 +712,7 @@ JsonConfigReturnStatus JsonConfigurator::load_initial_state()
                 state.add_parameter_change(param->id(), parameter.value.GetFloat());
             }
         }
+
         if (json_state.HasMember("properties"))
         {
             for (const auto& property : json_state["properties"].GetObject())
@@ -705,12 +723,14 @@ JsonConfigReturnStatus JsonConfigurator::load_initial_state()
                     ELKLOG_LOG_WARNING("Invalid property name: \"{}\"", property.name.GetString());
                     return JsonConfigReturnStatus::INVALID_CONFIGURATION;
                 }
+
                 state.add_property_change(param->id(), property.value.GetString());
             }
         }
 
         processor->set_state(&state, false);
     }
+
     return JsonConfigReturnStatus::OK;
 }
 
@@ -742,6 +762,7 @@ std::pair<JsonConfigReturnStatus, const rapidjson::Value&> JsonConfigurator::_pa
         ELKLOG_LOG_INFO("Config file does not have any \"{}\" definitions", name);
         return {JsonConfigReturnStatus::NOT_DEFINED, _json_data};
     }
+
     return {JsonConfigReturnStatus::OK, _json_data[name]};
 }
 
@@ -749,26 +770,32 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value& tra
 {
     auto name = track_def["name"].GetString();
     EngineReturnStatus status = EngineReturnStatus::ERROR;
-    ObjectId track_id;
+    ObjectId track_id {0};
 
-    if (type == TrackType::REGULAR)
+    switch (type)
     {
-        if (track_def.HasMember("multibus") && track_def["multibus"].GetBool())
+        case TrackType::REGULAR:
         {
-            std::tie(status, track_id) = _engine->create_multibus_track(name, track_def["buses"].GetInt());
+            if (track_def.HasMember("multibus") && track_def["multibus"].GetBool())
+            {
+                std::tie(status, track_id) = _engine->create_multibus_track(name, track_def["buses"].GetInt());
+            }
+            else if (track_def.HasMember("channels"))
+            {
+                std::tie(status, track_id) = _engine->create_track(name, track_def["channels"].GetInt());
+            }
+            break;
         }
-        else if (track_def.HasMember("channels"))
+        case TrackType::PRE:
         {
-            std::tie(status, track_id) = _engine->create_track(name, track_def["channels"].GetInt());
+            std::tie(status, track_id) = _engine->create_pre_track(name);
+            break;
         }
-    }
-    else if (type == TrackType::PRE)
-    {
-        std::tie(status, track_id) = _engine->create_pre_track(name);
-    }
-    else if (type == TrackType::POST)
-    {
-        std::tie(status, track_id) = _engine->create_post_track(name);
+        case TrackType::POST:
+        {
+            std::tie(status, track_id) = _engine->create_post_track(name);
+            break;
+        }
     }
 
     if (status == EngineReturnStatus::INVALID_PLUGIN || status == EngineReturnStatus::INVALID_PROCESSOR)
@@ -812,19 +839,21 @@ JsonConfigReturnStatus JsonConfigurator::_make_track(const rapidjson::Value& tra
     return JsonConfigReturnStatus::OK;
 }
 
-int JsonConfigurator::_get_midi_channel(const rapidjson::Value& channels)
+int JsonConfigurator::_get_midi_channel(const rapidjson::Value& channels) const
 {
     if (channels.IsString())
     {
         return midi::MidiChannel::OMNI;
     }
+
     return channels.GetInt();
 }
 
 std::unique_ptr<Event> JsonConfigurator::_parse_event(const rapidjson::Value& json_event, bool with_timestamp)
 {
-    Time timestamp = with_timestamp? std::chrono::microseconds(
-            static_cast<int>(std::round(json_event["time"].GetDouble() * 1'000'000))): IMMEDIATE_PROCESS;
+    Time timestamp = with_timestamp ?
+                     std::chrono::microseconds(static_cast<int>(std::round(json_event["time"].GetDouble() * 1'000'000))) :
+                     IMMEDIATE_PROCESS;
 
     const rapidjson::Value& data = json_event["data"];
     auto processor = _engine->processor_container()->processor(data["plugin_name"].GetString());
@@ -842,6 +871,7 @@ std::unique_ptr<Event> JsonConfigurator::_parse_event(const rapidjson::Value& js
             ELKLOG_LOG_WARNING("Unrecognised parameter: {}", data["parameter_name"].GetString());
             return nullptr;
         }
+
         return std::make_unique<ParameterChangeEvent>(ParameterChangeEvent::Subtype::FLOAT_PARAMETER_CHANGE,
                                                       processor->id(),
                                                       parameter->id(),
@@ -857,6 +887,7 @@ std::unique_ptr<Event> JsonConfigurator::_parse_event(const rapidjson::Value& js
             ELKLOG_LOG_WARNING("Unrecognised property: {}", data["property_name"].GetString());
             return nullptr;
         }
+
         return std::make_unique<PropertyChangeEvent>(processor->id(),
                                                      parameter->id(),
                                                      data["value"].GetString(),
@@ -882,6 +913,7 @@ std::unique_ptr<Event> JsonConfigurator::_parse_event(const rapidjson::Value& js
                                                data["velocity"].GetFloat(),
                                                timestamp);
     }
+
     return nullptr;
 }
 
@@ -908,8 +940,10 @@ bool JsonConfigurator::_validate_against_schema(rapidjson::Value& config, JsonSe
         {
             ELKLOG_LOG_ERROR("Schema validation failure at {}", error_node);
         }
+
         return false;
     }
+
     return true;
 }
 
@@ -981,6 +1015,7 @@ JsonConfigReturnStatus JsonConfigurator::_connect_audio_to_track(const rapidjson
             return JsonConfigReturnStatus::INVALID_CONFIGURATION;
         }
     }
+
     return JsonConfigReturnStatus::OK;
 }
 

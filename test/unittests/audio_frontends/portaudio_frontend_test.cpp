@@ -7,43 +7,62 @@
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-ELK_POP_WARNING
-
 #include "audio_frontends/portaudio_frontend.cpp"
-
 
 using ::testing::internal::posix::GetEnv;
 using ::testing::Return;
 using ::testing::NiceMock;
 using ::testing::SetArgPointee;
 
+namespace sushi::internal::audio_frontend
+{
+
+class PortaudioFrontendAccessor
+{
+public:
+    explicit PortaudioFrontendAccessor(PortAudioFrontend& f) : _friend(f) {}
+
+    [[nodiscard]] bool stream_initialized() const
+    {
+        return _friend._stream_initialized;
+    }
+
+    PaStream* stream()
+    {
+        return _friend._stream;
+    };
+
+private:
+    PortAudioFrontend& _friend;
+};
+
+}
+
 using namespace sushi;
 using namespace sushi::internal;
 using namespace sushi::internal::audio_frontend;
 using namespace sushi::internal::midi_dispatcher;
 
-constexpr float SAMPLE_RATE = 44000;
+constexpr float SAMPLE_RATE = 44100;
 
 
 class TestPortAudioFrontend : public ::testing::Test
 {
 protected:
     TestPortAudioFrontend()
-    {
-    }
+    = default;
 
     void SetUp() override
     {
         mockPortAudio = std::make_unique<NiceMock<MockPortAudio>>();
         _module_under_test = std::make_unique<PortAudioFrontend>(&_test_engine);
+
+        _accessor = std::make_unique<PortaudioFrontendAccessor>(*_module_under_test);
     }
 
     void TearDown() override
     {
-        if (_module_under_test->_stream_initialized)
+        if (_accessor->stream_initialized())
         {
             EXPECT_CALL(*mockPortAudio, Pa_IsStreamActive).WillOnce(Return(1));
             EXPECT_CALL(*mockPortAudio, Pa_StopStream);
@@ -55,6 +74,7 @@ protected:
 
     EngineMockup _test_engine {SAMPLE_RATE};
     std::unique_ptr<PortAudioFrontend> _module_under_test;
+    std::unique_ptr<PortaudioFrontendAccessor> _accessor;
 };
 
 TEST_F(TestPortAudioFrontend, TestInitSuccess)
@@ -73,7 +93,7 @@ TEST_F(TestPortAudioFrontend, TestInitSuccess)
     EXPECT_CALL(*mockPortAudio, Pa_GetDefaultOutputDevice);
     EXPECT_CALL(*mockPortAudio, Pa_GetDeviceInfo(config.input_device_id.value())).WillOnce(Return(const_cast<const PaDeviceInfo*>(&expected_info)));
     EXPECT_CALL(*mockPortAudio, Pa_GetDeviceInfo(config.output_device_id.value())).WillOnce(Return(const_cast<const PaDeviceInfo*>(&expected_info)));
-    EXPECT_CALL(*mockPortAudio, Pa_GetStreamInfo(_module_under_test->_stream)).WillOnce(Return(const_cast<const PaStreamInfo*>(&stream_info)));
+    EXPECT_CALL(*mockPortAudio, Pa_GetStreamInfo(_accessor->stream())).WillOnce(Return(const_cast<const PaStreamInfo*>(&stream_info)));
     auto ret_code = _module_under_test->init(&config);
     ASSERT_EQ(AudioFrontendStatus::OK, ret_code);
 }
@@ -159,7 +179,7 @@ TEST_F(TestPortAudioFrontend, TestProcess)
 
     EXPECT_CALL(*mockPortAudio, Pa_GetDeviceCount).WillOnce(Return(device_count));
     EXPECT_CALL(*mockPortAudio, Pa_GetDeviceInfo).WillRepeatedly(Return(&device_info));
-    EXPECT_CALL(*mockPortAudio, Pa_GetStreamInfo(_module_under_test->_stream)).WillOnce(Return(const_cast<const PaStreamInfo*>(&stream_info)));
+    EXPECT_CALL(*mockPortAudio, Pa_GetStreamInfo(_accessor->stream())).WillOnce(Return(const_cast<const PaStreamInfo*>(&stream_info)));
     auto result = _module_under_test->init(&config);
     ASSERT_EQ(AudioFrontendStatus::OK, result);
 
@@ -184,12 +204,21 @@ TEST_F(TestPortAudioFrontend, TestGetDeviceName)
     device_info.maxInputChannels = 1;
     device_info.maxOutputChannels = 1;
     device_info.name = expected_name;
+    device_info.hostApi = 1;
+
+    auto expected_api_name = "jack";
+    PaHostApiInfo api_info;
+    api_info.name = expected_api_name;
 
     EXPECT_CALL(*mockPortAudio, Pa_GetDeviceInfo)
     .WillOnce(Return(&device_info))
     .WillOnce(Return(&device_info))
     .WillOnce(Return(nullptr));
 
+    EXPECT_CALL(*mockPortAudio, Pa_GetHostApiInfo)
+    .WillOnce(Return(&api_info))
+    .WillOnce(Return(&api_info));
+    
     std::optional<int> portaudio_output_device_id = 1;
 
     auto device_name = sushi::internal::audio_frontend::get_portaudio_output_device_name(portaudio_output_device_id);

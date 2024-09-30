@@ -142,7 +142,10 @@ public:
         else
         {
             assert(_spec.coeff != 0);
-            return _current_value = (1.0 - _spec.coeff) * _target_value + _spec.coeff * _current_value;
+
+            _current_value = (static_cast<T>(1.0) - _spec.coeff) * _target_value + _spec.coeff * _current_value;
+
+            return _current_value;
         }
     }
 
@@ -150,7 +153,7 @@ public:
      * @brief Test whether the smoother has reached the target value.
      * @return true if the value has reached the target value, false otherwise
      */
-    bool stationary() const
+    [[nodiscard]] bool stationary() const
     {
         if constexpr (mode == Mode::RAMP || mode == Mode::EXP_RAMP)
         {
@@ -184,15 +187,16 @@ private:
         T   coeff{0};
     };
 
-    static constexpr T TIMECONSTANTS_RISE_TIME = 2.19;
-    static constexpr T STATIONARY_LIMIT = 0.0001; // -80dB
+    static constexpr T TIMECONSTANTS_RISE_TIME = static_cast<const T>(2.19);
+    static constexpr T STATIONARY_LIMIT = static_cast<const T>(0.0001); // -80dB
+
     static_assert(mode == Mode::RAMP || mode == Mode::FILTER || mode == Mode::EXP_RAMP);
 
     void _update_internals(std::chrono::duration<float, std::ratio<1,1>> lag_time, float sample_rate)
     {
         if constexpr (mode == Mode::FILTER)
         {
-            _spec.coeff = std::exp(-1.0 * TIMECONSTANTS_RISE_TIME / (lag_time.count() * sample_rate));
+            _spec.coeff = std::exp(static_cast<T>(-1.0 * TIMECONSTANTS_RISE_TIME) / (lag_time.count() * sample_rate));
         }
         else
         {

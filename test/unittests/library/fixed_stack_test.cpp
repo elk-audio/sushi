@@ -2,12 +2,27 @@
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-ELK_POP_WARNING
-
 #include "library/fixed_stack.h"
+
+namespace sushi
+{
+
+template<typename T, size_t storage_capacity>
+class FixedStackAccessor
+{
+public:
+    explicit FixedStackAccessor(FixedStack<T, storage_capacity>& f) : _friend(f) {}
+
+    const std::array<T, storage_capacity>& data()
+    {
+        return _friend._data;
+    }
+
+private:
+    FixedStack<T, storage_capacity>& _friend;
+};
+
+}
 
 using namespace sushi;
 
@@ -16,9 +31,11 @@ constexpr int STACK_SIZE = 5;
 class TestFixedStack : public ::testing::Test
 {
 protected:
-    TestFixedStack() {}
+    TestFixedStack() = default;
 
     FixedStack<int, STACK_SIZE> _module_under_test;
+
+    FixedStackAccessor<int, STACK_SIZE> _accessor {_module_under_test};
 };
 
 TEST_F(TestFixedStack, TestPush)
@@ -32,7 +49,7 @@ TEST_F(TestFixedStack, TestPush)
     }
     ASSERT_FALSE(_module_under_test.push(10));
 
-    ASSERT_EQ(2, _module_under_test._data[2]);
+    ASSERT_EQ(2, _accessor.data()[2]);
 }
 
 TEST_F(TestFixedStack, TestPop)

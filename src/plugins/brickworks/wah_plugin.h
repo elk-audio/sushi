@@ -25,6 +25,9 @@
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::wah_plugin {
 
 class WahPlugin : public InternalPlugin, public UidHelper<WahPlugin>
@@ -59,5 +62,7 @@ private:
 };
 
 } // namespace sushi::internal::wah_plugin
+
+ELK_POP_WARNING
 
 #endif // WAH_PLUGIN_H

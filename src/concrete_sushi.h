@@ -33,9 +33,7 @@ namespace sushi_rpc {
 class GrpcServer;
 }
 
-namespace sushi {
-
-namespace internal {
+namespace sushi::internal {
 
 class BaseFactory;
 
@@ -72,6 +70,8 @@ namespace jsonconfig {
 class JsonConfigurator;
 }
 
+class ConcreteSushiAccessor;
+
 class ConcreteSushi : public Sushi
 {
 public:
@@ -94,7 +94,7 @@ public:
 
     void set_sample_rate(float sample_rate) override;
 
-    float sample_rate() const override;
+    [[nodiscard]] float sample_rate() const override;
 
 protected:
     /**
@@ -102,7 +102,8 @@ protected:
      */
     ConcreteSushi();
 
-    friend class BaseFactory;
+    friend BaseFactory;
+    friend ConcreteSushiAccessor;
 
     std::unique_ptr<engine::AudioEngine> _engine {nullptr};
     std::unique_ptr<midi_dispatcher::MidiDispatcher> _midi_dispatcher {nullptr};
@@ -118,8 +119,6 @@ protected:
     std::unique_ptr<sushi_rpc::GrpcServer> _rpc_server {nullptr};
 #endif
 };
-
-} // end namespace internal
 
 } // end namespace sushi::internal
 

@@ -25,6 +25,9 @@
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::notch_plugin {
 
 class NotchPlugin : public InternalPlugin, public UidHelper<NotchPlugin>
@@ -60,5 +63,7 @@ private:
 };
 
 } // namespace sushi::internal::notch_plugin
+
+ELK_POP_WARNING
 
 #endif // NOTCH_PLUGIN_H

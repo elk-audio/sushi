@@ -7,12 +7,6 @@
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-ELK_POP_WARNING
-
-
 #include "audio_frontends/offline_frontend.cpp"
 
 #include "utils.cpp"
@@ -28,28 +22,44 @@ constexpr float SAMPLE_RATE = 44000;
 constexpr int CV_CHANNELS = 0;
 constexpr int AUDIO_CHANNELS = 2;
 
+namespace sushi::internal::audio_frontend
+{
+
+class OfflineFrontendAccessor
+{
+public:
+    explicit OfflineFrontendAccessor(OfflineFrontend& f) : _friend(f) {}
+
+    const std::vector<std::unique_ptr<Event>>& event_queue()
+    {
+        return _friend._event_queue;
+    }
+
+private:
+    OfflineFrontend& _friend;
+};
+
+}
+
 class TestOfflineFrontend : public ::testing::Test
 {
 protected:
-    TestOfflineFrontend()
-    {
-    }
+    TestOfflineFrontend() = default;
 
     void SetUp() override
     {
-        _module_under_test = new OfflineFrontend(&_engine);
+        _module_under_test = std::make_unique<OfflineFrontend>(&_engine);
+
+        _accessor = std::make_unique<OfflineFrontendAccessor>(*_module_under_test);
+
         _engine.set_audio_input_channels(AUDIO_CHANNELS);
         _engine.set_audio_output_channels(AUDIO_CHANNELS);
     }
 
-    void TearDown() override
-    {
-        delete _module_under_test;
-    }
-
-    EngineMockup     _engine {SAMPLE_RATE};
-    MidiDispatcher   _midi_dispatcher {_engine.event_dispatcher()};
-    OfflineFrontend* _module_under_test {};
+    EngineMockup _engine {SAMPLE_RATE};
+    MidiDispatcher _midi_dispatcher {_engine.event_dispatcher()};
+    std::unique_ptr<OfflineFrontend> _module_under_test ;
+    std::unique_ptr<OfflineFrontendAccessor> _accessor;
 };
 
 TEST_F(TestOfflineFrontend, TestWavProcessing)
@@ -148,7 +158,7 @@ TEST_F(TestOfflineFrontend, TestAddSequencerEvents)
     ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, status);
     _module_under_test->add_sequencer_events(std::move(events));
 
-    auto event_q = &_module_under_test->_event_queue;
+    auto event_q = &_accessor->event_queue();
     ASSERT_EQ(4u, event_q->size());
 
     // Check that queue is sorted by time

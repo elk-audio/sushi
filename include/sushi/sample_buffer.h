@@ -520,7 +520,7 @@ public:
             float* data = _buffer + size * channel;
             for (int i = 0; i < size; ++i)
             {
-                data[i] *= start + i * inc;
+                data[i] *= start + static_cast<float>(i) * inc;
             }
         }
     }

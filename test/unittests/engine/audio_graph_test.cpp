@@ -4,16 +4,9 @@
 
 #include "engine/transport.h"
 
-#include "elk-warning-suppressor/warning_suppressor.hpp"
-
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-#define protected public
-ELK_POP_WARNING
-
 #include "engine/audio_graph.cpp"
 #include "test_utils/host_control_mockup.h"
+#include "test_utils/audio_graph_accessor.h"
 
 constexpr float SAMPLE_RATE = 44000;
 constexpr int TEST_MAX_TRACKS = 2;
@@ -22,23 +15,32 @@ using namespace sushi;
 using namespace sushi::internal;
 using namespace sushi::internal::engine;
 
+#if defined(_MSC_VER)
+#define DISABLE_MULTICORE_UNIT_TESTS
+#endif
+
 
 class TestAudioGraph : public ::testing::Test
 {
 protected:
     using ::testing::Test::SetUp; // Hide error of hidden overload of virtual function in clang when signatures differ but the name is the same
-    TestAudioGraph() {}
+    TestAudioGraph() = default;
 
     void SetUp(int cores)
     {
         _module_under_test = std::make_unique<AudioGraph>(cores, TEST_MAX_TRACKS, SAMPLE_RATE, "");
+        _accessor = std::make_unique<AudioGraphAccessor>(*_module_under_test);
     }
 
-    HostControlMockup             _hc;
-    std::unique_ptr<AudioGraph>   _module_under_test;
+    HostControlMockup _hc;
+    std::unique_ptr<AudioGraph> _module_under_test;
+
+    std::unique_ptr<AudioGraphAccessor> _accessor;
+
     performance::PerformanceTimer _timer;
-    Track _track_1{_hc.make_host_control_mockup(SAMPLE_RATE), 2, &_timer};
-    Track _track_2{_hc.make_host_control_mockup(SAMPLE_RATE), 2, &_timer};
+
+    Track _track_1 {_hc.make_host_control_mockup(SAMPLE_RATE), 2, &_timer};
+    Track _track_2 {_hc.make_host_control_mockup(SAMPLE_RATE), 2, &_timer};
 };
 
 TEST_F(TestAudioGraph, TestSingleCoreOperation)
@@ -47,8 +49,8 @@ TEST_F(TestAudioGraph, TestSingleCoreOperation)
     ASSERT_TRUE(_module_under_test->add(&_track_1));
     ASSERT_TRUE(_module_under_test->add(&_track_2));
 
-    ASSERT_EQ(1u, _module_under_test->_audio_graph.size());
-    ASSERT_EQ(2u, _module_under_test->_audio_graph[0].size());
+    ASSERT_EQ(1u, _accessor->audio_graph().size());
+    ASSERT_EQ(2u, _accessor->audio_graph()[0].size());
 
     _module_under_test->render();
 
@@ -56,7 +58,7 @@ TEST_F(TestAudioGraph, TestSingleCoreOperation)
     ASSERT_TRUE(_module_under_test->remove(&_track_2));
     ASSERT_FALSE(_module_under_test->remove(&_track_2));
 
-    ASSERT_EQ(0u, _module_under_test->_audio_graph[0].size());
+    ASSERT_EQ(0u, _accessor->audio_graph()[0].size());
 }
 
 /**
@@ -75,10 +77,10 @@ TEST_F(TestAudioGraph, TestMultiCoreOperation)
     ASSERT_TRUE(_module_under_test->add(&_track_2));
 
     // Tracks should end up in slot 0 and 1
-    ASSERT_EQ(3u, _module_under_test->_audio_graph.size());
-    ASSERT_EQ(1u, _module_under_test->_audio_graph[0].size());
-    ASSERT_EQ(1u, _module_under_test->_audio_graph[1].size());
-    ASSERT_EQ(0u, _module_under_test->_audio_graph[2].size());
+    ASSERT_EQ(3u, _accessor->audio_graph().size());
+    ASSERT_EQ(1u, _accessor->audio_graph()[0].size());
+    ASSERT_EQ(1u, _accessor->audio_graph()[1].size());
+    ASSERT_EQ(0u, _accessor->audio_graph()[2].size());
 
     auto event = RtEvent::make_note_on_event(_track_1.id(), 0, 0, 48, 1.0f);
     _track_1.process_event(event);
@@ -100,6 +102,6 @@ TEST_F(TestAudioGraph, TestMaxNumberOfTracks)
     ASSERT_TRUE(_module_under_test->add(&_track_2));
     ASSERT_FALSE(_module_under_test->add(&_track_2));
 
-    ASSERT_EQ(1u, _module_under_test->_audio_graph.size());
-    ASSERT_EQ(2u, _module_under_test->_audio_graph[0].size());
+    ASSERT_EQ(1u, _accessor->audio_graph().size());
+    ASSERT_EQ(2u, _accessor->audio_graph()[0].size());
 }

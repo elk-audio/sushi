@@ -2,11 +2,6 @@
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-ELK_POP_WARNING
-
 #include "library/rt_event.h"
 
 using namespace sushi;
@@ -14,64 +9,64 @@ using namespace sushi::internal;
 
 TEST (TestRealtimeEvents, TestFactoryFunction)
 {
-    auto event = RtEvent::make_note_on_event(123, 1, 0, 46, 0.5);
+    auto event = RtEvent::make_note_on_event(123, 1, 0, 46, 0.5f);
     EXPECT_EQ(RtEventType::NOTE_ON, event.type());
     auto note_on_event = event.keyboard_event();
     EXPECT_EQ(ObjectId(123), note_on_event->processor_id());
     EXPECT_EQ(1, note_on_event->sample_offset());
     EXPECT_EQ(0, note_on_event->channel());
     EXPECT_EQ(46, note_on_event->note());
-    EXPECT_FLOAT_EQ(0.5, note_on_event->velocity());
+    EXPECT_FLOAT_EQ(0.5f, note_on_event->velocity());
 
-    event = RtEvent::make_note_off_event(122, 2, 1, 47, 0.5);
+    event = RtEvent::make_note_off_event(122, 2, 1, 47, 0.5f);
     EXPECT_EQ(RtEventType::NOTE_OFF, event.type());
     auto note_off_event = event.keyboard_event();
     EXPECT_EQ(ObjectId(122), note_off_event->processor_id());
     EXPECT_EQ(2, note_off_event->sample_offset());
     EXPECT_EQ(1, note_on_event->channel());
     EXPECT_EQ(47, note_off_event->note());
-    EXPECT_FLOAT_EQ(0.5, note_off_event->velocity());
+    EXPECT_FLOAT_EQ(0.5f, note_off_event->velocity());
 
-    event = RtEvent::make_note_aftertouch_event(124, 3, 2, 48, 0.5);
+    event = RtEvent::make_note_aftertouch_event(124, 3, 2, 48, 0.5f);
     EXPECT_EQ(RtEventType::NOTE_AFTERTOUCH, event.type());
     auto note_at_event = event.keyboard_event();
     EXPECT_EQ(ObjectId(124), note_at_event->processor_id());
     EXPECT_EQ(3, note_at_event->sample_offset());
     EXPECT_EQ(2, note_on_event->channel());
     EXPECT_EQ(48, note_at_event->note());
-    EXPECT_FLOAT_EQ(0.5, note_at_event->velocity());
+    EXPECT_FLOAT_EQ(0.5f, note_at_event->velocity());
 
-    event = RtEvent::make_aftertouch_event(111, 3, 2, 0.6);
+    event = RtEvent::make_aftertouch_event(111, 3, 2, 0.6f);
     EXPECT_EQ(RtEventType::AFTERTOUCH, event.type());
     auto at_event = event.keyboard_common_event();
     EXPECT_EQ(ObjectId(111), at_event->processor_id());
     EXPECT_EQ(3, at_event->sample_offset());
     EXPECT_EQ(2, note_on_event->channel());
-    EXPECT_FLOAT_EQ(0.6, at_event->value());
+    EXPECT_FLOAT_EQ(0.6f, at_event->value());
 
-    event = RtEvent::make_pitch_bend_event(112, 4, 3, 0.7);
+    event = RtEvent::make_pitch_bend_event(112, 4, 3, 0.7f);
     EXPECT_EQ(RtEventType::PITCH_BEND, event.type());
     auto pb_event = event.keyboard_common_event();
     EXPECT_EQ(ObjectId(112), pb_event->processor_id());
     EXPECT_EQ(4, pb_event->sample_offset());
     EXPECT_EQ(3, note_on_event->channel());
-    EXPECT_FLOAT_EQ(0.7, pb_event->value());
+    EXPECT_FLOAT_EQ(0.7f, pb_event->value());
 
-    event = RtEvent::make_kb_modulation_event(113, 5, 4, 0.8);
+    event = RtEvent::make_kb_modulation_event(113, 5, 4, 0.8f);
     EXPECT_EQ(RtEventType::MODULATION, event.type());
     auto mod_event = event.keyboard_common_event();
     EXPECT_EQ(ObjectId(113), mod_event->processor_id());
     EXPECT_EQ(5, mod_event->sample_offset());
     EXPECT_EQ(4, note_on_event->channel());
-    EXPECT_FLOAT_EQ(0.8, mod_event->value());
+    EXPECT_FLOAT_EQ(0.8f, mod_event->value());
 
-    event = RtEvent::make_parameter_change_event(125, 4, 64, 0.5);
+    event = RtEvent::make_parameter_change_event(125, 4, 64, 0.5f);
     EXPECT_EQ(RtEventType::FLOAT_PARAMETER_CHANGE, event.type());
     auto pc_event = event.parameter_change_event();
     EXPECT_EQ(ObjectId(125), pc_event->processor_id());
     EXPECT_EQ(4, pc_event->sample_offset());
     EXPECT_EQ(ObjectId(64), pc_event->param_id());
-    EXPECT_FLOAT_EQ(0.5, pc_event->value());
+    EXPECT_FLOAT_EQ(0.5f, pc_event->value());
 
     event = RtEvent::make_wrapped_midi_event(126, 5, {6u, 7u, 8u, 0u});
     EXPECT_EQ(RtEventType::WRAPPED_MIDI_EVENT, event.type());
@@ -90,7 +85,7 @@ TEST (TestRealtimeEvents, TestFactoryFunction)
     EXPECT_EQ(1, gate_event->gate_no());
     EXPECT_TRUE(gate_event->value());
 
-    event = RtEvent::make_cv_event(128, 7, 2, 0.5);
+    event = RtEvent::make_cv_event(128, 7, 2, 0.5f);
     EXPECT_EQ(RtEventType::CV_EVENT, event.type());
     auto cv_event = event.cv_event();
     EXPECT_EQ(ObjectId(128), cv_event->processor_id());
@@ -107,7 +102,7 @@ TEST (TestRealtimeEvents, TestFactoryFunction)
     EXPECT_EQ(ObjectId(65), spc_event->param_id());
     EXPECT_EQ("Hej", *spc_event->value());
 
-    uint8_t TEST_DATA[3] = {1,2,3};
+    uint8_t TEST_DATA[3] = {1, 2, 3};
     BlobData data{sizeof(TEST_DATA), TEST_DATA};
     event = RtEvent::make_data_property_change_event(130, 9, 66, data);
     EXPECT_EQ(RtEventType::DATA_PROPERTY_CHANGE, event.type());

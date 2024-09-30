@@ -1,12 +1,5 @@
 #include "gtest/gtest.h"
 
-#include "elk-warning-suppressor/warning_suppressor.hpp"
-
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-ELK_POP_WARNING
-
 #include "test_utils/test_utils.h"
 #include "dsp_library/sample_wrapper.h"
 
@@ -18,7 +11,7 @@ const int SAMPLE_DATA_LENGTH = sizeof(SAMPLE_DATA) / sizeof(float);
 class TestSampleWrapper : public ::testing::Test
 {
 protected:
-    TestSampleWrapper() {}
+    TestSampleWrapper() = default;
 
     Sample _module_under_test{SAMPLE_DATA, SAMPLE_DATA_LENGTH};
 };

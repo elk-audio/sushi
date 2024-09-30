@@ -93,7 +93,7 @@ void BitcrusherPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSa
 {
     /* Update parameter values */
     bw_sr_reduce_set_ratio(&_sr_reduce_coeffs, _samplerate_ratio->processed_value());
-    bw_bd_reduce_set_bit_depth(&_bd_reduce_coeffs, _bit_depth->processed_value());
+    bw_bd_reduce_set_bit_depth(&_bd_reduce_coeffs, static_cast<char>(_bit_depth->processed_value()));
 
     if (_bypass_manager.should_process())
     {

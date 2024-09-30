@@ -6,19 +6,39 @@
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-#define protected public
-
 #include "library/internal_plugin.cpp"
-#undef private
-#undef protected
-
-ELK_POP_WARNING
 
 #include "test_utils/host_control_mockup.h"
 #include "test_utils/test_utils.h"
+
+namespace sushi::internal
+{
+
+class InternalPluginAccessor
+{
+public:
+    explicit InternalPluginAccessor(InternalPlugin& plugin) : _plugin(plugin) {}
+
+    [[nodiscard]] std::deque<ParameterStorage>& parameter_values()
+    {
+        return _plugin._parameter_values;
+    }
+
+    void send_property_to_realtime(ObjectId property_id, const std::string& value)
+    {
+        _plugin.send_property_to_realtime(property_id, value);
+    }
+
+    void send_data_to_realtime(BlobData data, int id)
+    {
+        _plugin.send_data_to_realtime(data, id);
+    }
+
+private:
+    InternalPlugin& _plugin;
+};
+
+}
 
 using namespace sushi;
 using namespace sushi::internal;
@@ -26,7 +46,7 @@ using namespace sushi::internal;
 class TestPlugin : public InternalPlugin
 {
 public:
-    TestPlugin(HostControl host_control) : InternalPlugin(host_control)
+    explicit TestPlugin(HostControl host_control) : InternalPlugin(host_control)
     {
         set_name("test_plugin");
     }
@@ -45,17 +65,17 @@ protected:
 
     void SetUp() override
     {
-        _module_under_test = new TestPlugin(_host_control.make_host_control_mockup());
+        _module_under_test = std::make_unique<TestPlugin>(_host_control.make_host_control_mockup());
         _module_under_test->set_event_output(&_host_control._event_output);
-    }
 
-    void TearDown() override
-    {
-        delete(_module_under_test);
+        _accessor = std::make_unique<InternalPluginAccessor>(*_module_under_test);
     }
 
     HostControlMockup _host_control;
-    InternalPlugin* _module_under_test;
+
+    std::unique_ptr<InternalPlugin> _module_under_test;
+
+    std::unique_ptr<InternalPluginAccessor> _accessor;
 };
 
 
@@ -82,9 +102,9 @@ TEST_F(InternalPluginTest, TestParameterRegistration)
     auto parameter_list = _module_under_test->all_parameters();
     EXPECT_EQ(4u, parameter_list.size());
 
-    EXPECT_EQ(4u, _module_under_test->_parameter_values.size());
+    EXPECT_EQ(4u, _accessor->parameter_values().size());
     IntParameterValue* value = nullptr;
-    ASSERT_NO_FATAL_FAILURE(value = _module_under_test->_parameter_values[2].int_parameter_value());
+    ASSERT_NO_FATAL_FAILURE(value = _accessor->parameter_values()[2].int_parameter_value());
     EXPECT_EQ(3, value->processed_value());
 }
 
@@ -139,7 +159,8 @@ TEST_F(InternalPluginTest, TestIntParameterHandling)
     RtEvent event = RtEvent::make_parameter_change_event(0, 0, 0, 0.6f);
 
     _module_under_test->process_event(event);
-    EXPECT_FLOAT_EQ(6.0f, value->processed_value());
+
+    EXPECT_FLOAT_EQ(6.0f, static_cast<float>(value->processed_value()));
 
     // Access the parameter from the external interface
     auto [status, ext_value] = _module_under_test->parameter_value_in_domain(value->descriptor()->id());
@@ -219,7 +240,7 @@ TEST_F(InternalPluginTest, TestPropertyHandling)
 TEST_F(InternalPluginTest, TestSendingPropertyToRealtime)
 {
     _module_under_test->register_property("property", "Property", "default");
-    _module_under_test->send_property_to_realtime(0, "test");
+    _accessor->send_property_to_realtime(0, "test");
 
     // Check that an event was generated and queued
     auto event = _host_control._dummy_dispatcher.retrieve_event();
@@ -242,7 +263,7 @@ TEST_F(InternalPluginTest, TestSendingDataToRealtime)
 {
     int a = 123;
     BlobData data{.size = sizeof(a), .data = (uint8_t*) &a};
-    _module_under_test->send_data_to_realtime(data, 15);
+    _accessor->send_data_to_realtime(data, 15);
 
     // Check that an event was generated and queued
     auto event = _host_control._dummy_dispatcher.retrieve_event();
@@ -349,7 +370,7 @@ TEST_F(InternalPluginTest, TestStateSaving)
     ProcessorState state = _module_under_test->save_state();
 
     _module_under_test->set_property_value(descriptor->id(), "str_2");
-    auto rt_event = RtEvent::make_parameter_change_event(0, 0, param_id, 0.4);
+    auto rt_event = RtEvent::make_parameter_change_event(0, 0, param_id, 0.4f);
     _module_under_test->process_event(rt_event);
 
     ASSERT_NE(param_val, _module_under_test->parameter_value(param_id).second);

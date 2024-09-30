@@ -529,7 +529,7 @@ bool OSCFrontend::_remove_processor_connections(ObjectId processor_id)
                                       [&](const auto& c) { return c->processor == processor_id; }),
                        _connections.end());
 
-    count += _outgoing_connections.erase(static_cast<ObjectId>(processor_id));
+    count += static_cast<int>(_outgoing_connections.erase(static_cast<ObjectId>(processor_id)));
 
     ELKLOG_LOG_ERROR_IF(count == 0, "Failed to remove any connections for processor {}", processor_id)
     return count > 0;

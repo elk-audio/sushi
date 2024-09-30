@@ -27,10 +27,14 @@
 
 ELK_PUSH_WARNING
 ELK_DISABLE_SHORTEN_64_TO_32
+ELK_DISABLE_CONVERSION_FROM_SIZE_T_TO_INT
 #include <bw_comb.h>
 ELK_POP_WARNING
 
 #include "library/internal_plugin.h"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
 
 namespace sushi::internal::comb_plugin {
 
@@ -71,5 +75,7 @@ private:
 };
 
 } // namespace sushi::internal::comb_plugin
+
+ELK_POP_WARNING
 
 #endif // COMBDELAY_PLUGIN_H

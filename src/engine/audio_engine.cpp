@@ -22,7 +22,9 @@
 #include <iomanip>
 #include <functional>
 
-#include "twine/src/twine_internal.h"
+#define TWINE_EXPOSE_INTERNALS
+#include "twine/twine.h"
+
 #include "elklog/static_logger.h"
 
 #include "audio_engine.h"
@@ -1191,8 +1193,10 @@ void AudioEngine::update_timings()
     if (_process_timer.enabled())
     {
         auto engine_timings = _process_timer.timings_for_node(ENGINE_TIMING_ID);
-
-        _event_dispatcher->post_event(std::make_unique<EngineTimingNotificationEvent>(*engine_timings, IMMEDIATE_PROCESS));
+        if (engine_timings.has_value())
+        {
+            _event_dispatcher->post_event(std::make_unique<EngineTimingNotificationEvent>(*engine_timings, IMMEDIATE_PROCESS));
+        }
 
         _log_timing_print_counter += 1;
         if (_log_timing_print_counter > TIMING_LOG_PRINT_INTERVAL)

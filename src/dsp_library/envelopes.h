@@ -179,14 +179,14 @@ public:
     }
 
 private:
-    float _attack_factor{0};
-    float _decay_factor{0};
-    float _sustain_level{1};
-    float _release_factor{0.1};
-    float _current_level{0};
-    float _samplerate{44100};
+    float _attack_factor {0};
+    float _decay_factor {0};
+    float _sustain_level {1};
+    float _release_factor {0.1f};
+    float _current_level {0};
+    float _samplerate {44100};
 
-    EnvelopeState _state{EnvelopeState::OFF};
+    EnvelopeState _state {EnvelopeState::OFF};
 };
 
 } // end namespace sushi::dsp

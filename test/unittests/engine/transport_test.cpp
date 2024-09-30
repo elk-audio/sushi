@@ -4,11 +4,6 @@
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-ELK_POP_WARNING
-
 #include "library/rt_event_fifo.h"
 
 using namespace sushi;
@@ -148,14 +143,14 @@ TEST_F(TestTransport, TestTimeline68Time)
 
     /* Advance time by 1/2 second equal to 1/2 bar at 180 bpm. Can't test exact
      * values here since 48000 is not an even multiple of AUDIO_CHUNK_SIZE */
-    _module_under_test.set_time(std::chrono::milliseconds(500), TEST_SAMPLERATE / 2);
+    _module_under_test.set_time(std::chrono::milliseconds(500), static_cast<int64_t>(TEST_SAMPLERATE / 2.0f));
     EXPECT_NEAR(1.5, _module_under_test.current_bar_beats(), precision);
     EXPECT_NEAR(1.5, _module_under_test.current_beats(), precision);
     EXPECT_NEAR(0.0, _module_under_test.current_bar_start_beats(), precision);
 
     /* Advance time by 1 second equal to 1 bar at 180 bpm
      * which should bring us halfway  in to the next bar */
-    _module_under_test.set_time(std::chrono::milliseconds(1500), 3 * TEST_SAMPLERATE / 2);
+    _module_under_test.set_time(std::chrono::milliseconds(1500), static_cast<int64_t>(3 * TEST_SAMPLERATE / 2.0f));
     EXPECT_NEAR(1.5, _module_under_test.current_bar_beats(), precision);
     EXPECT_NEAR(4.5, _module_under_test.current_beats(), precision);
     EXPECT_NEAR(3.0, _module_under_test.current_bar_start_beats(), precision);

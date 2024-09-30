@@ -2,12 +2,6 @@
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-#define protected public
-ELK_POP_WARNING
-
 #include "engine/event_timer.cpp"
 
 using namespace sushi;
@@ -19,20 +13,18 @@ constexpr float TEST_SAMPLE_RATE = 44000.0f;
 
 TEST(TestEventTimerInternal, TestCalcChunkTime)
 {
-    int microsecs = std::round(1000000.0f * AUDIO_CHUNK_SIZE / TEST_SAMPLE_RATE);
+    int microseconds = static_cast<int>(std::round(1000000.0f * AUDIO_CHUNK_SIZE / TEST_SAMPLE_RATE));
     auto chunk_time = calc_chunk_time(TEST_SAMPLE_RATE);
-    ASSERT_EQ(microsecs, chunk_time.count());
+    ASSERT_EQ(microseconds, chunk_time.count());
 }
 
 
 class TestEventTimer : public ::testing::Test
 {
 protected:
-    TestEventTimer()
-    {
-    }
+    TestEventTimer() = default;
 
-    EventTimer       _module_under_test{TEST_SAMPLE_RATE};
+    EventTimer _module_under_test {TEST_SAMPLE_RATE};
 };
 
 TEST_F(TestEventTimer, TestToOffsetConversion)

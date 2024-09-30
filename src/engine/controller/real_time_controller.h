@@ -39,6 +39,8 @@ namespace engine
 class Transport;
 }
 
+class RtControllerAccessor;
+
 /**
  * @brief When a host application embeds Sushi, it should use this class to interface with Sushi in a real-time context.
  *        RealTimeController implements the RtController API.
@@ -82,10 +84,12 @@ public:
     void receive_midi(int input, MidiDataByte data, Time timestamp) override;
     void set_midi_callback(ReactiveMidiCallback&& callback) override;
 
-    sushi::Time calculate_timestamp_from_start(float sample_rate) const override;
+    [[nodiscard]] sushi::Time calculate_timestamp_from_start(float sample_rate) const override;
     void increment_samples_since_start(int64_t sample_count, Time timestamp) override;
 
 private:
+    friend RtControllerAccessor;
+
     audio_frontend::ReactiveFrontend* _audio_frontend {nullptr};
     midi_frontend::ReactiveMidiFrontend* _midi_frontend {nullptr};
     engine::Transport* _transport {nullptr};

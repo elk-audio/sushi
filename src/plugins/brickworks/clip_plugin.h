@@ -26,6 +26,9 @@
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::clip_plugin {
 
 class ClipPlugin : public InternalPlugin, public UidHelper<ClipPlugin>
@@ -67,5 +70,7 @@ private:
 };
 
 } // namespace sushi::internal::clip_plugin
+
+ELK_POP_WARNING
 
 #endif // CLIP_PLUGIN_H

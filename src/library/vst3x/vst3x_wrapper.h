@@ -23,6 +23,7 @@
 
 #include <map>
 #include <utility>
+#include <filesystem>
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
@@ -50,6 +51,8 @@ constexpr int VST_WRAPPER_NOTE_EVENT_QUEUE_SIZE = 256;
 constexpr int PARAMETER_UPDATE_QUEUE_SIZE = 100;
 // Maximum number of cached state changes, as only 1 can be processes per audio process call
 constexpr int STATE_CHANGE_QUEUE_SIZE = 10;
+
+class Vst3xWrapperAccessor;
 
 /**
  * @brief internal wrapper class for loading VST plugins and make them accessible as Processor to the Engine.
@@ -143,6 +146,8 @@ public:
     }
 
 private:
+    friend Vst3xWrapperAccessor;
+
     /**
      * @brief Tell the plugin that we're done with it and release all resources
      * we allocated during initialization.
@@ -219,7 +224,7 @@ private:
 
     BypassManager _bypass_manager{_bypassed};
 
-    std::vector<std::string> _program_files;
+    std::vector<std::filesystem::path> _program_files;
 
     std::string _plugin_load_name;
     std::string _plugin_load_path;

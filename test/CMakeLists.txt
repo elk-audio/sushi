@@ -78,6 +78,7 @@ set(TEST_HELPER_FILES ${TEST_HELPER_FILES}
 set(INCLUDE_DIRS ${INCLUDE_DIRS}
     ${PROJECT_SOURCE_DIR}/test/unittests
     ${PROJECT_SOURCE_DIR}/test/gtest/include
+    ${PROJECT_SOURCE_DIR}/third-party/portaudio/include
 )
 
 set(TEST_LINK_LIBRARIES
@@ -121,6 +122,12 @@ if (${SUSHI_WITH_VST2})
             unittests/test_utils/vst2_test_plugin.cpp
             ${VST2_SDK_PLUGIN_SOURCES}
     )
+    if (MSVC)
+        set(VST2_TEST_PLUGIN_SOURCES
+                unittests/test_utils/vst2_test_plugin.def
+                ${VST2_TEST_PLUGIN_SOURCES}
+        )
+    endif ()
 
     add_library(vst2_test_plugin MODULE ${VST2_TEST_PLUGIN_SOURCES})
 
@@ -189,6 +196,12 @@ endif()
 if (${SUSHI_WITH_VST3})
     set(TEST_FILES ${TEST_FILES} unittests/library/vst3x_wrapper_test.cpp)
     set(TEST_COMPILE_DEFINITIONS ${TEST_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_VST3)
+    if (APPLE)
+        # When building with Xcode the result of TARGET_BUNDLE_DIR returns .bundle instead of .vst3 so we need to replace it
+        set(TEST_COMPILE_DEFINITIONS ${TEST_COMPILE_DEFINITIONS} -DSUSHI_VST3_TEST_PLUGIN_PATH="$<PATH:REPLACE_EXTENSION,$<TARGET_BUNDLE_DIR:adelay>,.vst3>")
+    else()
+        set(TEST_COMPILE_DEFINITIONS ${TEST_COMPILE_DEFINITIONS} -DSUSHI_VST3_TEST_PLUGIN_PATH="../VST3/$<IF:$<CONFIG:DEBUG>,Debug,Release>/adelay.vst3")
+    endif()
     set(TEST_LINK_LIBRARIES ${TEST_LINK_LIBRARIES} vst3_host sdk base)
     set(TEST_DEPENDENCIES ${TEST_DEPENDENCIES} adelay vst3_host)
 endif()
@@ -215,7 +228,16 @@ endif()
 add_executable(unit_tests ${TEST_FILES} ${TEST_HELPER_FILES})
 
 target_compile_definitions(unit_tests PRIVATE ${TEST_COMPILE_DEFINITIONS})
-target_compile_options(unit_tests PRIVATE -Wall -Wextra -Wno-psabi -fno-rtti -ffast-math)
+
+if(MSVC)
+    # C5045: Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
+    #        is disabled for all - Spectre is not a concern for Sushi I don't think.
+    # C4996: Deprecated warning. This was flooding the terminal, I might remove the suppression from here eventually,
+    #        and out into the code again.
+    target_compile_options(unit_tests PRIVATE /W3 /wd5045 /wd4996)
+else ()
+    target_compile_options(unit_tests PRIVATE -Wall -fno-rtti -ffast-math)
+endif()
 
 target_include_directories(unit_tests
         PUBLIC
@@ -237,6 +259,15 @@ if(${SUSHI_DISABLE_MULTICORE_UNIT_TESTS})
 endif()
 
 add_test(unit_tests unit_tests)
+
+### Custom command to copy the dynamic dependencies to the binary folder
+#   Mainly for twine.dll because windows cannot find it from ../twine but
+#   needs it in the same directory
+if (MSVC)
+    add_custom_command(TARGET unit_tests POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:unit_tests> $<TARGET_FILE_DIR:unit_tests>
+    COMMAND_EXPAND_LISTS)
+endif()
 
 ### Custom target for running the tests
 # Environment variable pointing to test/data/ is set so that

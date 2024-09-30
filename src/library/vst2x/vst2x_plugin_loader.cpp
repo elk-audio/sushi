@@ -50,6 +50,9 @@
 
 #ifdef __APPLE__
 #include <Corefoundation/Corefoundation.h>
+#elif defined(_MSC_VER)
+#define NOMINMAX 1
+#include <Windows.h>
 #endif
 
 #include "elklog/static_logger.h"
@@ -198,6 +201,63 @@ void PluginLoader::close_library_handle(LibraryHandle library_handle)
     if (CFGetRetainCount(library_handle) > 0)
     {
         CFRelease(library_handle);
+    }
+}
+#elif defined(_MSC_VER)
+LibraryHandle PluginLoader::get_library_handle_for_plugin(const std::string& plugin_absolute_path)
+{
+    if (!std::filesystem::exists(plugin_absolute_path))
+    {
+        ELKLOG_LOG_ERROR("Plugin path not found: {}", plugin_absolute_path);
+        return nullptr;
+    }
+    void* libraryHandle = LoadLibrary(plugin_absolute_path.c_str());
+
+    if (libraryHandle == nullptr)
+    {
+        ELKLOG_LOG_ERROR("Could not open library, {}", GetLastError());
+        return nullptr;
+    }
+
+    return libraryHandle;
+}
+
+AEffect* PluginLoader::load_plugin(LibraryHandle library_handle)
+{
+    // Somewhat cheap hack to avoid a tricky compiler warning. Casting from void*
+    // to a proper function pointer will cause GCC to warn that "ISO C++ forbids
+    // casting between pointer-to-function and pointer-to-object". Here, we
+    // represent both types in a union and use the correct one in the given
+    // context, thus avoiding the need to cast anything.  See also:
+    // http://stackoverflow.com/a/2742234/14302
+    union
+    {
+        plugin_entry_proc entryPointFuncPtr;
+        void* entryPointVoidPtr;
+    } entryPoint;
+
+    entryPoint.entryPointVoidPtr = GetProcAddress((HMODULE) library_handle, "VSTPluginMain");
+
+    if (entryPoint.entryPointVoidPtr == nullptr)
+    {
+        entryPoint.entryPointVoidPtr = GetProcAddress((HMODULE) library_handle, "main");
+        if (entryPoint.entryPointVoidPtr == nullptr)
+        {
+            ELKLOG_LOG_ERROR("Couldn't get a pointer to plugin's main()");
+            return nullptr;
+        }
+    }
+
+    plugin_entry_proc mainEntryPoint = entryPoint.entryPointFuncPtr;
+    AEffect* plugin = mainEntryPoint(host_callback);
+    return plugin;
+}
+
+void PluginLoader::close_library_handle(LibraryHandle library_handle)
+{
+    if (library_handle != nullptr)
+    {
+        FreeLibrary(HMODULE(library_handle));
     }
 }
 #endif

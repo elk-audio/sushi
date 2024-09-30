@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8..3.23)
+cmake_minimum_required(VERSION 3.15..3.23)
 
 if(${CMAKE_VERSION} VERSION_LESS 3.12)
     cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
@@ -54,7 +54,6 @@ configure_file(
 ###########################
 #  Build and link options #
 ###########################
-
 # The defaults enable all options and select APIs available for either Xenomai or macOS
 set(SUSHI_WITH_JACK_DEFAULT OFF)
 set(SUSHI_WITH_VST2_DEFAULT OFF)
@@ -87,6 +86,21 @@ if (APPLE)
     set(SUSHI_WITH_UNIT_TESTS_DEFAULT ON)
     set(SUSHI_BUILD_TWINE_DEFAULT ON)
     set(SUSHI_DISABLE_MULTICORE_UNIT_TESTS_DEFAULT ON)
+
+elseif (MSVC)
+    # windows defaults
+    set(SUSHI_WITH_XENOMAI_DEFAULT OFF)
+    set(SUSHI_WITH_PORTAUDIO_DEFAULT ON)
+    set(SUSHI_WITH_ALSA_MIDI_DEFAULT OFF)
+    set(SUSHI_WITH_RT_MIDI_DEFAULT ON)
+    set(SUSHI_WITH_VST2_DEFAULT OFF)
+    set(SUSHI_WITH_LV2_DEFAULT OFF)
+    set(SUSHI_WITH_LV2_MDA_TESTS_DEFAULT OFF)
+    set(SUSHI_WITH_UNIT_TESTS_DEFAULT ON)
+    set(SUSHI_BUILD_TWINE_DEFAULT ON)
+
+    add_compile_definitions(_USE_MATH_DEFINES)
+
 elseif (CMAKE_CROSSCOMPILING)
     # Yocto cross-compilation defaults
     set(SUSHI_WITH_RASPA_DEFAULT ON)
@@ -98,6 +112,7 @@ elseif (CMAKE_CROSSCOMPILING)
     set(SUSHI_WITH_LV2_MDA_TESTS_DEFAULT OFF)
     set(SUSHI_WITH_UNIT_TESTS_DEFAULT OFF)
     set(SUSHI_BUILD_TWINE_DEFAULT OFF)
+
 else()
     # Native Linux defaults
     set(SUSHI_WITH_JACK_DEFAULT ON)
@@ -173,10 +188,12 @@ else()
     find_package(twine 0.4)
     set(INCLUDE_DIRS ${INCLUDE_DIRS} ${TWINE_PATH})
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} ${TWINE_LIB})
+    find_package(elk-warning-suppressor 0.1.0 COMPONENTS warningSuppressor)
 endif()
 
 set(ELKLOG_WITH_UNIT_TESTS OFF CACHE BOOL "")
 set(ELKLOG_USE_INCLUDED_TWINE OFF CACHE BOOL "")
+set(ELKLOG_TWINE_STATIC ${SUSHI_TWINE_STATIC} CACHE STRING "")
 set(ELKLOG_WITH_EXAMPLES OFF CACHE BOOL "")
 set(ELKLOG_MULTITHREADED_RT_LOGGING OFF CACHE BOOL "")
 set(ELKLOG_FILE_SIZE 10000000 CACHE STRING "")
@@ -258,9 +275,7 @@ endif()
 if (${SUSHI_WITH_PORTAUDIO})
     message("Building with PortAudio support.")
 
-    find_package(portaudio CONFIG REQUIRED)
-
-    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} portaudio_static)
+    set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} PortAudio)
 
     # Compile definitions
     set(EXTRA_COMPILE_DEFINITIONS ${EXTRA_COMPILE_DEFINITIONS} -DSUSHI_BUILD_WITH_PORTAUDIO)
@@ -381,15 +396,21 @@ if (${SUSHI_WITH_VST3})
             "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/pluginterfacesupport.cpp"
             "${VST3_SDK_PATH}/public.sdk/source/common/memorystream.cpp")
 
-    set(VST3_COMPILE_FLAGS "-Wno-unused-parameter \
-                            -Wno-extra \
-                            -Wno-deprecated \
-                            -Wno-cpp \
-                            -Wno-pointer-bool-conversion \
-                            -Wno-suggest-override \
-                            -Wno-deprecated-declarations \
-                            -Wno-shorten-64-to-32 \
-                            -Wformat=0")
+    if (MSVC)
+        set(VST3_HOST_SOURCES ${VST3_HOST_SOURCES} "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_win32.cpp")
+    endif()
+
+    if(NOT MSVC)
+        set(VST3_COMPILE_FLAGS "-Wno-unused-parameter \
+                                -Wno-extra \
+                                -Wno-deprecated \
+                                -Wno-cpp \
+                                -Wno-pointer-bool-conversion \
+                                -Wno-suggest-override \
+                                -Wno-deprecated-declarations \
+                                -Wno-shorten-64-to-32 \
+                                -Wformat=0")
+    endif()
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         set(VST3_HOST_SOURCES ${VST3_HOST_SOURCES} "${VST3_SDK_PATH}/public.sdk/source/vst/hosting/module_linux.cpp")
@@ -424,7 +445,8 @@ if (${SUSHI_WITH_VST3})
                                 src/library/vst3x/vst3x_processor_factory.h
                                 src/library/vst3x/vst3x_wrapper.cpp
                                 src/library/vst3x/vst3x_host_app.cpp
-                                src/library/vst3x/vst3x_utils.cpp)
+                                src/library/vst3x/vst3x_utils.cpp
+                                src/library/vst3x/vst3x_file_utils.cpp)
 
     # Linked libraries
     set(EXTRA_BUILD_LIBRARIES ${EXTRA_BUILD_LIBRARIES} vst3_host sdk)
@@ -512,6 +534,7 @@ message("Configured audio buffer size: " ${SUSHI_AUDIO_BUFFER_SIZE} " samples")
 
 if (${SUSHI_WITH_SENTRY})
     find_package(Threads)
+    find_package(ZLIB)
     find_package(sentry CONFIG REQUIRED)
 
     message("Building with sentry.io support.")
@@ -672,8 +695,6 @@ find_package(SndFile CONFIG REQUIRED)
 
 set(COMMON_LIBRARIES
     SndFile::sndfile
-    pthread
-    dl
     fifo
     oscpack
     elklog
@@ -681,7 +702,11 @@ set(COMMON_LIBRARIES
     ${TWINE_LIB}
 )
 
-set_target_properties(oscpack PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
+if(NOT MSVC)
+    set(COMMON_LIBRARIES ${COMMON_LIBRARIES} pthread dl)
+
+    set_target_properties(oscpack PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
+endif()
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     set(COMMON_LIBRARIES ${COMMON_LIBRARIES} atomic)
@@ -696,18 +721,28 @@ target_include_directories(${PROJECT_NAME}
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
-target_link_libraries(${PROJECT_NAME} PUBLIC ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES} elk::warningSuppressor)
+target_link_libraries(${PROJECT_NAME} PUBLIC ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} INTERFACE $<BUILD_INTERFACE:elk::warningSuppressor>)
 
 ####################################
 #  Compiler Flags and definitions  #
 ####################################
 
-target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Wextra -Wno-psabi -fPIC -ffast-math)
+if(MSVC)
+    # C5045: Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
+    #        is disabled for all - Spectre is not a concern for Sushi I don't think.
 
-target_compile_options(${PROJECT_NAME} PRIVATE -fno-rtti)
+    # C4996: Deprecated warning. This was flooding the terminal,
+    #        I might remove the suppression from here eventually, and out into the code again.
+    target_compile_options(${PROJECT_NAME} PRIVATE /wd4996 /wd5045)
+else ()
+    target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Wextra -Wno-psabi -fPIC -ffast-math)
 
-if (SUSHI_BUILD_WITH_SANITIZERS)
-    target_compile_options(${PROJECT_NAME}  PUBLIC -fsanitize=address -g)
+    target_compile_options(${PROJECT_NAME} PRIVATE -fno-rtti)
+
+    if (SUSHI_BUILD_WITH_SANITIZERS)
+        target_compile_options(${PROJECT_NAME}  PUBLIC -fsanitize=address -g)
+    endif()
 endif()
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)

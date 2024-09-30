@@ -216,13 +216,16 @@
 #ifndef OPTIONPARSER_H_
 #define OPTIONPARSER_H_
 
+#ifdef _MSC_VER
+#include <intrin.h>
+#pragma intrinsic(_BitScanReverse)
+#endif
+
 /** @brief The namespace of The Lean Mean C++ Option Parser. */
 namespace optionparser
 {
 
 #ifdef _MSC_VER
-#include <intrin.h>
-#pragma intrinsic(_BitScanReverse)
 struct MSC_Builtin_CLZ
 {
   static int builtin_clz(unsigned x)
@@ -1556,9 +1559,9 @@ inline bool Parser::workhorse(bool gnu, const Descriptor usage[], int numargs, c
 
     do // loop over short options in group, for long options the body is executed only once
     {
-      int idx;
+      int idx = 0;
 
-      const char* optarg;
+      const char* optarg = nullptr;
 
       /******************** long option **********************/
       if (handle_short_options == false || try_single_minus_longopt)

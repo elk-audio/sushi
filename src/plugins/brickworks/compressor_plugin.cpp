@@ -122,8 +122,9 @@ void CompressorPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSa
 
     if (_bypass_manager.should_process())
     {
-        const float* in_channel_ptrs[_current_input_channels];
-        float* out_channel_ptrs[_current_input_channels];
+        std::array<const float *, MAX_TRACK_CHANNELS> in_channel_ptrs {};
+        std::array<float *, MAX_TRACK_CHANNELS> out_channel_ptrs {};
+
         for (int i = 0; i < _current_input_channels; i++)
         {
             in_channel_ptrs[i] = in_buffer.channel(i);
@@ -133,9 +134,11 @@ void CompressorPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSa
         bw_comp_update_coeffs_ctrl(&_compressor_coeffs);
         for (int n = 0; n < AUDIO_CHUNK_SIZE; n++)
         {
+            std::array<float, MAX_TRACK_CHANNELS> input_samples {};
+
             bw_comp_update_coeffs_audio(&_compressor_coeffs);
             float control_sig = 0.0f;
-            float input_samples[_current_input_channels];
+
             for (int i = 0; i < _current_input_channels; ++i)
             {
                 input_samples[i] = *in_channel_ptrs[i]++;

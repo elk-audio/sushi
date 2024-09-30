@@ -26,9 +26,14 @@
 #include "library/internal_plugin.h"
 #include "plugins/sample_player_voice.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::sample_player_plugin {
 
 constexpr size_t TOTAL_POLYPHONY = 8;
+
+class Accessor;
 
 class SamplePlayerPlugin : public InternalPlugin, public UidHelper<SamplePlayerPlugin>
 {
@@ -54,13 +59,15 @@ public:
     static std::string_view static_uid();
 
 private:
+    friend Accessor;
+
     void _all_notes_off();
 
-    float*  _sample_buffer{nullptr};
-    float   _dummy_sample{0.0f};
+    float*  _sample_buffer {nullptr};
+    float   _dummy_sample {0.0f};
     dsp::Sample _sample;
 
-    SampleBuffer<AUDIO_CHUNK_SIZE> _buffer{1};
+    SampleBuffer<AUDIO_CHUNK_SIZE> _buffer {1};
     FloatParameterValue* _volume_parameter;
     FloatParameterValue* _attack_parameter;
     FloatParameterValue* _decay_parameter;
@@ -71,5 +78,7 @@ private:
 };
 
 } // end namespace sushi::internal::sample_player_plugin
+
+ELK_POP_WARNING
 
 #endif // SUSHI_SAMPLER_PLUGIN_H

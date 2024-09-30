@@ -21,7 +21,6 @@
 #include <ctime>
 
 #include "spdlog/fmt/bundled/format.h"
-
 #include "spdlog/fmt/bundled/chrono.h"
 
 #include "elklog/static_logger.h"
@@ -427,7 +426,7 @@ void SessionController::_restore_plugin_states(std::vector<control::TrackState> 
         auto status = track_instance->set_state(&state, false);
         if (status != ProcessorReturnCode::OK)
         {
-            ELKLOG_LOG_ERROR("Failed to restore state to track {} with status {}", track.name, status);
+            ELKLOG_LOG_ERROR("Failed to restore state to track {} with status {}", track.name, static_cast<int>(status));
         }
 
         for (auto& plugin : track.processors)
@@ -442,7 +441,7 @@ void SessionController::_restore_plugin_states(std::vector<control::TrackState> 
             status = instance->set_state(&state, false);
             if (status != ProcessorReturnCode::OK)
             {
-                ELKLOG_LOG_ERROR("Failed to restore state to track {} with status {}", track.name, status);
+                ELKLOG_LOG_ERROR("Failed to restore state to track {} with status {}", track.name, static_cast<int>(status));
             }
         }
     }

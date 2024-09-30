@@ -58,11 +58,13 @@ ELK_DISABLE_UNUSED_PARAMETER
 #include "aeffectx.h"
 ELK_POP_WARNING
 
+#ifndef _MSC_VER
 #include <dlfcn.h>
+#endif
 
 namespace sushi::internal::vst2 {
 
-typedef void* LibraryHandle;
+using LibraryHandle = void*;
 
 // TODO:
 //      this class is stateless atm (basically a namespace),

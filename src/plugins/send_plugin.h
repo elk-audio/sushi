@@ -28,6 +28,9 @@
 #include "send_return_factory.h"
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal {
 
 class SendReturnFactory;
@@ -37,6 +40,8 @@ namespace return_plugin { class ReturnPlugin; }
 constexpr int MAX_SEND_CHANNELS = MAX_TRACK_CHANNELS;
 
 namespace send_plugin {
+
+class Accessor;
 
 class SendPlugin : public InternalPlugin, public UidHelper<SendPlugin>
 {
@@ -65,12 +70,14 @@ public:
     static std::string_view static_uid();
 
 private:
+    friend Accessor;
+
     void _set_destination(return_plugin::ReturnPlugin* destination);
 
     void _change_return_destination(const std::string& dest_name);
 
     float                         _sample_rate;
-    return_plugin::ReturnPlugin*  _destination{nullptr};
+    return_plugin::ReturnPlugin*  _destination {nullptr};
 
     FloatParameterValue*          _gain_parameter;
     ValueSmootherFilter<float>    _gain_smoother;
@@ -85,5 +92,7 @@ private:
 
 } // end namespace sushi::internal
 } // end namespace send_plugin
+
+ELK_POP_WARNING
 
 #endif // SUSHI_SEND_PLUGIN_H

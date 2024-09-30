@@ -76,6 +76,8 @@ struct ControlConfig
     std::vector<std::tuple<int, int, bool>> rt_midi_output_mappings;
 };
 
+class Accessor;
+
 class JsonConfigurator
 {
 public:
@@ -157,6 +159,8 @@ public:
     void set_osc_frontend(control_frontend::OSCFrontend* osc_frontend);
 
 private:
+    friend Accessor;
+
     /**
      * @brief Helper function to retrieve a particular section of the json configuration
      * @param section JsonSection to denote which section is to be validated.
@@ -181,7 +185,7 @@ private:
      * @param channels rapidjson document object containing the channel information parsed from the file.
      * @return The number of MIDI channels.
      */
-    int _get_midi_channel(const rapidjson::Value& channels);
+    [[nodiscard]] int _get_midi_channel(const rapidjson::Value& channels) const;
 
     /* Helper enum for more expressive code */
     enum EventParseMode : bool

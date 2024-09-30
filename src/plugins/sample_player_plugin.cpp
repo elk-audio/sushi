@@ -37,7 +37,10 @@ BlobData load_sample_file(const std::string& file_name)
 {
     SNDFILE* sample_file;
     SF_INFO  soundfile_info = {};
-    if (! (sample_file = sf_open(file_name.c_str(), SFM_READ, &soundfile_info)))
+
+    sample_file = sf_open(file_name.c_str(), SFM_READ, &soundfile_info);
+
+    if (!sample_file)
     {
         ELKLOG_LOG_ERROR("Failed to open sample file: {}", file_name);
         return {0, nullptr};

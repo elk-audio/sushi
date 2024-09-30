@@ -25,6 +25,9 @@
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::noise_gate_plugin {
 
 class NoiseGatePlugin : public InternalPlugin, public UidHelper<NoiseGatePlugin>
@@ -62,5 +65,7 @@ private:
 };
 
 } // namespace sushi::internal::noise_gate_plugin
+
+ELK_POP_WARNING
 
 #endif // NOISE_GATE_PLUGIN_H

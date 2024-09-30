@@ -29,6 +29,9 @@
 #include "dsp_library/value_smoother.h"
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::wav_streamer_plugin {
 
 enum class StreamingMode
@@ -40,8 +43,8 @@ enum class StreamingMode
 };
 
 // Roughly 2 seconds of stereo audio per block @ 48kHz.
-constexpr ssize_t BLOCKSIZE = 100'000;
-constexpr ssize_t QUEUE_SIZE = 32;
+constexpr sf_count_t BLOCK_SIZE = 100'000;
+constexpr size_t QUEUE_SIZE = 32;
 constexpr int MAX_BLOCKS_PER_LOAD = 4;
 
 // Extra margin for interpolation
@@ -62,7 +65,7 @@ struct AudioBlock : public RtDeletable
     int64_t file_pos;
     int file_idx;
     bool is_last;
-    std::array<std::array<float, 2>, BLOCKSIZE + INT_MARGIN> audio_data;
+    std::array<std::array<float, 2>, BLOCK_SIZE + INT_MARGIN> audio_data;
 };
 
 /**
@@ -150,31 +153,33 @@ private:
     BoolParameterValue*  _loop_parameter;
     BoolParameterValue*  _exp_fade_parameter;
 
-    float _sample_rate{0};
-    float _file_samplerate{0};
-    float _file_length{1};
-    int   _file_idx{0};
+    float _sample_rate {0};
+    float _file_samplerate {0};
+    float _file_length {1};
+    int   _file_idx {0};
 
-    std::array<std::array<float, 2>, INT_MARGIN> _remainder;
+    std::array<std::array<float, 2>, INT_MARGIN> _remainder {};
 
     std::mutex  _file_mutex;
-    SNDFILE*    _file{nullptr};
-    SF_INFO     _file_info;
+    SNDFILE*    _file {nullptr};
+    SF_INFO     _file_info {};
 
     BypassManager _bypass_manager;
 
-    StreamingMode _mode{sushi::internal::wav_streamer_plugin::StreamingMode::STOPPED};
+    StreamingMode _mode {sushi::internal::wav_streamer_plugin::StreamingMode::STOPPED};
 
-    AudioBlock* _current_block{nullptr};
-    float _current_block_pos{0};
-    float _file_pos{0};
+    AudioBlock* _current_block {nullptr};
+    float _current_block_pos {0};
+    float _file_pos {0};
 
-    int _seek_update_count{0};
-    bool _seek_in_process{false};
+    int _seek_update_count {0};
+    bool _seek_in_process {false};
 
     memory_relaxed_aquire_release::CircularFifo<AudioBlock*, QUEUE_SIZE> _block_queue;
 };
 
 } // namespace sushi::internal::wav_player_plugin
+
+ELK_POP_WARNING
 
 #endif //SUSHI_WAV_STREAMER_PLUGIN_H

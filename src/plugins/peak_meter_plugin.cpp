@@ -49,7 +49,7 @@ inline float to_normalised_dB(float gain)
 
 PeakMeterPlugin::PeakMeterPlugin(HostControl host_control) : InternalPlugin(host_control)
 {
-    _clip_hold_count.fill(0.0);
+    _clip_hold_count.fill(0);
     _clipped.fill(false);
     _max_input_channels = MAX_METERED_CHANNELS;
     _max_output_channels = MAX_METERED_CHANNELS;
@@ -59,9 +59,9 @@ PeakMeterPlugin::PeakMeterPlugin(HostControl host_control) : InternalPlugin(host
     _link_channels_parameter = register_bool_parameter("link_channels", "Link Channels 1 & 2", "", false, Direction::AUTOMATABLE);
     _send_peaks_only_parameter = register_bool_parameter("peaks_only", "Peaks Only", "", false, Direction::AUTOMATABLE);
     _update_rate_parameter = register_float_parameter("update_rate", "Update Rate", "/s", DEFAULT_REFRESH_RATE,
-                                                      0.1, 25,
+                                                      0.1f, 25,
                                                       Direction::AUTOMATABLE,
-                                                      new FloatParameterPreProcessor(0.1, DEFAULT_REFRESH_RATE));
+                                                      new FloatParameterPreProcessor(0.1f, DEFAULT_REFRESH_RATE));
     _update_rate_id = _update_rate_parameter->descriptor()->id();
 
     std::string_view param_name = "level_{}";
@@ -128,7 +128,7 @@ void PeakMeterPlugin::process_event(const RtEvent& event)
 void PeakMeterPlugin::_update_refresh_interval(float rate, float sample_rate)
 {
     _refresh_interval = static_cast<int>(std::round(sample_rate / rate));
-    _clip_hold_samples = sample_rate * CLIP_HOLD_TIME.count();
+    _clip_hold_samples = static_cast<uint64_t>(sample_rate * CLIP_HOLD_TIME.count());
     for (auto& i :  _smoothers)
     {
         i.set_lag_time(REFRESH_TIME, sample_rate / AUDIO_CHUNK_SIZE);

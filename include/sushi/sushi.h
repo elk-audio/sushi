@@ -120,7 +120,7 @@ struct SushiOptions
      * Specify a directory to be the base of plugin paths used in JSON configuration files,
      * and over gRPC commands for plugin loading.
      */
-    std::string base_plugin_path = std::filesystem::current_path();
+    std::string base_plugin_path = std::filesystem::current_path().string();
 
     /**
      * Set this to choose how Sushi will be configured:

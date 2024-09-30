@@ -34,7 +34,7 @@ class SendReturnFactory : public BaseProcessorFactory
 public:
     SendReturnFactory();
 
-    ~SendReturnFactory() = default;
+    ~SendReturnFactory() override = default;
 
     send_plugin::SendPlugin* get_send();
 

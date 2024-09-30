@@ -26,7 +26,7 @@ ELKLOG_GET_LOGGER_WITH_MODULE_NAME("audio_frontend");
 
 namespace sushi::internal::audio_frontend {
 
-constexpr float XRUN_LIMIT_FACTOR = 1.8;
+constexpr float XRUN_LIMIT_FACTOR = 1.8f;
 
 AudioFrontendStatus BaseAudioFrontend::init(BaseAudioFrontendConfiguration* config)
 {
@@ -35,7 +35,7 @@ AudioFrontendStatus BaseAudioFrontend::init(BaseAudioFrontendConfiguration* conf
     {
         _pause_notify = twine::RtConditionVariable::create_rt_condition_variable();
     }
-    catch (const std::exception& e)
+    catch ([[maybe_unused]] const std::exception& e)
     {
         ELKLOG_LOG_ERROR("Failed to instantiate RtConditionVariable ({})", e.what());
         return AudioFrontendStatus::AUDIO_HW_ERROR;

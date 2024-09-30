@@ -48,10 +48,10 @@ using BitSet32 = std::bitset<std::numeric_limits<uint32_t>::digits>;
 
 struct ControlBuffer
 {
-    ControlBuffer() : cv_values{0}, gate_values{0} {}
+    ControlBuffer() = default;
 
-    std::array<float, MAX_ENGINE_CV_IO_PORTS> cv_values;
-    BitSet32 gate_values;
+    std::array<float, MAX_ENGINE_CV_IO_PORTS> cv_values {{0}};
+    BitSet32 gate_values {0};
 };
 
 enum class EngineReturnStatus

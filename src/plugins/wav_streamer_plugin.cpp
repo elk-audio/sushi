@@ -56,15 +56,14 @@ inline T catmull_rom_cubic_int(T frac_pos, T d0, T d1, T d2, T d3)
     return(a0 * frac_pos * f2 + a1 * f2 + a2 * frac_pos + a3);
 }
 
-
 int64_t fill_stereo_block(SNDFILE* file, AudioBlock* block, bool looping)
 {
-    sf_count_t samplecount = 0;
-    while (samplecount < BLOCKSIZE)
+    sf_count_t sample_count = 0;
+    while (sample_count < BLOCK_SIZE)
     {
-        auto count = sf_readf_float(file, block->audio_data[INT_MARGIN + samplecount].data(), BLOCKSIZE - samplecount);
-        samplecount += count;
-        if (samplecount < BLOCKSIZE)
+        auto count = sf_readf_float(file, block->audio_data[INT_MARGIN + sample_count].data(), BLOCK_SIZE - sample_count);
+        sample_count += count;
+        if (sample_count < BLOCK_SIZE)
         {
             block->is_last = true;
             if (looping)
@@ -78,18 +77,19 @@ int64_t fill_stereo_block(SNDFILE* file, AudioBlock* block, bool looping)
             }
         }
     }
-    return samplecount;
+
+    return sample_count;
 }
 
 int64_t fill_mono_block(SNDFILE* file, AudioBlock* block, bool looping)
 {
-    sf_count_t samplecount = 0;
-    std::vector<float> tmp_buffer(BLOCKSIZE, 0.0);
-    while (samplecount < BLOCKSIZE)
+    sf_count_t sample_count = 0;
+    std::vector<float> tmp_buffer(BLOCK_SIZE, 0.0);
+    while (sample_count < BLOCK_SIZE)
     {
-        auto count = sf_readf_float(file, tmp_buffer.data() + samplecount, BLOCKSIZE - samplecount);
-        samplecount += count;
-        if (samplecount < BLOCKSIZE)
+        auto count = sf_readf_float(file, tmp_buffer.data() + sample_count, BLOCK_SIZE - sample_count);
+        sample_count += count;
+        if (sample_count < BLOCK_SIZE)
         {
             block->is_last = true;
             if (looping)
@@ -103,11 +103,11 @@ int64_t fill_mono_block(SNDFILE* file, AudioBlock* block, bool looping)
         }
     }
     // Copy interleaved from the temporary buffer to the block
-    for (int i = 0; i < BLOCKSIZE; i++)
+    for (int i = 0; i < BLOCK_SIZE; i++)
     {
         block->audio_data[i + INT_MARGIN] = {tmp_buffer[i], tmp_buffer[i]};
     }
-    return samplecount;
+    return sample_count;
 }
 
 void fill_remainder(AudioBlock* block, std::array<std::array<float, 2>, INT_MARGIN>& remainder)
@@ -115,7 +115,7 @@ void fill_remainder(AudioBlock* block, std::array<std::array<float, 2>, INT_MARG
     for (size_t i = 0; i < INT_MARGIN; i++ )
     {
         block->audio_data[i] = remainder[i];
-        remainder[i] = block->audio_data[i + BLOCKSIZE];
+        remainder[i] = block->audio_data[i + BLOCK_SIZE];
     }
 }
 
@@ -385,7 +385,7 @@ int WavStreamerPlugin::_read_audio_data()
             fill_remainder(block, _remainder);
             _block_queue.push(block);
 
-            if (samplecount < BLOCKSIZE)
+            if (samplecount < BLOCK_SIZE)
             {
                 break;
             }
@@ -405,7 +405,7 @@ void WavStreamerPlugin::_fill_audio_data(ChunkSampleBuffer& buffer, float speed)
         auto first = static_cast<int>(_current_block_pos);
         float frac_pos = _current_block_pos - std::floor(_current_block_pos);
         assert(first >= 0);
-        assert(first < BLOCKSIZE);
+        assert(first < BLOCK_SIZE);
 
         float left = catmull_rom_cubic_int(frac_pos, data[first][LEFT_CHANNEL_INDEX], data[first + 1][LEFT_CHANNEL_INDEX],
                                            data[first + 2][LEFT_CHANNEL_INDEX], data[first + 3][LEFT_CHANNEL_INDEX]);
@@ -424,10 +424,10 @@ void WavStreamerPlugin::_fill_audio_data(ChunkSampleBuffer& buffer, float speed)
         }
 
         _current_block_pos += speed;
-        if (_current_block_pos >= BLOCKSIZE)
+        if (_current_block_pos >= BLOCK_SIZE)
         {
             // Don't reset to 0, as we want to preserve the fractional position.
-            _current_block_pos -= BLOCKSIZE;
+            _current_block_pos -= BLOCK_SIZE;
             if (!_load_new_block())
             {
                 break;

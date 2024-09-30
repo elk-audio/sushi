@@ -26,6 +26,9 @@
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::saturation_plugin {
 
 class SaturationPlugin : public InternalPlugin, public UidHelper<SaturationPlugin>
@@ -67,5 +70,7 @@ private:
 };
 
 } // namespace sushi::internal::saturation_plugin
+
+ELK_POP_WARNING
 
 #endif // SATURATION_PLUGIN_H

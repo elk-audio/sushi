@@ -96,7 +96,7 @@ void BaseFactory::_instantiate_subsystems(SushiOptions& options)
     }
 #endif
 
-    _engine = std::make_unique<engine::AudioEngine>(SUSHI_SAMPLE_RATE_DEFAULT,
+    _engine = std::make_unique<engine::AudioEngine>(static_cast<float>(SUSHI_SAMPLE_RATE_DEFAULT),
                                                     options.rt_cpu_cores,
                                                     options.device_name,
                                                     options.debug_mode_switches,

@@ -21,12 +21,23 @@
 #ifndef BITCRUSHER_PLUGIN_H
 #define BITCRUSHER_PLUGIN_H
 
+#include "elk-warning-suppressor/warning_suppressor.hpp"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_CONVERSION_FROM_INT_TO_FLOAT
+ELK_DISABLE_CONVERSION_FROM_SIZE_T_TO_INT
 #include <bw_sr_reduce.h>
 #include <bw_bd_reduce.h>
+ELK_POP_WARNING
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::bitcrusher_plugin {
+
+class Accessor;
 
 class BitcrusherPlugin : public InternalPlugin, public UidHelper<BitcrusherPlugin>
 {
@@ -53,6 +64,8 @@ public:
     static std::string_view static_uid();
 
 private:
+    friend Accessor;
+
     BypassManager _bypass_manager;
     float _sample_rate{0};
 
@@ -64,6 +77,8 @@ private:
     std::array<bw_sr_reduce_state, MAX_TRACK_CHANNELS> _sr_reduce_states;
 };
 
-} // namespace sshi::internal::bitcrusher_plugin
+} // namespace sushi::internal::bitcrusher_plugin
+
+ELK_POP_WARNING
 
 #endif // BITCRUSHER_PLUGIN_H

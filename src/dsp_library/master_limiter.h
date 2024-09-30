@@ -52,7 +52,7 @@ constexpr int UPSAMPLING_FACTOR = 4;
  * Experiments in numpy showed 1.6 has good correlation with the attack time for a range of settings
  *
  */
-constexpr float ATTACK_RATIO = 1.6;
+constexpr float ATTACK_RATIO = 1.6f;
 /**
  * @brief 4x polyphase interpolator.
  *
@@ -126,14 +126,14 @@ public:
      */
     void init(float sample_rate)
     {
-        _release_coeff = _release_time > 0 ? std::exp(-1.0f / (0.001f * sample_rate * _release_time)) : 0.0;
-        _attack_coeff = _attack_time > 0 ? std::exp(-1.0f / (0.001f * sample_rate * _attack_time)) : 0.0;
+        _release_coeff = _release_time > 0.0f ? std::exp(-1.0f / (0.001f * sample_rate * _release_time)) : 0.0f;
+        _attack_coeff = _attack_time > 0.0f ? std::exp(-1.0f / (0.001f * sample_rate * _attack_time)) : 0.0f;
         _gain_reduction = 0.0f;
         _up_sampler.reset();
     }
 
     /**
-     * @brief Process audio limiting to output to maxmimum 0.0 dB
+     * @brief Process audio limiting to output to maximum 0.0 dB
      *
      * @param input array of input values
      * @param output array of output values

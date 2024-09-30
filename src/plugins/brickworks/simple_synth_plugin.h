@@ -34,10 +34,14 @@
 #include "library/internal_plugin.h"
 #include "library/rt_event_fifo.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::simple_synth_plugin {
 
 constexpr int MAX_MIDI_NOTE = 128;
 
+class Accessor;
 
 class SimpleSynthPlugin : public InternalPlugin, public UidHelper<SimpleSynthPlugin>
 {
@@ -59,6 +63,8 @@ public:
     static std::string_view static_uid();
 
 private:
+    friend Accessor;
+
     void _render_loop(int offset, int n);
 
     void _change_active_note(int notenum);
@@ -91,5 +97,7 @@ private:
 };
 
 } // namespace sushi::internal::simple_synth_plugin
+
+ELK_POP_WARNING
 
 #endif //SUSHI_SIMPLE_SYNTH_PLUGIN_H

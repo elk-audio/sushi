@@ -27,10 +27,14 @@
 
 ELK_PUSH_WARNING
 ELK_DISABLE_SHORTEN_64_TO_32
+ELK_DISABLE_CONVERSION_FROM_SIZE_T_TO_INT
 #include <bw_chorus.h>
 ELK_POP_WARNING
 
 #include "library/internal_plugin.h"
+
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
 
 namespace sushi::internal::chorus_plugin {
 
@@ -68,4 +72,7 @@ private:
 };
 
 } // namespace sushi::internal::chorus_plugin
+
+ELK_POP_WARNING
+
 #endif // CHORUS_PLUGIN_H

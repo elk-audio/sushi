@@ -25,6 +25,9 @@
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::highpass_plugin {
 
 class HighPassPlugin : public InternalPlugin, public UidHelper<HighPassPlugin>
@@ -59,5 +62,7 @@ private:
 };
 
 } // namespace sushi::internal::highpass_plugin
+
+ELK_POP_WARNING
 
 #endif // HIGHPASS_PLUGIN_H

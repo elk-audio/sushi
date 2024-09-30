@@ -23,7 +23,12 @@
 
 #include "library/internal_plugin.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::gain_plugin {
+
+class Accessor;
 
 class GainPlugin : public InternalPlugin, public UidHelper<GainPlugin>
 {
@@ -37,9 +42,13 @@ public:
     static std::string_view static_uid();
 
 private:
+    friend Accessor;
+
     FloatParameterValue* _gain_parameter;
 };
 
 } // end namespace sushi::internal::gain_plugin
+
+ELK_POP_WARNING
 
 #endif // GAIN_PLUGIN_H

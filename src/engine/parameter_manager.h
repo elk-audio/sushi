@@ -36,6 +36,8 @@ namespace sushi::internal {
 namespace engine {class BaseProcessorContainer;}
 namespace dispatcher {class BaseEventDispatcher;}
 
+class ParameterManagerAccessor;
+
 class ParameterManager
 {
 public:
@@ -82,7 +84,11 @@ public:
      */
     void output_parameter_notifications(dispatcher::BaseEventDispatcher* dispatcher, Time target_time);
 
+    bool parameter_change_queue_empty() const;
+
 private:
+    friend ParameterManagerAccessor;
+
     void _output_parameter_notifications(dispatcher::BaseEventDispatcher* dispatcher, Time timestamp);
 
     void _output_processor_notifications(dispatcher::BaseEventDispatcher* dispatcher, Time timestamp);
@@ -106,6 +112,8 @@ private:
         Time update_time;
     };
 
+    using Parameters = std::unordered_map<ObjectId, std::unordered_map<ObjectId, ParameterEntry>>;
+
     std::vector<ProcessorUpdate> _processor_change_queue;
     std::vector<ParameterUpdate> _parameter_change_queue;
 
@@ -113,8 +121,7 @@ private:
     Time _update_rate;
 
     // Note this is only accessed from the event loop thread, so no mutex is needed
-    std::unordered_map<ObjectId, std::unordered_map<ObjectId, ParameterEntry>> _parameters;
-
+    Parameters _parameters;
 };
 
 } // end namespace sushi::internal

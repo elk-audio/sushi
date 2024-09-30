@@ -24,6 +24,9 @@
 #include "library/internal_plugin.h"
 #include "library/rt_event_fifo.h"
 
+ELK_PUSH_WARNING
+ELK_DISABLE_DOMINANCE_INHERITANCE
+
 namespace sushi::internal::passthrough_plugin {
 
 class PassthroughPlugin : public InternalPlugin, public UidHelper<PassthroughPlugin>
@@ -41,6 +44,8 @@ private:
 };
 
 } // end namespace sushi::internal::passthrough_plugin
+
+ELK_POP_WARNING
 
 #endif // PASSTHROUGH_PLUGIN_H
 

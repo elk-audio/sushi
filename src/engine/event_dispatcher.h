@@ -41,6 +41,11 @@ namespace sushi::internal::dispatcher {
 
 class BaseEventDispatcher;
 
+class Accessor;
+class WorkerAccessor;
+
+using EventQueue = SynchronizedQueue<std::unique_ptr<Event>>;
+
 /**
  * @brief Low priority worker for handling possibly time consuming tasks like
  * instantiating plugins or do asynchronous work from processors.
@@ -60,6 +65,9 @@ public:
     int dispatch(std::unique_ptr<Event> event);
 
 private:
+    friend Accessor;
+    friend WorkerAccessor;
+
     engine::BaseEngine*         _engine;
     BaseEventDispatcher*        _dispatcher;
 
@@ -67,7 +75,7 @@ private:
     std::thread                 _worker_thread;
     std::atomic<bool>           _running;
 
-    SynchronizedQueue<std::unique_ptr<Event>> _queue;
+    EventQueue _queue;
 };
 
 class EventDispatcher : public BaseEventDispatcher
@@ -96,6 +104,8 @@ public:
     int dispatch(std::unique_ptr<Event> event) override;
 
 private:
+    friend Accessor;
+
     void _event_loop();
 
     int _process_rt_event(RtEvent& rt_event);
@@ -110,7 +120,7 @@ private:
     std::atomic<bool>           _running;
     std::thread                 _event_thread;
 
-    SynchronizedQueue<std::unique_ptr<Event>> _in_queue;
+    EventQueue _in_queue;
 
     RtSafeRtEventFifo*          _in_rt_queue;
     RtSafeRtEventFifo*          _out_rt_queue;

@@ -119,7 +119,7 @@ void ControlToCvPlugin::process_audio(const ChunkSampleBuffer&  /*in_buffer*/, C
 
     _send_deferred_events();
     _parse_events(retrigger_mode, polyphony);
-    _send_cv_signals(coarse_tune + fine_tune + _pitch_bend_value, polyphony, send_velocity, send_modulation);
+    _send_cv_signals(static_cast<float>(coarse_tune) + fine_tune + _pitch_bend_value, polyphony, send_velocity, send_modulation);
 }
 
 void ControlToCvPlugin::_send_deferred_events()
@@ -200,7 +200,7 @@ void ControlToCvPlugin::_send_cv_signals(float tune_offset, int polyphony, bool 
     // As notes have a non-zero decay, pitch matters even if gate is off, hence always send pitch on all notes
     for (int i = 0; i < polyphony; ++i)
     {
-        set_parameter_and_notify(_pitch_parameters[i], pitch_to_cv(_voices[i].note + tune_offset));
+        set_parameter_and_notify(_pitch_parameters[i], pitch_to_cv(static_cast<float>(_voices[i].note) + tune_offset));
     }
     if (send_velocity)
     {

@@ -24,6 +24,7 @@
 
 #include <raspa/raspa.h>
 
+#include "elklog/static_logger.h"
 #include "xenomai_raspa_frontend.h"
 #include "audio_frontend_internals.h"
 

@@ -38,22 +38,25 @@ constexpr int DUMMY_FRONTEND_CHANNELS = 10;
 
 struct OfflineFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
-    OfflineFrontendConfiguration(const std::string input_filename,
-                                 const std::string output_filename,
+    OfflineFrontendConfiguration(std::string input_filename,
+                                 std::string output_filename,
                                  bool dummy_mode,
                                  int cv_inputs,
                                  int cv_outputs) :
             BaseAudioFrontendConfiguration(cv_inputs, cv_outputs),
-            input_filename(input_filename),
-            output_filename(output_filename),
+            input_filename(std::move(input_filename)),
+            output_filename(std::move(output_filename)),
             dummy_mode(dummy_mode)
     {}
 
-    virtual ~OfflineFrontendConfiguration() = default;
+    ~OfflineFrontendConfiguration() override = default;
+
     std::string input_filename;
     std::string output_filename;
     bool dummy_mode;
 };
+
+class OfflineFrontendAccessor;
 
 class OfflineFrontend : public BaseAudioFrontend
 {
@@ -86,6 +89,8 @@ public:
     void pause(bool paused) override;
 
 private:
+    friend OfflineFrontendAccessor;
+
     void _process_events(Time end_time);
     void _process_dummy();
     void _run_blocking();
@@ -98,7 +103,7 @@ private:
     std::atomic_bool    _running;
     std::thread         _worker;
 
-    SampleBuffer<AUDIO_CHUNK_SIZE> _buffer{DUMMY_FRONTEND_CHANNELS};
+    SampleBuffer<AUDIO_CHUNK_SIZE> _buffer {DUMMY_FRONTEND_CHANNELS};
     engine::ControlBuffer _control_buffer;
 
     std::vector<std::unique_ptr<Event>> _event_queue;

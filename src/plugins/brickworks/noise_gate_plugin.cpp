@@ -117,8 +117,9 @@ void NoiseGatePlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSam
 
     if (_bypass_manager.should_process())
     {
-        const float* in_channel_ptrs[_current_input_channels];
-        float* out_channel_ptrs[_current_input_channels];
+        std::array<const float *, MAX_TRACK_CHANNELS> in_channel_ptrs {};
+        std::array<float *, MAX_TRACK_CHANNELS> out_channel_ptrs {};
+
         for (int i = 0; i < _current_input_channels; i++)
         {
             in_channel_ptrs[i] = in_buffer.channel(i);

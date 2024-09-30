@@ -1,7 +1,7 @@
 #ifndef SUSHI_CONTROL_MOCKUP_H
 #define SUSHI_CONTROL_MOCKUP_H
 
-#ifndef __clang__
+#if !defined __clang__ && !defined _MSC_VER
 #include <bits/stdc++.h>
 #endif
 

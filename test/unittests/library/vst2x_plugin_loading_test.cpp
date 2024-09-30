@@ -28,7 +28,7 @@ protected:
 TEST_F(TestVst2xPluginLoading, TestPluginRegistryVst2xLoading)
 {
     auto full_path = std::filesystem::path(VST2_TEST_PLUGIN_PATH);
-    auto full_again_path = std::string(std::filesystem::absolute(full_path));
+    auto full_again_path = std::string(std::filesystem::absolute(full_path).string());
 
     PluginInfo plugin_info;
     plugin_info.uid = "";
@@ -47,7 +47,7 @@ TEST_F(TestVst2xPluginLoading, TestLoadPlugin)
 {
     // dlopen on Linux requires absolute paths if library is not on system paths already
     auto full_path = std::filesystem::path(VST2_TEST_PLUGIN_PATH);
-    auto full_again_path = std::string(std::filesystem::absolute(full_path));
+    auto full_again_path = std::string(std::filesystem::absolute(full_path).string());
 
     auto library_handle = vst2::PluginLoader::get_library_handle_for_plugin(full_again_path);
     ASSERT_NE(nullptr, library_handle);

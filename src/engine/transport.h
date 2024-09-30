@@ -112,7 +112,7 @@ public:
      * @brief Return the current set playing mode
      * @return the current set playing mode
      */
-    PlayingMode playing_mode() const {return _playmode;}
+    [[nodiscard]] PlayingMode playing_mode() const { return _playmode; }
 
     /**
      * @brief Set the playing mode, i.e. playing, stopped, recording etc.. Called from
@@ -127,7 +127,7 @@ public:
      * @brief Return the current current mode of synchronising tempo and beats
      * @return the current set mode of synchronisation
      */
-    SyncMode sync_mode() const {return _syncmode;}
+    [[nodiscard]] SyncMode sync_mode() const { return _syncmode; }
 
     /**
      * @brief Set the current mode of synchronising tempo and beats. Called from
@@ -141,7 +141,7 @@ public:
      * @return Set the sample rate.
      * @param sample_rate The current sample rate the engine is running at
      */
-    void set_sample_rate(float sample_rate) {_samplerate = sample_rate;}
+    void set_sample_rate(float sample_rate) { _samplerate = sample_rate; }
 
     /**
      * @brief Query the current time, Safe to call from rt and non-rt context. If called from
@@ -149,7 +149,7 @@ public:
      *        chunk being processed will appear on an output.
      * @return The current processing time.
      */
-    Time current_process_time() const {return _time;}
+    [[nodiscard]] Time current_process_time() const { return _time; }
 
     /**
      * @brief Query the current samplecount. Safe to call from rt and non-rt context. If called
@@ -157,19 +157,19 @@ public:
      *        0 of the current audio chunk being processed.
      * @return Total samplecount
      */
-    int64_t current_samples() const {return _sample_count;}
+    [[nodiscard]] int64_t current_samples() const { return _sample_count; }
 
     /**
      * @brief If the transport is currently playing or not.
      * @return true if the transport is currently playing, false if stopped
      */
-    bool playing() const {return _playmode != PlayingMode::STOPPED;}
+    [[nodiscard]] bool playing() const { return _playmode != PlayingMode::STOPPED; }
 
     /**
      * @brief Query the current time signature being used
      * @return A TimeSignature struct describing the current time signature
      */
-    TimeSignature time_signature() const {return _time_signature;}
+    [[nodiscard]] TimeSignature time_signature() const { return _time_signature; }
 
     /**
      * @brief Query the current tempo. Safe to call from rt and non-rt context but will
@@ -178,7 +178,7 @@ public:
      *        as an argument to set_tempo()
      * @return A float representing the tempo in beats per minute
      */
-    float current_tempo() const {return _tempo;}
+    [[nodiscard]] float current_tempo() const { return _tempo; }
 
     /**
     * @brief Query the position in beats (quarter notes) in the current bar with an optional
@@ -190,8 +190,8 @@ public:
     * @param samples The number of samples offset form sample 0 in the current audio chunk
     * @return A double representing the position in the current bar.
     */
-    double current_bar_beats(int samples) const;
-    double current_bar_beats() const {return _current_bar_beat_count;}
+    [[nodiscard]] double current_bar_beats(int samples) const;
+    [[nodiscard]] double current_bar_beats() const { return _current_bar_beat_count; }
 
     /**
      * @brief Query the current position in beats (quarter notes( with an optional sample
@@ -201,8 +201,8 @@ public:
      * @param samples The number of samples offset form sample 0 in the current audio chunk
      * @return A double representing the current position in quarter notes.
      */
-    double current_beats(int samples) const;
-    double current_beats() const {return _beat_count;}
+    [[nodiscard]] double current_beats(int samples) const;
+    [[nodiscard]] double current_beats() const { return _beat_count; }
 
     /**
      * @return Query the position, in beats (quarter notes), of the start of the current bar.
@@ -210,7 +210,7 @@ public:
      *         if called from a non-rt context
      * @return A double representing the start position of the current bar in quarter notes
      */
-    double current_bar_start_beats() const {return _bar_start_beat_count;}
+    [[nodiscard]] double current_bar_start_beats() const { return _bar_start_beat_count; }
 
     /**
      * @brief Sets which source to use for the beat count position: the internally calculated one, or the one set
@@ -223,21 +223,21 @@ public:
      * @brief Returns the position source setting.
      * @return PositionSource enum
      */
-    PositionSource position_source() {return _position_source;}
+    [[nodiscard]] PositionSource position_source() { return _position_source; }
 
     /**
      * @brief Sets the beat count value. This is to be used alongside a position_source set to EXTERNAL,
      *        or the set value will be overwritten by the internal calculation.
      * @param beat_count double value
      */
-    void set_current_beats(double beat_count) {_beat_count = beat_count;}
+    void set_current_beats(double beat_count) { _beat_count = beat_count; }
 
     /**
      * @brief Sets the bar beat count value. This is to be used alongside a position_source set to EXTERNAL,
      *        or the set value will be overwritten by the internal calculation.
      * @param bar_beat_count
      */
-    void set_current_bar_beats(double bar_beat_count) {_current_bar_beat_count = bar_beat_count;}
+    void set_current_bar_beats(double bar_beat_count) { _current_bar_beat_count = bar_beat_count; }
 
     /**
      * @brief Query any playing state changes occurring during the current processing chunk.
@@ -247,7 +247,7 @@ public:
      *        current_state_change() as UNCHANGED.
      * @return A PlayStateChange enum with the current state change, if any.
      */
-    PlayStateChange current_state_change() const {return _state_change;}
+    [[nodiscard]] PlayStateChange current_state_change() const { return _state_change; }
 
 private:
     void _update_internals();
@@ -258,25 +258,25 @@ private:
     void _set_link_tempo(float tempo);
     void _set_link_quantum(TimeSignature signature);
 
-    int64_t         _sample_count{0};
-    Time            _time{0};
-    Time            _latency{0};
-    double          _current_bar_beat_count{0.0};
-    double          _beat_count{0.0};
-    double          _bar_start_beat_count{0};
-    double          _beats_per_chunk{0};
-    double          _beats_per_bar{0};
-    float           _samplerate{0};
+    int64_t         _sample_count {0};
+    Time            _time {0};
+    Time            _latency {0};
+    double          _current_bar_beat_count {0.0};
+    double          _beat_count {0.0};
+    double          _bar_start_beat_count {0};
+    double          _beats_per_chunk {0};
+    double          _beats_per_bar {0};
+    float           _samplerate {0};
 
-    double          _last_tick_sent{0};
+    double          _last_tick_sent {0};
 
-    float           _tempo{DEFAULT_TEMPO};
-    float           _set_tempo{_tempo};
-    PlayingMode     _playmode{PlayingMode::STOPPED};
-    PlayingMode     _set_playmode{_playmode};
-    SyncMode        _syncmode{SyncMode::INTERNAL};
-    TimeSignature   _time_signature{4, 4};
-    PlayStateChange _state_change{PlayStateChange::STARTING};
+    float           _tempo {DEFAULT_TEMPO};
+    float           _set_tempo {_tempo};
+    PlayingMode     _playmode {PlayingMode::STOPPED};
+    PlayingMode     _set_playmode {_playmode};
+    SyncMode        _syncmode {SyncMode::INTERNAL};
+    TimeSignature   _time_signature {4, 4};
+    PlayStateChange _state_change {PlayStateChange::STARTING};
 
     RtEventPipe*    _rt_event_dispatcher;
 

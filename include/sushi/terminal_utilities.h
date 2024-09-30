@@ -35,12 +35,6 @@ enum class ParseStatus
     EXIT
 };
 
-static void print_sushi_headline()
-{
-    std::cout << "SUSHI - Copyright 2017-2023 Elk Audio AB, Stockholm" << std::endl;
-    std::cout << "SUSHI is licensed under the Affero GPL 3.0. Source code is available at github.com/elk-audio" << std::endl;
-}
-
 static void print_version_and_build_info()
 {
     std::cout << "\nVersion " << CompileTimeSettings::sushi_version << std::endl;

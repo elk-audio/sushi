@@ -5,14 +5,52 @@
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
 
-ELK_PUSH_WARNING
-ELK_DISABLE_KEYWORD_MACRO
-#define private public
-ELK_POP_WARNING
-
 #include "plugins/send_return_factory.cpp"
 #include "plugins/send_plugin.cpp"
 #include "plugins/return_plugin.cpp"
+
+namespace sushi::internal::send_plugin
+{
+
+class Accessor
+{
+public:
+    explicit Accessor(SendPlugin& plugin) : _plugin(plugin) {}
+
+    [[nodiscard]] return_plugin::ReturnPlugin* destination()
+    {
+        return _plugin._destination;
+    }
+
+    void set_destination(return_plugin::ReturnPlugin* destination)
+    {
+        _plugin._set_destination(destination);
+    }
+
+private:
+    SendPlugin& _plugin;
+};
+
+}
+
+namespace sushi::internal::return_plugin
+{
+
+class Accessor
+{
+public:
+    explicit Accessor(ReturnPlugin& plugin) : _plugin(plugin) {}
+
+    void swap_buffers()
+    {
+        _plugin._swap_buffers();
+    }
+
+private:
+    ReturnPlugin& _plugin;
+};
+
+}
 
 using namespace sushi;
 using namespace sushi::internal;
@@ -67,10 +105,13 @@ protected:
 
     SendReturnFactory   _factory;
     HostControlMockup   _host_control_mockup;
-    HostControl         _host_ctrl{_host_control_mockup.make_host_control_mockup(TEST_SAMPLERATE)};
+    HostControl         _host_ctrl {_host_control_mockup.make_host_control_mockup(TEST_SAMPLERATE)};
 
-    SendPlugin          _send_instance{_host_ctrl, &_factory};
-    ReturnPlugin        _return_instance{_host_ctrl, &_factory};
+    SendPlugin          _send_instance {_host_ctrl, &_factory};
+    ReturnPlugin        _return_instance {_host_ctrl, &_factory};
+
+    sushi::internal::send_plugin::Accessor _send_accessor {_send_instance};
+    sushi::internal::return_plugin::Accessor _return_accessor {_return_instance};
 };
 
 TEST_F(TestSendReturnPlugins, TestDestinationSetting)
@@ -86,12 +127,12 @@ TEST_F(TestSendReturnPlugins, TestDestinationSetting)
     EXPECT_EQ(DEFAULT_DEST, _send_instance.property_value(DEST_PROPERTY_ID).second);
     status = _send_instance.set_property_value(DEST_PROPERTY_ID, "return_2");
     EXPECT_EQ(ProcessorReturnCode::OK, status);
-    EXPECT_EQ(_send_instance._destination, return_instance_2.get());
+    EXPECT_EQ(_send_accessor.destination(), return_instance_2.get());
     EXPECT_EQ("return_2", _send_instance.property_value(DEST_PROPERTY_ID).second);
 
     // Destroy the second return and it should be automatically unlinked.
     return_instance_2.reset();
-    EXPECT_EQ(_send_instance._destination, nullptr);
+    EXPECT_EQ(_send_accessor.destination(), nullptr);
     EXPECT_EQ(DEFAULT_DEST, _send_instance.property_value(DEST_PROPERTY_ID).second);
 }
 
@@ -105,12 +146,12 @@ TEST_F(TestSendReturnPlugins, TestProcessing)
     _send_instance.process_audio(buffer_1, buffer_2);
     test_utils::assert_buffer_value(1.0f, buffer_2);
 
-    _send_instance._set_destination(&_return_instance);
+    _send_accessor.set_destination(&_return_instance);
     _send_instance.process_audio(buffer_1, buffer_2);
     buffer_2.clear();
 
     // Swap manually and verify that signal is returned
-    _return_instance._swap_buffers();
+    _return_accessor.swap_buffers();
     _return_instance.process_audio(buffer_1, buffer_2);
     test_utils::assert_buffer_value(1.0f, buffer_2);
 }
@@ -123,11 +164,13 @@ TEST_F(TestSendReturnPlugins, TestMultipleSends)
 
     _host_control_mockup._transport.set_time(Time(0), 0);
 
-    _send_instance._set_destination(&_return_instance);
+    _send_accessor.set_destination(&_return_instance);
     _send_instance.process_audio(buffer_1, buffer_2);
 
     SendPlugin send_instance_2(_host_ctrl, &_factory);
-    send_instance_2._set_destination(&_return_instance);
+    sushi::internal::send_plugin::Accessor _send_accessor_2 {send_instance_2};
+
+    _send_accessor_2.set_destination(&_return_instance);
     send_instance_2.process_audio(buffer_1, buffer_2);
     buffer_2.clear();
 
@@ -155,28 +198,28 @@ TEST_F(TestSendReturnPlugins, TestSelectiveChannelSending)
 
     _send_instance.set_input_channels(2);
     _send_instance.set_output_channels(2);
-    _send_instance._set_destination(&_return_instance);
+    _send_accessor.set_destination(&_return_instance);
 
     // Send only 1 channel
     auto event = RtEvent::make_parameter_change_event(_send_instance.id(), 0, channel_count_param_id,
-                                                      1.0 / (MAX_TRACK_CHANNELS - 1));
+                                                      1.0f / (MAX_TRACK_CHANNELS - 1));
     _send_instance.process_event(event);
     _send_instance.process_audio(buffer_1, buffer_1);
 
     // Swap manually and verify that signal only the first channel was sent
-    _return_instance._swap_buffers();
+    _return_accessor.swap_buffers();
     _return_instance.process_audio(buffer_1, buffer_2);
     EXPECT_FLOAT_EQ(1.0f, buffer_2.channel(0)[0]);
     EXPECT_FLOAT_EQ(0.0f, buffer_2.channel(1)[0]);
 
     // Set the destination channel to channel 1
     event = RtEvent::make_parameter_change_event(_send_instance.id(), 0, dest_channel_param_id,
-                                                 1.0 / (MAX_TRACK_CHANNELS - 1));
+                                                 1.0f / (MAX_TRACK_CHANNELS - 1));
     _send_instance.process_event(event);
     _send_instance.process_audio(buffer_1, buffer_1);
 
     // Swap manually and verify that signal only the first channel was sent to channel 2
-    _return_instance._swap_buffers();
+    _return_accessor.swap_buffers();
     _return_instance.process_audio(buffer_1, buffer_2);
     EXPECT_FLOAT_EQ(0.0f, buffer_2.channel(0)[0]);
     EXPECT_FLOAT_EQ(1.0f, buffer_2.channel(1)[0]);
@@ -187,7 +230,7 @@ TEST_F(TestSendReturnPlugins, TestSelectiveChannelSending)
     _send_instance.process_audio(buffer_1, buffer_1);
 
     // Both return channels should be 0
-    _return_instance._swap_buffers();
+    _return_accessor.swap_buffers();
     _return_instance.process_audio(buffer_1, buffer_2);
     EXPECT_FLOAT_EQ(0.0f, buffer_2.channel(0)[0]);
     EXPECT_FLOAT_EQ(0.0f, buffer_2.channel(1)[0]);
@@ -201,10 +244,10 @@ TEST_F(TestSendReturnPlugins, TestSelectiveChannelSending)
     event = RtEvent::make_parameter_change_event(_send_instance.id(), 0, start_channel_param_id, 0);
     _send_instance.process_event(event);
     event = RtEvent::make_parameter_change_event(_send_instance.id(), 0, dest_channel_param_id,
-                                                 2.0 / (MAX_TRACK_CHANNELS - 1));
+                                                 2.0f / (MAX_TRACK_CHANNELS - 1));
     _send_instance.process_event(event);
     event = RtEvent::make_parameter_change_event(_send_instance.id(), 0, channel_count_param_id,
-                                                 2.0 / (MAX_TRACK_CHANNELS - 1));
+                                                 2.0f / (MAX_TRACK_CHANNELS - 1));
     _send_instance.process_event(event);
 
     _send_instance.process_audio(buffer_1, buffer_1);
@@ -212,7 +255,7 @@ TEST_F(TestSendReturnPlugins, TestSelectiveChannelSending)
     buffer_1 = ChunkSampleBuffer(4);
     buffer_2 = ChunkSampleBuffer(4);
 
-    _return_instance._swap_buffers();
+    _return_accessor.swap_buffers();
     _return_instance.process_audio(buffer_1, buffer_2);
     EXPECT_FLOAT_EQ(0.0f, buffer_2.channel(0)[0]);
     EXPECT_FLOAT_EQ(0.0f, buffer_2.channel(1)[0]);
@@ -228,19 +271,19 @@ TEST_F(TestSendReturnPlugins, TestRampedProcessing)
 
     // Test only ramping
     _return_instance.send_audio_with_ramp(buffer_1, 0, 2.0f, 0.0f);
-    _return_instance._swap_buffers();
+    _return_accessor.swap_buffers();
     _return_instance.process_audio(buffer_1, buffer_2);
     EXPECT_NEAR(2.0f, buffer_2.channel(0)[0], 0.01);
     EXPECT_NEAR(1.0f, buffer_2.channel(0)[AUDIO_CHUNK_SIZE / 2], 0.1);
     EXPECT_NEAR(0.0f, buffer_2.channel(0)[AUDIO_CHUNK_SIZE - 1], 0.01);
-    _return_instance._swap_buffers();
+    _return_accessor.swap_buffers();
 
     // Test parameter smoothing
-    _send_instance._set_destination(&_return_instance);
+    _send_accessor.set_destination(&_return_instance);
     auto event = RtEvent::make_parameter_change_event(0, 0, 0, 0.0f);
     _send_instance.process_event(event);
     _send_instance.process_audio(buffer_1, buffer_2);
-    _return_instance._swap_buffers();
+    _return_accessor.swap_buffers();
     _return_instance.process_audio(buffer_1, buffer_2);
 
     // Audio should now begin to ramp down
