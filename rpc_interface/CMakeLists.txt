@@ -14,6 +14,12 @@ set(PROTOS protos/sushi_rpc.proto)
 # In yocto environments, yocto grpc does not include gRPCPluginTargets.cmake
 # when find_package(gRPC REQUIRED) is called.
 if(CMAKE_CROSSCOMPILING)
+    find_program(Protobuf_PROTOC_EXECUTABLE REQUIRED NAMES protoc)
+    if(NOT TARGET protobuf::protoc)
+        add_executable(protobuf::protoc IMPORTED)
+    endif()
+    set_target_properties(protobuf::protoc PROPERTIES
+        IMPORTED_LOCATION "${Protobuf_PROTOC_EXECUTABLE}")
     find_program(_gRPC_CPP_PLUGIN grpc_cpp_plugin)
 else()
     set(_gRPC_CPP_PLUGIN \$<TARGET_FILE:gRPC::grpc_cpp_plugin>)
