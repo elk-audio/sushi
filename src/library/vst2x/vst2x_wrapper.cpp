@@ -93,8 +93,8 @@ ProcessorReturnCode Vst2xWrapper::init(float sample_rate)
     _has_binary_programs = _plugin_handle->flags &= effFlagsProgramChunks;
 
     // Channel setup
-    _max_input_channels = _plugin_handle->numInputs;
-    _max_output_channels = _plugin_handle->numOutputs;
+    _max_input_channels = std::min(_plugin_handle->numInputs, VST_WRAPPER_MAX_N_CHANNELS);
+    _max_output_channels = std::min(_plugin_handle->numOutputs, VST_WRAPPER_MAX_N_CHANNELS);
 
     // Initialize internal plugin
     _vst_dispatcher(effOpen, 0, 0, nullptr, 0);
