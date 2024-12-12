@@ -74,9 +74,7 @@ public:
 
     void process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer) override;
 
-    void set_input_channels(int channels) override;
-
-    void set_output_channels(int channels) override;
+    void set_channels(int inputs, int outputs) override;
 
     void set_enabled(bool enabled) override;
 

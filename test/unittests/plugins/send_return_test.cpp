@@ -95,12 +95,10 @@ protected:
     void SetUp() override
     {
         ASSERT_EQ(ProcessorReturnCode::OK, _send_instance.init(TEST_SAMPLERATE));
-        _send_instance.set_input_channels(2);
-        _send_instance.set_output_channels(2);
+        _send_instance.set_channels(2, 2);
 
         ASSERT_EQ(ProcessorReturnCode::OK, _return_instance.init(TEST_SAMPLERATE));
-        _return_instance.set_input_channels(2);
-        _return_instance.set_output_channels(2);
+        _return_instance.set_channels(2, 2);
     }
 
     SendReturnFactory   _factory;
@@ -196,8 +194,7 @@ TEST_F(TestSendReturnPlugins, TestSelectiveChannelSending)
     ChunkSampleBuffer buffer_2(2);
     test_utils::fill_sample_buffer(buffer_1, 1.0f);
 
-    _send_instance.set_input_channels(2);
-    _send_instance.set_output_channels(2);
+    _send_instance.set_channels(2, 2);
     _send_accessor.set_destination(&_return_instance);
 
     // Send only 1 channel
@@ -236,8 +233,7 @@ TEST_F(TestSendReturnPlugins, TestSelectiveChannelSending)
     EXPECT_FLOAT_EQ(0.0f, buffer_2.channel(1)[0]);
 
     // Send both channels the send plugin to channels 3 & 4 of the return plugin
-    _return_instance.set_input_channels(4);
-    _return_instance.set_output_channels(4);
+    _return_instance.set_channels(4, 4);
 
     buffer_1.channel(0)[0] = 2.0;
     buffer_1.channel(1)[0] = 3.0;

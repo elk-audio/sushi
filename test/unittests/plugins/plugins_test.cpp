@@ -34,8 +34,7 @@ protected:
     {
         _module_under_test = std::make_unique<passthrough_plugin::PassthroughPlugin>(_host_control.make_host_control_mockup(TEST_SAMPLERATE));
         _module_under_test->set_enabled(true);
-        _module_under_test->set_input_channels(TEST_CHANNEL_COUNT);
-        _module_under_test->set_output_channels(TEST_CHANNEL_COUNT);
+        _module_under_test->set_channels(TEST_CHANNEL_COUNT, TEST_CHANNEL_COUNT);
     }
 
     HostControlMockup _host_control;
@@ -85,8 +84,7 @@ protected:
 
         ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
         _module_under_test->set_enabled(true);
-        _module_under_test->set_input_channels(TEST_CHANNEL_COUNT);
-        _module_under_test->set_output_channels(TEST_CHANNEL_COUNT);
+        _module_under_test->set_channels(TEST_CHANNEL_COUNT, TEST_CHANNEL_COUNT);
         ASSERT_EQ(ProcessorReturnCode::OK, status);
     }
 
@@ -109,8 +107,7 @@ TEST_F(TestGainPlugin, TestChannelSetup)
     ASSERT_EQ(2, _module_under_test->output_channels());
     ASSERT_EQ(2, _module_under_test->input_channels());
 
-    _module_under_test->set_input_channels(1);
-    _module_under_test->set_output_channels(1);
+    _module_under_test->set_channels(1, 1);
     ASSERT_EQ(1, _module_under_test->output_channels());
     ASSERT_EQ(1, _module_under_test->input_channels());
 }
@@ -140,8 +137,7 @@ protected:
 
         ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
         _module_under_test->set_enabled(true);
-        _module_under_test->set_input_channels(TEST_CHANNEL_COUNT);
-        _module_under_test->set_output_channels(TEST_CHANNEL_COUNT);
+        _module_under_test->set_channels(TEST_CHANNEL_COUNT, TEST_CHANNEL_COUNT);
         ASSERT_EQ(ProcessorReturnCode::OK, status);
     }
 
@@ -163,8 +159,7 @@ TEST_F(TestEqualizerPlugin, TestChannelSetup)
     ASSERT_EQ(2, _module_under_test->output_channels());
     ASSERT_EQ(2, _module_under_test->input_channels());
 
-    _module_under_test->set_input_channels(1);
-    _module_under_test->set_output_channels(1);
+    _module_under_test->set_channels(1, 1);
     ASSERT_EQ(1, _module_under_test->output_channels());
     ASSERT_EQ(1, _module_under_test->input_channels());
 }
@@ -205,8 +200,7 @@ protected:
         ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
         ASSERT_EQ(ProcessorReturnCode::OK, status);
         _module_under_test->set_enabled(true);
-        _module_under_test->set_input_channels(TEST_CHANNEL_COUNT);
-        _module_under_test->set_output_channels(TEST_CHANNEL_COUNT);
+        _module_under_test->set_channels(TEST_CHANNEL_COUNT, TEST_CHANNEL_COUNT);
         _module_under_test->set_event_output(&_fifo);
     }
 
@@ -376,8 +370,7 @@ protected:
         ASSERT_EQ(ProcessorReturnCode::OK, status);
         _module_under_test->set_event_output(&_fifo);
         _module_under_test->set_enabled(true);
-        _module_under_test->set_input_channels(wav_writer_plugin::N_AUDIO_CHANNELS);
-        _module_under_test->set_output_channels(wav_writer_plugin::N_AUDIO_CHANNELS);
+        _module_under_test->set_channels(wav_writer_plugin::N_AUDIO_CHANNELS, wav_writer_plugin::N_AUDIO_CHANNELS);
     }
 
     HostControlMockup _host_control;
@@ -467,9 +460,7 @@ protected:
         ASSERT_EQ(ProcessorReturnCode::OK, status);
         _module_under_test->set_enabled(true);
         _module_under_test->set_event_output(&_fifo);
-        _module_under_test->set_input_channels(TEST_CHANNEL_COUNT);
-        _module_under_test->set_output_channels(TEST_CHANNEL_COUNT);
-
+        _module_under_test->set_channels(TEST_CHANNEL_COUNT, TEST_CHANNEL_COUNT);
     }
 
     HostControlMockup _host_control;

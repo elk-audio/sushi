@@ -40,8 +40,7 @@ AudioFrontendStatus JackFrontend::init(BaseAudioFrontendConfiguration* config)
 
     auto jack_config = static_cast<JackFrontendConfiguration*>(_config);
     _autoconnect_ports = jack_config->autoconnect_ports;
-    _engine->set_audio_input_channels(MAX_FRONTEND_CHANNELS);
-    _engine->set_audio_output_channels(MAX_FRONTEND_CHANNELS);
+    _engine->set_audio_channels(MAX_FRONTEND_CHANNELS, MAX_FRONTEND_CHANNELS);
     auto status = _engine->set_cv_input_channels(jack_config->cv_inputs);
     if (status != engine::EngineReturnStatus::OK)
     {

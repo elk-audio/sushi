@@ -100,16 +100,15 @@ void ReturnPlugin::configure(float sample_rate)
     }
 }
 
-void ReturnPlugin::set_input_channels(int channels)
+void ReturnPlugin::set_channels(int inputs, int outputs)
 {
-    Processor::set_input_channels(channels);
-    _channel_config(channels);
-}
+    Processor::set_channels(inputs, outputs);
 
-void ReturnPlugin::set_output_channels(int channels)
-{
-    Processor::set_output_channels(channels);
-    _channel_config(channels);
+    int max_channels = std::max(inputs, outputs);
+    if (_buffers.front().channel_count() != max_channels)
+    {
+        _buffers.fill(ChunkSampleBuffer(max_channels));
+    }
 }
 
 void ReturnPlugin::set_enabled(bool enabled)
@@ -191,15 +190,6 @@ void inline ReturnPlugin::_maybe_swap_buffers(Time current_time)
     {
         _last_process_time.store(current_time, std::memory_order_release);
         _swap_buffers();
-    }
-}
-
-void ReturnPlugin::_channel_config(int channels)
-{
-    int max_channels = std::max(std::max(channels, _current_input_channels), _current_output_channels);
-    if (_buffers.front().channel_count() != max_channels)
-    {
-        _buffers.fill(ChunkSampleBuffer(max_channels));
     }
 }
 

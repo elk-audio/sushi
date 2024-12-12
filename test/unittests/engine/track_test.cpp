@@ -93,8 +93,7 @@ TEST_F(TrackTest, TestRenderingWithProcessors)
     passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);
     plugin.set_enabled(true);
-    plugin.set_input_channels(TEST_CHANNEL_COUNT);
-    plugin.set_output_channels(TEST_CHANNEL_COUNT);
+    plugin.set_channels(TEST_CHANNEL_COUNT, TEST_CHANNEL_COUNT);
 
     _module_under_test.add(&plugin);
 
@@ -110,8 +109,7 @@ TEST_F(TrackTest, TestPanAndGain)
     passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);
     plugin.set_enabled(true);
-    plugin.set_input_channels(TEST_CHANNEL_COUNT);
-    plugin.set_output_channels(TEST_CHANNEL_COUNT);
+    plugin.set_channels(TEST_CHANNEL_COUNT, TEST_CHANNEL_COUNT);
 
     _module_under_test.add(&plugin);
     auto gain_param = _module_under_test.parameter_from_name("gain");
@@ -154,8 +152,7 @@ TEST_F(TrackTest, TestPanAndGainPerBus)
     passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);
     plugin.set_enabled(true);
-    plugin.set_input_channels(multibus_track.input_channels());
-    plugin.set_output_channels(multibus_track.input_channels());
+    plugin.set_channels(multibus_track.input_channels(), multibus_track.input_channels());
 
     multibus_track.add(&plugin);
 
@@ -197,8 +194,7 @@ TEST_F(TrackTest, TestGainOnly)
     passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);
     plugin.set_enabled(true);
-    plugin.set_input_channels(gain_only_track.input_channels());
-    plugin.set_output_channels(gain_only_track.input_channels());
+    plugin.set_channels(gain_only_track.input_channels(), gain_only_track.input_channels());
 
     gain_only_track.add(&plugin);
 
@@ -229,8 +225,7 @@ TEST_F(TrackTest, TestMute)
     passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);
     plugin.set_enabled(true);
-    plugin.set_input_channels(TEST_CHANNEL_COUNT);
-    plugin.set_output_channels(TEST_CHANNEL_COUNT);
+    plugin.set_channels(TEST_CHANNEL_COUNT, TEST_CHANNEL_COUNT);
 
     _module_under_test.add(&plugin);
     auto mute_param = _module_under_test.parameter_from_name("mute");
@@ -262,12 +257,10 @@ TEST_F(TrackTest, TestEventProcessing)
     passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);
     plugin.set_enabled(true);
-    plugin.set_input_channels(TEST_CHANNEL_COUNT);
-    plugin.set_output_channels(TEST_CHANNEL_COUNT);
+    plugin.set_channels(TEST_CHANNEL_COUNT, TEST_CHANNEL_COUNT);
 
     plugin.set_event_output(&event_queue);
-    _module_under_test.set_input_channels(2);
-    _module_under_test.set_output_channels(2);
+    _module_under_test.set_channels(2, 2);
     _module_under_test.set_event_output(&event_queue);
     _module_under_test.add(&plugin);
 
@@ -288,8 +281,7 @@ TEST_F(TrackTest, TestEventForwarding)
     passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);
     plugin.set_enabled(true);
-    plugin.set_input_channels(TEST_CHANNEL_COUNT);
-    plugin.set_output_channels(TEST_CHANNEL_COUNT);
+    plugin.set_channels(TEST_CHANNEL_COUNT, TEST_CHANNEL_COUNT);
     plugin.set_event_output(&event_queue);
 
     _module_under_test.set_event_output(&event_queue);
@@ -315,8 +307,7 @@ TEST_F(TrackTest, TestSilenceUnusedChannels)
     passthrough_plugin::PassthroughPlugin plugin(_host_control.make_host_control_mockup());
     plugin.init(44100);
     plugin.set_enabled(true);
-    plugin.set_input_channels(1);
-    plugin.set_output_channels(1);
+    plugin.set_channels(1, 1);
 
     // Add a mono plugin to a stereo track.
     _module_under_test.add(&plugin);

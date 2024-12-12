@@ -100,8 +100,7 @@ protected:
 
     void SetUp() override
     {
-        _engine.set_audio_input_channels(ENGINE_CHANNELS);
-        _engine.set_audio_output_channels(ENGINE_CHANNELS);
+        _engine.set_audio_channels(ENGINE_CHANNELS, ENGINE_CHANNELS);
         _path = test_utils::get_data_dir_path();
         _path.append("config.json");
 

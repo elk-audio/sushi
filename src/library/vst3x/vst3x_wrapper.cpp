@@ -261,18 +261,11 @@ void Vst3xWrapper::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSample
     _process_data.clear();
 }
 
-void Vst3xWrapper::set_input_channels(int channels)
+void Vst3xWrapper::set_channels(int inputs, int outputs)
 {
-    Processor::set_input_channels(channels);
+    Processor::set_channels(inputs, outputs);
     _setup_channels();
 }
-
-void Vst3xWrapper::set_output_channels(int channels)
-{
-    Processor::set_output_channels(channels);
-    _setup_channels();
-}
-
 
 void Vst3xWrapper::set_enabled(bool enabled)
 {

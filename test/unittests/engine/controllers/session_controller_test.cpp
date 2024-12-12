@@ -80,9 +80,7 @@ protected:
 
         _accessor = std::make_unique<sushi::internal::engine::controller_impl::Accessor>(*_module_under_test);
 
-        _audio_engine->set_audio_input_channels(8);
-        _audio_engine->set_audio_output_channels(8);
-
+        _audio_engine->set_audio_channels(8, 8);
     }
 
     MockOscInterface*                     _mock_osc_interface;
@@ -186,8 +184,7 @@ TEST_F(SessionControllerTest, TestSaveEngineState)
     auto [track_status, track_id] = _audio_engine->create_track(TRACK_NAME, 2);
     ASSERT_EQ(EngineReturnStatus::OK, track_status);
 
-    _audio_engine->set_audio_input_channels(8);
-    _audio_engine->set_audio_output_channels(6);
+    _audio_engine->set_audio_channels(8, 6);
     _audio_engine->set_cv_input_channels(0);
     _audio_engine->set_cv_output_channels(2);
     _audio_engine->set_sample_rate(TEST_SAMPLE_RATE);
@@ -295,8 +292,7 @@ TEST_F(SessionControllerTest, TestSaveAndRestore)
     ASSERT_EQ(MidiDispatcherStatus::OK, _midi_dispatcher->connect_pc_to_processor(MIDI_PORT, proc_id, MIDI_CH));
 
     // Set some engine parameters
-    _audio_engine->set_audio_input_channels(8);
-    _audio_engine->set_audio_output_channels(6);
+    _audio_engine->set_audio_channels(8, 6);
     _audio_engine->set_cv_input_channels(0);
     _audio_engine->set_cv_output_channels(2);
     _audio_engine->set_sample_rate(TEST_SAMPLE_RATE);

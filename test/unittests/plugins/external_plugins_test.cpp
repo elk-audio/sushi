@@ -84,8 +84,7 @@ std::tuple<ProcessorReturnCode, ProcessorReturnCode, std::shared_ptr<Processor>>
 
     ProcessorReturnCode init_status = plugin->init(TEST_SAMPLERATE);
     plugin->set_enabled(true);
-    plugin->set_input_channels(TEST_CHANNEL_COUNT);
-    plugin->set_output_channels(TEST_CHANNEL_COUNT);
+    plugin->set_channels(TEST_CHANNEL_COUNT, TEST_CHANNEL_COUNT);
 
     return std::make_tuple(processor_status, init_status, plugin);
 }
@@ -280,8 +279,7 @@ protected:
 
         ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
         _module_under_test->set_enabled(true);
-        _module_under_test->set_input_channels(TEST_CHANNEL_COUNT);
-        _module_under_test->set_output_channels(TEST_CHANNEL_COUNT);
+        _module_under_test->set_channels(TEST_CHANNEL_COUNT, TEST_CHANNEL_COUNT);
         ASSERT_EQ(ProcessorReturnCode::OK, status);
     }
 

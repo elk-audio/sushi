@@ -24,8 +24,7 @@ protected:
         _event_dispatcher_mockup = static_cast<EventDispatcherMockup*>(_audio_engine->event_dispatcher());
         _module_under_test = std::make_unique<AudioGraphController>(_audio_engine.get());
 
-        _audio_engine->set_audio_input_channels(8);
-        _audio_engine->set_audio_output_channels(8);
+        _audio_engine->set_audio_channels(8, 8);
 
         _audio_engine->create_track("Track 1", 2);
         _track_id = _audio_engine->processor_container()->track("Track 1")->id();

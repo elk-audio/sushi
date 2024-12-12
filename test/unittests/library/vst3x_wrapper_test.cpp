@@ -161,8 +161,7 @@ protected:
         ASSERT_EQ(ProcessorReturnCode::OK, ret);
         _module_under_test->set_enabled(true);
         _module_under_test->set_event_output(&_event_queue);
-        _module_under_test->set_input_channels(TEST_CHANNEL_COUNT);
-        _module_under_test->set_output_channels(TEST_CHANNEL_COUNT);
+        _module_under_test->set_channels(TEST_CHANNEL_COUNT, TEST_CHANNEL_COUNT);
     }
 
     SushiHostApplication _host_app;

@@ -143,23 +143,20 @@ void AudioEngine::set_sample_rate(float sample_rate)
     }
 }
 
-void AudioEngine::set_audio_input_channels(int channels)
+void AudioEngine::set_audio_channels(int inputs, int outputs)
 {
-    _clip_detector.set_input_channels(channels);
-    BaseEngine::set_audio_input_channels(channels);
-    _input_swap_buffer = ChunkSampleBuffer(channels);
-}
+    _clip_detector.set_input_channels(inputs);
+    _clip_detector.set_output_channels(outputs);
 
-void AudioEngine::set_audio_output_channels(int channels)
-{
-    _clip_detector.set_output_channels(channels);
-    BaseEngine::set_audio_output_channels(channels);
+    BaseEngine::set_audio_channels(inputs, outputs);
+    _input_swap_buffer = ChunkSampleBuffer(inputs);
+    _output_swap_buffer = ChunkSampleBuffer(outputs);
+
     _master_limiters.clear();
-    for (int c = 0; c < channels; c++)
+    for (int c = 0; c < outputs; c++)
     {
         _master_limiters.emplace_back();
     }
-    _output_swap_buffer = ChunkSampleBuffer(channels);
 }
 
 EngineReturnStatus AudioEngine::set_cv_input_channels(int channels)
@@ -728,8 +725,8 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
         return EngineReturnStatus::ERROR;
     }
 
-    plugin->set_input_channels(std::min(plugin->max_input_channels(), track->input_channels()));
-    plugin->set_output_channels(std::min(plugin->max_output_channels(), track->input_channels()));
+    int channels = std::min(plugin->max_input_channels(), track->input_channels());
+    plugin->set_channels(channels, channels);
     plugin->set_enabled(true);
 
     if (this->realtime())
@@ -944,7 +941,7 @@ EngineReturnStatus AudioEngine::_connect_audio_channel(int engine_channel,
                 track->output_channels() <= 1)
             {
                 // Corner case when connecting a mono track to a stereo output bus, this is allowed
-                track->set_output_channels(2);
+                track->set_channels(1, 2);
             }
             else
             {

@@ -128,20 +128,12 @@ void Vst2xWrapper::configure(float sample_rate)
     }
 }
 
-void Vst2xWrapper::set_input_channels(int channels)
+void Vst2xWrapper::set_channels(int inputs, int outputs)
 {
-    Processor::set_input_channels(channels);
-    [[maybe_unused]] bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
+    Processor::set_channels(inputs, outputs);
+    [[maybe_unused]] bool valid_arr = _update_speaker_arrangements(inputs, outputs);
     ELKLOG_LOG_WARNING_IF(!valid_arr, "Failed to set a valid speaker arrangement")
 }
-
-void Vst2xWrapper::set_output_channels(int channels)
-{
-    Processor::set_output_channels(channels);
-    [[maybe_unused]] bool valid_arr = _update_speaker_arrangements(_current_input_channels, _current_output_channels);
-    ELKLOG_LOG_WARNING_IF(!valid_arr, "Failed to set a valid speaker arrangement")
-}
-
 
 void Vst2xWrapper::set_enabled(bool enabled)
 {

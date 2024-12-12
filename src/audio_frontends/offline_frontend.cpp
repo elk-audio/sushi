@@ -105,13 +105,11 @@ AudioFrontendStatus OfflineFrontend::init(BaseAudioFrontendConfiguration* config
             ELKLOG_LOG_ERROR("Unable to open output file {}", off_config->output_filename);
             return AudioFrontendStatus::INVALID_OUTPUT_FILE;
         }
-        _engine->set_audio_input_channels(OFFLINE_FRONTEND_CHANNELS);
-        _engine->set_audio_output_channels(OFFLINE_FRONTEND_CHANNELS);
+        _engine->set_audio_channels(OFFLINE_FRONTEND_CHANNELS, OFFLINE_FRONTEND_CHANNELS);
     }
     else
     {
-        _engine->set_audio_input_channels(DUMMY_FRONTEND_CHANNELS);
-        _engine->set_audio_output_channels(DUMMY_FRONTEND_CHANNELS);
+        _engine->set_audio_channels(DUMMY_FRONTEND_CHANNELS, DUMMY_FRONTEND_CHANNELS);
     }
     
     auto status = _engine->set_cv_input_channels(off_config->cv_inputs);

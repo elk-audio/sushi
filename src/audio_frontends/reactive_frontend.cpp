@@ -38,8 +38,7 @@ AudioFrontendStatus ReactiveFrontend::init(BaseAudioFrontendConfiguration* confi
 
     auto frontend_config = static_cast<ReactiveFrontendConfiguration*>(_config); // static cast because of no rtti
 
-    _engine->set_audio_input_channels(REACTIVE_FRONTEND_CHANNELS);
-    _engine->set_audio_output_channels(REACTIVE_FRONTEND_CHANNELS);
+    _engine->set_audio_channels(REACTIVE_FRONTEND_CHANNELS, REACTIVE_FRONTEND_CHANNELS);
 
     auto status = _engine->set_cv_input_channels(frontend_config->cv_inputs);
     if (status != engine::EngineReturnStatus::OK)
