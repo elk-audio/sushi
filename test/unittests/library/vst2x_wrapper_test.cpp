@@ -102,8 +102,7 @@ protected:
         auto ret = _module_under_test->init(TEST_SAMPLE_RATE);
         ASSERT_EQ(ProcessorReturnCode::OK, ret);
         _module_under_test->set_enabled(true);
-        _module_under_test->set_channels(TEST_CHANNEL_COUNT, 0);
-        _module_under_test->set_output_channels(TEST_CHANNEL_COUNT);
+        _module_under_test->set_channels(TEST_CHANNEL_COUNT, TEST_CHANNEL_COUNT);
         _module_under_test->set_event_output(&_host_control._event_output);
     }
 
@@ -125,8 +124,7 @@ TEST_F(TestVst2xWrapper, TestSetChannels)
 {
     SetUp(VST2_TEST_PLUGIN_PATH);
     EXPECT_EQ(2, _module_under_test->input_channels());
-    _module_under_test->set_channels(1, 0);
-    _module_under_test->set_output_channels(1);
+    _module_under_test->set_channels(1, 1);
 
     EXPECT_EQ(1, _module_under_test->input_channels());
     EXPECT_EQ(1, _module_under_test->output_channels());
@@ -175,7 +173,7 @@ TEST_F(TestVst2xWrapper, TestMonoProcess)
     ChunkSampleBuffer mono_buffer(1);
     ChunkSampleBuffer stereo_buffer(2);
 
-    _module_under_test->set_channels(1, 0);
+    _module_under_test->set_channels(1, 2);
     test_utils::fill_sample_buffer(mono_buffer, 1.0f);
     _module_under_test->process_audio(mono_buffer, stereo_buffer);
 
@@ -184,8 +182,7 @@ TEST_F(TestVst2xWrapper, TestMonoProcess)
     test_utils::assert_buffer_value(1.0f, left);
     test_utils::assert_buffer_value(0.0f, right);
 
-    _module_under_test->set_output_channels(1);
-    _module_under_test->set_channels(2, 0);
+    _module_under_test->set_channels(2, 1);
     test_utils::fill_sample_buffer(stereo_buffer, 2.0f);
     _module_under_test->process_audio(stereo_buffer, mono_buffer);
     test_utils::assert_buffer_value(2.0f, mono_buffer);

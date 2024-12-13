@@ -63,9 +63,8 @@ public:
 
     void set_sample_rate(float sample_rate);
 
-    void set_input_channels(int channels);
+    void set_channels(int inputs, int outputs);
 
-    void set_output_channels(int channels);
     /**
      * @brief Find clipped samples in a buffer and send notifications
      * @param buffer The audio buffer to process

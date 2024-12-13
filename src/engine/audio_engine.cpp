@@ -57,20 +57,15 @@ EngineReturnStatus to_engine_status(ProcessorReturnCode processor_status)
     }
 }
 
-
 void ClipDetector::set_sample_rate(float sample_rate)
 {
     _interval = static_cast<unsigned int>(sample_rate * CLIPPING_DETECTION_INTERVAL.count() / 1000 - AUDIO_CHUNK_SIZE);
 }
 
-void ClipDetector::set_input_channels(int channels)
+void ClipDetector::set_channels(int inputs, int outputs)
 {
-    _input_clip_count = std::vector<unsigned int>(channels, _interval);
-}
-
-void ClipDetector::set_output_channels(int channels)
-{
-    _output_clip_count = std::vector<unsigned int>(channels, _interval);
+    _input_clip_count = std::vector<unsigned int>(inputs, _interval);
+    _output_clip_count = std::vector<unsigned int>(outputs, _interval);
 }
 
 void ClipDetector::detect_clipped_samples(const ChunkSampleBuffer& buffer, RtSafeRtEventFifo& queue, bool audio_input)
@@ -90,6 +85,7 @@ void ClipDetector::detect_clipped_samples(const ChunkSampleBuffer& buffer, RtSaf
         }
     }
 }
+
 
 AudioEngine::AudioEngine(float sample_rate,
                          int rt_cpu_cores,
@@ -145,8 +141,7 @@ void AudioEngine::set_sample_rate(float sample_rate)
 
 void AudioEngine::set_audio_channels(int inputs, int outputs)
 {
-    _clip_detector.set_input_channels(inputs);
-    _clip_detector.set_output_channels(outputs);
+    _clip_detector.set_channels(inputs, outputs);
 
     BaseEngine::set_audio_channels(inputs, outputs);
     _input_swap_buffer = ChunkSampleBuffer(inputs);

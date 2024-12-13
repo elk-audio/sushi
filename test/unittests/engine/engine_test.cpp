@@ -65,8 +65,7 @@ protected:
 
     void SetUp() override
     {
-        _module_under_test.set_input_channels(TEST_CHANNEL_COUNT);
-        _module_under_test.set_output_channels(TEST_CHANNEL_COUNT);
+        _module_under_test.set_channels(TEST_CHANNEL_COUNT, TEST_CHANNEL_COUNT);
     }
 
     ClipDetector _module_under_test{SAMPLE_RATE};

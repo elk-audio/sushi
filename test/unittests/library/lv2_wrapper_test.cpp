@@ -106,8 +106,8 @@ protected:
         {
             _module_under_test->set_event_output(&_fifo);
             _module_under_test->set_enabled(true);
-            _module_under_test->set_input_channels(std::min(TEST_CHANNEL_COUNT, _module_under_test->max_input_channels()));
-            _module_under_test->set_output_channels(std::min(TEST_CHANNEL_COUNT, _module_under_test->max_output_channels()));
+            _module_under_test->set_channels(std::min(TEST_CHANNEL_COUNT, _module_under_test->max_input_channels()),
+                                             std::min(TEST_CHANNEL_COUNT, _module_under_test->max_output_channels()));
         }
 
         return ret;
