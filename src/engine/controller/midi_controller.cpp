@@ -140,7 +140,7 @@ bool MidiController::get_midi_clock_output_enabled(int port) const
 
 control::ControlStatus MidiController::set_midi_clock_output_enabled(bool enabled, int port)
 {
-    auto lambda = [=] () -> int
+    auto lambda = [=, this] () -> int
     {
         auto status = _midi_dispatcher->enable_midi_clock(enabled, port);
         return status == midi_dispatcher::MidiDispatcherStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
@@ -190,7 +190,7 @@ control::ControlStatus MidiController::connect_kbd_input_to_track(int track_id,
 {
     const int int_channel = int_from_ext_midi_channel(channel);
 
-    auto lambda = [=] () -> int
+    auto lambda = [=, this] () -> int
     {
         midi_dispatcher::MidiDispatcherStatus status;
         if (!raw_midi)
@@ -223,7 +223,7 @@ control::ControlStatus MidiController::connect_kbd_output_from_track(int track_i
 {
     const int int_channel = int_from_ext_midi_channel(channel);
 
-    auto lambda = [=] () -> int
+    auto lambda = [=, this] () -> int
     {
         midi_dispatcher::MidiDispatcherStatus status;
         status = _midi_dispatcher->connect_track_to_output(port, track_id, int_channel);
@@ -254,7 +254,7 @@ control::ControlStatus MidiController::connect_cc_to_parameter(int processor_id,
 {
     const int int_channel = int_from_ext_midi_channel(channel);
 
-    auto lambda = [=] () -> int
+    auto lambda = [=, this] () -> int
     {
         auto status = _midi_dispatcher->connect_cc_to_parameter(port, // midi_input maps to port
                                                                 processor_id,
@@ -285,7 +285,7 @@ control::ControlStatus MidiController::connect_pc_to_processor(int processor_id,
 {
     const int int_channel = int_from_ext_midi_channel(channel);
 
-    auto lambda = [=] () -> int
+    auto lambda = [=, this] () -> int
     {
         midi_dispatcher::MidiDispatcherStatus status;
 
@@ -313,7 +313,7 @@ control::ControlStatus MidiController::disconnect_kbd_input(int track_id,
 {
     const int int_channel = int_from_ext_midi_channel(channel);
 
-    auto lambda = [=]() -> int
+    auto lambda = [=, this]() -> int
     {
         midi_dispatcher::MidiDispatcherStatus status;
         if (!raw_midi)
@@ -349,7 +349,7 @@ control::ControlStatus MidiController::disconnect_kbd_output(int track_id, contr
 {
     const int int_channel = int_from_ext_midi_channel(channel);
 
-    auto lambda = [=] () -> int
+    auto lambda = [=, this] () -> int
     {
         midi_dispatcher::MidiDispatcherStatus status;
         status = _midi_dispatcher->disconnect_track_from_output(port, track_id, int_channel);
@@ -375,7 +375,7 @@ control::ControlStatus MidiController::disconnect_cc(int processor_id,
 {
     const int int_channel = int_from_ext_midi_channel(channel);
 
-    auto lambda = [=] () -> int
+    auto lambda = [=, this] () -> int
     {
         const auto status = _midi_dispatcher->disconnect_cc_from_parameter(port, // port maps to midi_input
                                                                            processor_id,
@@ -402,7 +402,7 @@ control::ControlStatus MidiController::disconnect_pc(int processor_id, control::
 {
     const int int_channel = int_from_ext_midi_channel(channel);
 
-    auto lambda = [=] () -> int
+    auto lambda = [=, this] () -> int
     {
         midi_dispatcher::MidiDispatcherStatus status;
 
@@ -428,7 +428,7 @@ control::ControlStatus MidiController::disconnect_pc(int processor_id, control::
 
 control::ControlStatus MidiController::disconnect_all_cc_from_processor(int processor_id)
 {
-    auto lambda = [=] () -> int
+    auto lambda = [=, this] () -> int
     {
         const auto status = _midi_dispatcher->disconnect_all_cc_from_processor(processor_id);
 
@@ -450,7 +450,7 @@ control::ControlStatus MidiController::disconnect_all_cc_from_processor(int proc
 
 control::ControlStatus MidiController::disconnect_all_pc_from_processor(int processor_id)
 {
-    auto lambda = [=] () -> int
+    auto lambda = [=, this] () -> int
     {
         const auto status = _midi_dispatcher->disconnect_all_pc_from_processor(processor_id);
 
