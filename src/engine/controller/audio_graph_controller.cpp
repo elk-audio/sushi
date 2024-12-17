@@ -194,8 +194,8 @@ control::ControlStatus AudioGraphController::set_processor_state(int processor_i
     auto internal_state = std::make_unique<ProcessorState>();
     to_internal(internal_state.get(), &state);
 
-    // Capture everything by copy, except internal_state which is captured by move.
-    auto lambda = [=, state = std::move(internal_state)] () -> int
+    // Capture locals by copy, this via pointer and internal_state by move.
+    auto lambda = [=, this, state = std::move(internal_state)] () -> int
     {
         bool realtime = _engine->realtime();
 
