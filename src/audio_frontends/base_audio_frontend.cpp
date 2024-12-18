@@ -49,6 +49,7 @@ void BaseAudioFrontend::pause(bool paused)
      * _handle_resume() and _handle_pause() in the audio callback */
     assert(twine::is_current_thread_realtime() == false);
     bool running = !_pause_manager.bypassed();
+    _pause_manager.set_bypass(paused, _engine->sample_rate());
 
     // If pausing, return when engine has ramped down.
     if (paused && running)
@@ -65,8 +66,6 @@ void BaseAudioFrontend::pause(bool paused)
             _engine->enable_realtime(true);
         }
     }
-
-    _pause_manager.set_bypass(paused, _engine->sample_rate());
 }
 
 std::pair<bool, Time> BaseAudioFrontend::_test_for_xruns(Time current_time, int current_samples)
@@ -87,7 +86,7 @@ void BaseAudioFrontend::_handle_resume(Time current_time, int current_samples)
 {
     if (!_resume_notified && _pause_manager.should_process())
     {
-        _resume_notified = false;
+        _resume_notified = true;
         _engine->notify_interrupted_audio(current_time - _pause_start);
     }
     else
