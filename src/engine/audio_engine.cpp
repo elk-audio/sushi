@@ -720,8 +720,9 @@ EngineReturnStatus AudioEngine::add_plugin_to_track(ObjectId plugin_id,
         return EngineReturnStatus::ERROR;
     }
 
-    int channels = std::min(plugin->max_input_channels(), track->input_channels());
-    plugin->set_channels(channels, channels);
+    int in_channels = std::min(plugin->max_input_channels(), track->input_channels());
+    int out_channels = std::min(plugin->max_output_channels(), track->input_channels());
+    plugin->set_channels(in_channels, out_channels);
     plugin->set_enabled(true);
 
     if (this->realtime())
