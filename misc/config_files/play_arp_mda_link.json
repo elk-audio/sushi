@@ -47,15 +47,12 @@
             }
         ]
     },
-    "events" : [
+    "initial_state" : [
         {
-           "time" : 0.0,
-           "type" : "parameter_change",
-           "data" : {
-               "plugin_name" : "main",
-               "parameter_name" : "gain",
-               "value" : 0.75
-           }
-       }
+            "processor" : "main",
+            "parameters" : {
+                "gain" : 0.7
+            }
+        }
     ]
 }
