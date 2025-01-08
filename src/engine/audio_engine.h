@@ -119,7 +119,7 @@ public:
      * @brief Set the number of audio channels, set by the audio frontend before
      *        starting processing
      * @param inputs The number of input audio channels to use
-     * @param inputs The number of output audio channels to use
+     * @param outputs The number of output audio channels to use
      */
     void set_audio_channels(int inputs, int outputs) override;
 
