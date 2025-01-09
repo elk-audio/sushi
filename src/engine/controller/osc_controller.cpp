@@ -69,7 +69,7 @@ control::ControlStatus OscController::enable_output_for_parameter(int processor_
         return control::ControlStatus::UNSUPPORTED_OPERATION;
     }
 
-    auto lambda = [=] () -> int
+    auto lambda = [=, this] () -> int
     {
         // Here we SHOULD use name, since it is needed for building the OSC "Address Path".
         // We could avoid the _processors dependency here, though not crucial, by having 4 parameters to the call.
@@ -108,7 +108,7 @@ control::ControlStatus OscController::disable_output_for_parameter(int processor
         return control::ControlStatus::UNSUPPORTED_OPERATION;
     }
 
-    auto lambda = [=] () -> int
+    auto lambda = [=, this] () -> int
     {
         // Here we SHOULD use name, since it is needed for building the OSC "Address Path".
         // We could avoid the _processors dependency here, though not crucial, by having 4 parameters to the call.
@@ -152,7 +152,7 @@ control::ControlStatus OscController::enable_all_output()
         return control::ControlStatus::UNSUPPORTED_OPERATION;
     }
 
-    auto lambda = [=] () -> int
+    auto lambda = [=, this] () -> int
     {
         _osc_frontend->connect_from_all_parameters();
         return EventStatus::HANDLED_OK;
@@ -170,7 +170,7 @@ control::ControlStatus OscController::disable_all_output()
         return control::ControlStatus::UNSUPPORTED_OPERATION;
     }
 
-    auto lambda = [=] () -> int
+    auto lambda = [=, this] () -> int
     {
         _osc_frontend->disconnect_from_all_parameters();
         return EventStatus::HANDLED_OK;

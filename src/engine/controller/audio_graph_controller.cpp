@@ -194,8 +194,8 @@ control::ControlStatus AudioGraphController::set_processor_state(int processor_i
     auto internal_state = std::make_unique<ProcessorState>();
     to_internal(internal_state.get(), &state);
 
-    // Capture everything by copy, except internal_state which is captured by move.
-    auto lambda = [=, state = std::move(internal_state)] () -> int
+    // Capture locals by copy, this via pointer and internal_state by move.
+    auto lambda = [=, this, state = std::move(internal_state)] () -> int
     {
         bool realtime = _engine->realtime();
 
@@ -231,7 +231,7 @@ control::ControlStatus AudioGraphController::create_track(const std::string& nam
 {
     ELKLOG_LOG_DEBUG("create_track called with name {} and {} channels", name, channels);
 
-    auto lambda = [=] () -> int
+    auto lambda = [=, this] () -> int
     {
         auto [status, track_id] = _engine->create_track(name, channels);
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
@@ -245,7 +245,7 @@ control::ControlStatus AudioGraphController::create_track(const std::string& nam
 control::ControlStatus AudioGraphController::create_multibus_track(const std::string& name, int buses)
 {
     ELKLOG_LOG_DEBUG("create_multibus_track called with name {} and {} buses ", name, buses);
-    auto lambda = [=] () -> int
+    auto lambda = [=, this] () -> int
     {
         auto [status, track_id] = _engine->create_multibus_track(name, buses);
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
@@ -259,7 +259,7 @@ control::ControlStatus AudioGraphController::create_multibus_track(const std::st
 control::ControlStatus AudioGraphController::create_pre_track(const std::string& name)
 {
     ELKLOG_LOG_DEBUG("create_pre_track called with name {}", name);
-    auto lambda = [=] () -> int
+    auto lambda = [=, this] () -> int
     {
         auto [status, track_id] = _engine->create_pre_track(name);
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
@@ -273,7 +273,7 @@ control::ControlStatus AudioGraphController::create_pre_track(const std::string&
 control::ControlStatus AudioGraphController::create_post_track(const std::string& name)
 {
     ELKLOG_LOG_DEBUG("create_post_track called with name {}", name);
-    auto lambda = [=] () -> int
+    auto lambda = [=, this] () -> int
     {
         auto [status, track_id] = _engine->create_post_track(name);
         return status == EngineReturnStatus::OK? EventStatus::HANDLED_OK : EventStatus::ERROR;
@@ -291,7 +291,7 @@ control::ControlStatus AudioGraphController::move_processor_on_track(int process
 {
     ELKLOG_LOG_DEBUG("move_processor_on_track called with processor id {}, source track id and {} dest track id {}",
                     processor_id, source_track_id, dest_track_id);
-    auto lambda = [=] () -> int
+    auto lambda = [=, this] () -> int
     {
         auto plugin_order = _processors->processors_on_track(source_track_id);
 
@@ -349,7 +349,7 @@ control::ControlStatus AudioGraphController::create_processor_on_track(const std
 {
     ELKLOG_LOG_DEBUG("create_processor_on_track called with name {}, uid {} from {} on track {}",
                                                                     name, uid, file, track_id);
-    auto lambda = [=] () -> int
+    auto lambda = [=, this] () -> int
     {
         PluginInfo plugin_info;
         plugin_info.uid = uid;
@@ -382,7 +382,7 @@ control::ControlStatus AudioGraphController::delete_processor_from_track(int pro
 {
     ELKLOG_LOG_DEBUG("delete processor_from_track called with processor id {} and track id {}",
                     processor_id, track_id);
-    auto lambda = [=] () -> int
+    auto lambda = [=, this] () -> int
     {
         auto status = _engine->remove_plugin_from_track(processor_id, track_id);
         if (status == engine::EngineReturnStatus::OK)
@@ -400,7 +400,7 @@ control::ControlStatus AudioGraphController::delete_processor_from_track(int pro
 control::ControlStatus AudioGraphController::delete_track(int track_id)
 {
     ELKLOG_LOG_DEBUG("delete_track called with id {}", track_id);
-    auto lambda = [=] () -> int
+    auto lambda = [=, this] () -> int
     {
         auto track = _processors->track(track_id);
         if (track == nullptr)
