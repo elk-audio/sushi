@@ -34,8 +34,7 @@ protected:
 
     void SetUp() override
     {
-        _engine.set_audio_input_channels(ENGINE_CHANNELS);
-        _engine.set_audio_output_channels(ENGINE_CHANNELS);
+        _engine.set_audio_channels(ENGINE_CHANNELS, ENGINE_CHANNELS);
 
         ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, _configurator.load_host_config());
         ASSERT_EQ(jsonconfig::JsonConfigReturnStatus::OK, _configurator.load_tracks());

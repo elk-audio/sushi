@@ -54,8 +54,7 @@ protected:
 
         ProcessorReturnCode status = _module_under_test->init(TEST_SAMPLERATE);
         ASSERT_EQ(ProcessorReturnCode::OK, status);
-        _module_under_test->set_input_channels(0);
-        _module_under_test->set_output_channels(TEST_CHANNEL_COUNT);
+        _module_under_test->set_channels(0, TEST_CHANNEL_COUNT);
         _module_under_test->set_enabled(true);
     }
 

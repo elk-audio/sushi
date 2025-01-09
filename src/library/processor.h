@@ -201,25 +201,17 @@ public:
     /**
      * @brief Set the number of input audio channels of the Processor.
      *        Must not be set to more channels than what is reported by
-     *        max_input_channels()
-     * @param channels The new number of input channels
+     *        max_input_channels() or max_output_channels()
+     * @param inputs The new number of input channels
+     * @param outputs The new number of output channels
      */
-    virtual void set_input_channels(int channels)
+    virtual void set_channels(int inputs, int outputs)
     {
-        assert(channels <= _max_input_channels);
-        _current_input_channels = channels;
-    }
+        assert(inputs <= _max_input_channels);
+        assert(outputs <= _max_output_channels);
 
-    /**
-     * @brief Set the number of output audio channels of the Processor.
-     *        Must not be set to more channels than what is reported by
-     *        max_output_channels()
-     * @param channels The new number of output channels
-     */
-    virtual void set_output_channels(int channels)
-    {
-        assert(channels <= _max_output_channels);
-        _current_output_channels = channels;
+        _current_input_channels = inputs;
+        _current_output_channels = outputs;
     }
 
     virtual bool enabled() {return _enabled;}

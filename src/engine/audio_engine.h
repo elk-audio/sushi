@@ -63,9 +63,8 @@ public:
 
     void set_sample_rate(float sample_rate);
 
-    void set_input_channels(int channels);
+    void set_channels(int inputs, int outputs);
 
-    void set_output_channels(int channels);
     /**
      * @brief Find clipped samples in a buffer and send notifications
      * @param buffer The audio buffer to process
@@ -117,18 +116,12 @@ public:
     void set_sample_rate(float sample_rate) override;
 
     /**
-     * @brief Set the number of input audio channels, set by the audio frontend before
+     * @brief Set the number of audio channels, set by the audio frontend before
      *        starting processing
-     * @param channels The number of audio channels to use
+     * @param inputs The number of input audio channels to use
+     * @param outputs The number of output audio channels to use
      */
-    void set_audio_input_channels(int channels) override;
-
-    /**
-     * @brief Set the number of output audio channels, set by the audio frontend before
-     *        starting processing
-     * @param channels The number of audio channels to use
-     */
-    void set_audio_output_channels(int channels) override;
+    void set_audio_channels(int inputs, int outputs) override;
 
     /**
      * @brief Set the number of control voltage inputs, set by the audio frontend before

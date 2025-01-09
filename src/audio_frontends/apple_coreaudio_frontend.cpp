@@ -249,8 +249,7 @@ AudioFrontendStatus AppleCoreAudioFrontend::configure_audio_channels(const Apple
     _in_buffer = ChunkSampleBuffer(num_input_channels);
     _out_buffer = ChunkSampleBuffer(num_output_channels);
 
-    _engine->set_audio_input_channels(num_input_channels);
-    _engine->set_audio_output_channels(num_output_channels);
+    _engine->set_audio_channels(num_input_channels, num_output_channels);
 
     auto status = _engine->set_cv_input_channels(config->cv_inputs);
     if (status != engine::EngineReturnStatus::OK)

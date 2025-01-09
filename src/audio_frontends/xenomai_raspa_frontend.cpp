@@ -179,8 +179,7 @@ AudioFrontendStatus XenomaiRaspaFrontend::config_audio_channels(const XenomaiRas
     _cv_output_channels = config->cv_outputs;
     _audio_input_channels = num_total_input_channels - _cv_input_channels;
     _audio_output_channels = num_total_output_channels - _cv_output_channels;
-    _engine->set_audio_input_channels(_audio_input_channels);
-    _engine->set_audio_output_channels(_audio_output_channels);
+    _engine->set_audio_input_channels(_audio_input_channels, _audio_output_channels);
     auto status = _engine->set_cv_input_channels(_cv_input_channels);
     if (status != engine::EngineReturnStatus::OK)
     {

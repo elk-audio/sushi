@@ -99,14 +99,10 @@ public:
         _sample_rate = sample_rate;
     }
 
-    virtual void set_audio_input_channels(int channels)
+    virtual void set_audio_channels(int inputs, int outputs)
     {
-        _audio_inputs = channels;
-    }
-
-    virtual void set_audio_output_channels(int channels)
-    {
-        _audio_outputs = channels;
+        _audio_inputs = inputs;
+        _audio_outputs = outputs;
     }
 
     int audio_input_channels() const

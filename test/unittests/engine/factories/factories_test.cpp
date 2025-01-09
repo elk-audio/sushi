@@ -33,8 +33,7 @@ namespace sushi::internal::audio_frontend {
 
 PortAudioFrontend::PortAudioFrontend(engine::BaseEngine* engine) : BaseAudioFrontend(engine)
 {
-    _engine->set_audio_input_channels(MOCK_CHANNEL_COUNT);
-    _engine->set_audio_output_channels(MOCK_CHANNEL_COUNT);
+    _engine->set_audio_channels(MOCK_CHANNEL_COUNT, MOCK_CHANNEL_COUNT);
 }
 
 AudioFrontendStatus PortAudioFrontend::init(BaseAudioFrontendConfiguration*)

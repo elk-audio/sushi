@@ -52,8 +52,7 @@ protected:
 
         _accessor = std::make_unique<OfflineFrontendAccessor>(*_module_under_test);
 
-        _engine.set_audio_input_channels(AUDIO_CHANNELS);
-        _engine.set_audio_output_channels(AUDIO_CHANNELS);
+        _engine.set_audio_channels(AUDIO_CHANNELS, AUDIO_CHANNELS);
     }
 
     EngineMockup _engine {SAMPLE_RATE};

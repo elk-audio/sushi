@@ -153,19 +153,18 @@ TEST_F(TestProcessor, TestBypassProcessing)
     test_utils::fill_sample_buffer(buffer, 1.0f);
     test_utils::fill_sample_buffer(mono_buffer, 2.0f);
 
-    _module_under_test->set_input_channels(2);
-    _module_under_test->set_output_channels(2);
+    _module_under_test->set_channels(2, 2);
     // Stereo into stereo
     _accessor->bypass_process(buffer, out_buffer);
     test_utils::assert_buffer_value(1.0f, out_buffer);
 
     // Mono into stereo
-    _module_under_test->set_input_channels(1);
+    _module_under_test->set_channels(1, 2);
     _accessor->bypass_process(mono_buffer, out_buffer);
     test_utils::assert_buffer_value(2.0f, out_buffer);
 
     // No input should clear output
-    _module_under_test->set_input_channels(0);
+    _module_under_test->set_channels(0, 2);
     _accessor->bypass_process(buffer, out_buffer);
     test_utils::assert_buffer_value(0.0f, out_buffer);
 }

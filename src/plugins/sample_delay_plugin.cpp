@@ -44,16 +44,16 @@ SampleDelayPlugin::SampleDelayPlugin(HostControl host_control) : InternalPlugin(
     }
 }
 
-void SampleDelayPlugin::set_input_channels(int channels)
+void SampleDelayPlugin::set_channels(int inputs, int outputs)
 {
-    Processor::set_input_channels(channels);
-    _channel_config(channels);
-}
+    Processor::set_channels(inputs, 0);
 
-void SampleDelayPlugin::set_output_channels(int channels)
-{
-    Processor::set_output_channels(channels);
-    _channel_config(channels);
+    int max_channels = std::max(inputs, outputs);
+    if (_delaylines.size() != static_cast<size_t>(max_channels))
+    {
+        _delaylines.resize(max_channels);
+        _reset();
+    }
 }
 
 void SampleDelayPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkSampleBuffer &out_buffer)
@@ -87,16 +87,6 @@ void SampleDelayPlugin::process_audio(const ChunkSampleBuffer &in_buffer, ChunkS
     else
     {
         bypass_process(in_buffer, out_buffer);
-    }
-}
-
-void SampleDelayPlugin::_channel_config(int channels)
-{
-    int max_channels = std::max(std::max(channels, _current_input_channels), _current_output_channels);
-    if (_delaylines.size() != static_cast<size_t>(max_channels))
-    {
-        _delaylines.resize(max_channels);
-        _reset();
     }
 }
 

@@ -63,9 +63,7 @@ public:
 
     void configure(float sample_rate) override;
 
-    void set_input_channels(int channels) override;
-
-    void set_output_channels(int channels) override;
+    void set_channels(int inputs, int outputs) override;
 
     void set_enabled(bool enabled) override;
 
@@ -81,8 +79,6 @@ public:
 
 private:
     friend Accessor;
-
-    void _channel_config(int channels);
 
     void inline _swap_buffers();
 
