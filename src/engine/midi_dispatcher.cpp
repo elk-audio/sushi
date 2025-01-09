@@ -231,9 +231,11 @@ MidiDispatcherStatus MidiDispatcher::disconnect_all_cc_from_processor(ObjectId p
                                                          return c.target == processor_id;
                                                      });
 
-                connection_vector.erase(erase_iterator, connection_vector.end());
-
-                ELKLOG_LOG_DEBUG("Disconnected all CC's from processor ID \"{}\"", processor_id);
+                if (erase_iterator != connection_vector.end())
+                {
+                    connection_vector.erase(erase_iterator, connection_vector.end());
+                    ELKLOG_LOG_DEBUG("Disconnected all CC's from processor ID {}", processor_id);
+                }
             }
         }
     }
