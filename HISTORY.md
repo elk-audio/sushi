@@ -6,15 +6,16 @@ New Features:
   * C++20 support
   * Updated Elklog
   * Updated Twine to 1.0
-  * Warning suppressor included
+  * Warning suppressor library included
 
 Fixes:
   * Improved handling of audio pause / resume
   * Xrun detection in audio frontends
   * Improved handling of processor add/delete if audio thread is not running
   * Better event lifetime management
-  * EventDispatcher thread could stall if clock changed
-
+  * EventDispatcher thread could stall if system clock changed
+  * Fix for Vst2 plugins with > 16 channels
+  * All example config files now uses "initial_state" to set initial parameter values
 
 ## 1.1.0
 
