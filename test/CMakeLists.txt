@@ -245,7 +245,7 @@ target_include_directories(unit_tests
             ${INCLUDE_DIRS}
             ${PUBLIC_INCLUDE_DIRS})
 
-target_link_libraries(unit_tests "${TEST_LINK_LIBRARIES}" elk::warningSuppressor)
+target_link_libraries(unit_tests "${TEST_LINK_LIBRARIES}")
 if (TEST_DEPENDENCIES)
     add_dependencies(unit_tests ${TEST_DEPENDENCIES})
 endif()

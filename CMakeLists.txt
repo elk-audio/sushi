@@ -695,6 +695,7 @@ set(COMMON_LIBRARIES
     oscpack
     elklog
     freeverb
+    elk::warningSuppressor
     ${TWINE_LIB}
 )
 
@@ -718,7 +719,6 @@ target_include_directories(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME} PUBLIC ${EXTRA_BUILD_LIBRARIES} ${COMMON_LIBRARIES})
-target_link_libraries(${PROJECT_NAME} INTERFACE $<BUILD_INTERFACE:elk::warningSuppressor>)
 
 ####################################
 #  Compiler Flags and definitions  #
