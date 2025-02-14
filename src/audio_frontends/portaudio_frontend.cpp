@@ -363,7 +363,7 @@ AudioFrontendStatus PortAudioFrontend::_configure_audio_channels(const PortAudio
     _audio_output_channels = _num_total_output_channels - _cv_output_channels;
     _in_buffer = ChunkSampleBuffer(_audio_input_channels);
     _out_buffer = ChunkSampleBuffer(_audio_output_channels);
-    _engine->set_audio_input_channels(_audio_input_channels, _audio_output_channels);
+    _engine->set_audio_channels(_audio_input_channels, _audio_output_channels);
     auto status = _engine->set_cv_input_channels(_cv_input_channels);
     if (status != engine::EngineReturnStatus::OK)
     {

@@ -36,7 +36,7 @@ pipelines:
           - ./third-party/vcpkg/bootstrap-vcpkg.sh
           - mkdir build
           - cd build
-          - cmake -DCMAKE_TOOLCHAIN_FILE=../third-party/vcpkg/scripts/buildsystems/vcpkg.cmake -DWITH_XENOMAI=FALSE -DWITH_JACK=TRUE -DWITH_VST2=OFF -DWITH_LV2=ON -DWITH_LV2_MDA_TESTS=ON -DTWINE_WITH_XENOMAI=OFF -DSUSHI_BUILD_WITH_SANITIZERS=OFF ..
+          - cmake -DCMAKE_TOOLCHAIN_FILE=../third-party/vcpkg/scripts/buildsystems/vcpkg.cmake -DWITH_XENOMAI=FALSE -DWITH_JACK=TRUE -DWITH_VST2=OFF -DSUSHI_WITH_PORTAUDIO=ON -DWITH_LV2=ON -DWITH_LV2_MDA_TESTS=ON -DTWINE_WITH_XENOMAI=OFF -DSUSHI_BUILD_WITH_SANITIZERS=OFF ..
 
           # Build multiple configuration and run unit tests
           # Build sushi and unit tests with default options and default buffer size (64 samples)
@@ -69,7 +69,7 @@ pipelines:
           #- pkill sushi
 
           # Build with most options disabled to test compile time configuration
-          - cmake -DAUDIO_BUFFER_SIZE=64 -DSUSHI_WITH_VST2=OFF -DSUSHI_WITH_VST3=OFF -DSUSHI_WITH_LV2=OFF -DSUSHI_WITH_LV2_MDA_TESTS=OFF -DSUSHI_WITH_RT_MIDI=ON -DSUSHI_WITH_ALSA_MIDI=OFF ..
+          - cmake -DAUDIO_BUFFER_SIZE=64 -DSUSHI_WITH_VST2=OFF -DSUSHI_WITH_VST3=OFF -DSUSHI_WITH_LV2=OFF -DSUSHI_WITH_LV2_MDA_TESTS=OFF -DSUSHI_WITH_RT_MIDI=ON -DSUSHI_WITH_ALSA_MIDI=OFF -DSUSHI_WITH_PORTAUDIO=OFF ..
           - make sushi -j4
           - make unit_tests -j4
           - cd test
