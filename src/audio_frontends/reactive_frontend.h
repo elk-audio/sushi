@@ -33,17 +33,21 @@
 
 namespace sushi::internal::audio_frontend {
 
-// TODO: Hard-coding the number of channels for now.
-constexpr int REACTIVE_FRONTEND_CHANNELS = 2;
-
 struct ReactiveFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
-    ReactiveFrontendConfiguration(int cv_inputs,
+    ReactiveFrontendConfiguration(int audio_inputs,
+                                  int audio_outputs,
+                                  int cv_inputs,
                                   int cv_outputs) :
-            BaseAudioFrontendConfiguration(cv_inputs, cv_outputs)
+            BaseAudioFrontendConfiguration(cv_inputs, cv_outputs),
+            audio_inputs{audio_inputs},
+            audio_outputs{audio_outputs}
     {}
 
     ~ReactiveFrontendConfiguration() override = default;
+
+    int audio_inputs;
+    int audio_outputs;
 };
 
 class ReactiveFrontend : public BaseAudioFrontend

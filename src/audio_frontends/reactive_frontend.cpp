@@ -38,7 +38,17 @@ AudioFrontendStatus ReactiveFrontend::init(BaseAudioFrontendConfiguration* confi
 
     auto frontend_config = static_cast<ReactiveFrontendConfiguration*>(_config); // static cast because of no rtti
 
-    _engine->set_audio_channels(REACTIVE_FRONTEND_CHANNELS, REACTIVE_FRONTEND_CHANNELS);
+    if (frontend_config->audio_inputs > MAX_FRONTEND_CHANNELS ||
+        frontend_config->audio_outputs > MAX_FRONTEND_CHANNELS)
+    {
+        ELKLOG_LOG_ERROR("Requested channel count ({} in / {} out) exceeds MAX_FRONTEND_CHANNELS ({})",
+                         frontend_config->audio_inputs,
+                         frontend_config->audio_outputs,
+                         MAX_FRONTEND_CHANNELS);
+        return AudioFrontendStatus::INVALID_N_CHANNELS;
+    }
+
+    _engine->set_audio_channels(frontend_config->audio_inputs, frontend_config->audio_outputs);
 
     auto status = _engine->set_cv_input_channels(frontend_config->cv_inputs);
     if (status != engine::EngineReturnStatus::OK)
