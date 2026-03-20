@@ -104,6 +104,47 @@ public:
      */
      void notify_interrupted_audio(Time duration);
 
+    /**
+     * @brief Set a CV input value to be passed to the engine in the next process_audio() call.
+     *        Call this before process_audio() from the audio thread.
+     * @param channel Index in [0, MAX_ENGINE_CV_IO_PORTS).
+     * @param value   Normalised value [0.0, 1.0].
+     */
+    void set_cv_input(int channel, float value)
+    {
+        _in_controls.cv_values[static_cast<size_t>(channel)] = value;
+    }
+
+    /**
+     * @brief Read a CV output value produced by the engine during the last process_audio() call.
+     * @param channel Index in [0, MAX_ENGINE_CV_IO_PORTS).
+     * @return Normalised value [0.0, 1.0].
+     */
+    [[nodiscard]] float cv_output(int channel) const
+    {
+        return _out_controls.cv_values[static_cast<size_t>(channel)];
+    }
+
+    /**
+     * @brief Set a gate (digital) input line state before the next process_audio() call.
+     * @param gate  Index in [0, 32).
+     * @param high  true = high, false = low.
+     */
+    void set_gate_input(int gate, bool high)
+    {
+        _in_controls.gate_values.set(static_cast<size_t>(gate), high);
+    }
+
+    /**
+     * @brief Read a gate output state produced by the engine during the last process_audio() call.
+     * @param gate Index in [0, 32).
+     * @return true if the gate is high.
+     */
+    [[nodiscard]] bool gate_output(int gate) const
+    {
+        return _out_controls.gate_values.test(static_cast<size_t>(gate));
+    }
+
 private:
     engine::ControlBuffer _in_controls;
     engine::ControlBuffer _out_controls;

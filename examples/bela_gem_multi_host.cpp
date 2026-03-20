@@ -63,6 +63,7 @@
 #include <sushi/reactive_factory.h>
 #include <sushi/rt_controller.h>
 #include <sushi/sample_buffer.h>
+#include <sushi/constants.h>       // MAX_ENGINE_CV_IO_PORTS
 
 // ---- Standard library -------------------------------------------------------
 #include <cassert>
@@ -240,10 +241,68 @@ void render(BelaContext* context, void* /*userData*/)
         BELA_GEM_MULTI_INPUTS);
 
     // ------------------------------------------------------------------
+    // CV inputs: Bela's analogIn provides up to 8 channels at half the
+    // audio sample rate.  Read the last sample of each analog frame as
+    // the representative value for this audio block, normalise from
+    // Bela's [0, 1] range directly (Bela analog range is already [0,1]).
+    // Only route channels that Sushi was configured to accept.
+    // ------------------------------------------------------------------
+    {
+        int cv_channels = std::min(context->analogInChannels,
+                                   sushi::MAX_ENGINE_CV_IO_PORTS);
+        int last_analog_frame = static_cast<int>(context->analogFrames) - 1;
+        for (int ch = 0; ch < cv_channels; ++ch)
+        {
+            float value = analogRead(context, last_analog_frame, ch);
+            g_host.rt_controller->set_cv_input(ch, value);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Gate inputs: Bela's digital pins (0-15) mapped to Sushi gates.
+    // ------------------------------------------------------------------
+    {
+        int gate_count = std::min(context->digitalChannels, 16);
+        for (int g = 0; g < gate_count; ++g)
+        {
+            bool high = digitalRead(context, 0, g) != 0;
+            g_host.rt_controller->set_gate_input(g, high);
+        }
+    }
+
+    // ------------------------------------------------------------------
     // Drive Sushi — xrun detection and pause handling happen inside
     // ReactiveFrontend::process_audio() via _handle_resume/_handle_pause.
     // ------------------------------------------------------------------
     g_host.rt_controller->process_audio(wrapped_in, g_host.buffer_out, timestamp);
+
+    // ------------------------------------------------------------------
+    // CV outputs: write Sushi's CV results back to Bela's analog outputs.
+    // ------------------------------------------------------------------
+    {
+        int cv_channels = std::min(context->analogOutChannels,
+                                   sushi::MAX_ENGINE_CV_IO_PORTS);
+        for (int ch = 0; ch < cv_channels; ++ch)
+        {
+            float value = g_host.rt_controller->cv_output(ch);
+            for (uint32_t f = 0; f < context->analogFrames; ++f)
+            {
+                analogWrite(context, f, ch, value);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Gate outputs: drive Bela's digital pins from Sushi's gate results.
+    // ------------------------------------------------------------------
+    {
+        int gate_count = std::min(context->digitalChannels, 16);
+        for (int g = 0; g < gate_count; ++g)
+        {
+            digitalWrite(context, 0, g,
+                         g_host.rt_controller->gate_output(g) ? HIGH : LOW);
+        }
+    }
 
     // ------------------------------------------------------------------
     // Copy Sushi output into Bela's audioOut array.

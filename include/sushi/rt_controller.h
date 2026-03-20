@@ -110,6 +110,41 @@ public:
      */
     virtual void notify_interrupted_audio(Time duration) = 0;
 
+    /// For CV and Gate I/O:
+    /////////////////////////////////////////////////////////////
+
+    /**
+     * @brief Set the value of a CV (control voltage) input channel before calling process_audio().
+     *        Maps to Sushi's internal CV routing system.  Must be called from the audio thread.
+     * @param channel CV channel index [0, MAX_ENGINE_CV_IO_PORTS).
+     * @param value   Normalised value in [0.0, 1.0].
+     */
+    virtual void set_cv_input(int channel, float value) = 0;
+
+    /**
+     * @brief Read the value of a CV output channel after process_audio() returns.
+     *        Reflects any CV values produced by Sushi plugins during the last block.
+     * @param channel CV channel index [0, MAX_ENGINE_CV_IO_PORTS).
+     * @return Normalised value in [0.0, 1.0].
+     */
+    [[nodiscard]] virtual float cv_output(int channel) const = 0;
+
+    /**
+     * @brief Set the state of a gate (digital) input line before calling process_audio().
+     *        Maps to Sushi's internal gate routing system.  Must be called from the audio thread.
+     * @param gate  Gate index [0, 32).
+     * @param high  true = gate high, false = gate low.
+     */
+    virtual void set_gate_input(int gate, bool high) = 0;
+
+    /**
+     * @brief Read the state of a gate output line after process_audio() returns.
+     *        Reflects gate values produced by Sushi plugins during the last block.
+     * @param gate Gate index [0, 32).
+     * @return true if the gate is high.
+     */
+    [[nodiscard]] virtual bool gate_output(int gate) const = 0;
+
     /// For MIDI:
     /////////////////////////////////////////////////////////////
 

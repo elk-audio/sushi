@@ -115,6 +115,26 @@ void RealTimeController::notify_interrupted_audio(Time duration)
     _audio_frontend->notify_interrupted_audio(duration);
 }
 
+void RealTimeController::set_cv_input(int channel, float value)
+{
+    _audio_frontend->set_cv_input(channel, value);
+}
+
+float RealTimeController::cv_output(int channel) const
+{
+    return _audio_frontend->cv_output(channel);
+}
+
+void RealTimeController::set_gate_input(int gate, bool high)
+{
+    _audio_frontend->set_gate_input(gate, high);
+}
+
+bool RealTimeController::gate_output(int gate) const
+{
+    return _audio_frontend->gate_output(gate);
+}
+
 void RealTimeController::receive_midi(int input, MidiDataByte data, Time timestamp)
 {
     _midi_frontend->receive_midi(input, data, timestamp);

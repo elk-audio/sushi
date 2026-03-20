@@ -78,6 +78,14 @@ public:
 
     void notify_interrupted_audio(sushi::Time duration) override;
 
+    /// For CV and Gate I/O:
+    /////////////////////////////////////////////////////////////
+
+    void set_cv_input(int channel, float value) override;
+    [[nodiscard]] float cv_output(int channel) const override;
+    void set_gate_input(int gate, bool high) override;
+    [[nodiscard]] bool gate_output(int gate) const override;
+
     /// For MIDI:
     /////////////////////////////////////////////////////////////
 

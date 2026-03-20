@@ -93,6 +93,15 @@ public:
      */
      virtual void pause(bool paused);
 
+    /**
+     * @brief Called by the Sushi instance when the host changes the sample rate after init.
+     *        Updates the internal _sample_rate / _inv_sample_rate used by xrun detection.
+     */
+    virtual void update_sample_rate(float sample_rate)
+    {
+        _set_engine_sample_rate(sample_rate);
+    }
+
 protected:
     /**
      * @brief Call before calling engine->process_chunk for default handling of resume and xrun detection
