@@ -125,8 +125,8 @@ protected:
     Time _pause_start;
 
     Time _last_process_time{Time(0)};
-    float _sample_rate;
-    float _inv_sample_rate;
+    float _sample_rate    {44100.0f};
+    float _inv_sample_rate{1.0f / 44100.0f};
 };
 
 } // end namespace sushi::internal

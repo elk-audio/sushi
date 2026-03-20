@@ -23,6 +23,7 @@
 #include "elklog/static_logger.h"
 
 #include "reactive_frontend.h"
+#include "audio_frontend_internals.h"
 
 namespace sushi::internal::audio_frontend {
 
@@ -64,7 +65,7 @@ AudioFrontendStatus ReactiveFrontend::init(BaseAudioFrontendConfiguration* confi
         return AudioFrontendStatus::AUDIO_HW_ERROR;
     }
 
-    _engine->set_output_latency(std::chrono::microseconds(0));
+    _engine->set_output_latency(std::chrono::microseconds(frontend_config->output_latency_us));
 
     return ret_code;
 }
@@ -79,21 +80,24 @@ void ReactiveFrontend::run()
     _engine->enable_realtime(true);
 }
 
-// TODO: While in JUCE plugins channel count can change, in sushi it's set on init.
-//  In JUCE, the buffer size is always the same for in and out, with some unused,
-//  if they differ.
+// Note: channel count changes at runtime are not supported — the count is fixed at init().
+// Buffer sizes other than AUDIO_CHUNK_SIZE are the host's responsibility to handle.
 void ReactiveFrontend::process_audio(ChunkSampleBuffer& in_buffer,
                                      ChunkSampleBuffer& out_buffer,
                                      int64_t total_sample_count,
                                      Time timestamp)
 {
-    // TODO: Do we need to concern ourselves with multiple buses?
-
-    // TODO: Deal also with MIDI.
-
-    // TODO: Deal also with CV.
+    // Keep the FTZ/DAZ flags set on x86; no-op on ARM where the compiler/ABI handles it.
+    set_flush_denormals_to_zero();
 
     out_buffer.clear();
+
+    // Automatic xrun detection: compares timestamp against the previous callback.
+    // Fires engine->notify_interrupted_audio() when a gap is detected.
+    // This only has sub-block precision when the host passes real hardware timestamps
+    // (e.g. twine::current_rt_time()) — with calculated timestamps xruns are invisible.
+    // Also handles the resume-after-pause notification path.
+    _handle_resume(timestamp, AUDIO_CHUNK_SIZE);
 
     if (_pause_manager.should_process())
     {
@@ -109,6 +113,10 @@ void ReactiveFrontend::process_audio(ChunkSampleBuffer& in_buffer,
             _pause_manager.ramp_output(out_buffer);
         }
     }
+
+    // Notify the non-RT thread blocked in BaseAudioFrontend::pause(true) once the
+    // output has ramped down.  Without this call, pause() would deadlock.
+    _handle_pause(timestamp);
 }
 
 void ReactiveFrontend::notify_interrupted_audio(Time duration)

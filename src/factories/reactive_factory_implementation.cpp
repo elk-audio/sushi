@@ -78,7 +78,8 @@ Status ReactiveFactoryImplementation::_setup_audio_frontend(const SushiOptions& 
     ELKLOG_LOG_INFO("Setting up reactive frontend ({} in / {} out)",
                     options.reactive_audio_inputs, options.reactive_audio_outputs);
     _frontend_config = std::make_unique<audio_frontend::ReactiveFrontendConfiguration>(
-        options.reactive_audio_inputs, options.reactive_audio_outputs, cv_inputs, cv_outputs);
+        options.reactive_audio_inputs, options.reactive_audio_outputs,
+        cv_inputs, cv_outputs, options.reactive_output_latency_us);
 
     _audio_frontend = std::make_unique<audio_frontend::ReactiveFrontend>(_engine.get());
 

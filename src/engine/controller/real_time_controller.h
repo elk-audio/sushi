@@ -95,6 +95,15 @@ private:
     engine::Transport* _transport {nullptr};
     int64_t _samples_since_start {0};
 
+    // Real-clock anchor for calculate_timestamp_from_start().
+    // Set by increment_samples_since_start() when the host supplies a non-zero
+    // hardware timestamp (e.g. twine::current_rt_time()).  When set, the utility
+    // anchors its output to the real clock instead of a pure sample counter,
+    // which fixes Ableton Link sync and prevents float-precision drift after
+    // long sessions.
+    Time    _clock_anchor {0};
+    int64_t _samples_at_anchor {0};
+
     float _tempo {0};
     sushi::TimeSignature _time_signature {0, 0};
     control::PlayingMode _playing_mode {control::PlayingMode::STOPPED};

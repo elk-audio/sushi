@@ -265,6 +265,17 @@ struct SushiOptions
     int reactive_audio_outputs = 2;
 
     /**
+     * Output latency of the audio hardware, in microseconds, for the Reactive frontend.
+     * Defaults to 0. Setting this correctly allows the engine to compensate scheduled
+     * parameter automation and MIDI for the time it takes audio to travel through the
+     * DAC pipeline to a physical output.
+     *
+     * For Bela, a reasonable estimate is two block periods:
+     *   reactive_output_latency_us = (2 * block_size * 1'000'000) / sample_rate
+     */
+    int reactive_output_latency_us = 0;
+
+    /**
      * These are used only if Sushi uses an Offline audio frontend.
      * Then, sushi uses the first path as its audio input,
      * and the second as output.

@@ -38,16 +38,19 @@ struct ReactiveFrontendConfiguration : public BaseAudioFrontendConfiguration
     ReactiveFrontendConfiguration(int audio_inputs,
                                   int audio_outputs,
                                   int cv_inputs,
-                                  int cv_outputs) :
+                                  int cv_outputs,
+                                  int output_latency_us = 0) :
             BaseAudioFrontendConfiguration(cv_inputs, cv_outputs),
             audio_inputs{audio_inputs},
-            audio_outputs{audio_outputs}
+            audio_outputs{audio_outputs},
+            output_latency_us{output_latency_us}
     {}
 
     ~ReactiveFrontendConfiguration() override = default;
 
     int audio_inputs;
     int audio_outputs;
+    int output_latency_us;
 };
 
 class ReactiveFrontend : public BaseAudioFrontend
