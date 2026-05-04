@@ -503,7 +503,7 @@ ProcessorState Vst2xWrapper::save_state() const
     if (_has_binary_programs)
     {
         std::byte* data = nullptr;
-        int size = _vst_dispatcher(effGetChunk, SINGLE_PROGRAM, reinterpret_cast<VstIntPtr>(&data), nullptr, 0);
+        int size = _vst_dispatcher(effGetChunk, SINGLE_PROGRAM, 0, &data, 0);
         if (size > 0)
         {
             state.set_binary_data(std::vector<std::byte>(data, data + size));

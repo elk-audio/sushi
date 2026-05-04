@@ -506,8 +506,13 @@ public:
     [[nodiscard]] bool is_async_work_event() const override {return true;}
     virtual std::unique_ptr<Event> execute() = 0;
 
+    [[nodiscard]] ObjectId requesting_processor() const {return _requesting_processor;}
+
 protected:
-    explicit AsynchronousWorkEvent(Time timestamp) : Event(timestamp) {}
+    explicit AsynchronousWorkEvent(ObjectId requesting_processor, Time timestamp) : Event(timestamp),
+                                                                                    _requesting_processor(requesting_processor) {}
+
+    ObjectId _requesting_processor;
 };
 
 typedef int (*AsynchronousWorkCallback)(void* data, EventId id);
@@ -517,12 +522,11 @@ class AsynchronousProcessorWorkEvent : public AsynchronousWorkEvent
 public:
     AsynchronousProcessorWorkEvent(AsynchronousWorkCallback callback,
                                    void* data,
-                                   ObjectId processor,
+                                   ObjectId requesting_processor,
                                    EventId rt_event_id,
-                                   Time timestamp) : AsynchronousWorkEvent(timestamp),
+                                   Time timestamp) : AsynchronousWorkEvent(requesting_processor, timestamp),
                                                      _work_callback(callback),
                                                      _data(data),
-                                                     _rt_processor(processor),
                                                      _rt_event_id(rt_event_id)
     {}
 
@@ -531,7 +535,6 @@ public:
 private:
     AsynchronousWorkCallback _work_callback;
     void*                    _data;
-    ObjectId                 _rt_processor;
     EventId                  _rt_event_id;
 };
 
@@ -539,7 +542,8 @@ class AsynchronousBlobDeleteEvent : public AsynchronousWorkEvent
 {
 public:
     AsynchronousBlobDeleteEvent(BlobData data,
-                                Time timestamp) : AsynchronousWorkEvent(timestamp),
+                                ObjectId requesting_processor,
+                                Time timestamp) : AsynchronousWorkEvent(requesting_processor,timestamp),
                                                   _data(data) {}
     std::unique_ptr<Event> execute() override;
 
@@ -551,7 +555,8 @@ class AsynchronousDeleteEvent : public AsynchronousWorkEvent
 {
 public:
     AsynchronousDeleteEvent(RtDeletable* data,
-                            Time timestamp) : AsynchronousWorkEvent(timestamp),
+                            ObjectId requesting_processor,
+                            Time timestamp) : AsynchronousWorkEvent(requesting_processor, timestamp),
                                               _data(data) {}
     std::unique_ptr<Event> execute() override;
 

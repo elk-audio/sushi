@@ -148,7 +148,7 @@ std::unique_ptr<Event> Event::from_rt_event(const RtEvent& rt_event, Time timest
         case RtEventType::BLOB_DELETE:
         {
             auto typed_ev = rt_event.data_payload_event();
-            return std::make_unique<AsynchronousBlobDeleteEvent>(typed_ev->value(), timestamp);
+            return std::make_unique<AsynchronousBlobDeleteEvent>(typed_ev->value(), typed_ev->processor_id(), timestamp);
         }
         case RtEventType::CLIP_NOTIFICATION:
         {
@@ -161,7 +161,7 @@ std::unique_ptr<Event> Event::from_rt_event(const RtEvent& rt_event, Time timest
         case RtEventType::DELETE:
         {
             auto typed_ev = rt_event.delete_data_event();
-            return std::make_unique<AsynchronousDeleteEvent>(typed_ev->data(), timestamp);
+            return std::make_unique<AsynchronousDeleteEvent>(typed_ev->data(), typed_ev->processor_id(), timestamp);
         }
         case RtEventType::NOTIFY:
         {
@@ -291,7 +291,7 @@ RtEvent AsynchronousProcessorWorkCompletionEvent::to_rt_event(int /*sample_offse
 std::unique_ptr<Event> AsynchronousProcessorWorkEvent::execute()
 {
     int status = _work_callback(_data, _rt_event_id);
-    return std::make_unique<AsynchronousProcessorWorkCompletionEvent>(status, _rt_processor, _rt_event_id, IMMEDIATE_PROCESS);
+    return std::make_unique<AsynchronousProcessorWorkCompletionEvent>(status, _requesting_processor, _rt_event_id, IMMEDIATE_PROCESS);
 }
 
 std::unique_ptr<Event> AsynchronousBlobDeleteEvent::execute()
