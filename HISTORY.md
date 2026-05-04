@@ -1,3 +1,10 @@
+## Next
+New Features:
+
+Fixes:
+* Vst2 crash on saving state if effFlagsProgramChunks is set
+* Fix for async work events when tearing down processors
+
 ## 1.3.0
 New Features:
   * Tracks can be explicitly allocated to threads
