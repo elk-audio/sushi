@@ -471,7 +471,7 @@ ProcessorReturnCode Vst2xWrapper::set_state(ProcessorState* state, bool realtime
         this->set_program(state->program().value());
     }
 
-    if (realtime_running)
+    if (realtime_running && !state->has_binary_data())
     {
         auto rt_state = std::make_unique<RtState>(*state);
         _host_control.post_event(std::make_unique<RtStateEvent>(this->id(), std::move(rt_state), IMMEDIATE_PROCESS));
@@ -483,7 +483,10 @@ ProcessorReturnCode Vst2xWrapper::set_state(ProcessorState* state, bool realtime
         {
             _set_bypass_rt(state->bypassed().value());
         }
-
+        if (state->has_binary_data())
+        {
+            _vst_dispatcher(effSetChunk, SINGLE_PROGRAM, state->binary_data().size(), state->binary_data().data(), 0);
+        }
         for (const auto& parameter : state->parameters())
         {
             VstInt32 id = parameter.first;
@@ -548,7 +551,6 @@ void Vst2xWrapper::_set_state_rt(RtState* state)
     {
         _set_bypass_rt(*state->bypassed());
     }
-
     for (const auto& parameter : state->parameters())
     {
         VstInt32 id = parameter.first;

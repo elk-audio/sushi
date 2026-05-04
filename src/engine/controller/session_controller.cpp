@@ -129,7 +129,7 @@ void SessionController::set_osc_frontend(control_frontend::OSCFrontend* osc_fron
 
 control::SessionState SessionController::save_session() const
 {
-    ELKLOG_LOG_DEBUG("save_session called");
+    ELKLOG_LOG_INFO("save_session called");
 
     control::SessionState session;
     auto date = time(nullptr);
@@ -145,7 +145,7 @@ control::SessionState SessionController::save_session() const
 
 control::ControlResponse SessionController::restore_session(const control::SessionState& state)
 {
-    ELKLOG_LOG_DEBUG("restore_session called");
+    ELKLOG_LOG_INFO("restore_session called");
     if (_check_state(state) == false)
     {
         return {control::ControlStatus::INVALID_ARGUMENTS, 0};
