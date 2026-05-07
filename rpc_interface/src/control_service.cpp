@@ -723,6 +723,7 @@ inline sushi::control::TrackState to_sushi_ext(const sushi_rpc::TrackState& src)
     dest.label = src.label();
     dest.channels = src.channels();
     dest.buses = src.buses();
+    dest.thread = src.thread();
     dest.type = to_sushi_ext(src.type().type());
     to_sushi_ext(dest.track_state, src.track_state());
 

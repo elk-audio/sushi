@@ -188,7 +188,7 @@ EventId Processor::request_non_rt_task(AsyncWorkCallback callback)
 
 void Processor::async_delete(RtDeletable* object)
 {
-    auto rt_event = RtEvent::make_delete_data_event(object);
+    auto rt_event = RtEvent::make_delete_data_event(object, this->id());
     output_event(rt_event);
 }
 
