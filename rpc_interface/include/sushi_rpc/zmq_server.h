@@ -27,7 +27,7 @@
 
 #include "sushi/control_interface.h"
 
-namespace zmq {class context_t}
+namespace zmq {class context_t;}
 
 namespace sushi_ipc {
 

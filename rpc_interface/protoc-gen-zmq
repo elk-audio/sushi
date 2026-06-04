@@ -1,0 +1,122 @@
+#!/usr/bin/python3
+#### was: #!/usr/bin/env python3
+import sys
+from google.protobuf.compiler import plugin_pb2
+from google.protobuf.descriptor_pb2 import FileDescriptorProto
+
+def to_cpp_type(proto_type):
+    return proto_type.lstrip('.').replace('.', '::')
+
+def to_upper_snake(name):
+    result = []
+    for i, ch in enumerate(name):
+        if ch.isupper() and i > 0:
+            result.append('_')
+        result.append(ch.upper())
+    return ''.join(result)
+
+def generate_header(all_services, all_messages):
+    lines = []
+    lines.append("// Auto-generated — do not edit")
+    lines.append("#pragma once")
+    lines.append("#include <cstdint>")
+    lines.append("#include <stdexcept>")
+    lines.append("#include <string>")
+    lines.append("")
+    lines.append("namespace sushi_ipc {")
+    lines.append("")
+
+    # Top-level service enumeration
+    lines.append("enum class Service : int32_t")
+    lines.append("{")
+    for i, service in enumerate(all_services):
+        lines.append(f"    {to_upper_snake(service.name)} = {i},")
+    lines.append("};")
+    lines.append("")
+
+    # Message type enumeration
+    lines.append("enum class Message : int32_t")
+    lines.append("{")
+    for i, msg in enumerate(all_messages):
+        lines.append(f"    {to_upper_snake(msg.name)} = {i},")
+    lines.append("};")
+    lines.append("")
+
+    # Per-service command enums and client classes
+    for service in all_services:
+        cmd_enum = f"{service.name}Command"
+
+        lines.append(f"enum class {cmd_enum} : int32_t")
+        lines.append("{")
+        for i, method in enumerate(service.method):
+            lines.append(f"    {to_upper_snake(method.name)} = {i},")
+        lines.append("};")
+        lines.append("")
+
+        lines.append(f"class {service.name}Client {{")
+        lines.append("public:")
+        lines.append(f"    virtual ~{service.name}Client() = default;")
+        lines.append("")
+
+        for method in service.method:
+            in_t = to_cpp_type(method.input_type)
+            out_t = to_cpp_type(method.output_type)
+            lines.append(f"    virtual void {method.name}(const {in_t}& request, {out_t}& response) = 0;")
+
+        lines.append("")
+        lines.append("    std::string dispatch(int32_t cmd, const void* data, int size)")
+        lines.append("    {")
+        lines.append(f"        switch (static_cast<{cmd_enum}>(cmd))")
+        lines.append("        {")
+        for method in service.method:
+            in_t = to_cpp_type(method.input_type)
+            out_t = to_cpp_type(method.output_type)
+            enum_val = f"{cmd_enum}::{to_upper_snake(method.name)}"
+            lines.append(f"            case {enum_val}:")
+            lines.append("            {")
+            lines.append(f"                {in_t} request;")
+            lines.append(f"                if (!request.ParseFromArray(data, size)) {{ throw std::runtime_error(\"Failed to deserialise {in_t}\"); }}")
+            lines.append(f"                {out_t} response;")
+            lines.append(f"                {method.name}(request, response);")
+            lines.append("                std::string out;")
+            lines.append("                response.SerializeToString(&out);")
+            lines.append("                return out;")
+            lines.append("            }")
+        lines.append("            default:")
+        lines.append("                return {};")
+        lines.append("        }")
+        lines.append("    }")
+        lines.append("};")
+        lines.append("")
+
+    lines.append("} // namespace stomp_zmq")
+    return "\n".join(lines)
+
+def main():
+    data = sys.stdin.buffer.read()
+    request = plugin_pb2.CodeGeneratorRequest()
+    request.ParseFromString(data)
+
+    all_services = []
+    all_messages = []
+
+    for proto_file in request.proto_file:
+        if proto_file.name not in request.file_to_generate:
+            continue
+        all_services.extend(proto_file.service)
+        all_messages.extend(proto_file.message_type)
+
+    response = plugin_pb2.CodeGeneratorResponse()
+
+    if all_services or all_messages:
+        first_name = next(
+            pf.name for pf in request.proto_file if pf.name in request.file_to_generate
+        )
+        f = response.file.add()
+        f.name = first_name.replace('.proto', '_zmq.h')
+        f.content = generate_header(all_services, all_messages)
+
+    sys.stdout.buffer.write(response.SerializeToString())
+
+if __name__ == "__main__":
+    main()

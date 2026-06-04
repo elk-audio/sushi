@@ -1376,7 +1376,7 @@ void NotificationControlService::_send(sushi_ipc::Message command, grpc::protobu
     static std::string serialised_message;
 
     int32_t command_code = static_cast<int32_t>(command);
-    zmq::const_buffer command_buffer(*command_code, sizeof(command_code));
+    zmq::const_buffer command_buffer(&command_code, sizeof(command_code));
 
     request.SerializeToString(&serialised_message);
     zmq::const_buffer message_buffer(serialised_message.data(), serialised_message.size());

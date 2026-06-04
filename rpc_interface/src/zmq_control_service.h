@@ -307,7 +307,7 @@ private:
 class NotificationControlService : public NotificationControllerClient, private sushi::control::ControlListener
 {
 public:
-    NotificationControlService(sushi::control::SushiControl* controller)
+    NotificationControlService(sushi::control::SushiControl* controller);
 
     ~NotificationControlService();
 
