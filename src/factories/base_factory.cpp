@@ -331,7 +331,7 @@ Status BaseFactory::_set_up_control([[maybe_unused]] const SushiOptions& options
     {
         _rpc_server = std::make_unique<sushi_rpc::GrpcServer>(options.grpc_listening_address, _engine_controller.get());
         ELKLOG_LOG_INFO("Instantiating gRPC server with address: {}", options.grpc_listening_address);
-        _ipc_server = std::make_unique<sushi_ipc::ZmqServer>(sushi_ipc::ZMQ_IPC_ADDRESS, _engine_controller.get());
+        _ipc_server = std::make_unique<sushi_ipc::ZmqServer>(sushi_ipc::ZMQ_IPC_ADDRESS, sushi_ipc::ZMQ_PUB_IPC_ADDRESS, _engine_controller.get());
         ELKLOG_LOG_INFO("Instantiating ZMQ server with address: {}", sushi_ipc::ZMQ_IPC_ADDRESS);
     }
 #endif

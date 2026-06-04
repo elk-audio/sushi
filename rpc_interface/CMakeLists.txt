@@ -44,7 +44,7 @@ protobuf_generate(
 protobuf_generate(TARGET protos-lib
         LANGUAGE zmq
         GENERATE_EXTENSIONS _zmq.h
-        PLUGIN "protoc-gen-zmq=${CMAKE_CURRENT_SOURCE_DIR}/protos/protoc-gen-zmq"
+        PLUGIN "protoc-gen-zmq=${CMAKE_CURRENT_SOURCE_DIR}/protoc-gen-zmq"
 )
 
 

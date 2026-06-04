@@ -18,21 +18,18 @@
  * @Copyright 2017-2026 Elk Audio AB, Stockholm
  */
 
-#include "sushi_rpc/zmq_server.h"
-#include "zmq_control_service.h"
+#include <zmq.hpp>
 
 #include "elklog/static_logger.h"
 
-#include <zmq.hpp>
+#include "sushi_rpc/zmq_server.h"
+#include "zmq_control_service.h"
 
 ELKLOG_GET_LOGGER_WITH_MODULE_NAME("zmq_server");
 
-constexpr auto ZMQ_SOCK_PATH   = "/tmp/sushi_ipc.sock";
-constexpr auto ZMQ_PUB_SOCK_PATH = "/tmp/sushi_pub.sock";
-
-
 namespace sushi_ipc {
-ZmqServer::ZmqServer(const std::string& socket,
+ZmqServer::ZmqServer(const std::string& address,
+                     const std::string& sub_address,
                      sushi::control::SushiControl* controller) :_system_control_service{std::make_unique<SystemControlService>(controller)},
                                                                 _transport_control_service{std::make_unique<TransportControlService>(controller)},
                                                                 _timing_control_service{std::make_unique<TimingControlService>(controller)},
@@ -46,10 +43,10 @@ ZmqServer::ZmqServer(const std::string& socket,
                                                                 _session_control_service{std::make_unique<SessionControlService>(controller)},
                                                                 _notification_control_service{std::make_unique<NotificationControlService>(controller)},
                                                                 _zmq_context{std::make_unique<zmq::context_t>(1)},
-                                                                _socket{socket},
+                                                                _address{address},
+                                                                _sub_address{sub_address},
                                                                 _running{false}
-{
-}
+{}
 
 ZmqServer::~ZmqServer()
 {
@@ -57,15 +54,25 @@ ZmqServer::~ZmqServer()
 
 bool ZmqServer::start()
 {
-    _running = true;
-    _notification_control_service->start(*_zmq_context.get(), ZMQ_PUB_SOCK_PATH);
-    _worker_tread = std::thread(&ZmqServer::_worker, this);
-    return true; // TODO catch exception if socket creation fails?
+    try
+    {
+        _running = true;
+        _notification_control_service->start(*_zmq_context.get(), _sub_address);
+        _worker_tread = std::thread(&ZmqServer::_worker, this);
+        return true;
+    }
+    catch (const std::runtime_error& e)
+    {
+        ELKLOG_LOG_ERROR("ZMQ Error: {}", e.what());
+    }
+    stop();
+    return false;
 }
 
 void ZmqServer::stop()
 {
     _notification_control_service->stop();
+    _running = false;
     if (_worker_tread.joinable())
     {
         _worker_tread.join();
@@ -88,7 +95,7 @@ void ZmqServer::_worker()
 
     std::string response_frame;
 
-    socket.bind(_socket);
+    socket.bind(_address);
 
     while (_running)
     {
@@ -104,6 +111,7 @@ void ZmqServer::_worker()
          */
         try
         {
+            // Receive the service and command part
             if (!socket.recv(command_frame))
             {
                 continue; // timeout
@@ -114,20 +122,22 @@ void ZmqServer::_worker()
                 ELKLOG_LOG_ERROR("Unexpected command frame size: {}", command_frame.size());
                 continue;
             }
-
+            // Receive the message part
             if (!socket.recv(message_frame))
             {
-                ELKLOG_LOG_ERROR("Unexpected message frame size: {}", command_frame.size());
+                ELKLOG_LOG_ERROR("Failed to receive message");
                 continue;
             }
         }
         catch (const zmq::error_t& e)
         {
-            std::cerr << "ZMQ recv error: " << e.what() << '\n';
+            ELKLOG_LOG_ERROR("ZMQ recv error: {}", e.what());
+            // Avoid an infinite retry loop
+            std::this_thread::sleep_for(std::chrono::seconds(2));
             continue;
         }
 
-        Command*    cmd = reinterpret_cast<Command*>(message_frame.data());
+        Command*    cmd = reinterpret_cast<Command*>(command_frame.data());
         const auto* data = static_cast<const char*>(message_frame.data());
         const int   size = static_cast<int>(message_frame.size());
         ELKLOG_LOG_DEBUG("Received {} bytes of data with Service {} and command {}", size, cmd->service, cmd->endpoint);
@@ -190,14 +200,14 @@ void ZmqServer::_worker()
 
                 default:
                     ELKLOG_LOG_ERROR("Unknown service type: {}", cmd->service);
-                    continue;
+                    // Every request need to be met by a response to keep the zmq state machine happy, so send an empty response.
+                    response_frame = "";
             }
-
             socket.send(zmq::const_buffer(response_frame.data(), response_frame.size()));
         }
         catch (const std::runtime_error& e)
         {
-            std::cerr << "Error: " << e.what() << '\n';
+            ELKLOG_LOG_ERROR("Error receiving message: {}", e.what());
         }
     }
 }

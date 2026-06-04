@@ -25,6 +25,37 @@
 
 namespace sushi_rpc {
 
+inline grpc::Status to_grpc_status(sushi::control::ControlStatus status, const char* error = nullptr)
+{
+    if (!error)
+    {
+        error = to_string(status);
+    }
+    switch (status)
+    {
+        case sushi::control::ControlStatus::OK:
+            return ::grpc::Status::OK;
+
+        case sushi::control::ControlStatus::ERROR:
+            return ::grpc::Status(::grpc::StatusCode::UNKNOWN, error);
+
+        case sushi::control::ControlStatus::UNSUPPORTED_OPERATION:
+            return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, error);
+
+        case sushi::control::ControlStatus::NOT_FOUND:
+            return ::grpc::Status(::grpc::StatusCode::NOT_FOUND, error);
+
+        case sushi::control::ControlStatus::OUT_OF_RANGE:
+            return ::grpc::Status(::grpc::StatusCode::OUT_OF_RANGE, error);
+
+        case sushi::control::ControlStatus::INVALID_ARGUMENTS:
+            return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, error);
+
+        default:
+            return ::grpc::Status(::grpc::StatusCode::INTERNAL, error);
+    }
+}
+
 grpc::Status SystemControlService::GetSushiVersion(grpc::ServerContext* /*context*/,
                                                    const sushi_rpc::GenericVoidValue* /*request*/,
                                                    sushi_rpc::GenericStringValue* response)

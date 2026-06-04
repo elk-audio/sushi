@@ -32,6 +32,8 @@ namespace zmq {class context_t;}
 namespace sushi_ipc {
 
 constexpr auto ZMQ_IPC_ADDRESS = "ipc:///tmp/sushi_ipc.sock";
+constexpr auto ZMQ_PUB_IPC_ADDRESS = "ipc:///tmp/sushi_pub.sock";
+
 
 class SystemControlService;
 class TransportControlService;
@@ -51,7 +53,7 @@ class NotificationControlService;
 class ZmqServer
 {
 public:
-    ZmqServer(const std::string& socket, sushi::control::SushiControl* controller);
+    ZmqServer(const std::string& address, const std::string& sub_address, sushi::control::SushiControl* controller);
 
     ~ZmqServer();
 
@@ -79,7 +81,8 @@ private:
     std::unique_ptr<NotificationControlService>     _notification_control_service;
 
     std::unique_ptr<zmq::context_t>                 _zmq_context;
-    std::string                                     _socket;
+    std::string                                     _address;
+    std::string                                     _sub_address;
     std::thread                                     _worker_tread;
     std::atomic<bool>                               _running;
     void                                            _worker();

@@ -148,7 +148,8 @@ Status ConcreteSushi::start()
     if (_rpc_server != nullptr)
     {
         bool rpc_server_status = _rpc_server->start();
-        if (!rpc_server_status)
+        bool ipc_server_status = _ipc_server->start();
+        if (!rpc_server_status || !ipc_server_status)
         {
             if (_osc_frontend != nullptr)
             {

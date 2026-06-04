@@ -24,7 +24,8 @@
 
 #include "sushi_rpc.pb.h"
 #include "sushi_rpc_zmq.h"
-#include "../../build/vcpkg_installed/arm64-osx/include/grpcpp/impl/codegen/config_protobuf.h"
+
+#include <grpcpp/impl/codegen/config_protobuf.h>
 
 #include "sushi/control_interface.h"
 #include "sushi/control_notifications.h"

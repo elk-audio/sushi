@@ -52,11 +52,9 @@ void SubscribeToUpdatesCallData<ValueType, BlocklistType>::proceed()
         _status = CallStatus::PROCESS;
         _subscribe();
         _in_completion_queue = true;
-        ELKLOG_LOG_DEBUG("SubscribeToUpdates({}): CREATE", typeid(ValueType).name());
     }
     else if (_status == CallStatus::PROCESS)
     {
-        ELKLOG_LOG_DEBUG("SubscribeToUpdates({}): PROCESS", typeid(ValueType).name());
         if (_first_iteration)
         {
             _respawn();
@@ -99,7 +97,6 @@ void SubscribeToUpdatesCallData<ValueType, BlocklistType>::push(std::shared_ptr<
 {
     if (_active)
     {
-        ELKLOG_LOG_DEBUG("SubscribeToUpdates({}): Push()", typeid(ValueType).name());
         _notifications.push(notification);
     }
     if (_in_completion_queue == false)

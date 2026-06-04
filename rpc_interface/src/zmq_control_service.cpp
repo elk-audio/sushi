@@ -35,13 +35,13 @@ using namespace sushi_rpc;
 //=============================================================================
 
 void SystemControlService::GetSushiVersion(const sushi_rpc::GenericVoidValue& /*request*/,
-                                            sushi_rpc::GenericStringValue& response)
+                                           sushi_rpc::GenericStringValue& response)
 {
     response.set_value(_controller->get_sushi_version());
 }
 
 void SystemControlService::GetSushiApiVersion(const sushi_rpc::GenericVoidValue& /*request*/,
-                                               sushi_rpc::GenericStringValue& response)
+                                              sushi_rpc::GenericStringValue& response)
 {
     response.set_value(_controller->get_sushi_api_version());
 }
@@ -1176,50 +1176,78 @@ void NotificationControlService::notification(const sushi::control::ControlNotif
 void NotificationControlService::SubscribeToTransportChanges(const sushi_rpc::GenericVoidValue& /*request*/,
                                                              sushi_rpc::TransportUpdate& /*response*/)
 {
-    _controller->subscribe_to_notifications(sushi::control::NotificationType::TRANSPORT_UPDATE, this);
-    _transport_notifications_enabled = true;
+    if (!_transport_notifications_enabled)
+    {
+        _controller->subscribe_to_notifications(sushi::control::NotificationType::TRANSPORT_UPDATE, this);
+        _transport_notifications_enabled = true;
+    }
+    ELKLOG_LOG_DEBUG("Enabled transport updates");
 }
 
 void NotificationControlService::SubscribeToEngineCpuTimingUpdates(const sushi_rpc::GenericVoidValue& /*request*/,
                                                                    sushi_rpc::CpuTimings& /*response*/)
 {
-    _controller->subscribe_to_notifications(sushi::control::NotificationType::CPU_TIMING_UPDATE, this);
-    _cpu_timing_notifications_enabled = true;
+    if (!_cpu_timing_notifications_enabled)
+    {
+        _controller->subscribe_to_notifications(sushi::control::NotificationType::CPU_TIMING_UPDATE, this);
+        _cpu_timing_notifications_enabled = true;
+    }
+    ELKLOG_LOG_DEBUG("Enabled cpu updates");
 }
 
 void NotificationControlService::SubscribeToTrackChanges(const sushi_rpc::GenericVoidValue& /*request*/,
                                                          sushi_rpc::TrackUpdate& /*response*/)
 {
-    _controller->subscribe_to_notifications(sushi::control::NotificationType::TRACK_UPDATE, this);
-    _track_notifications_enabled = true;
+    if (!_track_notifications_enabled)
+    {
+        _controller->subscribe_to_notifications(sushi::control::NotificationType::TRACK_UPDATE, this);
+        _track_notifications_enabled = true;
+    }
+    ELKLOG_LOG_DEBUG("Enabled track updates");
 }
 
 void NotificationControlService::SubscribeToProcessorChanges(const sushi_rpc::GenericVoidValue& /*request*/,
                                                              sushi_rpc::ProcessorUpdate& /*response*/)
 {
-    _controller->subscribe_to_notifications(sushi::control::NotificationType::PROCESSOR_UPDATE, this);
-    _processor_notifications_enabled = true;
+    if (!_processor_notifications_enabled)
+    {
+        _controller->subscribe_to_notifications(sushi::control::NotificationType::PROCESSOR_UPDATE, this);
+        _processor_notifications_enabled = true;
+    }
+    ELKLOG_LOG_DEBUG("Enabled processor updates");
 }
 
 void NotificationControlService::SubscribeToParameterUpdates(const sushi_rpc::ParameterNotificationBlocklist& /*request*/,
                                                              sushi_rpc::ParameterUpdate& /*response*/)
 {
-    _controller->subscribe_to_notifications(sushi::control::NotificationType::PARAMETER_CHANGE, this);
-    _parameter_notifications_enabled = true;
+    if (!_parameter_notifications_enabled)
+    {
+        _controller->subscribe_to_notifications(sushi::control::NotificationType::PARAMETER_CHANGE, this);
+        _parameter_notifications_enabled = true;
+    }
+    ELKLOG_LOG_DEBUG("Enabled param updates");
 }
 
 void NotificationControlService::SubscribeToPropertyUpdates(const sushi_rpc::PropertyNotificationBlocklist& /*request*/,
                                                             sushi_rpc::PropertyValue& /*response*/)
 {
-    _controller->subscribe_to_notifications(sushi::control::NotificationType::PROPERTY_CHANGE, this);
-    _property_notifications_enabled = true;
+    if (!_property_notifications_enabled)
+    {
+        _controller->subscribe_to_notifications(sushi::control::NotificationType::PROPERTY_CHANGE, this);
+        _property_notifications_enabled = true;
+    }
+    ELKLOG_LOG_DEBUG("Enabled property updates");
 }
 
 void NotificationControlService::SubscribeToAsyncCommandUpdates(const sushi_rpc::GenericVoidValue& /*request*/,
                                                                 sushi_rpc::AsyncCommandResponse& /*response*/)
 {
-    _controller->subscribe_to_notifications(sushi::control::NotificationType::ASYNC_COMMAND_COMPLETION, this);
-    _async_notifications_enabled = true;
+    if (!_async_notifications_enabled)
+    {
+        _controller->subscribe_to_notifications(sushi::control::NotificationType::ASYNC_COMMAND_COMPLETION, this);
+        _async_notifications_enabled = true;
+    }
+    ELKLOG_LOG_DEBUG("Enabled async updates");
 }
 
 void NotificationControlService::_forward_transport_notification_to_subscribers(const sushi::control::ControlNotification* notification)
@@ -1382,8 +1410,15 @@ void NotificationControlService::_send(sushi_ipc::Message command, grpc::protobu
     zmq::const_buffer message_buffer(serialised_message.data(), serialised_message.size());
     try
     {
-        _socket.send(command_buffer, zmq::send_flags::sndmore);
-        _socket.send(message_buffer);
+        auto res = _socket.send(command_buffer, zmq::send_flags::sndmore);
+        if (res = _socket.send(message_buffer))
+        {
+            ELKLOG_LOG_DEBUG("Sent {} bytes with code {}", message_buffer.size(), command_code);
+        }
+        else
+        {
+            ELKLOG_LOG_DEBUG("Failed to send {} bytes woth code {}", message_buffer.size(), command_code);
+        }
     }
     catch (zmq::error_t& e)
     {

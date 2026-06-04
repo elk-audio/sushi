@@ -14,7 +14,7 @@
  */
 
 /**
- * @brief Sushi Control Service, gRPC service for external control of Sushi
+ * @brief Conversion function between sushi internals and generated protobuf objects
  * @Copyright 2017-2026 Elk Audio AB, Stockholm
  */
 
@@ -24,7 +24,7 @@
 ELK_PUSH_WARNING
 ELK_DISABLE_UNUSED_PARAMETER
 ELK_DISABLE_UNREACHABLE_CODE
-#include "sushi_rpc.grpc.pb.h"
+#include "sushi_rpc.pb.h"
 ELK_POP_WARNING
 
 namespace sushi_rpc {
@@ -167,37 +167,6 @@ inline const char* to_string(const sushi::control::ControlStatus status)
         case sushi::control::ControlStatus::OUT_OF_RANGE:          return "OUT OF RANGE";
         case sushi::control::ControlStatus::INVALID_ARGUMENTS:     return "INVALID ARGUMENTS";
         default:                                                   return "INTERNAL";
-    }
-}
-
-inline grpc::Status to_grpc_status(sushi::control::ControlStatus status, const char* error = nullptr)
-{
-    if (!error)
-    {
-        error = to_string(status);
-    }
-    switch (status)
-    {
-        case sushi::control::ControlStatus::OK:
-            return ::grpc::Status::OK;
-
-        case sushi::control::ControlStatus::ERROR:
-            return ::grpc::Status(::grpc::StatusCode::UNKNOWN, error);
-
-        case sushi::control::ControlStatus::UNSUPPORTED_OPERATION:
-            return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, error);
-
-        case sushi::control::ControlStatus::NOT_FOUND:
-            return ::grpc::Status(::grpc::StatusCode::NOT_FOUND, error);
-
-        case sushi::control::ControlStatus::OUT_OF_RANGE:
-            return ::grpc::Status(::grpc::StatusCode::OUT_OF_RANGE, error);
-
-        case sushi::control::ControlStatus::INVALID_ARGUMENTS:
-            return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, error);
-
-        default:
-            return ::grpc::Status(::grpc::StatusCode::INTERNAL, error);
     }
 }
 
