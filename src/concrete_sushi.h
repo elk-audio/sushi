@@ -32,6 +32,9 @@
 namespace sushi_rpc {
 class GrpcServer;
 }
+namespace sushi_ipc {
+class ZmqServer;
+}
 
 namespace sushi::internal {
 
@@ -117,6 +120,7 @@ protected:
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     std::unique_ptr<sushi_rpc::GrpcServer> _rpc_server {nullptr};
+    std::unique_ptr<sushi_ipc::ZmqServer> _ipc_server {nullptr};
 #endif
 };
 
