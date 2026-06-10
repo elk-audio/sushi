@@ -24,7 +24,7 @@
 
 namespace sushi::internal::audio_frontend {
 
-constexpr int MAX_FRONTEND_CHANNELS = 8;
+constexpr int MAX_FRONTEND_CHANNELS = 16;
 
 /**
  * @brief Error codes returned from init()
@@ -93,6 +93,15 @@ public:
      */
      virtual void pause(bool paused);
 
+    /**
+     * @brief Called by the Sushi instance when the host changes the sample rate after init.
+     *        Updates the internal _sample_rate / _inv_sample_rate used by xrun detection.
+     */
+    virtual void update_sample_rate(float sample_rate)
+    {
+        _set_engine_sample_rate(sample_rate);
+    }
+
 protected:
     /**
      * @brief Call before calling engine->process_chunk for default handling of resume and xrun detection
@@ -125,8 +134,8 @@ protected:
     Time _pause_start;
 
     Time _last_process_time{Time(0)};
-    float _sample_rate;
-    float _inv_sample_rate;
+    float _sample_rate    {44100.0f};
+    float _inv_sample_rate{1.0f / 44100.0f};
 };
 
 } // end namespace sushi::internal

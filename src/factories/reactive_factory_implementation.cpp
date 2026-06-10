@@ -69,14 +69,17 @@ std::unique_ptr<RtController> ReactiveFactoryImplementation::rt_controller()
     return std::move(_real_time_controller);
 }
 
-Status ReactiveFactoryImplementation::_setup_audio_frontend([[maybe_unused]] const SushiOptions& options,
+Status ReactiveFactoryImplementation::_setup_audio_frontend(const SushiOptions& options,
                                                             const jsonconfig::ControlConfig& config)
 {
     int cv_inputs = config.cv_inputs.value_or(0);
     int cv_outputs = config.cv_outputs.value_or(0);
 
-    ELKLOG_LOG_INFO("Setting up reactive frontend");
-    _frontend_config = std::make_unique<audio_frontend::ReactiveFrontendConfiguration>(cv_inputs, cv_outputs);
+    ELKLOG_LOG_INFO("Setting up reactive frontend ({} in / {} out)",
+                    options.reactive_audio_inputs, options.reactive_audio_outputs);
+    _frontend_config = std::make_unique<audio_frontend::ReactiveFrontendConfiguration>(
+        options.reactive_audio_inputs, options.reactive_audio_outputs,
+        cv_inputs, cv_outputs, options.reactive_output_latency_us);
 
     _audio_frontend = std::make_unique<audio_frontend::ReactiveFrontend>(_engine.get());
 

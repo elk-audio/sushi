@@ -16,10 +16,22 @@ For the Reactive use-case, we have developed new frontends for audio and MIDI in
 For the Active use-case, there are no such limitations - the full Sushi functionality is available. 
 
 ## The main limitations for the Reactive use-case are currently that:
-* Sushi can only work with stereo audio I/O.
 * Sushi's audio buffer size is set at compile time, using the CMake argument SUSHI_AUDIO_BUFFER_SIZE. But an audio host may have a dynamic buffer-size setting. If the buffer size doesn't match, the host needs to handle that, ensuring Sushi is only ever given audio buffers of the size defined at build-time.
 * MIDI I/O to Sushi from a containing host application is not currently real-time, but asynchronous, meaning MIDI and audio synchronisation is not sample-accurate.
 * For any control commands to be processes by Sushi, it needs to be receiving audio buffers regularly. When no audio callbacks are received, Sushi will also not process and control commands (e.g. those received over gRPC and OSC).
+
+## Configuring audio channel count (Reactive mode)
+
+The Reactive frontend supports configurable N-channel I/O, up to `MAX_FRONTEND_CHANNELS` (16) channels per direction.
+Set the desired counts on `SushiOptions` before calling `new_instance()`:
+
+```c++
+sushi::SushiOptions options;
+options.reactive_audio_inputs  = 10;
+options.reactive_audio_outputs = 10;
+```
+
+The defaults are `2` (stereo) for backwards compatibility. Requesting more than `MAX_FRONTEND_CHANNELS` channels will cause `new_instance()` to return `Status::FAILED_AUDIO_FRONTEND_INITIALIZATION`.
 
 ## Using Sushi as a library
 For using Sushi as a library, you only need to be aware of the header files contained in the include/sushi folder, where Sushi's API is exposed. The internals are hidden away.
@@ -76,8 +88,9 @@ You will need the following fields:
 sushi::SushiOptions _sushi_options;
 std::unique_ptr<sushi::RtController> _rt_controller;
 std::unique_ptr<sushi::Sushi> _sushi;
-sushi::ChunkSampleBuffer _sushi_buffer_in;
-sushi::ChunkSampleBuffer _sushi_buffer_out;
+// Channel counts must match reactive_audio_inputs / reactive_audio_outputs set in _sushi_options.
+sushi::ChunkSampleBuffer _sushi_buffer_in  {_sushi_options.reactive_audio_inputs};
+sushi::ChunkSampleBuffer _sushi_buffer_out {_sushi_options.reactive_audio_outputs};
 ```
 
 ### Starting Reactive Sushi

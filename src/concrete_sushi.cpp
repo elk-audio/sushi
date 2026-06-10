@@ -216,6 +216,10 @@ control::SushiControl* ConcreteSushi::controller()
 void ConcreteSushi::set_sample_rate(float sample_rate)
 {
     _engine->set_sample_rate(sample_rate);
+    if (_audio_frontend)
+    {
+        _audio_frontend->update_sample_rate(sample_rate);
+    }
 }
 
 float ConcreteSushi::sample_rate() const

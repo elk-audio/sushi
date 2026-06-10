@@ -115,6 +115,26 @@ void RealTimeController::notify_interrupted_audio(Time duration)
     _audio_frontend->notify_interrupted_audio(duration);
 }
 
+void RealTimeController::set_cv_input(int channel, float value)
+{
+    _audio_frontend->set_cv_input(channel, value);
+}
+
+float RealTimeController::cv_output(int channel) const
+{
+    return _audio_frontend->cv_output(channel);
+}
+
+void RealTimeController::set_gate_input(int gate, bool high)
+{
+    _audio_frontend->set_gate_input(gate, high);
+}
+
+bool RealTimeController::gate_output(int gate) const
+{
+    return _audio_frontend->gate_output(gate);
+}
+
 void RealTimeController::receive_midi(int input, MidiDataByte data, Time timestamp)
 {
     _midi_frontend->receive_midi(input, data, timestamp);
@@ -127,14 +147,36 @@ void RealTimeController::set_midi_callback(ReactiveMidiCallback&& callback)
 
 sushi::Time RealTimeController::calculate_timestamp_from_start(float sample_rate) const
 {
-    uint64_t micros = static_cast<uint64_t>(_samples_since_start * 1'000'000.0f / sample_rate);
-    auto timestamp = std::chrono::microseconds(micros);
-    return timestamp;
+    if (_clock_anchor.count() != 0)
+    {
+        // Host is supplying real hardware timestamps via increment_samples_since_start().
+        // Compute the offset from the anchor in samples and add it to the real clock time.
+        // Using double avoids float precision loss that would occur after ~6 minutes of
+        // session time with a 32-bit float accumulator.
+        int64_t delta_samples = _samples_since_start - _samples_at_anchor;
+        auto delta = std::chrono::microseconds(
+            static_cast<int64_t>(static_cast<double>(delta_samples) * 1'000'000.0 / sample_rate));
+        return _clock_anchor + delta;
+    }
+
+    // Fallback: no real-clock anchor available — derive time purely from the sample counter.
+    // Still uses double to avoid precision loss during long sessions.
+    return std::chrono::microseconds(
+        static_cast<uint64_t>(static_cast<double>(_samples_since_start) * 1'000'000.0 / sample_rate));
 }
 
-void RealTimeController::increment_samples_since_start(int64_t sample_count, Time)
+void RealTimeController::increment_samples_since_start(int64_t sample_count, Time timestamp)
 {
     _samples_since_start += sample_count;
+
+    // If the host provides a real hardware timestamp, record it as the new anchor so that
+    // calculate_timestamp_from_start() can return clock-accurate values.
+    // A zero timestamp means "not provided" and leaves the previous anchor unchanged.
+    if (timestamp.count() != 0)
+    {
+        _clock_anchor      = timestamp;
+        _samples_at_anchor = _samples_since_start;
+    }
 }
 
 } // end namespace sushi

@@ -23,7 +23,7 @@
 
 #include "engine/controller/real_time_controller.cpp"
 
-#include "audio_frontends/reactive_frontend.cpp"
+#include "audio_frontends/reactive_frontend.h"
 #include "control_frontends/reactive_midi_frontend.cpp"
 
 #include "test_utils/audio_frontend_mockup.h"
@@ -55,6 +55,21 @@ public:
     [[nodiscard]] control::PlayingMode playing_mode() const
     {
         return _friend._playing_mode;
+    }
+
+    [[nodiscard]] sushi::Time clock_anchor() const
+    {
+        return _friend._clock_anchor;
+    }
+
+    [[nodiscard]] int64_t samples_at_anchor() const
+    {
+        return _friend._samples_at_anchor;
+    }
+
+    [[nodiscard]] int64_t samples_since_start() const
+    {
+        return _friend._samples_since_start;
     }
 
 private:
@@ -198,4 +213,80 @@ TEST_F(ReactiveControllerTestFrontend, TestRtControllerMidiCalls)
 {
     // TODO: Currently the Passive Controller MIDI handling over the Passive MIDI frontend, is unfinished,
     //  and not real-time safe. Once it's finished (story AUD-456), we should add relevant tests also here.
+}
+
+TEST_F(ReactiveControllerTestFrontend, TestTimestampFallsBackToSampleCounterWithoutAnchor)
+{
+    // With no hardware timestamp supplied, calculate_timestamp_from_start() should derive
+    // time purely from the sample counter.
+    _real_time_controller->increment_samples_since_start(44100, Time(0));
+
+    EXPECT_EQ(_accessor->clock_anchor(), Time(0));
+    EXPECT_EQ(_accessor->samples_at_anchor(), 0);
+
+    auto ts = _real_time_controller->calculate_timestamp_from_start(TEST_SAMPLE_RATE);
+    EXPECT_EQ(ts, std::chrono::microseconds(1'000'000));
+}
+
+TEST_F(ReactiveControllerTestFrontend, TestTimestampAnchorsToRealClockWhenProvided)
+{
+    // Supplying a non-zero timestamp anchors the utility to the real clock. Subsequent calls
+    // with zero timestamps keep the anchor intact and extrapolate from the sample counter.
+    auto anchor = std::chrono::microseconds(5'000'000);
+    _real_time_controller->increment_samples_since_start(44100, anchor);
+
+    EXPECT_EQ(_accessor->clock_anchor(), anchor);
+    EXPECT_EQ(_accessor->samples_at_anchor(), 44100);
+
+    // Exactly at the anchor, timestamp == anchor.
+    EXPECT_EQ(_real_time_controller->calculate_timestamp_from_start(TEST_SAMPLE_RATE), anchor);
+
+    // One second of audio later, with no new hardware timestamp, extrapolate from the sample
+    // counter delta.
+    _real_time_controller->increment_samples_since_start(44100, Time(0));
+    EXPECT_EQ(_accessor->clock_anchor(), anchor);  // anchor unchanged
+    EXPECT_EQ(_real_time_controller->calculate_timestamp_from_start(TEST_SAMPLE_RATE),
+              anchor + std::chrono::microseconds(1'000'000));
+}
+
+TEST_F(ReactiveControllerTestFrontend, TestTimestampReanchorsOnNewHardwareTimestamp)
+{
+    _real_time_controller->increment_samples_since_start(44100, std::chrono::microseconds(1'000'000));
+
+    // A new hardware timestamp re-anchors.
+    auto new_anchor = std::chrono::microseconds(10'000'000);
+    _real_time_controller->increment_samples_since_start(44100, new_anchor);
+
+    EXPECT_EQ(_accessor->clock_anchor(), new_anchor);
+    EXPECT_EQ(_accessor->samples_at_anchor(), 88200);
+    EXPECT_EQ(_real_time_controller->calculate_timestamp_from_start(TEST_SAMPLE_RATE), new_anchor);
+}
+
+TEST_F(ReactiveControllerTestFrontend, TestTimestampRemainsExactOverLongSession)
+{
+    // The utility stores the sample count in int64_t and does the µs conversion in
+    // double.  The earlier float-based implementation drifted by > 1 ms after a few
+    // minutes — this test locks in the current precision contract.
+    //
+    // 1 hour at 44.1 kHz = 158'760'000 samples → 3'600'000'000 µs exactly.
+    const int64_t one_hour_samples = static_cast<int64_t>(TEST_SAMPLE_RATE) * 3600;
+
+    // Anchored at t=0 so the utility uses the anchored path.
+    _real_time_controller->increment_samples_since_start(0, std::chrono::microseconds(0));
+    _real_time_controller->increment_samples_since_start(one_hour_samples, Time(0));
+
+    EXPECT_EQ(_real_time_controller->calculate_timestamp_from_start(TEST_SAMPLE_RATE),
+              std::chrono::microseconds(3'600'000'000LL));
+}
+
+TEST_F(ReactiveControllerTestFrontend, TestTimestampRemainsExactWithoutAnchorOverLongSession)
+{
+    // Same contract for the unanchored fallback path, which runs when the host never
+    // passes a real timestamp via increment_samples_since_start().
+    const int64_t one_hour_samples = static_cast<int64_t>(TEST_SAMPLE_RATE) * 3600;
+    _real_time_controller->increment_samples_since_start(one_hour_samples, Time(0));
+
+    EXPECT_EQ(_accessor->clock_anchor(), Time(0));  // confirm we stayed on the fallback path
+    EXPECT_EQ(_real_time_controller->calculate_timestamp_from_start(TEST_SAMPLE_RATE),
+              std::chrono::microseconds(3'600'000'000LL));
 }

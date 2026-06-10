@@ -67,7 +67,7 @@ public:
     std::unique_ptr<RtController> rt_controller();
 
 protected:
-    Status _setup_audio_frontend([[maybe_unused]] const SushiOptions& options,
+    Status _setup_audio_frontend(const SushiOptions& options,
                                  const jsonconfig::ControlConfig& config) override;
 
     Status _set_up_midi([[maybe_unused]] const SushiOptions& options,
