@@ -253,14 +253,14 @@ struct SushiOptions
     /**
      * Number of audio input channels for the Reactive frontend.
      * Defaults to 2 (stereo) to maintain backwards compatibility.
-     * Must not exceed MAX_FRONTEND_CHANNELS (16).
+     * Must not exceed MAX_REACTIVE_CHANNELS (16).
      */
     int reactive_audio_inputs = 2;
 
     /**
      * Number of audio output channels for the Reactive frontend.
      * Defaults to 2 (stereo) to maintain backwards compatibility.
-     * Must not exceed MAX_FRONTEND_CHANNELS (16).
+     * Must not exceed MAX_REACTIVE_CHANNELS (16).
      */
     int reactive_audio_outputs = 2;
 

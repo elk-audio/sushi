@@ -102,22 +102,22 @@ TEST_F(TestReactiveFrontend, TestInitConfiguresChannelsAndLatency)
 
 TEST_F(TestReactiveFrontend, TestInitAcceptsMaxChannels)
 {
-    ReactiveFrontendConfiguration config(MAX_FRONTEND_CHANNELS, MAX_FRONTEND_CHANNELS, 0, 0);
+    ReactiveFrontendConfiguration config(MAX_REACTIVE_CHANNELS, MAX_REACTIVE_CHANNELS, 0, 0);
     ASSERT_EQ(AudioFrontendStatus::OK, _module_under_test->init(&config));
 
-    EXPECT_EQ(MAX_FRONTEND_CHANNELS, _engine.audio_input_channels());
-    EXPECT_EQ(MAX_FRONTEND_CHANNELS, _engine.audio_output_channels());
+    EXPECT_EQ(MAX_REACTIVE_CHANNELS, _engine.audio_input_channels());
+    EXPECT_EQ(MAX_REACTIVE_CHANNELS, _engine.audio_output_channels());
 }
 
 TEST_F(TestReactiveFrontend, TestInitRejectsTooManyInputChannels)
 {
-    ReactiveFrontendConfiguration config(MAX_FRONTEND_CHANNELS + 1, 2, 0, 0);
+    ReactiveFrontendConfiguration config(MAX_REACTIVE_CHANNELS + 1, 2, 0, 0);
     EXPECT_EQ(AudioFrontendStatus::INVALID_N_CHANNELS, _module_under_test->init(&config));
 }
 
 TEST_F(TestReactiveFrontend, TestInitRejectsTooManyOutputChannels)
 {
-    ReactiveFrontendConfiguration config(2, MAX_FRONTEND_CHANNELS + 1, 0, 0);
+    ReactiveFrontendConfiguration config(2, MAX_REACTIVE_CHANNELS + 1, 0, 0);
     EXPECT_EQ(AudioFrontendStatus::INVALID_N_CHANNELS, _module_under_test->init(&config));
 }
 

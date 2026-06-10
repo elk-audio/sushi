@@ -33,6 +33,15 @@
 
 namespace sushi::internal::audio_frontend {
 
+/**
+ * @brief Maximum number of audio channels (each way) supported by the
+ *        Reactive frontend. Kept separate from MAX_FRONTEND_CHANNELS so the
+ *        higher reactive limit does not change the channel/port count of the
+ *        other frontends (e.g. the JACK frontend registers
+ *        MAX_FRONTEND_CHANNELS ports).
+ */
+constexpr int MAX_REACTIVE_CHANNELS = 16;
+
 struct ReactiveFrontendConfiguration : public BaseAudioFrontendConfiguration
 {
     ReactiveFrontendConfiguration(int audio_inputs,
