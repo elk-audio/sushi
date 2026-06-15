@@ -4,6 +4,7 @@ New Features:
 Fixes:
 * Vst2 crash on saving state if effFlagsProgramChunks is set
 * Fix for async work events when tearing down processors
+* LV2 plugins could crash if passed an invalid parameter id
 
 ## 1.3.0
 New Features:
