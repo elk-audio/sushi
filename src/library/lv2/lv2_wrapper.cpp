@@ -435,22 +435,21 @@ void LV2_Wrapper::process_event(const RtEvent& event)
     if (event.type() == RtEventType::FLOAT_PARAMETER_CHANGE)
     {
         auto typed_event = event.parameter_change_event();
-        auto parameter_id = typed_event->param_id();
 
-        auto parameter = parameter_from_id(parameter_id);
+        if (auto parameter = parameter_from_id(typed_event->param_id()))
+        {
+            const int port_index = static_cast<int>(typed_event->param_id());
+            assert(port_index < _model->port_count());
 
-        const int port_index = static_cast<int>(parameter_id);
-        assert(port_index < _model->port_count());
+            auto port = _model->get_port(port_index);
+            auto value = typed_event->value();
 
-        auto port = _model->get_port(port_index);
+            float min = parameter->min_domain_value();
+            float max = parameter->max_domain_value();
 
-        auto value = typed_event->value();
-
-        float min = parameter->min_domain_value();
-        float max = parameter->max_domain_value();
-
-        auto value_in_domain = _to_domain(value, min, max);
-        port->set_control_value(value_in_domain);
+            auto value_in_domain = _to_domain(value, min, max);
+            port->set_control_value(value_in_domain);
+        }
     }
     else if (is_keyboard_event(event))
     {
