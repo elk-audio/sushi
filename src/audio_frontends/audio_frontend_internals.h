@@ -38,14 +38,18 @@ constexpr float CV_IN_CORR = -1.449f;
 
 /**
  * @brief Sets the FTZ (flush denormals to zero) and DAC (denormals are zero) flags
- *        in the cpu to avoid performance hits of denormals in the audio thread. This
- *        is only needed for x86 based machines as ARM machines have it disabled by
- *        default if vectorization is enabled.
+ *        in the cpu to avoid performance hits of denormals in the audio thread. This is
+ *        currently enabled for x86 based machines and 32-bit ARM.
  */
 inline void set_flush_denormals_to_zero()
 {
     #ifdef __x86_64__
     _mm_setcsr(0x9FC0);
+    #elif defined(__arm__)
+    uint32_t fpscr;
+    asm volatile("vmrs %0, fpscr" : "=r"(fpscr));
+    fpscr |= (1 << 24);  // FZ bit
+    asm volatile("vmsr fpscr, %0" : : "r"(fpscr));
     #endif
 }
 
