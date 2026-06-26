@@ -28,6 +28,7 @@
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
 #include "sushi_rpc/grpc_server.h"
+#include "sushi_rpc/zmq_server.h"
 #endif
 
 namespace sushi {
@@ -147,7 +148,8 @@ Status ConcreteSushi::start()
     if (_rpc_server != nullptr)
     {
         bool rpc_server_status = _rpc_server->start();
-        if (!rpc_server_status)
+        bool ipc_server_status = _ipc_server->start();
+        if (!rpc_server_status || !ipc_server_status)
         {
             if (_osc_frontend != nullptr)
             {
@@ -193,10 +195,15 @@ void ConcreteSushi::stop()
     }
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
-    if (_rpc_server != nullptr)
+    if (_rpc_server)
     {
         _rpc_server->stop();
         _rpc_server.reset();
+    }
+    if (_ipc_server)
+    {
+        _ipc_server->stop();
+        _ipc_server.reset();
     }
 #endif
 }

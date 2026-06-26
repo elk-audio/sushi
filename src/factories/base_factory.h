@@ -26,6 +26,7 @@
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
 #include "sushi_rpc/grpc_server.h"
+#include "sushi_rpc/zmq_server.h"
 #endif
 
 namespace sushi::internal {
@@ -134,6 +135,7 @@ protected:
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     std::unique_ptr<sushi_rpc::GrpcServer> _rpc_server {nullptr};
+    std::unique_ptr<sushi_ipc::ZmqServer> _ipc_server;
 #endif
 
 private:

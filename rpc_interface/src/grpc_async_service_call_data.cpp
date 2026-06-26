@@ -17,10 +17,14 @@
  * @brief Sushi Async gRPC Call Data implementation. Objects to handle async calls to sushi.
  * @Copyright 2017-2023 Elk Audio AB, Stockholm
  */
+#include <typeinfo>
+#include "grpc_async_service_call_data.h"
 
-#include "async_service_call_data.h"
+#include "grpc_control_service.h"
+#include "elklog/static_logger.h"
 
-#include "control_service.h"
+ELKLOG_GET_LOGGER_WITH_MODULE_NAME("grpc_async");
+
 
 namespace sushi_rpc {
 

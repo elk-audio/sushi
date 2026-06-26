@@ -22,7 +22,6 @@
 #define SUSHI_SPINLOCK_H
 
 #include <atomic>
-
 #include "sushi/constants.h"
 
 // since std::hardware_destructive_interference_size is not yet supported in GCC 7

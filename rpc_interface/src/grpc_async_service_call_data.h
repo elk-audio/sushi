@@ -33,7 +33,7 @@ ELK_DISABLE_UNREACHABLE_CODE
 ELK_POP_WARNING
 
 #include "library/synchronised_fifo.h"
-#include "control_service.h"
+#include "grpc_control_service.h"
 
 namespace sushi_rpc {
 

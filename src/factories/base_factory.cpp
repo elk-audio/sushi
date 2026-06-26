@@ -32,6 +32,7 @@
 #include "audio_frontends/apple_coreaudio_frontend.h"
 
 #include "control_frontends/oscpack_osc_messenger.h"
+#include "rpc_interface/include/sushi_rpc/zmq_server.h"
 
 namespace sushi::internal {
 
@@ -59,6 +60,7 @@ std::unique_ptr<Sushi> BaseFactory::_make_sushi()
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
         sushi->_rpc_server = std::move(_rpc_server);
+        sushi->_ipc_server = std::move(_ipc_server);
 #endif
         return sushi;
     }
@@ -329,6 +331,8 @@ Status BaseFactory::_set_up_control([[maybe_unused]] const SushiOptions& options
     {
         _rpc_server = std::make_unique<sushi_rpc::GrpcServer>(options.grpc_listening_address, _engine_controller.get());
         ELKLOG_LOG_INFO("Instantiating gRPC server with address: {}", options.grpc_listening_address);
+        _ipc_server = std::make_unique<sushi_ipc::ZmqServer>(sushi_ipc::ZMQ_IPC_ADDRESS, sushi_ipc::ZMQ_PUB_IPC_ADDRESS, _engine_controller.get());
+        ELKLOG_LOG_INFO("Instantiating ZMQ server with address: {}", sushi_ipc::ZMQ_IPC_ADDRESS);
     }
 #endif
 
