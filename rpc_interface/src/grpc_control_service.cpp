@@ -77,7 +77,7 @@ grpc::Status SystemControlService::GetBuildInfo(grpc::ServerContext* /*context*/
                                                 sushi_rpc::SushiBuildInfo* response)
 {
     auto build_info = _controller->get_sushi_build_info();
-    to_grpc(*response, build_info);
+    to_proto(*response, build_info);
     return grpc::Status::OK;
 }
 
@@ -109,7 +109,7 @@ grpc::Status TransportControlService::GetPlayingMode(grpc::ServerContext* /*cont
                                                      const sushi_rpc::GenericVoidValue* /*request*/,
                                                      sushi_rpc::PlayingMode* response)
 {
-    response->set_mode(to_grpc(_controller->get_playing_mode()));
+    response->set_mode(to_proto(_controller->get_playing_mode()));
     return grpc::Status::OK;
 }
 
@@ -117,7 +117,7 @@ grpc::Status TransportControlService::GetSyncMode(grpc::ServerContext* /*context
                                                   const sushi_rpc::GenericVoidValue* /*request*/,
                                                   sushi_rpc::SyncMode* response)
 {
-    response->set_mode(to_grpc(_controller->get_sync_mode()));
+    response->set_mode(to_proto(_controller->get_sync_mode()));
     return grpc::Status::OK;
 }
 
@@ -144,7 +144,7 @@ grpc::Status TransportControlService::SetTempo(grpc::ServerContext* /*context*/,
                                                sushi_rpc::CommandResponse* response)
 {
     auto status = _controller->set_tempo(request->value());
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;}
 
 grpc::Status TransportControlService::SetPlayingMode(grpc::ServerContext* /*context*/,
@@ -161,7 +161,7 @@ grpc::Status TransportControlService::SetSyncMode(grpc::ServerContext* /*context
                                                   sushi_rpc::CommandResponse* response)
 {
     auto status = _controller->set_sync_mode(to_sushi_ext(request->mode()));
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -173,7 +173,7 @@ grpc::Status TransportControlService::SetTimeSignature(grpc::ServerContext* /*co
     ts.numerator = request->numerator();
     ts.denominator = request->denominator();
     auto status = _controller->set_time_signature(ts);
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -201,7 +201,7 @@ grpc::Status TimingControlService::GetEngineTimings(grpc::ServerContext* /*conte
     auto [status, timings] = _controller->get_engine_timings();
     if (status == sushi::control::ControlStatus::OK)
     {
-        to_grpc(*response, timings);
+        to_proto(*response, timings);
     }
     return grpc::Status::OK;
 }
@@ -213,9 +213,9 @@ grpc::Status TimingControlService::GetTrackTimings(grpc::ServerContext* /*contex
     auto [status, timings] = _controller->get_track_timings(request->id());
     if (status == sushi::control::ControlStatus::OK)
     {
-        to_grpc(*response->mutable_timings(), timings);
+        to_proto(*response->mutable_timings(), timings);
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -226,9 +226,9 @@ grpc::Status TimingControlService::GetProcessorTimings(grpc::ServerContext* /*co
     auto [status, timings] = _controller->get_processor_timings(request->id());
     if (status == sushi::control::ControlStatus::OK)
     {
-        to_grpc(*response->mutable_timings(), timings);
+        to_proto(*response->mutable_timings(), timings);
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -246,7 +246,7 @@ grpc::Status TimingControlService::ResetTrackTimings(grpc::ServerContext* /*cont
                                                      sushi_rpc::CommandResponse* response)
 {
     auto status = _controller->reset_track_timings(request->id());
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -255,7 +255,7 @@ grpc::Status TimingControlService::ResetProcessorTimings(grpc::ServerContext* /*
                                                          sushi_rpc::CommandResponse* response)
 {
     auto status = _controller->reset_processor_timings(request->id());
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -264,7 +264,7 @@ grpc::Status KeyboardControlService::SendNoteOn(grpc::ServerContext* /*context*/
                                                 sushi_rpc::CommandResponse* response)
 {
     auto status = _controller->send_note_on(request->track().id(), request->channel(), request->note(), request->velocity());
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -273,7 +273,7 @@ grpc::Status KeyboardControlService::SendNoteOff(grpc::ServerContext* /*context*
                                                  sushi_rpc::CommandResponse* response)
 {
     auto status = _controller->send_note_off(request->track().id(), request->channel(), request->note(), request->velocity());
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -282,7 +282,7 @@ grpc::Status KeyboardControlService::SendNoteAftertouch(grpc::ServerContext* /*c
                                                         sushi_rpc::CommandResponse* response)
 {
     auto status = _controller->send_note_aftertouch(request->track().id(), request->channel(), request->note(), request->value());
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -291,7 +291,7 @@ grpc::Status KeyboardControlService::SendAftertouch(grpc::ServerContext* /*conte
                                                     sushi_rpc::CommandResponse* response)
 {
     auto status = _controller->send_aftertouch(request->track().id(), request->channel(), request->value());
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -300,7 +300,7 @@ grpc::Status KeyboardControlService::SendPitchBend(grpc::ServerContext* /*contex
                                                    sushi_rpc::CommandResponse* response)
 {
     auto status = _controller->send_pitch_bend(request->track().id(), request->channel(), request->value());
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -309,7 +309,7 @@ grpc::Status KeyboardControlService::SendModulation(grpc::ServerContext* /*conte
                                                     sushi_rpc::CommandResponse* response)
 {
     auto status = _controller->send_modulation(request->track().id(), request->channel(), request->value());
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -321,7 +321,7 @@ grpc::Status AudioGraphControlService::GetAllProcessors(grpc::ServerContext* /*c
     for (const auto& processor : processors)
     {
         auto info = response->add_processors();
-        to_grpc(*info, processor);
+        to_proto(*info, processor);
     }
     return grpc::Status::OK;
 }
@@ -334,7 +334,7 @@ grpc::Status AudioGraphControlService::GetAllTracks(grpc::ServerContext* /*conte
     for (const auto& track : tracks)
     {
         auto info = response->add_tracks();
-        to_grpc(*info, track);
+        to_proto(*info, track);
     }
     return grpc::Status::OK;
 }
@@ -348,7 +348,7 @@ grpc::Status AudioGraphControlService::GetTrackId(grpc::ServerContext* /*context
     {
         response->set_id(id);
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -359,9 +359,9 @@ grpc::Status AudioGraphControlService::GetTrackInfo(grpc::ServerContext* /*conte
     auto [status, track] = _controller->get_track_info(request->id());
     if (status == sushi::control::ControlStatus::OK)
     {
-        to_grpc(*response->mutable_info(), track);
+        to_proto(*response->mutable_info(), track);
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -373,9 +373,9 @@ grpc::Status AudioGraphControlService::GetTrackProcessors(grpc::ServerContext* /
     for (const auto& processor : processors)
     {
         auto info = response->add_processors();
-        to_grpc(*info, processor);
+        to_proto(*info, processor);
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -388,7 +388,7 @@ grpc::Status AudioGraphControlService::GetProcessorId(grpc::ServerContext* /*con
     {
         response->set_id(id);
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -399,9 +399,9 @@ grpc::Status AudioGraphControlService::GetProcessorInfo(grpc::ServerContext* /*c
     auto [status, processor] = _controller->get_processor_info(request->id());
     if (status == sushi::control::ControlStatus::OK)
     {
-        to_grpc(*response->mutable_processor(), processor);
+        to_proto(*response->mutable_processor(), processor);
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -414,7 +414,7 @@ grpc::Status AudioGraphControlService::GetProcessorBypassState(grpc::ServerConte
     {
         response->set_value(state);
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -425,9 +425,9 @@ grpc::Status AudioGraphControlService::GetProcessorState(grpc::ServerContext* /*
     auto [status, state] = _controller->get_processor_state(request->id());
     if (status == sushi::control::ControlStatus::OK)
     {
-        to_grpc(*response->mutable_state(), state);
+        to_proto(*response->mutable_state(), state);
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -436,7 +436,7 @@ grpc::Status AudioGraphControlService::SetProcessorBypassState(grpc::ServerConte
                                                                sushi_rpc::CommandResponse* response)
 {
     auto status = _controller->set_processor_bypass_state(request->processor().id(), request->value());
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -447,7 +447,7 @@ grpc::Status AudioGraphControlService::SetProcessorState(grpc::ServerContext* /*
     sushi::control::ProcessorState sushi_state;
     to_sushi_ext(sushi_state, request->state());
     auto status = _controller->set_processor_state(request->processor().id(), sushi_state);
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -457,7 +457,7 @@ grpc::Status AudioGraphControlService::CreateTrack(grpc::ServerContext* /*contex
 {
     auto thread = (request->thread().has_value() ? std::optional<int>(request->thread().value()) : std::nullopt);
     auto status = _controller->create_track(request->name(), request->channels(), thread);
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -467,7 +467,7 @@ grpc::Status AudioGraphControlService::CreateMultibusTrack(grpc::ServerContext* 
 {
     auto thread = (request->thread().has_value() ? std::optional<int>(request->thread().value()) : std::nullopt);
     auto status = _controller->create_multibus_track(request->name(), request->buses(), thread);
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -476,7 +476,7 @@ grpc::Status AudioGraphControlService::CreatePreTrack(grpc::ServerContext* /*con
                                                       sushi_rpc::CommandResponse* response)
 {
     auto status = _controller->create_pre_track(request->name());
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -485,7 +485,7 @@ grpc::Status AudioGraphControlService::CreatePostTrack(grpc::ServerContext* /*co
                                                        sushi_rpc::CommandResponse* response)
 {
     auto status = _controller->create_post_track(request->name());
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -494,7 +494,7 @@ grpc::Status AudioGraphControlService::DeleteTrack(grpc::ServerContext* /*contex
                                                    sushi_rpc::CommandResponse* response)
 {
     auto status = _controller->delete_track(request->id());
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -513,7 +513,7 @@ grpc::Status AudioGraphControlService::CreateProcessorOnTrack(grpc::ServerContex
                                                          to_sushi_ext(request->type().type()),
                                                          request->track().id(),
                                                          before_processor);
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -530,7 +530,7 @@ grpc::Status AudioGraphControlService::MoveProcessorOnTrack(grpc::ServerContext*
                                                        request->source_track().id(),
                                                        request->dest_track().id(),
                                                        before_processor);
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -540,7 +540,7 @@ grpc::Status AudioGraphControlService::DeleteProcessorFromTrack(grpc::ServerCont
 {
     auto status = _controller->delete_processor_from_track(request->processor().id(),
                                                            request->track().id());
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -552,9 +552,9 @@ grpc::Status ParameterControlService::GetTrackParameters(grpc::ServerContext* /*
     for (const auto& parameter : parameters)
     {
         auto info = response->add_parameters();
-        to_grpc(*info, parameter);
+        to_proto(*info, parameter);
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -568,7 +568,7 @@ grpc::Status ParameterControlService::GetParameterId(grpc::ServerContext* /*cont
         response->mutable_id()->set_parameter_id(id);
         response->mutable_id()->set_processor_id(request->processor().id());
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -579,9 +579,9 @@ grpc::Status ParameterControlService::GetParameterInfo(grpc::ServerContext* /*co
     auto [status, parameter] = _controller->get_parameter_info(request->processor_id(), request->parameter_id());
     if (status == sushi::control::ControlStatus::OK)
     {
-        to_grpc(*response->mutable_info(), parameter);
+        to_proto(*response->mutable_info(), parameter);
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -594,7 +594,7 @@ grpc::Status ParameterControlService::GetParameterValue(grpc::ServerContext* /*c
     {
         response->set_value(value);
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -607,7 +607,7 @@ grpc::Status ParameterControlService::GetParameterValueInDomain(grpc::ServerCont
     {
         response->set_value(value);
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -620,7 +620,7 @@ grpc::Status ParameterControlService::GetParameterValueAsString(grpc::ServerCont
     {
         response->set_value(value);
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -631,7 +631,7 @@ grpc::Status ParameterControlService::SetParameterValue(grpc::ServerContext* /*c
     auto status = _controller->set_parameter_value(request->parameter().processor_id(),
                                                    request->parameter().parameter_id(),
                                                    request->value());
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -644,7 +644,7 @@ grpc::Status ProgramControlService::GetProcessorCurrentProgram(grpc::ServerConte
     {
         response->set_program(program);
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -657,7 +657,7 @@ grpc::Status ProgramControlService::GetProcessorCurrentProgramName(grpc::ServerC
     {
         response->set_value(program);
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -670,7 +670,7 @@ grpc::Status ProgramControlService::GetProcessorProgramName(grpc::ServerContext*
     {
         response->set_value(program);
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -686,7 +686,7 @@ grpc::Status ProgramControlService::GetProcessorPrograms(grpc::ServerContext* /*
         info->set_name(program);
         info->mutable_id()->set_program(id++);
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -695,7 +695,7 @@ grpc::Status ProgramControlService::SetProcessorProgram(grpc::ServerContext* /*c
                                                         sushi_rpc::CommandResponse* response)
 {
     auto status = _controller->set_processor_program(request->processor().id(), request->program().program());
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -707,9 +707,9 @@ grpc::Status ParameterControlService::GetProcessorParameters(grpc::ServerContext
     for (const auto& parameter : parameters)
     {
         auto info = response->add_parameters();
-        to_grpc(*info, parameter);
+        to_proto(*info, parameter);
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -721,9 +721,9 @@ grpc::Status ParameterControlService::GetTrackProperties(grpc::ServerContext* /*
     for (const auto& property : properties)
     {
         auto info = response->add_properties();
-        to_grpc(*info, property);
+        to_proto(*info, property);
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -735,9 +735,9 @@ grpc::Status ParameterControlService::GetProcessorProperties(grpc::ServerContext
     for (const auto& property : properties)
     {
         auto info = response->add_properties();
-        to_grpc(*info, property);
+        to_proto(*info, property);
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -751,7 +751,7 @@ grpc::Status ParameterControlService::GetPropertyId(grpc::ServerContext* /*conte
         response->mutable_id()->set_property_id(id);
         response->mutable_id()->set_processor_id(request->processor().id());
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -762,9 +762,9 @@ grpc::Status ParameterControlService::GetPropertyInfo(grpc::ServerContext* /*con
     auto [status, property] = _controller->get_property_info(request->processor_id(), request->property_id());
     if (status == sushi::control::ControlStatus::OK)
     {
-        to_grpc(*response->mutable_info(), property);
+        to_proto(*response->mutable_info(), property);
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -777,7 +777,7 @@ grpc::Status ParameterControlService::GetPropertyValue(grpc::ServerContext* /*co
     {
         response->set_value(std::move(value));
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -788,7 +788,7 @@ grpc::Status ParameterControlService::SetPropertyValue(grpc::ServerContext* /*co
     auto status = _controller->set_property_value(request->property().processor_id(),
                                                   request->property().property_id(),
                                                   request->value());
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -816,7 +816,7 @@ grpc::Status MidiControlService::GetAllKbdInputConnections(grpc::ServerContext* 
     for (const auto& connection : input_connections)
     {
         auto info = response->add_connections();
-        to_grpc(*info, connection);
+        to_proto(*info, connection);
     }
     return grpc::Status::OK;
 }
@@ -829,7 +829,7 @@ grpc::Status MidiControlService::GetAllKbdOutputConnections(grpc::ServerContext*
     for (const auto& connection : output_connections)
     {
         auto info = response->add_connections();
-        to_grpc(*info, connection);
+        to_proto(*info, connection);
     }
     return grpc::Status::OK;
 }
@@ -842,7 +842,7 @@ grpc::Status MidiControlService::GetAllCCInputConnections(grpc::ServerContext* /
     for (const auto& connection : output_connections)
     {
         auto info = response->add_connections();
-        to_grpc(*info, connection);
+        to_proto(*info, connection);
     }
     return grpc::Status::OK;
 }
@@ -855,7 +855,7 @@ grpc::Status MidiControlService::GetAllPCInputConnections(grpc::ServerContext* /
     for (const auto& connection : input_connections)
     {
         auto info = response->add_connections();
-        to_grpc(*info, connection);
+        to_proto(*info, connection);
     }
     return grpc::Status::OK;
 }
@@ -871,10 +871,10 @@ grpc::Status MidiControlService::GetCCInputConnectionsForProcessor(grpc::ServerC
         for (const auto& connection : output_connections.second)
         {
             auto info = response->add_connections();
-            to_grpc(*info, connection);
+            to_proto(*info, connection);
         }
     }
-    response->mutable_status()->set_status(to_grpc(output_connections.first));
+    response->mutable_status()->set_status(to_proto(output_connections.first));
     return grpc::Status::OK;
 }
 
@@ -889,10 +889,10 @@ grpc::Status MidiControlService::GetPCInputConnectionsForProcessor(grpc::ServerC
         for (const auto& connection : input_connections.second)
         {
             auto info = response->add_connections();
-            to_grpc(*info, connection);
+            to_proto(*info, connection);
         }
     }
-    response->mutable_status()->set_status(to_grpc(input_connections.first));
+    response->mutable_status()->set_status(to_proto(input_connections.first));
     return grpc::Status::OK;
 }
 
@@ -910,7 +910,7 @@ grpc::Status MidiControlService::SetMidiClockOutputEnabled(grpc::ServerContext* 
                                                            sushi_rpc::CommandResponse* response)
 {
     auto status = _midi_controller->set_midi_clock_output_enabled(request->enabled(), request->port());
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -926,7 +926,7 @@ grpc::Status MidiControlService::ConnectKbdInputToTrack(grpc::ServerContext* /*c
 
     const auto status = _midi_controller->connect_kbd_input_to_track(track_id.id(), midi_channel, port, raw_midi);
 
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -941,7 +941,7 @@ grpc::Status MidiControlService::ConnectKbdOutputFromTrack(grpc::ServerContext* 
 
     const auto status = _midi_controller->connect_kbd_output_from_track(track_id.id(), midi_channel, port);
 
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -959,7 +959,7 @@ grpc::Status MidiControlService::ConnectCCToParameter(grpc::ServerContext* /*con
                                                                   request->max_range(),
                                                                   request->relative_mode());
 
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -975,7 +975,7 @@ grpc::Status MidiControlService::ConnectPCToProcessor(grpc::ServerContext* /*con
 
     const auto status = _midi_controller->connect_pc_to_processor(processor_id, midi_channel, port);
 
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -990,7 +990,7 @@ grpc::Status MidiControlService::DisconnectKbdInput(grpc::ServerContext* /*conte
     const auto raw_midi = request->raw_midi();
     const auto status = _midi_controller->disconnect_kbd_input(track_id.id(), midi_channel, port, raw_midi);
 
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -1005,7 +1005,7 @@ grpc::Status MidiControlService::DisconnectKbdOutput(grpc::ServerContext* /*cont
 
     const auto status = _midi_controller->disconnect_kbd_output(track_id.id(), midi_channel, port);
 
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -1019,7 +1019,7 @@ grpc::Status MidiControlService::DisconnectCC(grpc::ServerContext* /*context*/,
                                                         request->port(),
                                                         request->cc_number());
 
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -1033,7 +1033,7 @@ grpc::Status MidiControlService::DisconnectPC(grpc::ServerContext* /*context*/,
     sushi::control::MidiChannel midi_channel = to_sushi_ext(channel);
 
     const auto status = _midi_controller->disconnect_pc(processor_id, midi_channel, port);
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -1043,7 +1043,7 @@ grpc::Status MidiControlService::DisconnectAllCCFromProcessor(grpc::ServerContex
 {
     const auto processor_id = request->id();
     const auto status = _midi_controller->disconnect_all_cc_from_processor(processor_id);
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -1053,7 +1053,7 @@ grpc::Status MidiControlService::DisconnectAllPCFromProcessor(grpc::ServerContex
 {
     const auto processor_id = request->id();
     const auto status = _midi_controller->disconnect_all_pc_from_processor(processor_id);
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -1065,7 +1065,7 @@ grpc::Status AudioRoutingControlService::GetAllInputConnections(grpc::ServerCont
     for (const auto& connection : connections)
     {
         auto c = response->add_connections();
-        to_grpc(*c, connection);
+        to_proto(*c, connection);
     }
     return grpc::Status::OK;
 }
@@ -1078,7 +1078,7 @@ grpc::Status AudioRoutingControlService::GetAllOutputConnections(grpc::ServerCon
     for (const auto& connection : connections)
     {
         auto c = response->add_connections();
-        to_grpc(*c, connection);
+        to_proto(*c, connection);
     }
     return grpc::Status::OK;
 }
@@ -1091,9 +1091,9 @@ grpc::Status AudioRoutingControlService::GetInputConnectionsForTrack(grpc::Serve
     for (const auto& connection : connections)
     {
         auto c = response->add_connections();
-        to_grpc(*c, connection);
+        to_proto(*c, connection);
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -1105,9 +1105,9 @@ grpc::Status AudioRoutingControlService::GetOutputConnectionsForTrack(grpc::Serv
     for (const auto& connection : connections)
     {
         auto c = response->add_connections();
-        to_grpc(*c, connection);
+        to_proto(*c, connection);
     }
-    response->mutable_status()->set_status(to_grpc(status));
+    response->mutable_status()->set_status(to_proto(status));
     return grpc::Status::OK;
 }
 
@@ -1118,7 +1118,7 @@ grpc::Status AudioRoutingControlService::ConnectInputChannelToTrack(grpc::Server
     auto status = _controller->connect_input_channel_to_track(request->track().id(),
                                                               request->track_channel(),
                                                               request->engine_channel());
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -1129,7 +1129,7 @@ grpc::Status AudioRoutingControlService::ConnectOutputChannelFromTrack(grpc::Ser
     auto status = _controller->connect_output_channel_to_track(request->track().id(),
                                                                request->track_channel(),
                                                                request->engine_channel());
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -1140,7 +1140,7 @@ grpc::Status AudioRoutingControlService::DisconnectInput(grpc::ServerContext* /*
     auto status = _controller->disconnect_input(request->track().id(),
                                                 request->track_channel(),
                                                 request->engine_channel());
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -1151,7 +1151,7 @@ grpc::Status AudioRoutingControlService::DisconnectOutput(grpc::ServerContext* /
     auto status = _controller->disconnect_output(request->track().id(),
                                                  request->track_channel(),
                                                  request->engine_channel());
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -1160,7 +1160,7 @@ grpc::Status AudioRoutingControlService::DisconnectAllInputsFromTrack(grpc::Serv
                                                                       sushi_rpc::CommandResponse* response)
 {
     auto status = _controller->disconnect_all_inputs_from_track(request->id());
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -1178,7 +1178,7 @@ grpc::Status AudioRoutingControlService::DisconnectAllOutputsFromTrack(grpc::Ser
                                                                        sushi_rpc::CommandResponse* response)
 {
     auto status = _controller->disconnect_all_outputs_from_track(request->id());
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -1382,7 +1382,7 @@ grpc::Status OscControlService::EnableOutputForParameter(grpc::ServerContext* /*
 
     auto status = _controller->enable_output_for_parameter(processor_id, parameter_id);
 
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -1395,7 +1395,7 @@ grpc::Status OscControlService::DisableOutputForParameter(grpc::ServerContext* /
 
     auto status = _controller->disable_output_for_parameter(processor_id, parameter_id);
 
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -1404,7 +1404,7 @@ grpc::Status OscControlService::EnableAllOutput(grpc::ServerContext* /*context*/
                                                 sushi_rpc::CommandResponse* response)
 {
     auto status = _controller->enable_all_output();
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -1413,7 +1413,7 @@ grpc::Status OscControlService::DisableAllOutput(grpc::ServerContext* /*context*
                                                  sushi_rpc::CommandResponse* response)
 {
     auto status = _controller->disable_all_output();
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -1422,7 +1422,7 @@ grpc::Status SessionControlService::SaveSession(grpc::ServerContext* /*context*/
                                                 sushi_rpc::SessionState* response)
 {
     auto session_state = _controller->save_session();
-    to_grpc(*response, session_state);
+    to_proto(*response, session_state);
     return grpc::Status::OK;
 }
 
@@ -1435,7 +1435,7 @@ grpc::Status SessionControlService::RestoreSession(grpc::ServerContext* /*contex
 
     auto status = _controller->restore_session(sushi_state);
 
-    to_grpc(*response, status);
+    to_proto(*response, status);
     return grpc::Status::OK;
 }
 
@@ -1511,13 +1511,13 @@ void NotificationControlService::_forward_transport_notification_to_subscribers(
         }
         case sushi::control::TransportAction::PLAYING_MODE_CHANGED:
         {
-            auto grpc_playing_mode = to_grpc(std::get<sushi::control::PlayingMode>(typed_notification->value()));
+            auto grpc_playing_mode = to_proto(std::get<sushi::control::PlayingMode>(typed_notification->value()));
             notification_content->mutable_playing_mode()->set_mode(grpc_playing_mode);
             break;
         }
         case sushi::control::TransportAction::SYNC_MODE_CHANGED:
         {
-            auto grpc_sync_mode = to_grpc(std::get<sushi::control::SyncMode>(typed_notification->value()));
+            auto grpc_sync_mode = to_proto(std::get<sushi::control::SyncMode>(typed_notification->value()));
             notification_content->mutable_sync_mode()->set_mode(grpc_sync_mode);
             break;
         }
@@ -1547,7 +1547,7 @@ void NotificationControlService::_forward_cpu_timing_notification_to_subscribers
 {
     auto typed_notification = static_cast<const sushi::control::CpuTimingNotification*>(notification);
     auto notification_content = std::make_shared<CpuTimings>();
-    to_grpc(*notification_content, typed_notification->cpu_timings());
+    to_proto(*notification_content, typed_notification->cpu_timings());
 
     std::scoped_lock lock(_timing_subscriber_lock);
     for (auto& subscriber : _timing_subscribers)
@@ -1661,7 +1661,7 @@ void NotificationControlService::_forward_async_command_notification_to_subscrib
 {
     auto typed_notification = static_cast<const sushi::control::CommandCompletionNotification*>(notification);
     auto notification_content = std::make_shared<AsyncCommandResponse>();
-    notification_content->mutable_status()->set_status(to_grpc(typed_notification->status()));
+    notification_content->mutable_status()->set_status(to_proto(typed_notification->status()));
     notification_content->set_request_id(typed_notification->id());
 
     std::scoped_lock lock(_command_subscriber_lock);

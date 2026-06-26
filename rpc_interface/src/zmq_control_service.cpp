@@ -50,7 +50,7 @@ void SystemControlService::GetBuildInfo(const sushi_rpc::GenericVoidValue& /*req
                                         sushi_rpc::SushiBuildInfo& response)
 {
     auto build_info = _controller->get_sushi_build_info();
-    to_grpc(response, build_info);
+    to_proto(response, build_info);
 }
 
 void SystemControlService::GetInputAudioChannelCount(const sushi_rpc::GenericVoidValue& /*request*/,
@@ -78,13 +78,13 @@ void TransportControlService::GetSamplerate(const sushi_rpc::GenericVoidValue& /
 void TransportControlService::GetPlayingMode(const sushi_rpc::GenericVoidValue& /*request*/,
                                              sushi_rpc::PlayingMode& response)
 {
-    response.set_mode(to_grpc(_controller->get_playing_mode()));
+    response.set_mode(to_proto(_controller->get_playing_mode()));
 }
 
 void TransportControlService::GetSyncMode(const sushi_rpc::GenericVoidValue& /*request*/,
                                           sushi_rpc::SyncMode& response)
 {
-    response.set_mode(to_grpc(_controller->get_sync_mode()));
+    response.set_mode(to_proto(_controller->get_sync_mode()));
 }
 
 void TransportControlService::GetTimeSignature(const sushi_rpc::GenericVoidValue& /*request*/,
@@ -105,7 +105,7 @@ void TransportControlService::SetTempo(const sushi_rpc::GenericFloatValue& reque
                                        sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->set_tempo(request.value());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void TransportControlService::SetPlayingMode(const sushi_rpc::PlayingMode& request,
@@ -119,7 +119,7 @@ void TransportControlService::SetSyncMode(const sushi_rpc::SyncMode& request,
                                           sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->set_sync_mode(to_sushi_ext(request.mode()));
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void TransportControlService::SetTimeSignature(const sushi_rpc::TimeSignature& request,
@@ -129,7 +129,7 @@ void TransportControlService::SetTimeSignature(const sushi_rpc::TimeSignature& r
     ts.numerator = request.numerator();
     ts.denominator = request.denominator();
     auto status = _controller->set_time_signature(ts);
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 //=============================================================================
@@ -155,7 +155,7 @@ void TimingControlService::GetEngineTimings(const sushi_rpc::GenericVoidValue& /
     auto [status, timings] = _controller->get_engine_timings();
     if (status == sushi::control::ControlStatus::OK)
     {
-        to_grpc(response, timings);
+        to_proto(response, timings);
     }
 }
 
@@ -165,9 +165,9 @@ void TimingControlService::GetTrackTimings(const sushi_rpc::TrackIdentifier& req
     auto [status, timings] = _controller->get_track_timings(request.id());
     if (status == sushi::control::ControlStatus::OK)
     {
-        to_grpc(*response.mutable_timings(), timings);
+        to_proto(*response.mutable_timings(), timings);
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void TimingControlService::GetProcessorTimings(const sushi_rpc::ProcessorIdentifier& request,
@@ -176,9 +176,9 @@ void TimingControlService::GetProcessorTimings(const sushi_rpc::ProcessorIdentif
     auto [status, timings] = _controller->get_processor_timings(request.id());
     if (status == sushi::control::ControlStatus::OK)
     {
-        to_grpc(*response.mutable_timings(), timings);
+        to_proto(*response.mutable_timings(), timings);
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void TimingControlService::ResetAllTimings(const sushi_rpc::GenericVoidValue& /*request*/,
@@ -192,14 +192,14 @@ void TimingControlService::ResetTrackTimings(const sushi_rpc::TrackIdentifier& r
                                              sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->reset_track_timings(request.id());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void TimingControlService::ResetProcessorTimings(const sushi_rpc::ProcessorIdentifier& request,
                                                  sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->reset_processor_timings(request.id());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 //=============================================================================
@@ -210,42 +210,42 @@ void KeyboardControlService::SendNoteOn(const sushi_rpc::NoteOnRequest& request,
                                         sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->send_note_on(request.track().id(), request.channel(), request.note(), request.velocity());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void KeyboardControlService::SendNoteOff(const sushi_rpc::NoteOffRequest& request,
                                          sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->send_note_off(request.track().id(), request.channel(), request.note(), request.velocity());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void KeyboardControlService::SendNoteAftertouch(const sushi_rpc::NoteAftertouchRequest& request,
                                                 sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->send_note_aftertouch(request.track().id(), request.channel(), request.note(), request.value());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void KeyboardControlService::SendAftertouch(const sushi_rpc::NoteModulationRequest& request,
                                             sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->send_aftertouch(request.track().id(), request.channel(), request.value());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void KeyboardControlService::SendPitchBend(const sushi_rpc::NoteModulationRequest& request,
                                            sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->send_pitch_bend(request.track().id(), request.channel(), request.value());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void KeyboardControlService::SendModulation(const sushi_rpc::NoteModulationRequest& request,
                                             sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->send_modulation(request.track().id(), request.channel(), request.value());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 //=============================================================================
@@ -258,7 +258,7 @@ void AudioGraphControlService::GetAllProcessors(const sushi_rpc::GenericVoidValu
     auto processors = _controller->get_all_processors();
     for (const auto& processor : processors)
     {
-        to_grpc(*response.add_processors(), processor);
+        to_proto(*response.add_processors(), processor);
     }
 }
 
@@ -268,7 +268,7 @@ void AudioGraphControlService::GetAllTracks(const sushi_rpc::GenericVoidValue& /
     auto tracks = _controller->get_all_tracks();
     for (const auto& track : tracks)
     {
-        to_grpc(*response.add_tracks(), track);
+        to_proto(*response.add_tracks(), track);
     }
 }
 
@@ -280,7 +280,7 @@ void AudioGraphControlService::GetTrackId(const sushi_rpc::GenericStringValue& r
     {
         response.set_id(id);
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void AudioGraphControlService::GetTrackInfo(const sushi_rpc::TrackIdentifier& request,
@@ -289,9 +289,9 @@ void AudioGraphControlService::GetTrackInfo(const sushi_rpc::TrackIdentifier& re
     auto [status, track] = _controller->get_track_info(request.id());
     if (status == sushi::control::ControlStatus::OK)
     {
-        to_grpc(*response.mutable_info(), track);
+        to_proto(*response.mutable_info(), track);
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void AudioGraphControlService::GetTrackProcessors(const sushi_rpc::TrackIdentifier& request,
@@ -300,9 +300,9 @@ void AudioGraphControlService::GetTrackProcessors(const sushi_rpc::TrackIdentifi
     auto [status, processors] = _controller->get_track_processors(request.id());
     for (const auto& processor : processors)
     {
-        to_grpc(*response.add_processors(), processor);
+        to_proto(*response.add_processors(), processor);
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void AudioGraphControlService::GetProcessorId(const sushi_rpc::GenericStringValue& request,
@@ -313,7 +313,7 @@ void AudioGraphControlService::GetProcessorId(const sushi_rpc::GenericStringValu
     {
         response.set_id(id);
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void AudioGraphControlService::GetProcessorInfo(const sushi_rpc::ProcessorIdentifier& request,
@@ -322,9 +322,9 @@ void AudioGraphControlService::GetProcessorInfo(const sushi_rpc::ProcessorIdenti
     auto [status, processor] = _controller->get_processor_info(request.id());
     if (status == sushi::control::ControlStatus::OK)
     {
-        to_grpc(*response.mutable_processor(), processor);
+        to_proto(*response.mutable_processor(), processor);
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void AudioGraphControlService::GetProcessorBypassState(const sushi_rpc::ProcessorIdentifier& request,
@@ -335,7 +335,7 @@ void AudioGraphControlService::GetProcessorBypassState(const sushi_rpc::Processo
     {
         response.set_value(state);
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void AudioGraphControlService::GetProcessorState(const sushi_rpc::ProcessorIdentifier& request,
@@ -344,16 +344,16 @@ void AudioGraphControlService::GetProcessorState(const sushi_rpc::ProcessorIdent
     auto [status, state] = _controller->get_processor_state(request.id());
     if (status == sushi::control::ControlStatus::OK)
     {
-        to_grpc(*response.mutable_state(), state);
+        to_proto(*response.mutable_state(), state);
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void AudioGraphControlService::SetProcessorBypassState(const sushi_rpc::ProcessorBypassStateSetRequest& request,
                                                        sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->set_processor_bypass_state(request.processor().id(), request.value());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void AudioGraphControlService::SetProcessorState(const sushi_rpc::ProcessorStateSetRequest& request,
@@ -362,7 +362,7 @@ void AudioGraphControlService::SetProcessorState(const sushi_rpc::ProcessorState
     sushi::control::ProcessorState sushi_state;
     to_sushi_ext(sushi_state, request.state());
     auto status = _controller->set_processor_state(request.processor().id(), sushi_state);
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void AudioGraphControlService::CreateTrack(const sushi_rpc::CreateTrackRequest& request,
@@ -370,7 +370,7 @@ void AudioGraphControlService::CreateTrack(const sushi_rpc::CreateTrackRequest& 
 {
     auto thread = (request.thread().has_value() ? std::optional<int>(request.thread().value()) : std::nullopt);
     auto status = _controller->create_track(request.name(), request.channels(), thread);
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void AudioGraphControlService::CreateMultibusTrack(const sushi_rpc::CreateMultibusTrackRequest& request,
@@ -378,21 +378,21 @@ void AudioGraphControlService::CreateMultibusTrack(const sushi_rpc::CreateMultib
 {
     auto thread = (request.thread().has_value() ? std::optional<int>(request.thread().value()) : std::nullopt);
     auto status = _controller->create_multibus_track(request.name(), request.buses(), thread);
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void AudioGraphControlService::CreatePreTrack(const sushi_rpc::CreatePreTrackRequest& request,
                                               sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->create_pre_track(request.name());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void AudioGraphControlService::CreatePostTrack(const sushi_rpc::CreatePostTrackRequest& request,
                                                sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->create_post_track(request.name());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void AudioGraphControlService::CreateProcessorOnTrack(const sushi_rpc::CreateProcessorRequest& request,
@@ -409,7 +409,7 @@ void AudioGraphControlService::CreateProcessorOnTrack(const sushi_rpc::CreatePro
                                                          to_sushi_ext(request.type().type()),
                                                          request.track().id(),
                                                          before_processor);
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void AudioGraphControlService::MoveProcessorOnTrack(const sushi_rpc::MoveProcessorRequest& request,
@@ -424,21 +424,21 @@ void AudioGraphControlService::MoveProcessorOnTrack(const sushi_rpc::MoveProcess
                                                        request.source_track().id(),
                                                        request.dest_track().id(),
                                                        before_processor);
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void AudioGraphControlService::DeleteProcessorFromTrack(const sushi_rpc::DeleteProcessorRequest& request,
                                                         sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->delete_processor_from_track(request.processor().id(), request.track().id());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void AudioGraphControlService::DeleteTrack(const sushi_rpc::TrackIdentifier& request,
                                            sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->delete_track(request.id());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 //=============================================================================
@@ -453,7 +453,7 @@ void ProgramControlService::GetProcessorCurrentProgram(const sushi_rpc::Processo
     {
         response.set_program(program);
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void ProgramControlService::GetProcessorCurrentProgramName(const sushi_rpc::ProcessorIdentifier& request,
@@ -464,7 +464,7 @@ void ProgramControlService::GetProcessorCurrentProgramName(const sushi_rpc::Proc
     {
         response.set_value(program);
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void ProgramControlService::GetProcessorProgramName(const sushi_rpc::ProcessorProgramIdentifier& request,
@@ -475,7 +475,7 @@ void ProgramControlService::GetProcessorProgramName(const sushi_rpc::ProcessorPr
     {
         response.set_value(program);
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void ProgramControlService::GetProcessorPrograms(const sushi_rpc::ProcessorIdentifier& request,
@@ -489,14 +489,14 @@ void ProgramControlService::GetProcessorPrograms(const sushi_rpc::ProcessorIdent
         info->set_name(program);
         info->mutable_id()->set_program(id++);
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void ProgramControlService::SetProcessorProgram(const sushi_rpc::ProcessorProgramSetRequest& request,
                                                 sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->set_processor_program(request.processor().id(), request.program().program());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 //=============================================================================
@@ -509,9 +509,9 @@ void ParameterControlService::GetTrackParameters(const sushi_rpc::TrackIdentifie
     auto [status, parameters] = _controller->get_track_parameters(request.id());
     for (const auto& parameter : parameters)
     {
-        to_grpc(*response.add_parameters(), parameter);
+        to_proto(*response.add_parameters(), parameter);
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void ParameterControlService::GetProcessorParameters(const sushi_rpc::ProcessorIdentifier& request,
@@ -520,9 +520,9 @@ void ParameterControlService::GetProcessorParameters(const sushi_rpc::ProcessorI
     auto [status, parameters] = _controller->get_processor_parameters(request.id());
     for (const auto& parameter : parameters)
     {
-        to_grpc(*response.add_parameters(), parameter);
+        to_proto(*response.add_parameters(), parameter);
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void ParameterControlService::GetParameterId(const sushi_rpc::ParameterIdRequest& request,
@@ -534,7 +534,7 @@ void ParameterControlService::GetParameterId(const sushi_rpc::ParameterIdRequest
         response.mutable_id()->set_parameter_id(id);
         response.mutable_id()->set_processor_id(request.processor().id());
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void ParameterControlService::GetParameterInfo(const sushi_rpc::ParameterIdentifier& request,
@@ -543,9 +543,9 @@ void ParameterControlService::GetParameterInfo(const sushi_rpc::ParameterIdentif
     auto [status, parameter] = _controller->get_parameter_info(request.processor_id(), request.parameter_id());
     if (status == sushi::control::ControlStatus::OK)
     {
-        to_grpc(*response.mutable_info(), parameter);
+        to_proto(*response.mutable_info(), parameter);
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void ParameterControlService::GetParameterValue(const sushi_rpc::ParameterIdentifier& request,
@@ -556,7 +556,7 @@ void ParameterControlService::GetParameterValue(const sushi_rpc::ParameterIdenti
     {
         response.set_value(value);
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void ParameterControlService::GetParameterValueInDomain(const sushi_rpc::ParameterIdentifier& request,
@@ -567,7 +567,7 @@ void ParameterControlService::GetParameterValueInDomain(const sushi_rpc::Paramet
     {
         response.set_value(value);
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void ParameterControlService::GetParameterValueAsString(const sushi_rpc::ParameterIdentifier& request,
@@ -578,7 +578,7 @@ void ParameterControlService::GetParameterValueAsString(const sushi_rpc::Paramet
     {
         response.set_value(value);
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void ParameterControlService::SetParameterValue(const sushi_rpc::ParameterValue& request,
@@ -587,7 +587,7 @@ void ParameterControlService::SetParameterValue(const sushi_rpc::ParameterValue&
     auto status = _controller->set_parameter_value(request.parameter().processor_id(),
                                                    request.parameter().parameter_id(),
                                                    request.value());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void ParameterControlService::GetTrackProperties(const sushi_rpc::TrackIdentifier& request,
@@ -596,9 +596,9 @@ void ParameterControlService::GetTrackProperties(const sushi_rpc::TrackIdentifie
     auto [status, properties] = _controller->get_track_properties(request.id());
     for (const auto& property : properties)
     {
-        to_grpc(*response.add_properties(), property);
+        to_proto(*response.add_properties(), property);
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void ParameterControlService::GetProcessorProperties(const sushi_rpc::ProcessorIdentifier& request,
@@ -607,9 +607,9 @@ void ParameterControlService::GetProcessorProperties(const sushi_rpc::ProcessorI
     auto [status, properties] = _controller->get_processor_properties(request.id());
     for (const auto& property : properties)
     {
-        to_grpc(*response.add_properties(), property);
+        to_proto(*response.add_properties(), property);
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void ParameterControlService::GetPropertyId(const sushi_rpc::PropertyIdRequest& request,
@@ -621,7 +621,7 @@ void ParameterControlService::GetPropertyId(const sushi_rpc::PropertyIdRequest& 
         response.mutable_id()->set_property_id(id);
         response.mutable_id()->set_processor_id(request.processor().id());
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void ParameterControlService::GetPropertyInfo(const sushi_rpc::PropertyIdentifier& request,
@@ -630,9 +630,9 @@ void ParameterControlService::GetPropertyInfo(const sushi_rpc::PropertyIdentifie
     auto [status, property] = _controller->get_property_info(request.processor_id(), request.property_id());
     if (status == sushi::control::ControlStatus::OK)
     {
-        to_grpc(*response.mutable_info(), property);
+        to_proto(*response.mutable_info(), property);
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void ParameterControlService::GetPropertyValue(const sushi_rpc::PropertyIdentifier& request,
@@ -643,7 +643,7 @@ void ParameterControlService::GetPropertyValue(const sushi_rpc::PropertyIdentifi
     {
         response.set_value(std::move(value));
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void ParameterControlService::SetPropertyValue(const sushi_rpc::PropertyValue& request,
@@ -652,7 +652,7 @@ void ParameterControlService::SetPropertyValue(const sushi_rpc::PropertyValue& r
     auto status = _controller->set_property_value(request.property().processor_id(),
                                                   request.property().property_id(),
                                                   request.value());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 //=============================================================================
@@ -677,7 +677,7 @@ void MidiControlService::GetAllKbdInputConnections(const sushi_rpc::GenericVoidV
     auto connections = _controller->get_all_kbd_input_connections();
     for (const auto& connection : connections)
     {
-        to_grpc(*response.add_connections(), connection);
+        to_proto(*response.add_connections(), connection);
     }
 }
 
@@ -687,7 +687,7 @@ void MidiControlService::GetAllKbdOutputConnections(const sushi_rpc::GenericVoid
     auto connections = _controller->get_all_kbd_output_connections();
     for (const auto& connection : connections)
     {
-        to_grpc(*response.add_connections(), connection);
+        to_proto(*response.add_connections(), connection);
     }
 }
 
@@ -697,7 +697,7 @@ void MidiControlService::GetAllCCInputConnections(const sushi_rpc::GenericVoidVa
     auto connections = _controller->get_all_cc_input_connections();
     for (const auto& connection : connections)
     {
-        to_grpc(*response.add_connections(), connection);
+        to_proto(*response.add_connections(), connection);
     }
 }
 
@@ -707,7 +707,7 @@ void MidiControlService::GetAllPCInputConnections(const sushi_rpc::GenericVoidVa
     auto connections = _controller->get_all_pc_input_connections();
     for (const auto& connection : connections)
     {
-        to_grpc(*response.add_connections(), connection);
+        to_proto(*response.add_connections(), connection);
     }
 }
 
@@ -719,10 +719,10 @@ void MidiControlService::GetCCInputConnectionsForProcessor(const sushi_rpc::Proc
     {
         for (const auto& connection : connections)
         {
-            to_grpc(*response.add_connections(), connection);
+            to_proto(*response.add_connections(), connection);
         }
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void MidiControlService::GetPCInputConnectionsForProcessor(const sushi_rpc::ProcessorIdentifier& request,
@@ -733,10 +733,10 @@ void MidiControlService::GetPCInputConnectionsForProcessor(const sushi_rpc::Proc
     {
         for (const auto& connection : connections)
         {
-            to_grpc(*response.add_connections(), connection);
+            to_proto(*response.add_connections(), connection);
         }
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void MidiControlService::GetMidiClockOutputEnabled(const sushi_rpc::GenericIntValue& request,
@@ -749,7 +749,7 @@ void MidiControlService::SetMidiClockOutputEnabled(const sushi_rpc::MidiClockSet
                                                    sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->set_midi_clock_output_enabled(request.enabled(), request.port());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void MidiControlService::ConnectKbdInputToTrack(const sushi_rpc::MidiKbdConnection& request,
@@ -757,7 +757,7 @@ void MidiControlService::ConnectKbdInputToTrack(const sushi_rpc::MidiKbdConnecti
 {
     const auto midi_channel = to_sushi_ext(request.channel().channel());
     auto status = _controller->connect_kbd_input_to_track(request.track().id(), midi_channel, request.port(), request.raw_midi());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void MidiControlService::ConnectKbdOutputFromTrack(const sushi_rpc::MidiKbdConnection& request,
@@ -765,7 +765,7 @@ void MidiControlService::ConnectKbdOutputFromTrack(const sushi_rpc::MidiKbdConne
 {
     const auto midi_channel = to_sushi_ext(request.channel().channel());
     auto status = _controller->connect_kbd_output_from_track(request.track().id(), midi_channel, request.port());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void MidiControlService::ConnectCCToParameter(const sushi_rpc::MidiCCConnection& request,
@@ -780,7 +780,7 @@ void MidiControlService::ConnectCCToParameter(const sushi_rpc::MidiCCConnection&
                                                        request.min_range(),
                                                        request.max_range(),
                                                        request.relative_mode());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void MidiControlService::ConnectPCToProcessor(const sushi_rpc::MidiPCConnection& request,
@@ -788,7 +788,7 @@ void MidiControlService::ConnectPCToProcessor(const sushi_rpc::MidiPCConnection&
 {
     const auto midi_channel = to_sushi_ext(request.channel().channel());
     auto status = _controller->connect_pc_to_processor(request.processor().id(), midi_channel, request.port());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void MidiControlService::DisconnectKbdInput(const sushi_rpc::MidiKbdConnection& request,
@@ -796,7 +796,7 @@ void MidiControlService::DisconnectKbdInput(const sushi_rpc::MidiKbdConnection& 
 {
     const auto midi_channel = to_sushi_ext(request.channel().channel());
     auto status = _controller->disconnect_kbd_input(request.track().id(), midi_channel, request.port(), request.raw_midi());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void MidiControlService::DisconnectKbdOutput(const sushi_rpc::MidiKbdConnection& request,
@@ -804,7 +804,7 @@ void MidiControlService::DisconnectKbdOutput(const sushi_rpc::MidiKbdConnection&
 {
     const auto midi_channel = to_sushi_ext(request.channel().channel());
     auto status = _controller->disconnect_kbd_output(request.track().id(), midi_channel, request.port());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void MidiControlService::DisconnectCC(const sushi_rpc::MidiCCConnection& request,
@@ -815,7 +815,7 @@ void MidiControlService::DisconnectCC(const sushi_rpc::MidiCCConnection& request
                                              midi_channel,
                                              request.port(),
                                              request.cc_number());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void MidiControlService::DisconnectPC(const sushi_rpc::MidiPCConnection& request,
@@ -823,21 +823,21 @@ void MidiControlService::DisconnectPC(const sushi_rpc::MidiPCConnection& request
 {
     const auto midi_channel = to_sushi_ext(request.channel().channel());
     auto status = _controller->disconnect_pc(request.processor().id(), midi_channel, request.port());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void MidiControlService::DisconnectAllCCFromProcessor(const sushi_rpc::ProcessorIdentifier& request,
                                                       sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->disconnect_all_cc_from_processor(request.id());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void MidiControlService::DisconnectAllPCFromProcessor(const sushi_rpc::ProcessorIdentifier& request,
                                                       sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->disconnect_all_pc_from_processor(request.id());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 //=============================================================================
@@ -850,7 +850,7 @@ void AudioRoutingControlService::GetAllInputConnections(const sushi_rpc::Generic
     auto connections = _controller->get_all_input_connections();
     for (const auto& connection : connections)
     {
-        to_grpc(*response.add_connections(), connection);
+        to_proto(*response.add_connections(), connection);
     }
 }
 
@@ -860,7 +860,7 @@ void AudioRoutingControlService::GetAllOutputConnections(const sushi_rpc::Generi
     auto connections = _controller->get_all_output_connections();
     for (const auto& connection : connections)
     {
-        to_grpc(*response.add_connections(), connection);
+        to_proto(*response.add_connections(), connection);
     }
 }
 
@@ -870,9 +870,9 @@ void AudioRoutingControlService::GetInputConnectionsForTrack(const sushi_rpc::Tr
     auto [status, connections] = _controller->get_input_connections_for_track(request.id());
     for (const auto& connection : connections)
     {
-        to_grpc(*response.add_connections(), connection);
+        to_proto(*response.add_connections(), connection);
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void AudioRoutingControlService::GetOutputConnectionsForTrack(const sushi_rpc::TrackIdentifier& request,
@@ -881,9 +881,9 @@ void AudioRoutingControlService::GetOutputConnectionsForTrack(const sushi_rpc::T
     auto [status, connections] = _controller->get_output_connections_for_track(request.id());
     for (const auto& connection : connections)
     {
-        to_grpc(*response.add_connections(), connection);
+        to_proto(*response.add_connections(), connection);
     }
-    response.mutable_status()->set_status(to_grpc(status));
+    response.mutable_status()->set_status(to_proto(status));
 }
 
 void AudioRoutingControlService::ConnectInputChannelToTrack(const sushi_rpc::AudioConnection& request,
@@ -892,7 +892,7 @@ void AudioRoutingControlService::ConnectInputChannelToTrack(const sushi_rpc::Aud
     auto status = _controller->connect_input_channel_to_track(request.track().id(),
                                                               request.track_channel(),
                                                               request.engine_channel());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void AudioRoutingControlService::ConnectOutputChannelFromTrack(const sushi_rpc::AudioConnection& request,
@@ -901,7 +901,7 @@ void AudioRoutingControlService::ConnectOutputChannelFromTrack(const sushi_rpc::
     auto status = _controller->connect_output_channel_to_track(request.track().id(),
                                                                request.track_channel(),
                                                                request.engine_channel());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void AudioRoutingControlService::DisconnectInput(const sushi_rpc::AudioConnection& request,
@@ -910,7 +910,7 @@ void AudioRoutingControlService::DisconnectInput(const sushi_rpc::AudioConnectio
     auto status = _controller->disconnect_input(request.track().id(),
                                                 request.track_channel(),
                                                 request.engine_channel());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void AudioRoutingControlService::DisconnectOutput(const sushi_rpc::AudioConnection& request,
@@ -919,14 +919,14 @@ void AudioRoutingControlService::DisconnectOutput(const sushi_rpc::AudioConnecti
     auto status = _controller->disconnect_output(request.track().id(),
                                                  request.track_channel(),
                                                  request.engine_channel());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void AudioRoutingControlService::DisconnectAllInputsFromTrack(const sushi_rpc::TrackIdentifier& request,
                                                               sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->disconnect_all_inputs_from_track(request.id());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void AudioRoutingControlService::DisconnectAllOutputFromTrack(const sushi_rpc::TrackIdentifier& /*request*/,
@@ -939,7 +939,7 @@ void AudioRoutingControlService::DisconnectAllOutputsFromTrack(const sushi_rpc::
                                                                sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->disconnect_all_outputs_from_track(request.id());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 //=============================================================================
@@ -1052,28 +1052,28 @@ void OscControlService::EnableOutputForParameter(const sushi_rpc::ParameterIdent
                                                  sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->enable_output_for_parameter(request.processor_id(), request.parameter_id());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void OscControlService::DisableOutputForParameter(const sushi_rpc::ParameterIdentifier& request,
                                                   sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->disable_output_for_parameter(request.processor_id(), request.parameter_id());
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void OscControlService::EnableAllOutput(const sushi_rpc::GenericVoidValue& /*request*/,
                                         sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->enable_all_output();
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 void OscControlService::DisableAllOutput(const sushi_rpc::GenericVoidValue& /*request*/,
                                          sushi_rpc::CommandResponse& response)
 {
     auto status = _controller->disable_all_output();
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 //=============================================================================
@@ -1084,7 +1084,7 @@ void SessionControlService::SaveSession(const sushi_rpc::GenericVoidValue& /*req
                                         sushi_rpc::SessionState& response)
 {
     auto session_state = _controller->save_session();
-    to_grpc(response, session_state);
+    to_proto(response, session_state);
 }
 
 void SessionControlService::RestoreSession(const sushi_rpc::SessionState& request,
@@ -1093,7 +1093,7 @@ void SessionControlService::RestoreSession(const sushi_rpc::SessionState& reques
     sushi::control::SessionState sushi_state;
     to_sushi_ext(sushi_state, request);
     auto status = _controller->restore_session(sushi_state);
-    to_grpc(response, status);
+    to_proto(response, status);
 }
 
 
@@ -1268,13 +1268,13 @@ void NotificationControlService::_forward_transport_notification_to_subscribers(
             }
             case sushi::control::TransportAction::PLAYING_MODE_CHANGED:
             {
-                auto grpc_playing_mode = to_grpc(std::get<sushi::control::PlayingMode>(typed_notification->value()));
+                auto grpc_playing_mode = to_proto(std::get<sushi::control::PlayingMode>(typed_notification->value()));
                 message.mutable_playing_mode()->set_mode(grpc_playing_mode);
                 break;
             }
             case sushi::control::TransportAction::SYNC_MODE_CHANGED:
             {
-                auto grpc_sync_mode = to_grpc(std::get<sushi::control::SyncMode>(typed_notification->value()));
+                auto grpc_sync_mode = to_proto(std::get<sushi::control::SyncMode>(typed_notification->value()));
                 message.mutable_sync_mode()->set_mode(grpc_sync_mode);
                 break;
             }
@@ -1302,7 +1302,7 @@ void NotificationControlService::_forward_cpu_timing_notification_to_subscribers
     {
         auto typed_notification = static_cast<const sushi::control::CpuTimingNotification*>(notification);
         CpuTimings message;
-        to_grpc(message, typed_notification->cpu_timings());
+        to_proto(message, typed_notification->cpu_timings());
         _send(sushi_ipc::Message::CPU_TIMINGS, message);
     }
 }
@@ -1392,7 +1392,7 @@ void NotificationControlService::_forward_async_command_notification_to_subscrib
     {
         auto typed_notification = static_cast<const sushi::control::CommandCompletionNotification*>(notification);
         AsyncCommandResponse message;
-        message.mutable_status()->set_status(to_grpc(typed_notification->status()));
+        message.mutable_status()->set_status(to_proto(typed_notification->status()));
         message.set_request_id(typed_notification->id());
         _send(sushi_ipc::Message::ASYNC_COMMAND_RESPONSE, message);
     }
@@ -1411,7 +1411,7 @@ void NotificationControlService::_send(sushi_ipc::Message command, grpc::protobu
     try
     {
         auto res = _socket.send(command_buffer, zmq::send_flags::sndmore);
-        if (res = _socket.send(message_buffer))
+        if ((res = _socket.send(message_buffer)))
         {
             ELKLOG_LOG_DEBUG("Sent {} bytes with code {}", message_buffer.size(), command_code);
         }

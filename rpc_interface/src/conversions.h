@@ -29,7 +29,7 @@ ELK_POP_WARNING
 
 namespace sushi_rpc {
 /* Convenience conversion functions between sushi enums and their respective grpc implementations */
-inline sushi_rpc::ParameterType::Type to_grpc(const sushi::control::ParameterType type)
+inline sushi_rpc::ParameterType::Type to_proto(const sushi::control::ParameterType type)
 {
     switch (type)
     {
@@ -40,7 +40,7 @@ inline sushi_rpc::ParameterType::Type to_grpc(const sushi::control::ParameterTyp
     }
 }
 
-inline sushi_rpc::PlayingMode::Mode to_grpc(const sushi::control::PlayingMode mode)
+inline sushi_rpc::PlayingMode::Mode to_proto(const sushi::control::PlayingMode mode)
 {
     switch (mode)
     {
@@ -51,7 +51,7 @@ inline sushi_rpc::PlayingMode::Mode to_grpc(const sushi::control::PlayingMode mo
     }
 }
 
-inline MidiChannel_Channel to_grpc(const sushi::control::MidiChannel channel)
+inline MidiChannel_Channel to_proto(const sushi::control::MidiChannel channel)
 {
     switch (channel)
     {
@@ -112,7 +112,7 @@ inline sushi::control::PlayingMode to_sushi_ext(const sushi_rpc::PlayingMode::Mo
     }
 }
 
-inline sushi_rpc::SyncMode::Mode to_grpc(const sushi::control::SyncMode mode)
+inline sushi_rpc::SyncMode::Mode to_proto(const sushi::control::SyncMode mode)
 {
     switch (mode)
     {
@@ -134,7 +134,7 @@ inline sushi::control::SyncMode to_sushi_ext(const sushi_rpc::SyncMode::Mode mod
     }
 }
 
-inline sushi_rpc::TrackType::Type to_grpc(const sushi::control::TrackType type)
+inline sushi_rpc::TrackType::Type to_proto(const sushi::control::TrackType type)
 {
     switch (type)
     {
@@ -170,7 +170,7 @@ inline const char* to_string(const sushi::control::ControlStatus status)
     }
 }
 
-inline sushi_rpc::CommandStatus::Status to_grpc(sushi::control::ControlStatus status)
+inline sushi_rpc::CommandStatus::Status to_proto(sushi::control::ControlStatus status)
 {
     switch (status)
     {
@@ -185,22 +185,22 @@ inline sushi_rpc::CommandStatus::Status to_grpc(sushi::control::ControlStatus st
     }
 }
 
-inline void to_grpc(CommandResponse& dest, const sushi::control::ControlResponse src)
+inline void to_proto(CommandResponse& dest, const sushi::control::ControlResponse src)
 {
-    dest.mutable_status()->set_status(to_grpc(src.status));
+    dest.mutable_status()->set_status(to_proto(src.status));
     dest.set_id(src.id);
 }
 
-inline void to_grpc(CommandResponse& dest, const sushi::control::ControlStatus src)
+inline void to_proto(CommandResponse& dest, const sushi::control::ControlStatus src)
 {
-    dest.mutable_status()->set_status(to_grpc(src));
+    dest.mutable_status()->set_status(to_proto(src));
     dest.set_id(0);
 }
 
-inline void to_grpc(ParameterInfo& dest, const sushi::control::ParameterInfo& src)
+inline void to_proto(ParameterInfo& dest, const sushi::control::ParameterInfo& src)
 {
     dest.set_id(src.id);
-    dest.mutable_type()->set_type(to_grpc(src.type));
+    dest.mutable_type()->set_type(to_proto(src.type));
     dest.set_label(src.label);
     dest.set_name(src.name);
     dest.set_unit(src.unit);
@@ -211,14 +211,14 @@ inline void to_grpc(ParameterInfo& dest, const sushi::control::ParameterInfo& sr
 
 //inline void to_grpc(ParameterIdentifier& dest, const sushi::control::ParameterChangeNotifica
 
-inline void to_grpc(PropertyInfo& dest, const sushi::control::PropertyInfo& src)
+inline void to_proto(PropertyInfo& dest, const sushi::control::PropertyInfo& src)
 {
     dest.set_id(src.id);
     dest.set_name(src.name);
     dest.set_label(src.label);
 }
 
-inline void to_grpc(sushi_rpc::ProcessorInfo& dest, const sushi::control::ProcessorInfo& src)
+inline void to_proto(sushi_rpc::ProcessorInfo& dest, const sushi::control::ProcessorInfo& src)
 {
     dest.set_id(src.id);
     dest.set_label(src.label);
@@ -227,20 +227,20 @@ inline void to_grpc(sushi_rpc::ProcessorInfo& dest, const sushi::control::Proces
     dest.set_program_count(src.program_count);
 }
 
-inline void to_grpc(sushi_rpc::MidiKbdConnection& dest, const sushi::control::MidiKbdConnection& src)
+inline void to_proto(sushi_rpc::MidiKbdConnection& dest, const sushi::control::MidiKbdConnection& src)
 {
     dest.mutable_track()->set_id(src.track_id);
-    dest.mutable_channel()->set_channel(to_grpc(src.channel));
+    dest.mutable_channel()->set_channel(to_proto(src.channel));
     dest.set_port(src.port);
     dest.set_raw_midi(src.raw_midi);
 }
 
-inline void to_grpc(sushi_rpc::MidiCCConnection& dest, const sushi::control::MidiCCConnection& src)
+inline void to_proto(sushi_rpc::MidiCCConnection& dest, const sushi::control::MidiCCConnection& src)
 {
     dest.mutable_parameter()->set_processor_id(src.processor_id);
     dest.mutable_parameter()->set_parameter_id(src.parameter_id);
     dest.mutable_parameter()->set_processor_id(src.processor_id);
-    dest.mutable_channel()->set_channel(to_grpc(src.channel));
+    dest.mutable_channel()->set_channel(to_proto(src.channel));
     dest.set_port(src.port);
     dest.set_cc_number(src.cc_number);
     dest.set_min_range(static_cast<float>(src.min_range));
@@ -248,14 +248,14 @@ inline void to_grpc(sushi_rpc::MidiCCConnection& dest, const sushi::control::Mid
     dest.set_relative_mode(src.relative_mode);
 }
 
-inline void to_grpc(sushi_rpc::MidiPCConnection& dest, const sushi::control::MidiPCConnection& src)
+inline void to_proto(sushi_rpc::MidiPCConnection& dest, const sushi::control::MidiPCConnection& src)
 {
     dest.mutable_processor()->set_id(src.processor_id);
-    dest.mutable_channel()->set_channel(to_grpc(src.channel));
+    dest.mutable_channel()->set_channel(to_proto(src.channel));
     dest.set_port(src.port);
 }
 
-inline void to_grpc(sushi_rpc::TrackInfo& dest, const sushi::control::TrackInfo& src)
+inline void to_proto(sushi_rpc::TrackInfo& dest, const sushi::control::TrackInfo& src)
 {
     dest.set_id(src.id);
     dest.set_label(src.label);
@@ -263,37 +263,37 @@ inline void to_grpc(sushi_rpc::TrackInfo& dest, const sushi::control::TrackInfo&
     dest.set_channels(src.channels);
     dest.set_buses(src.buses);
     dest.set_thread(src.thread);
-    dest.mutable_type()->set_type(to_grpc(src.type));
+    dest.mutable_type()->set_type(to_proto(src.type));
     for (auto i : src.processors)
     {
         dest.mutable_processors()->Add()->set_id(i);
     }
 }
 
-inline void to_grpc(sushi_rpc::Timings& dest, const sushi::control::Timings& src)
+inline void to_proto(sushi_rpc::Timings& dest, const sushi::control::Timings& src)
 {
     dest.set_average(src.avg);
     dest.set_min(src.min);
     dest.set_max(src.max);
 }
 
-inline void to_grpc(sushi_rpc::CpuTimings& dest, const sushi::control::CpuTimings& src)
+inline void to_proto(sushi_rpc::CpuTimings& dest, const sushi::control::CpuTimings& src)
 {
-    to_grpc(*dest.mutable_main(), src.main);
+    to_proto(*dest.mutable_main(), src.main);
     for (const auto& thread : src.threads)
     {
-        to_grpc(*dest.mutable_threads()->Add(), thread);
+        to_proto(*dest.mutable_threads()->Add(), thread);
     }
 }
 
-inline void to_grpc(sushi_rpc::AudioConnection& dest, const sushi::control::AudioConnection& src)
+inline void to_proto(sushi_rpc::AudioConnection& dest, const sushi::control::AudioConnection& src)
 {
     dest.mutable_track()->set_id(src.track_id);
     dest.set_track_channel(src.track_channel);
     dest.set_engine_channel(src.engine_channel);
 }
 
-inline sushi_rpc::PluginType::Type to_grpc(const sushi::control::PluginType type)
+inline sushi_rpc::PluginType::Type to_proto(const sushi::control::PluginType type)
 {
     switch (type)
     {
@@ -317,7 +317,7 @@ inline sushi::control::PluginType to_sushi_ext(const sushi_rpc::PluginType::Type
     }
 }
 
-inline void to_grpc(sushi_rpc::ProcessorState& dest, sushi::control::ProcessorState& src)
+inline void to_proto(sushi_rpc::ProcessorState& dest, sushi::control::ProcessorState& src)
 {
     if (src.program.has_value())
     {
@@ -380,7 +380,7 @@ inline void to_sushi_ext(sushi::control::ProcessorState& dest, const sushi_rpc::
                             reinterpret_cast<const std::byte*>(src.binary_data().data()) + src.binary_data().size());
 }
 
-inline void to_grpc(sushi_rpc::SushiBuildInfo& dest, sushi::control::SushiBuildInfo& src)
+inline void to_proto(sushi_rpc::SushiBuildInfo& dest, sushi::control::SushiBuildInfo& src)
 {
     dest.set_version(std::move(src.version));
 
@@ -408,7 +408,7 @@ inline void to_sushi_ext(sushi::control::SushiBuildInfo& dest, const sushi_rpc::
     dest.build_date = src.build_date();
 }
 
-inline void to_grpc(sushi_rpc::OscParameterState& dest, sushi::control::OscParameterState& src)
+inline void to_proto(sushi_rpc::OscParameterState& dest, sushi::control::OscParameterState& src)
 {
     dest.set_processor(std::move(src.processor));
     dest.mutable_parameter_ids()->Reserve(static_cast<int>(src.parameter_ids.size()));
@@ -426,14 +426,14 @@ inline sushi::control::OscParameterState to_sushi_ext(const sushi_rpc::OscParame
     return dest;
 }
 
-inline void to_grpc(sushi_rpc::OscState& dest, sushi::control::OscState& src)
+inline void to_proto(sushi_rpc::OscState& dest, sushi::control::OscState& src)
 {
     dest.set_enable_all_processor_outputs(src.enable_all_processor_outputs);
     dest.mutable_enabled_processor_outputs()->Reserve(static_cast<int>(src.enabled_processor_outputs.size()));
     for (auto& state : src.enabled_processor_outputs)
     {
         auto grpc_state = dest.mutable_enabled_processor_outputs()->Add();
-        to_grpc(*grpc_state, state);
+        to_proto(*grpc_state, state);
     }
 }
 
@@ -447,10 +447,10 @@ inline void to_sushi_ext(sushi::control::OscState& dest, const sushi_rpc::OscSta
     }
 }
 
-inline void to_grpc(sushi_rpc::MidiKbdConnectionState& dest, sushi::control::MidiKbdConnectionState& src)
+inline void to_proto(sushi_rpc::MidiKbdConnectionState& dest, sushi::control::MidiKbdConnectionState& src)
 {
     dest.set_track(std::move(src.track));
-    dest.mutable_channel()->set_channel(to_grpc(src.channel));
+    dest.mutable_channel()->set_channel(to_proto(src.channel));
     dest.set_port(src.port);
     dest.set_raw_midi(src.raw_midi);
 }
@@ -465,11 +465,11 @@ inline sushi::control::MidiKbdConnectionState to_sushi_ext(const sushi_rpc::Midi
     return dest;
 }
 
-inline void to_grpc(sushi_rpc::MidiCCConnectionState& dest, sushi::control::MidiCCConnectionState& src)
+inline void to_proto(sushi_rpc::MidiCCConnectionState& dest, sushi::control::MidiCCConnectionState& src)
 {
     dest.set_processor(std::move(src.processor));
     dest.mutable_parameter()->set_parameter_id(src.parameter_id);
-    dest.mutable_channel()->set_channel(to_grpc(src.channel));
+    dest.mutable_channel()->set_channel(to_proto(src.channel));
     dest.set_port(src.port);
     dest.set_cc_number(src.cc_number);
     dest.set_min_range(src.min_range);
@@ -490,10 +490,10 @@ inline sushi::control::MidiCCConnectionState to_sushi_ext(const sushi_rpc::MidiC
     return dest;
 }
 
-inline void to_grpc(sushi_rpc::MidiPCConnectionState& dest, sushi::control::MidiPCConnectionState& src)
+inline void to_proto(sushi_rpc::MidiPCConnectionState& dest, sushi::control::MidiPCConnectionState& src)
 {
     dest.set_processor(std::move(src.processor));
-    dest.mutable_channel()->set_channel(to_grpc(src.channel));
+    dest.mutable_channel()->set_channel(to_proto(src.channel));
     dest.set_port(src.port);
 }
 
@@ -506,7 +506,7 @@ inline sushi::control::MidiPCConnectionState to_sushi_ext(const sushi_rpc::MidiP
     return dest;
 }
 
-inline void to_grpc(sushi_rpc::MidiState& dest, sushi::control::MidiState& src)
+inline void to_proto(sushi_rpc::MidiState& dest, sushi::control::MidiState& src)
 {
     dest.set_inputs(src.inputs);
     dest.set_outputs(src.outputs);
@@ -515,28 +515,28 @@ inline void to_grpc(sushi_rpc::MidiState& dest, sushi::control::MidiState& src)
     for (auto& con : src.kbd_input_connections)
     {
         auto grpc_con = dest.mutable_kbd_input_connections()->Add();
-        to_grpc(*grpc_con, con);
+        to_proto(*grpc_con, con);
     }
 
     dest.mutable_kbd_output_connections()->Reserve(static_cast<int>(src.kbd_output_connections.size()));
     for (auto& con : src.kbd_output_connections)
     {
         auto grpc_con = dest.mutable_kbd_output_connections()->Add();
-        to_grpc(*grpc_con, con);
+        to_proto(*grpc_con, con);
     }
 
     dest.mutable_cc_connections()->Reserve(static_cast<int>(src.cc_connections.size()));
     for (auto& con : src.cc_connections)
     {
         auto grpc_con = dest.mutable_cc_connections()->Add();
-        to_grpc(*grpc_con, con);
+        to_proto(*grpc_con, con);
     }
 
     dest.mutable_pc_connections()->Reserve(static_cast<int>(src.pc_connections.size()));
     for (auto& con : src.pc_connections)
     {
         auto grpc_con = dest.mutable_pc_connections()->Add();
-        to_grpc(*grpc_con, con);
+        to_proto(*grpc_con, con);
     }
 
     dest.mutable_enabled_clock_outputs()->Reserve(static_cast<int>(src.enabled_clock_outputs.size()));
@@ -576,7 +576,7 @@ inline void to_sushi_ext(sushi::control::MidiState& dest, const sushi_rpc::MidiS
     dest.enabled_clock_outputs = std::vector<int>(src.enabled_clock_outputs().begin(), src.enabled_clock_outputs().end());
 }
 
-inline void to_grpc(sushi_rpc::TrackAudioConnectionState& dest, sushi::control::TrackAudioConnectionState& src)
+inline void to_proto(sushi_rpc::TrackAudioConnectionState& dest, sushi::control::TrackAudioConnectionState& src)
 {
     dest.set_track(std::move(src.track));
     dest.set_track_channel(src.track_channel);
@@ -592,12 +592,12 @@ inline sushi::control::TrackAudioConnectionState to_sushi_ext(const sushi_rpc::T
     return dest;
 }
 
-inline void to_grpc(sushi_rpc::EngineState& dest, sushi::control::EngineState& src)
+inline void to_proto(sushi_rpc::EngineState& dest, sushi::control::EngineState& src)
 {
     dest.set_sample_rate(src.sample_rate);
     dest.set_tempo(src.tempo);
-    dest.mutable_playing_mode()->set_mode(to_grpc(src.playing_mode));
-    dest.mutable_sync_mode()->set_mode(to_grpc(src.sync_mode));
+    dest.mutable_playing_mode()->set_mode(to_proto(src.playing_mode));
+    dest.mutable_sync_mode()->set_mode(to_proto(src.sync_mode));
     dest.mutable_time_signature()->set_denominator(src.time_signature.denominator);
     dest.mutable_time_signature()->set_numerator(src.time_signature.numerator);
     dest.set_clip_detection_input(src.input_clip_detection);
@@ -610,14 +610,14 @@ inline void to_grpc(sushi_rpc::EngineState& dest, sushi::control::EngineState& s
     for (auto& con : src.input_connections)
     {
         auto grpc_con = dest.mutable_input_connections()->Add();
-        to_grpc(*grpc_con, con);
+        to_proto(*grpc_con, con);
     }
 
     dest.mutable_output_connections()->Reserve(static_cast<int>(src.output_connections.size()));
     for (auto& con : src.output_connections)
     {
         auto grpc_con = dest.mutable_output_connections()->Add();
-        to_grpc(*grpc_con, con);
+        to_proto(*grpc_con, con);
     }
 }
 
@@ -647,14 +647,14 @@ inline void to_sushi_ext(sushi::control::EngineState& dest, const sushi_rpc::Eng
     }
 }
 
-inline void to_grpc(sushi_rpc::PluginClass& dest, sushi::control::PluginClass& src)
+inline void to_proto(sushi_rpc::PluginClass& dest, sushi::control::PluginClass& src)
 {
     dest.set_name(std::move(src.name));
     dest.set_label(std::move(src.label));
     dest.set_uid(std::move(src.uid));
     dest.set_path(std::move(src.path));
-    dest.mutable_type()->set_type(to_grpc(src.type));
-    to_grpc(*dest.mutable_state(), src.state);
+    dest.mutable_type()->set_type(to_proto(src.type));
+    to_proto(*dest.mutable_state(), src.state);
 }
 
 inline sushi::control::PluginClass to_sushi_ext(const sushi_rpc::PluginClass& src)
@@ -669,21 +669,21 @@ inline sushi::control::PluginClass to_sushi_ext(const sushi_rpc::PluginClass& sr
     return dest;
 }
 
-inline void to_grpc(sushi_rpc::TrackState& dest, sushi::control::TrackState& src)
+inline void to_proto(sushi_rpc::TrackState& dest, sushi::control::TrackState& src)
 {
     dest.set_name(std::move(src.name));
     dest.set_label(std::move(src.label));
     dest.set_channels(src.channels);
     dest.set_buses(src.buses);
     dest.set_thread(src.thread);
-    dest.mutable_type()->set_type(to_grpc(src.type));
-    to_grpc(*dest.mutable_track_state(), src.track_state);
+    dest.mutable_type()->set_type(to_proto(src.type));
+    to_proto(*dest.mutable_track_state(), src.track_state);
 
     dest.mutable_processors()->Reserve(static_cast<int>(src.processors.size()));
     for (auto& proc : src.processors)
     {
         auto grpc_proc = dest.mutable_processors()->Add();
-        to_grpc(*grpc_proc, proc);
+        to_proto(*grpc_proc, proc);
     }
 }
 
@@ -706,19 +706,19 @@ inline sushi::control::TrackState to_sushi_ext(const sushi_rpc::TrackState& src)
     return dest;
 }
 
-inline void to_grpc(sushi_rpc::SessionState& dest, sushi::control::SessionState& src)
+inline void to_proto(sushi_rpc::SessionState& dest, sushi::control::SessionState& src)
 {
-    to_grpc(*dest.mutable_sushi_info(), src.sushi_info);
+    to_proto(*dest.mutable_sushi_info(), src.sushi_info);
     dest.set_save_date(std::move(src.save_date));
-    to_grpc(*dest.mutable_osc_state(), src.osc_state);
-    to_grpc(*dest.mutable_midi_state(), src.midi_state);
-    to_grpc(*dest.mutable_engine_state(), src.engine_state);
+    to_proto(*dest.mutable_osc_state(), src.osc_state);
+    to_proto(*dest.mutable_midi_state(), src.midi_state);
+    to_proto(*dest.mutable_engine_state(), src.engine_state);
 
     dest.mutable_tracks()->Reserve(static_cast<int>(src.tracks.size()));
     for (auto& track : src.tracks)
     {
         auto grpc_track = dest.mutable_tracks()->Add();
-        to_grpc(*grpc_track, track);
+        to_proto(*grpc_track, track);
     }
 }
 
