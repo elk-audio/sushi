@@ -21,7 +21,7 @@ pipelines:
           - apt-get install -y -q libsndfile1-dev libasound2-dev
           - apt-get install -y -q cmake git make
           - apt-get install -y -q curl zip unzip tar
-          - apt-get install -y -q libgrpc++-dev protobuf-compiler-grpc libzmq3-dev
+          - apt-get install -y -q libgrpc++-dev protobuf-compiler-grpc
           - apt-get install -y -q python3-protobuf
           - apt-get install -y -q liblilv-dev lilv-utils lv2-dev lv2-examples mda-lv2
           - apt-get install -y software-properties-common
