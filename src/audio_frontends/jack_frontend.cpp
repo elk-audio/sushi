@@ -270,7 +270,7 @@ void JackFrontend::_set_engine_sample_rate(float sample_rate)
 int JackFrontend::internal_process_callback(jack_nframes_t framecount)
 {
     set_flush_denormals_to_zero();
-    if (framecount < 64 || framecount % 64)
+    if (framecount < AUDIO_CHUNK_SIZE || framecount % AUDIO_CHUNK_SIZE)
     {
         ELKLOG_LOG_WARNING("Chunk size not a multiple of AUDIO_CHUNK_SIZE. Skipping.");
         return 0;
