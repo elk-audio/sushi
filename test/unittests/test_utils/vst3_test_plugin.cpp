@@ -1,5 +1,7 @@
 #ifdef SUSHI_BUILD_WITH_VST3
 
+#include "gtest/gtest.h"
+
 #include "vst3_test_plugin.h"
 #include "library/vst3x/vst3x_utils.h"
 #include "public.sdk/source/vst/vstsinglecomponenteffect.cpp"
@@ -29,6 +31,11 @@ Vst3TestPlugin::Vst3TestPlugin()
 Steinberg::int32 test_callback(void* data, Steinberg::uint16 id)
 {
     return CALLBACK_ID + id;
+}
+
+void assert_true(bool value)
+{
+    ASSERT_TRUE(value);
 }
 
 Vst3TestPlugin::~Vst3TestPlugin() = default;
@@ -64,6 +71,13 @@ Steinberg::tresult Vst3TestPlugin::setActive(Steinberg::TBool state)
 
 Steinberg::tresult Vst3TestPlugin::process(Steinberg::Vst::ProcessData& data)
 {
+    // Test that Sushi's time capabilities are reported correctly
+    assert_true(data.processContext->state & Steinberg::Vst::ProcessContext::kSystemTimeValid);
+    assert_true(data.processContext->state & Steinberg::Vst::ProcessContext::kContTimeValid);
+    assert_true(data.processContext->state & Steinberg::Vst::ProcessContext::kBarPositionValid);
+    assert_true(data.processContext->state & Steinberg::Vst::ProcessContext::kTempoValid);
+    assert_true(data.processContext->state & Steinberg::Vst::ProcessContext::kTimeSigValid);
+
     return SingleComponentEffect::process(data);
 }
 
