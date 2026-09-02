@@ -21,12 +21,15 @@
 #include <string>
 
 #include "elk-warning-suppressor/warning_suppressor.hpp"
+#include "elk_vst3_extensions/elk_vst3_extensions.h"
+#include "pluginterfaces/base/ftypes.h"
 
 ELK_PUSH_WARNING
 ELK_DISABLE_EXTRA
 ELK_DISABLE_DEPRECATED_DECLARATIONS
 ELK_DISABLE_SHORTEN_64_TO_32
 
+#include <climits>
 #include "pluginterfaces/base/ustring.h"
 #include "pluginterfaces/vst/ivstmidicontrollers.h"
 #include "public.sdk/source/vst/vstpresetfile.h"
@@ -564,6 +567,13 @@ ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool realtime
         {
             _add_parameter_change(id, value, 0);
         }
+    }
+    for (const auto& property : state->properties())
+    {
+        int id = property.first;
+        const std::string& string_prop = property.second;
+        elk::PropertyValue property_value {string_prop.c_str(), static_cast<Steinberg::int32>(string_prop.size())};
+        _instance.controller_extension()->setPropertyValue(static_cast<Steinberg::int32>(id), property_value);
     }
 
     if (realtime_running)
