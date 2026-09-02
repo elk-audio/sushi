@@ -96,12 +96,13 @@ enum class Status : int
     FAILED_MIDI_FRONTEND_INITIALIZATION = 15,
 
     FAILED_TO_START_RPC_SERVER = 16,
-    FRONTEND_IS_INCOMPATIBLE_WITH_STANDALONE = 17,
+    FAILED_TO_START_IPC_SERVER = 17,
+    FRONTEND_IS_INCOMPATIBLE_WITH_STANDALONE = 18,
     
-    SUSHI_ALREADY_STARTED = 18,
-    SUSHI_THREW_EXCEPTION = 19,
+    SUSHI_ALREADY_STARTED = 19,
+    SUSHI_THREW_EXCEPTION = 20,
 
-    UNINITIALIZED = 20
+    UNINITIALIZED = 21
 };
 
 std::string to_string(Status status);
@@ -243,6 +244,11 @@ struct SushiOptions
      * gRPC listening address in the format: address:port. By default accepts incoming connections from all ip:s.
      */
     std::string grpc_listening_address = SUSHI_GRPC_LISTENING_PORT_DEFAULT;
+
+    /**
+     * Set this to false, to disable ZMQ completely.
+     */
+    bool use_zmq = true;
 
     /**
      * Set the path to the crash handler to use for sentry reports.

@@ -163,6 +163,7 @@ enum OptionIndex
     OPT_IDX_GRPC_LISTEN_ADDRESS,
     OPT_IDX_NO_OSC,
     OPT_IDX_NO_GRPC,
+    OPT_IDX_NO_ZMQ,
     OPT_IDX_BASE_PLUGIN_PATH,
     OPT_IDX_SENTRY_CRASH_HANDLER,
     OPT_IDX_SENTRY_DSN
@@ -478,6 +479,14 @@ const optionparser::Descriptor usage[] =
         "no-grpc",
         SushiArg::Optional,
         "\t\t--no-grpc \tDisable gRPC Control completely"
+    },
+    {
+        OPT_IDX_NO_ZMQ,
+        OPT_TYPE_DISABLED,
+        "",
+        "no-zmq",
+        SushiArg::Optional,
+        "\t\t--no-grpc \tDisable ZMQ Control completely"
     },
     {
         OPT_IDX_BASE_PLUGIN_PATH,

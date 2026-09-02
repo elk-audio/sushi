@@ -249,6 +249,10 @@ static ParseStatus parse_options(int argc, char* argv[], sushi::SushiOptions& op
                     options.use_grpc = false;
                     break;
 
+                case OPT_IDX_NO_ZMQ:
+                    options.use_zmq = false;
+                    break;
+
                 case OPT_IDX_BASE_PLUGIN_PATH:
                     options.base_plugin_path = std::string(opt.arg);
                     break;
