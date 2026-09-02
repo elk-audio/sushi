@@ -435,11 +435,17 @@ void Worker::_worker()
             if (event->is_async_work_event())
             {
                 auto typed_event = static_cast<AsynchronousWorkEvent*>(event.get());
-                auto response_event = typed_event->execute();
-                if (response_event != nullptr)
+                // Look up the processor to make sure it's still alive and not being destroyed
+                auto processor = _engine->processor_container()->processor(typed_event->requesting_processor());
+                if (processor)
                 {
-                    _dispatcher->post_event(std::move(response_event));
+                    auto response_event = typed_event->execute();
+                    if (response_event != nullptr)
+                    {
+                        _dispatcher->post_event(std::move(response_event));
+                    }
                 }
+                ELKLOG_LOG_WARNING_IF(!processor, "Calling an async callback on a non-existent processor ({})", typed_event->requesting_processor());
             }
 
             // This is a synchronous call to the completion callback,

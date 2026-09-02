@@ -233,7 +233,7 @@ void SamplePlayerPlugin::process_event(const RtEvent& event)
 
             // Delete the old sample data outside the rt thread
             BlobData data{0, reinterpret_cast<uint8_t*>(old_sample)};
-            auto delete_event = RtEvent::make_delete_blob_event(data);
+            auto delete_event = RtEvent::make_delete_blob_event(data, this->id());
             output_event(delete_event);
             break;
         }

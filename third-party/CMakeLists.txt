@@ -117,6 +117,12 @@ if (SUSHI_WITH_PORTAUDIO)
         target_compile_options(PortAudio PRIVATE /U_UNICODE /UUNICODE)
     endif()
 endif()
+
+if (SUSHI_WITH_RPC_INTERFACE)
+    set(CPPZMQ_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    add_subdirectory(cppzmq)
+endif()
+
 #####################################################
 #  External Projects definitions (non-Cmake based)  #
 #####################################################

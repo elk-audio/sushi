@@ -227,7 +227,7 @@ TEST(EventTest, TestFromRtEvent)
     EXPECT_TRUE(event->process_asynchronously());
 
     BlobData testdata = {0, nullptr};
-    auto async_blod_del_event = RtEvent::make_delete_blob_event(testdata);
+    auto async_blod_del_event = RtEvent::make_delete_blob_event(testdata, 12);
     event = Event::from_rt_event(async_blod_del_event, IMMEDIATE_PROCESS);
     ASSERT_TRUE(event != nullptr);
     EXPECT_TRUE(event->is_async_work_event());

@@ -41,3 +41,6 @@
 [submodule "third-party/elk-plugin-extensions"]
 	path = third-party/elk-plugin-extensions
 	url = ../elk-plugin-extensions.git
+[submodule "third-party/cppzmq"]
+	path = third-party/cppzmq
+	url = https://github.com/zeromq/cppzmq.git

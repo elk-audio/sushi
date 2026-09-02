@@ -43,6 +43,7 @@ SET(TEST_FILES
     unittests/engine/controllers/reactive_controller_test.cpp
     unittests/engine/factories/factories_test.cpp
     unittests/audio_frontends/offline_frontend_test.cpp
+    unittests/audio_frontends/reactive_frontend_test.cpp
     unittests/control_frontends/osc_frontend_test.cpp
     unittests/control_frontends/oscpack_osc_messenger_test.cpp
     unittests/dsp_library/envelope_test.cpp
@@ -67,6 +68,7 @@ SET(TEST_FILES
 set(TEST_HELPER_FILES ${TEST_HELPER_FILES}
     ${PROJECT_SOURCE_DIR}/src/library/processor_state.cpp
     ${PROJECT_SOURCE_DIR}/src/audio_frontends/base_audio_frontend.cpp
+    ${PROJECT_SOURCE_DIR}/src/audio_frontends/reactive_frontend.cpp
     ${PROJECT_SOURCE_DIR}/src/plugins/transposer_plugin.cpp
     ${PROJECT_SOURCE_DIR}/src/library/lv2/lv2_processor_factory.cpp
     ${PROJECT_SOURCE_DIR}/src/library/vst2x/vst2x_processor_factory.cpp

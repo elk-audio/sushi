@@ -196,8 +196,8 @@ TEST_F(TestLv2Wrapper, TestProcessingWithParameterChanges)
 
     // Verify that a parameter change affects the sound.
     // eg-amp plugins Gain parameter range is from -90 to 24
-    auto lower_gain_Event = RtEvent::make_parameter_change_event(0, 0, 0, 0.0f);
-    _module_under_test->process_event(lower_gain_Event);
+    auto lower_gain_event = RtEvent::make_parameter_change_event(0, 0, 0, 0.0f);
+    _module_under_test->process_event(lower_gain_event);
 
     _module_under_test->process_audio(in_buffer, out_buffer);
 
@@ -206,6 +206,11 @@ TEST_F(TestLv2Wrapper, TestProcessingWithParameterChanges)
     auto [status, parameter_value] = _module_under_test->parameter_value(0);
     ASSERT_EQ(ProcessorReturnCode::OK, status);
     EXPECT_EQ(0.0f, parameter_value);
+
+    // Verify that passing a parameter with invalid ID doesn't break the wrapper
+    lower_gain_event = RtEvent::make_parameter_change_event(0, 0, 1233456, 0.5f);
+    _module_under_test->process_event(lower_gain_event);
+    _module_under_test->process_audio(in_buffer, out_buffer);
 }
 
 TEST_F(TestLv2Wrapper, TestBypassProcessing)

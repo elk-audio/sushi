@@ -658,8 +658,8 @@ private:
 class DeleteDataRtEvent : public BaseRtEvent
 {
 public:
-    DeleteDataRtEvent(RtDeletable* data) : BaseRtEvent(RtEventType::DELETE, 0, 0),
-                                           _data(data)
+    DeleteDataRtEvent(RtDeletable* data, ObjectId processor) : BaseRtEvent(RtEventType::DELETE, processor, 0),
+                                                               _data(data)
     {}
 
     RtDeletable* data() const {return _data;}
@@ -1159,9 +1159,9 @@ public:
         return typed_event;
     }
 
-    static RtEvent make_delete_blob_event(BlobData data)
+    static RtEvent make_delete_blob_event(BlobData data, ObjectId processor)
     {
-        DataPayloadRtEvent typed_event(RtEventType::BLOB_DELETE, 0, 0, data);
+        DataPayloadRtEvent typed_event(RtEventType::BLOB_DELETE, processor, 0, data);
         return typed_event;
     }
 
@@ -1207,9 +1207,9 @@ public:
         return typed_event;
     }
 
-    static RtEvent make_delete_data_event(RtDeletable* data)
+    static RtEvent make_delete_data_event(RtDeletable* data, ObjectId processor)
     {
-        DeleteDataRtEvent typed_event(data);
+        DeleteDataRtEvent typed_event(data, processor);
         return typed_event;
     }
 

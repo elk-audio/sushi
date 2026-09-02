@@ -21,9 +21,9 @@
 #include <vector>
 #include <string>
 
-#include "control_service.h"
+#include "grpc_control_service.h"
 #include "sushi_rpc/grpc_server.h"
-#include "async_service_call_data.h"
+#include "grpc_async_service_call_data.h"
 
 namespace sushi_rpc {
 

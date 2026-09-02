@@ -18,6 +18,7 @@
     "lv2",
     "lilv",
     "sentry-native",
+    "zeromq",
     { "name": "pkgconf", "platform": "windows" }
   ]
 }
