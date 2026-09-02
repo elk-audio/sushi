@@ -145,13 +145,17 @@ struct SushiOptions
     /**
      * Specify minimum logging level, from ('debug', 'info', 'warning', 'error')
      */
-    std::string log_level = std::string(ELKLOG_LOG_LEVEL_DEFAULT);
+    std::string log_level = std::string(SUSHI_LOG_LEVEL_DEFAULT);
 
     /**
-     * Specify logging file destination.
+     * Specify log file destination.
      */
-    std::string log_file = std::string(ELKLOG_LOG_FILE_DEFAULT);
+    std::string log_file = std::string(SUSHI_LOG_FILE_DEFAULT);
 
+    /**
+     * Specify log file maximum size.
+     */
+    int log_file_size = SUSHI_LOG_FILE_SIZE_DEFAULT;
     /**
      * These are only for the case of using a JACK audio frontend,
      * and even then, you will rarely need to alter the defaults.

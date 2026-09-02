@@ -39,8 +39,9 @@ ELK_POP_WARNING
 // Options Defaults
 ////////////////////////////////////////////////////////////////////////////////
 
-#define ELKLOG_LOG_LEVEL_DEFAULT "info"
-#define ELKLOG_LOG_FILE_DEFAULT "/tmp/sushi.log"
+#define SUSHI_LOG_LEVEL_DEFAULT "info"
+#define SUSHI_LOG_FILE_DEFAULT "/tmp/sushi.log"
+#define SUSHI_LOG_FILE_SIZE_DEFAULT 10485760
 #define SUSHI_JSON_FILENAME_DEFAULT "config.json"
 #define SUSHI_JSON_STRING_DEFAULT "{}"
 #define SUSHI_SAMPLE_RATE_DEFAULT 48000
@@ -131,6 +132,7 @@ enum OptionIndex
     OPT_IDX_LOG_LEVEL,
     OPT_IDX_LOG_FILE,
     OPT_IDX_LOG_FLUSH_INTERVAL,
+    OPT_IDX_LOG_FILE_SIZE,
     OPT_IDX_DUMP_PARAMETERS,
     OPT_IDX_CONFIG_FILE,
     OPT_IDX_USE_OFFLINE,
@@ -207,7 +209,7 @@ const optionparser::Descriptor usage[] =
         "l",
         "log-level",
         SushiArg::NonEmpty,
-        "\t\t-l <level>, --log-level=<level> \tSpecify minimum logging level, from ('debug', 'info', 'warning', 'error') [default=" ELKLOG_LOG_LEVEL_DEFAULT "]."
+        "\t\t-l <level>, --log-level=<level> \tSpecify minimum logging level, from ('debug', 'info', 'warning', 'error') [default=" SUSHI_LOG_LEVEL_DEFAULT "]."
     },
     {
         OPT_IDX_LOG_FILE,
@@ -215,7 +217,7 @@ const optionparser::Descriptor usage[] =
         "L",
         "log-file",
         SushiArg::NonEmpty,
-        "\t\t-L <filename>, --log-file=<filename> \tSpecify logging file destination [default=" ELKLOG_LOG_FILE_DEFAULT
+        "\t\t-L <filename>, --log-file=<filename> \tSpecify logging file destination [default=" SUSHI_LOG_FILE_DEFAULT
       "]."
     },
     {
@@ -225,6 +227,14 @@ const optionparser::Descriptor usage[] =
         "log-flush-interval",
         SushiArg::NonEmpty,
         "\t\t--log-flush-interval=<seconds> \tEnable flushing the log periodically and specify the interval."
+    },
+    {
+        OPT_IDX_LOG_FILE_SIZE,
+        OPT_TYPE_UNUSED,
+        "",
+        "log-file-size",
+        SushiArg::NonEmpty,
+        "\t\t--log-file-size=<kilobytes> \tSet the maximum log file size [default=10240 kB (10MB)]."
     },
     {
         OPT_IDX_DUMP_PARAMETERS,
