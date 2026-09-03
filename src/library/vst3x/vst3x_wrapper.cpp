@@ -46,10 +46,10 @@ namespace sushi::internal::vst3 {
 
 constexpr int VST_NAME_BUFFER_SIZE = 128;
 
-constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = Steinberg::Vst::ProcessContext::kSystemTimeValid &
-                                                  Steinberg::Vst::ProcessContext::kContTimeValid &
-                                                  Steinberg::Vst::ProcessContext::kBarPositionValid &
-                                                  Steinberg::Vst::ProcessContext::kTempoValid &
+constexpr uint32_t SUSHI_HOST_TIME_CAPABILITIES = Steinberg::Vst::ProcessContext::kSystemTimeValid |
+                                                  Steinberg::Vst::ProcessContext::kContTimeValid |
+                                                  Steinberg::Vst::ProcessContext::kBarPositionValid |
+                                                  Steinberg::Vst::ProcessContext::kTempoValid |
                                                   Steinberg::Vst::ProcessContext::kTimeSigValid;
 
 ELKLOG_GET_LOGGER_WITH_MODULE_NAME("vst3");
