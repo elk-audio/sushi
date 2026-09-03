@@ -574,6 +574,12 @@ ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool realtime
         const std::string& string_prop = property.second;
         elk::PropertyValue property_value {string_prop.c_str(), static_cast<Steinberg::int32>(string_prop.size())};
         _instance.controller_extension()->setPropertyValue(static_cast<Steinberg::int32>(id), property_value);
+
+        auto config = _property_configs.find(id);
+        if (config != _property_configs.end() && config->second.audio_thread_notification)
+        {
+            _host_control.post_event(std::make_unique<StringPropertyEvent>(this->id(), id, string_prop, IMMEDIATE_PROCESS));
+        }
     }
 
     if (realtime_running)
