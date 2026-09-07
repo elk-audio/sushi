@@ -2,6 +2,8 @@
 
 #include "gtest/gtest.h"
 
+#include <twine/twine.h>
+
 #include "vst3_test_plugin.h"
 #include "library/vst3x/vst3x_utils.h"
 #include "public.sdk/source/vst/vstsinglecomponenteffect.cpp"
@@ -126,6 +128,8 @@ Steinberg::tresult Vst3TestPlugin::setPropertyValue(Steinberg::int32 propertyId,
 void Vst3TestPlugin::propertyValueChanged(Steinberg::int32 propertyId, const elk::PropertyValue& value)
 {
     _last_changed_property_id = propertyId;
+    _last_changed_property_value.assign(value.value, value.length);
+    _last_changed_property_was_rt_thread = twine::is_current_thread_realtime();
 }
 
 void Vst3TestPlugin::asyncWorkCompleted(Steinberg::int32 requestId, Steinberg::int32 requestReturnValue)

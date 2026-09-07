@@ -62,6 +62,8 @@ public:
     std::array<elk::PropertyInfo, STRING_PROPERTIES> _string_properties;
     std::array<std::string, STRING_PROPERTIES> _property_values;
     int _last_changed_property_id;
+    std::string _last_changed_property_value;
+    bool _last_changed_property_was_rt_thread{false};
 
     int _last_async_id;
     int _last_async_id_received;
