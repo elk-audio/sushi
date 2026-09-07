@@ -96,13 +96,12 @@ enum class Status : int
     FAILED_MIDI_FRONTEND_INITIALIZATION = 15,
 
     FAILED_TO_START_RPC_SERVER = 16,
-    FAILED_TO_START_IPC_SERVER = 17,
-    FRONTEND_IS_INCOMPATIBLE_WITH_STANDALONE = 18,
+    FRONTEND_IS_INCOMPATIBLE_WITH_STANDALONE = 17,
     
-    SUSHI_ALREADY_STARTED = 19,
-    SUSHI_THREW_EXCEPTION = 20,
+    SUSHI_ALREADY_STARTED = 18,
+    SUSHI_THREW_EXCEPTION = 19,
 
-    UNINITIALIZED = 21
+    UNINITIALIZED = 20
 };
 
 std::string to_string(Status status);
@@ -146,17 +145,13 @@ struct SushiOptions
     /**
      * Specify minimum logging level, from ('debug', 'info', 'warning', 'error')
      */
-    std::string log_level = std::string(SUSHI_LOG_LEVEL_DEFAULT);
+    std::string log_level = std::string(ELKLOG_LOG_LEVEL_DEFAULT);
 
     /**
-     * Specify log file destination.
+     * Specify logging file destination.
      */
-    std::string log_file = std::string(SUSHI_LOG_FILE_DEFAULT);
+    std::string log_file = std::string(ELKLOG_LOG_FILE_DEFAULT);
 
-    /**
-     * Specify log file maximum size.
-     */
-    int log_file_size = SUSHI_LOG_FILE_SIZE_DEFAULT;
     /**
      * These are only for the case of using a JACK audio frontend,
      * and even then, you will rarely need to alter the defaults.
@@ -244,11 +239,6 @@ struct SushiOptions
      * gRPC listening address in the format: address:port. By default accepts incoming connections from all ip:s.
      */
     std::string grpc_listening_address = SUSHI_GRPC_LISTENING_PORT_DEFAULT;
-
-    /**
-     * Set this to false, to disable ZMQ completely.
-     */
-    bool use_zmq = true;
 
     /**
      * Set the path to the crash handler to use for sentry reports.

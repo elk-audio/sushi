@@ -125,10 +125,6 @@ static ParseStatus parse_options(int argc, char* argv[], sushi::SushiOptions& op
                     options.enable_flush_interval = true;
                     break;
 
-                case OPT_IDX_LOG_FILE_SIZE:
-                    options.log_file_size = std::strtol(opt.arg, nullptr, 0) * 1024;
-                    break;
-
                 case OPT_IDX_DUMP_PARAMETERS:
                     options.enable_parameter_dump = true;
                     break;
@@ -247,10 +243,6 @@ static ParseStatus parse_options(int argc, char* argv[], sushi::SushiOptions& op
 
                 case OPT_IDX_NO_GRPC:
                     options.use_grpc = false;
-                    break;
-
-                case OPT_IDX_NO_ZMQ:
-                    options.use_zmq = false;
                     break;
 
                 case OPT_IDX_BASE_PLUGIN_PATH:

@@ -110,8 +110,6 @@ std::string to_string(Status status)
             return "Failed to setup the Midi frontend.";
         case Status::FAILED_TO_START_RPC_SERVER:
             return "Failed to start the RPC server.";
-        case Status::FAILED_TO_START_IPC_SERVER:
-            return "Failed to start the IPC server.";
         case Status::SUSHI_ALREADY_STARTED:
             return "Sushi has already been started";
         case Status::SUSHI_THREW_EXCEPTION:
@@ -147,13 +145,18 @@ Status ConcreteSushi::start()
     }
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
-    if (_rpc_server && !_rpc_server->start())
+    if (_rpc_server != nullptr)
     {
-        return Status::FAILED_TO_START_RPC_SERVER;
-    }
-    if (_ipc_server && !_ipc_server->start())
-    {
-        return Status::FAILED_TO_START_IPC_SERVER;
+        bool rpc_server_status = _rpc_server->start();
+        bool ipc_server_status = _ipc_server->start();
+        if (!rpc_server_status || !ipc_server_status)
+        {
+            if (_osc_frontend != nullptr)
+            {
+                _osc_frontend->stop();
+            }
+            return Status::FAILED_TO_START_RPC_SERVER;
+        }
     }
 #endif
 

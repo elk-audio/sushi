@@ -70,8 +70,7 @@ void init_logger([[maybe_unused]] const SushiOptions& options)
     auto ret_code = elklog::StaticLogger::init_logger(options.log_file,
                                                       "Logger",
                                                       options.log_level,
-                                                      options.enable_flush_interval? options.log_flush_interval : std::chrono::seconds(0),
-                                                      options.log_file_size);
+                                                      options.enable_flush_interval? options.log_flush_interval : std::chrono::seconds(0));
 
     if (ret_code != elklog::Status::OK)
     {
