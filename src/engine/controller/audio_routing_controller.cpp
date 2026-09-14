@@ -108,7 +108,7 @@ std::pair<control::ControlStatus, std::vector<control::AudioConnection>> AudioRo
 
 control::ControlResponse AudioRoutingController::connect_input_channel_to_track(int track_id, int track_channel, int input_channel)
 {
-    ELKLOG_LOG_DEBUG("disconnect_output called with track id {}, track_channel {}, input_channel {}", track_id, track_channel, input_channel);
+    ELKLOG_LOG_DEBUG("connect_input_channel_to_track called with track id {}, track_channel {}, input_channel {}", track_id, track_channel, input_channel);
     auto lambda = [=, this] () -> int
     {
         auto status = _engine->connect_audio_input_channel(input_channel, track_channel, track_id);
@@ -124,7 +124,7 @@ control::ControlResponse AudioRoutingController::connect_input_channel_to_track(
 
 control::ControlResponse AudioRoutingController::connect_output_channel_to_track(int track_id, int track_channel, int output_channel)
 {
-    ELKLOG_LOG_DEBUG("connect_output called with track id {}, track_channel {}, output_channel {}", track_id, track_channel, output_channel);
+    ELKLOG_LOG_DEBUG("connect_output_channel_to_track called with track id {}, track_channel {}, output_channel {}", track_id, track_channel, output_channel);
     auto lambda = [=, this] () -> int
     {
         auto status = _engine->connect_audio_output_channel(output_channel, track_channel, track_id);
@@ -186,7 +186,10 @@ control::ControlResponse AudioRoutingController::disconnect_all_inputs_from_trac
                 ELKLOG_LOG_ERROR_IF(status != EngineReturnStatus::OK, "Disconnecting audio channel {} from channel {} of track id {} failed with error {}",
                                    connection.engine_channel, connection.track_channel, connection.track, static_cast<int>(status))
 
-                return map_status(status);
+                if (status != EngineReturnStatus::OK)
+                {
+                    return map_status(status);
+                }
             }
         }
         return EventStatus::HANDLED_OK;
