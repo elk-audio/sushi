@@ -154,7 +154,7 @@ SUSHI_WITH_VST2                       | on / off | Include support for loading V
 SUSHI_WITH_VST3                       | on / off | Include support for loading Vst 3.x plugins in Sushi.
 SUSHI_LINK_VST3                       | on / off | Link Vst3 SDK (statically) if Vst3 is included. Turn this off if Sushi is linked statically as a library, into an application which already links Vst3's SDK.
 SUSHI_WITH_LV2                        | on / off | Include support for loading LV2 plugins in Sushi.
-SUSHI_WITH_RPC_INTERFACE              | on / off | Build gRPC external control interface, requires gRPC development files.
+SUSHI_WITH_RPC_INTERFACE              | on / off | Build gRPC and ZMQ external control interfaces, requires gRPC development files.
 SUSHI_BUILD_TWINE                     | on / off | Build and link with the included version of [TWINE](https://github.com/elk-audio/twine), otherwise tries to link with system wide if the option is disabled.
 SUSHI_TWINE_STATIC                    | on / off | Link statically against TWINE (not recommended, useful only in a few cases).
 SUSHI_WITH_UNIT_TESTS                 | on / off | Build and run unit tests together with building Sushi.

@@ -2,6 +2,7 @@
 New Features:
  * New ZMQ based IPC api
  * More feature complete ReactiveFrontend
+ * Log file size settable from commandline
 
 Fixes:
  * Vst2 crash on saving state if effFlagsProgramChunks is set
