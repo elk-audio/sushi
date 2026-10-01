@@ -539,6 +539,10 @@ ProcessorReturnCode Vst3xWrapper::set_state(ProcessorState* state, bool realtime
     if (state->has_binary_data())
     {
         _set_binary_state(state->binary_data());
+        for (const auto& property : state->properties())
+        {
+            set_property_value(property.first, property.second);
+        }
         return ProcessorReturnCode::OK;
     }
 
@@ -597,12 +601,22 @@ ProcessorState Vst3xWrapper::save_state() const
     {
         auto data_size = stream.getSize();
         auto data = reinterpret_cast<std::byte*>(stream.getData());
-        state.set_binary_data(std::vector<std::byte>(data, data + data_size));
+        for (const auto& property_config : _property_configs)
+        {
+            auto [status, value] = property_value(property_config.first);
+            if (status == ProcessorReturnCode::OK)
+            {
+                state.add_property_change(property_config.first, value);
+            }
+        }    state.set_binary_data(std::vector<std::byte>(data, data + data_size));
     }
     else
     {
         ELKLOG_LOG_WARNING("Failed to get component state");
     }
+
+    
+
     return state;
 }
 
