@@ -154,14 +154,25 @@ TEST_F(AudioRoutingControllerTest, TestRemovingAudioRouting)
     connections = _module_under_test->get_all_output_connections();
     EXPECT_EQ(2u, connections.size());
 
+    // Reconnect input 3 so there's 2 input connections to remove
+    engine_status = _audio_engine->connect_audio_input_channel(3, 0, _track_id);
+    ASSERT_EQ(EngineReturnStatus::OK, engine_status);
+
+    // Testing disconnect_all functions
     response = _module_under_test->disconnect_all_outputs_from_track(_track_id);
     ASSERT_EQ(control::ControlStatus::ASYNC_RESPONSE, response.status);
 
     auto execution_status_2 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
     ASSERT_EQ(execution_status_2, EventStatus::HANDLED_OK);
 
+    response = _module_under_test->disconnect_all_inputs_from_track(_track_id);
+    ASSERT_EQ(control::ControlStatus::ASYNC_RESPONSE, response.status);
+
+    auto execution_status_3 = _event_dispatcher_mockup->execute_engine_event(_audio_engine.get());
+    ASSERT_EQ(execution_status_3, EventStatus::HANDLED_OK);
+
     connections = _module_under_test->get_all_input_connections();
-    EXPECT_EQ(1u, connections.size());
+    EXPECT_TRUE(connections.empty());
     connections = _module_under_test->get_all_output_connections();
-    EXPECT_EQ(0u, connections.size());
+    EXPECT_TRUE(connections.empty());
 }
