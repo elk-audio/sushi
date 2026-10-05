@@ -10,6 +10,7 @@ Fixes:
  * LV2 plugins could crash if passed an invalid parameter id
  * Fix for bug when disconnecting all audio connections to a track
  * VST3 capability reporting bug
+ * Plugin properties saved for VST3
  * Allow buffersizes < 64 in JackFrontend
  * Linux build fixes
 
