@@ -1,4 +1,4 @@
-## Next
+## 1.4.0
 New Features:
  * New ZMQ based IPC api
  * More feature complete ReactiveFrontend
