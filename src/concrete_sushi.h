@@ -119,8 +119,12 @@ protected:
     std::unique_ptr<engine::Controller> _engine_controller {nullptr};
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+#ifdef SUSHI_RPC_WITH_GRPC
     std::unique_ptr<sushi_rpc::GrpcServer> _rpc_server {nullptr};
+#endif
+#ifdef SUSHI_RPC_WITH_ZMQ
     std::unique_ptr<sushi_ipc::ZmqServer> _ipc_server {nullptr};
+#endif
 #endif
 };
 

@@ -135,7 +135,7 @@ public:
         return _friend._engine_controller;
     }
 
-#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+#ifdef SUSHI_RPC_WITH_GRPC
     const std::unique_ptr<sushi_rpc::GrpcServer>& rpc_server()
     {
         return _friend._rpc_server;
@@ -198,7 +198,7 @@ TEST_F(ReactiveFactoryTest, TestReactiveFactoryWithDefaultConfig)
     EXPECT_NE(_accessor.frontend_config().get(), nullptr);
     EXPECT_NE(_accessor.engine_controller().get(), nullptr);
 
-#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+#ifdef SUSHI_RPC_WITH_GRPC
     EXPECT_NE(sushi_cast->_rpc_server.get(), nullptr);
 #endif
 
@@ -234,7 +234,7 @@ TEST_F(ReactiveFactoryTest, TestPassiveFactoryWithConfigFile)
     EXPECT_NE(_accessor.frontend_config().get(), nullptr);
     EXPECT_NE(_accessor.engine_controller().get(), nullptr);
 
-#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+#ifdef SUSHI_RPC_WITH_GRPC
     EXPECT_NE(sushi_cast->_rpc_server.get(), nullptr);
 #endif
 
@@ -292,7 +292,7 @@ TEST_F(OfflineFactoryTest, TestOfflineFactoryWithDefaultConfig)
     EXPECT_NE(_accessor.frontend_config().get(), nullptr);
     EXPECT_NE(_accessor.engine_controller().get(), nullptr);
 
-#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+#ifdef SUSHI_RPC_WITH_GRPC
     EXPECT_NE(sushi_cast->_rpc_server.get(), nullptr);
 #endif
 }
@@ -324,7 +324,7 @@ TEST_F(OfflineFactoryTest, TestOfflineFactoryWithConfigFile)
     EXPECT_NE(_accessor.frontend_config().get(), nullptr);
     EXPECT_NE(_accessor.engine_controller().get(), nullptr);
 
-#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+#ifdef SUSHI_RPC_WITH_GRPC
     EXPECT_NE(sushi_cast->_rpc_server.get(), nullptr);
 #endif
 }
@@ -415,7 +415,7 @@ TEST_F(StandaloneFactoryTest, TestStandaloneFactoryWithDefaultConfig)
     EXPECT_NE(_accessor.frontend_config().get(), nullptr);
     EXPECT_NE(_accessor.engine_controller().get(), nullptr);
 
-#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+#ifdef SUSHI_RPC_WITH_GRPC
     EXPECT_NE(sushi_cast->_rpc_server.get(), nullptr);
 #endif
 }
@@ -463,7 +463,7 @@ TEST_F(StandaloneFactoryTest, TestStandaloneFactoryWithConfigFile)
     EXPECT_NE(_accessor.frontend_config().get(), nullptr);
     EXPECT_NE(_accessor.engine_controller().get(), nullptr);
 
-#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+#ifdef SUSHI_RPC_WITH_GRPC
     EXPECT_NE(sushi_cast->_rpc_server.get(), nullptr);
 #endif
 }

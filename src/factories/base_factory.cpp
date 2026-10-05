@@ -59,8 +59,12 @@ std::unique_ptr<Sushi> BaseFactory::_make_sushi()
         sushi->_engine_controller = std::move(_engine_controller);
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+#ifdef SUSHI_RPC_WITH_GRPC
         sushi->_rpc_server = std::move(_rpc_server);
+#endif
+#ifdef SUSHI_RPC_WITH_ZMQ
         sushi->_ipc_server = std::move(_ipc_server);
+#endif
 #endif
         return sushi;
     }
@@ -329,13 +333,21 @@ Status BaseFactory::_set_up_control([[maybe_unused]] const SushiOptions& options
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
     if (options.use_grpc)
     {
+#ifdef SUSHI_RPC_WITH_GRPC
         _rpc_server = std::make_unique<sushi_rpc::GrpcServer>(options.grpc_listening_address, _engine_controller.get());
         ELKLOG_LOG_INFO("Instantiating gRPC server with address: {}", options.grpc_listening_address);
+#else
+        ELKLOG_LOG_WARNING("Sushi was not built with gRPC support");
+#endif
     }
     if (options.use_zmq)
     {
+#ifdef SUSHI_RPC_WITH_ZMQ
         _ipc_server = std::make_unique<sushi_ipc::ZmqServer>(sushi_ipc::ZMQ_IPC_ADDRESS, sushi_ipc::ZMQ_PUB_IPC_ADDRESS, _engine_controller.get());
         ELKLOG_LOG_INFO("Instantiating ZMQ server with address: {}", sushi_ipc::ZMQ_IPC_ADDRESS);
+#else
+        ELKLOG_LOG_WARNING("Sushi was not built with ZMQ support");
+#endif
     }
 #endif
 
