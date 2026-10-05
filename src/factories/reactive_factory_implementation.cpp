@@ -30,7 +30,7 @@
 
 #include "src/concrete_sushi.h"
 
-#ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+#ifdef SUSHI_RPC_WITH_GRPC
 #include "sushi_rpc/grpc_server.h"
 #endif
 

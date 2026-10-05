@@ -27,8 +27,12 @@
 #include "engine/audio_engine.h"
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+#ifdef SUSHI_RPC_WITH_GRPC
 #include "sushi_rpc/grpc_server.h"
+#endif
+#ifdef SUSHI_RPC_WITH_ZMQ
 #include "sushi_rpc/zmq_server.h"
+#endif
 #endif
 
 namespace sushi {
@@ -147,14 +151,18 @@ Status ConcreteSushi::start()
     }
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+#ifdef SUSHI_RPC_WITH_GRPC
     if (_rpc_server && !_rpc_server->start())
     {
         return Status::FAILED_TO_START_RPC_SERVER;
     }
+#endif
+#ifdef SUSHI_RPC_WITH_ZMQ
     if (_ipc_server && !_ipc_server->start())
     {
         return Status::FAILED_TO_START_IPC_SERVER;
     }
+#endif
 #endif
 
     _audio_frontend->run();
@@ -192,16 +200,20 @@ void ConcreteSushi::stop()
     }
 
 #ifdef SUSHI_BUILD_WITH_RPC_INTERFACE
+#ifdef SUSHI_RPC_WITH_GRPC
     if (_rpc_server)
     {
         _rpc_server->stop();
         _rpc_server.reset();
     }
+#endif
+#ifdef SUSHI_RPC_WITH_ZMQ
     if (_ipc_server)
     {
         _ipc_server->stop();
         _ipc_server.reset();
     }
+#endif
 #endif
 }
 

@@ -1398,7 +1398,7 @@ void NotificationControlService::_forward_async_command_notification_to_subscrib
     }
 }
 
-void NotificationControlService::_send(sushi_ipc::Message command, grpc::protobuf::Message& request)
+void NotificationControlService::_send(sushi_ipc::Message command, google::protobuf::Message& request)
 {
     // Reuse a static string to reduce the amount of allocations and heap fragmentation, notifications are called from the same thread in sushi
     static std::string serialised_message;

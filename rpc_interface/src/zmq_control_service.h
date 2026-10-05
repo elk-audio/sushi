@@ -25,7 +25,7 @@
 #include "sushi_rpc.pb.h"
 #include "sushi_rpc_zmq.h"
 
-#include <grpcpp/impl/codegen/config_protobuf.h>
+#include <google/protobuf/message.h>
 
 #include "sushi/control_interface.h"
 #include "sushi/control_notifications.h"
@@ -335,7 +335,7 @@ private:
     void _forward_property_notification_to_subscribers(const sushi::control::ControlNotification* notification);
     void _forward_async_command_notification_to_subscribers(const sushi::control::ControlNotification* notification);
 
-    void _send(sushi_ipc::Message command, grpc::protobuf::Message& request);
+    void _send(sushi_ipc::Message command, google::protobuf::Message& request);
 
     zmq::socket_t _socket;
     sushi::control::SushiControl* _controller;
