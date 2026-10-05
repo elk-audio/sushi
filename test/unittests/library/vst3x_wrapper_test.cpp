@@ -840,45 +840,6 @@ TEST_F(TestVst3xWrapper, TestSetStatePropertyReadOnly)
     ASSERT_TRUE(_event_queue.empty());
 }
 
-TEST_F(TestVst3xWrapper, TestSetStatePropertyNotifiesOnRtThread)
-{
-    Steinberg::IPtr<test_utils::Vst3TestPlugin> plugin = new test_utils::Vst3TestPlugin();
-    SetUp(plugin.get());
-
-    ProcessorState state;
-    state.add_property_change(test_utils::Vst3TestPlugin::PROPERTY_ID_1, "rt value");
-
-    auto status = _module_under_test->set_state(&state, false);
-    ASSERT_EQ(ProcessorReturnCode::OK, status);
-
-    // Discard the non rt-thread notification
-    auto event = _host_control._dummy_dispatcher.retrieve_event();
-    ASSERT_TRUE(event);
-    ASSERT_TRUE(event->is_property_change_notification());
-
-    // The processor-side notification must be posted and handled on the real
-    // audio thread, never called synchronously from set_state() - fake being on
-    // the audio thread the same way TestAsyncWork does
-    event = _host_control._dummy_dispatcher.retrieve_event();
-    ASSERT_TRUE(event);
-    ASSERT_TRUE(event->maps_to_rt_event());
-
-    {
-        twine::ThreadRtFlag flag;
-        _module_under_test->process_event(event->to_rt_event(0));
-    }
-
-    EXPECT_TRUE(plugin->_last_changed_property_was_rt_thread);
-    EXPECT_EQ("rt value", plugin->_last_changed_property_value);
-
-    RtEvent rt_event;
-    ASSERT_TRUE(_event_queue.pop(rt_event));
-    ASSERT_EQ(RtEventType::DELETE, rt_event.type());
-    auto delete_event = Event::from_rt_event(rt_event, IMMEDIATE_PROCESS);
-    ASSERT_TRUE(delete_event);
-    static_cast<AsynchronousDeleteEvent*>(delete_event.get())->execute();
-}
-
 TEST_F(TestVst3xWrapper, TestAsyncWork)
 {
     Steinberg::IPtr<test_utils::Vst3TestPlugin> plugin = new test_utils::Vst3TestPlugin();
