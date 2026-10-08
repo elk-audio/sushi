@@ -17,8 +17,18 @@
     "rtmidi",
     "lv2",
     "lilv",
-    "sentry-native",
     "zeromq",
-    { "name": "pkgconf", "platform": "windows" }
-  ]
+    {
+      "name": "pkgconf",
+      "platform": "windows"
+    }
+  ],
+  "features": {
+    "sentry": {
+      "description": "Sentry.io crash reporting support (use with -DSUSHI_WITH_SENTRY=ON)",
+      "dependencies": [
+        "sentry-native"
+      ]
+    }
+  }
 }

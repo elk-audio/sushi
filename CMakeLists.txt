@@ -12,7 +12,7 @@ endif()
 
 # Don't change version anywhere else. Everything is generated from this.
 set(SUSHI_VERSION_MAJOR 1)
-set(SUSHI_VERSION_MINOR 3)
+set(SUSHI_VERSION_MINOR 4)
 set(SUSHI_VERSION_REVISION 0)
 
 # Versioning for the external api(s)
