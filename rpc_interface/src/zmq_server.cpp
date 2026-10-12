@@ -140,7 +140,7 @@ void ZmqServer::_worker()
         Command*    cmd = reinterpret_cast<Command*>(command_frame.data());
         const auto* data = static_cast<const char*>(message_frame.data());
         const int   size = static_cast<int>(message_frame.size());
-        ELKLOG_LOG_DEBUG("Received {} bytes of data with Service {} and command {}", size, cmd->service, cmd->endpoint);
+        ELKLOG_LOG_DEBUG("Received {} bytes of data with Service {} and command {}", size, static_cast<int>(cmd->service), cmd->endpoint);
 
         try
         {
@@ -199,7 +199,7 @@ void ZmqServer::_worker()
                     break;
 
                 default:
-                    ELKLOG_LOG_ERROR("Unknown service type: {}", cmd->service);
+                    ELKLOG_LOG_ERROR("Unknown service type: {}", static_cast<int>(cmd->service));
                     // Every request need to be met by a response to keep the zmq state machine happy, so send an empty response.
                     response_frame = "";
             }
